@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benchmark Leuk · Comparaciones</title>
+<link rel="stylesheet" href="styles.css?v=24">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img src="assets/logo-uk.svg?v=24" alt="Ukelele" class="logo">
+    <span class="brand-sub">Benchmark competitivo</span>
+  </div>
+  <div class="top-right">
+    <nav class="mode-toggle" id="nav">
+      <button data-page="comparaciones" class="active">Comparaciones</button>
+      <button data-page="resultados">Resultados <span id="navCount" class="nav-count"></span></button>
+      <button data-page="decisiones">Decisiones</button>
+    </nav>
+    <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
+  </div>
+</header>
+
+<main>
+  <!-- PÁGINA COMPARACIONES -->
+  <section id="page-comparaciones" class="page">
+    <div class="search-wrap">
+      <input id="search" type="search" inputmode="search" autocomplete="off"
+             placeholder="Buscá un producto Leuk por SKU o nombre (ej: 7052, Freya)…">
+    </div>
+    <div id="catFilters" class="cat-filters"></div>
+    <div id="catCount" class="cat-count"></div>
+    <div id="catalogo" class="cat-grid"></div>
+    <div id="comparacion"></div>
+  </section>
+
+  <!-- PÁGINA RESULTADOS (solo comparaciones autorizadas) -->
+  <section id="page-resultados" class="page hidden">
+    <div class="res-intro">Comparaciones <b>autorizadas</b> — comparación por <b>precio neto</b> (con el descuento de cada marca). Autorizá desde <b>Comparaciones</b>.</div>
+    <div class="filters" id="filters"></div>
+    <div class="filters-bar">
+      <span id="countLabel" class="count"></span>
+      <div class="btn-row">
+        <button id="importBtn" class="btn-ghost">⬆ Importar</button>
+        <button id="exportJsonBtn" class="btn-ghost">⬇ Autorizaciones (.json)</button>
+        <button id="exportBtn" class="btn-ghost">⬇ Exportar CSV</button>
+        <input id="importFile" type="file" accept="application/json" hidden>
+      </div>
+    </div>
+    <div id="tabla"></div>
+  </section>
+
+  <!-- PÁGINA DECISIONES (tablero sobre lo autorizado) -->
+  <section id="page-decisiones" class="page hidden">
+    <div class="res-intro">Tablero de decisión sobre tus comparaciones <b>autorizadas</b>. Cuanto más autorices, más completo.</div>
+    <div id="dash"></div>
+  </section>
+</main>
+
+<div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
+<footer class="foot"><span id="metaLine"></span></footer>
+
+<script src="data.js?v=24"></script>
+<script src="app.js?v=24"></script>
+</body>
+</html>

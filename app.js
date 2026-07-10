@@ -78,7 +78,7 @@
   function save() { localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH)); updateNavCount(); }
 
   /* ---- Sync remoto (Supabase): autorizaciones compartidas entre todos ---- */
-  const SB = { url: "__SUPABASE_URL__", key: "__SUPABASE_ANON_KEY__", table: "autorizaciones" };
+  const SB = { url: "https://cswqoretlhppxkelysny.supabase.co", key: "sb_publishable_Rpbm5uyhUp8aTvoCnHylyA_B0wq8sRs", table: "autorizaciones" };
   const sbOn = () => /^https?:\/\//.test(SB.url) && SB.key.length > 20;
   const sbHead = () => ({ apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" });
   async function sbPull() {

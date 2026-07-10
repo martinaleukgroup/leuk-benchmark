@@ -76,6 +76,49 @@
   let AUTH = load();
   function load() { try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || {}; } catch (e) { return {}; } }
   function save() { localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH)); updateNavCount(); }
+
+  /* ---- Sync remoto (Supabase): autorizaciones compartidas entre todos ---- */
+  const SB = { url: "__SUPABASE_URL__", key: "__SUPABASE_ANON_KEY__", table: "autorizaciones" };
+  const sbOn = () => /^https?:\/\//.test(SB.url) && SB.key.length > 20;
+  const sbHead = () => ({ apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" });
+  async function sbPull() {
+    if (!sbOn()) return;
+    try {
+      const r = await fetch(`${SB.url}/rest/v1/${SB.table}?select=*`, { headers: sbHead() });
+      if (!r.ok) return;
+      const rows = await r.json();
+      const remote = {};
+      rows.forEach(row => { remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() }); });
+      AUTH = remote;                                 // el remoto es la fuente de verdad compartida
+      localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH));
+      updateNavCount();
+    } catch (e) { /* sin conexión: seguimos con la copia local */ }
+  }
+  async function sbPut(k) {
+    if (!sbOn()) return;
+    const a = AUTH[k]; if (!a) return;
+    try {
+      await fetch(`${SB.url}/rest/v1/${SB.table}`, {
+        method: "POST",
+        headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+        body: JSON.stringify([{ key: k, autor: a.autor || null, datos: a, ts: new Date(a.ts || Date.now()).toISOString() }]),
+      });
+    } catch (e) { }
+  }
+  async function sbDel(k) {
+    if (!sbOn()) return;
+    try { await fetch(`${SB.url}/rest/v1/${SB.table}?key=eq.${encodeURIComponent(k)}`, { method: "DELETE", headers: sbHead() }); } catch (e) { }
+  }
+  const AUTOR_KEY = "benchmark_leuk_autor";
+  function getAutor() {
+    let a = localStorage.getItem(AUTOR_KEY);
+    if (!a) {
+      a = (prompt("¿Cómo te llamás? Queda registrado en las comparaciones que autorices (una sola vez).") || "").trim();
+      if (a) localStorage.setItem(AUTOR_KEY, a);
+    }
+    return a || "Anónimo";
+  }
+
   const keyOf = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
   const isAuth = k => !!AUTH[k];
   function snapshot(p, prop) {
@@ -93,8 +136,8 @@
   }
   function toggleAuth(p, prop) {
     const k = keyOf(p.sku, prop);
-    if (AUTH[k]) delete AUTH[k]; else AUTH[k] = snapshot(p, prop);
-    save();
+    if (AUTH[k]) { delete AUTH[k]; save(); sbDel(k); }
+    else { const s = snapshot(p, prop); s.autor = getAutor(); AUTH[k] = s; save(); sbPut(k); }
   }
   function updateNavCount() {
     const n = Object.keys(AUTH).length;
@@ -106,8 +149,11 @@
   };
   const findProp = (sku, marca, fslug) => {
     const p = P.find(x => x.sku === sku); if (!p) return null;
-    return (p.propuestas || []).find(x => x.marca === marca && x.fslug === fslug)
-      || Object.values(p.mejor_por_marca).find(x => x && x.marca === marca && x.fslug === fslug)
+    const inList = arr => (arr || []).find(x => x && x.marca === marca && x.fslug === fslug);
+    // buscar en TODAS las secciones con botón Autorizar (antes faltaba 'posibles' → esos no se guardaban)
+    return inList(p.propuestas)
+      || Object.values(p.mejor_por_marca || {}).find(x => x && x.marca === marca && x.fslug === fslug)
+      || inList(p.posibles)
       || suggList(sku).find(x => x.marca === marca && x.fslug === fslug) || null;
   };
   // click delegado en botones de autorizar
@@ -468,6 +514,7 @@
           </div>
           <div class="res-meta">
             ${priceBlock}
+            ${a.autor ? `<div class="res-autor">Autorizó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
             <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button><button class="rm" title="Quitar">✕</button></div>
           </div>
         </div>
@@ -482,7 +529,7 @@
       };
       exp.onclick = toggle;
       card.querySelector(".res-head").onclick = ev => { if (!ev.target.closest(".rm") && !ev.target.closest(".res-exp")) toggle(); };
-      card.querySelector(".rm").onclick = () => { delete AUTH[a.key]; save(); renderTabla(); };
+      card.querySelector(".rm").onclick = () => { delete AUTH[a.key]; save(); sbDel(a.key); renderTabla(); };
       grid.appendChild(card);
     });
     cont.appendChild(grid);
@@ -490,9 +537,9 @@
   const csv = s => `"${(s || "").toString().replace(/"/g, '""')}"`;
   function exportCSV() {
     const f = authList();
-    const H = ["SKU_Leuk", "Producto_Leuk", "Precio_Leuk_lista", "Precio_Leuk_neto", "Competidor", "Equivalente", "Nivel", "Desc_comp%", "Precio_comp_lista", "Precio_comp_neto", "Dif_neto%", "Dif_lista%"];
+    const H = ["SKU_Leuk", "Producto_Leuk", "Precio_Leuk_lista", "Precio_Leuk_neto", "Competidor", "Equivalente", "Nivel", "Desc_comp%", "Precio_comp_lista", "Precio_comp_neto", "Dif_neto%", "Dif_lista%", "Autorizo"];
     const lines = [H.join(",")];
-    f.forEach(a => lines.push([a.leukSku, csv(a.leukNombre), a.precioLeukUsd, a.precioLeukNeto, a.marca, csv(a.equivNombre), a.veredicto, a.descComp != null ? a.descComp : "", a.precioCompUsd != null ? a.precioCompUsd : "", a.precioCompNeto != null ? a.precioCompNeto : "", a.diferencia_pct != null ? a.diferencia_pct : "", a.diferencia_lista != null ? a.diferencia_lista : ""].join(",")));
+    f.forEach(a => lines.push([a.leukSku, csv(a.leukNombre), a.precioLeukUsd, a.precioLeukNeto, a.marca, csv(a.equivNombre), a.veredicto, a.descComp != null ? a.descComp : "", a.precioCompUsd != null ? a.precioCompUsd : "", a.precioCompNeto != null ? a.precioCompNeto : "", a.diferencia_pct != null ? a.diferencia_pct : "", a.diferencia_lista != null ? a.diferencia_lista : "", csv(a.autor)].join(",")));
     dl(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }), "benchmark_leuk_autorizadas.csv");
   }
   function exportJson() {
@@ -503,7 +550,7 @@
     rd.onload = () => {
       try {
         const obj = JSON.parse(rd.result); let n = 0;
-        Object.entries(obj).forEach(([k, v]) => { if (v && v.leukSku) { AUTH[k] = v; n++; } });
+        Object.entries(obj).forEach(([k, v]) => { if (v && v.leukSku) { AUTH[k] = v; n++; sbPut(k); } });
         save(); renderTabla();
         alert(`Importadas ${n} autorización(es). Total: ${Object.keys(AUTH).length}.`);
       } catch (e) { alert("Archivo inválido."); }
@@ -723,8 +770,8 @@
     $("#page-comparaciones").classList.toggle("hidden", page !== "comparaciones");
     $("#page-resultados").classList.toggle("hidden", page !== "resultados");
     $("#page-decisiones").classList.toggle("hidden", page !== "decisiones");
-    if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); }
-    if (page === "decisiones") renderDecisiones();
+    if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
+    if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
   });
 
   searchEl.addEventListener("input", () => renderCatalogo());
@@ -734,6 +781,9 @@
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
   buildCatFilters(); renderCatalogo(); updateNavCount(); updateDescBtn();
+  // sincronización inicial + refresco periódico de autorizaciones compartidas
+  sbPull().then(() => { updateNavCount(); if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
+  setInterval(() => { if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla); }, 20000);
   const meta = DATA.meta || {};
   $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;
 })();

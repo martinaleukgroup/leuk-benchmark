@@ -936,46 +936,73 @@
     });
     return { items, col: { sku: cSku, precio: cPre } };
   }
+  const flatSlug = s => norm2(s).replace(/[^a-z0-9]+/g, "");
+  // matchea filas (sku/código + precio) a claves de override, según la marca elegida
+  function matchRows(items, marca) {
+    if (marca === "LEUK") {
+      const skus = new Set(P.map(p => String(p.sku)));
+      const out = items.filter(i => skus.has(i.sku)).map(i => ({ key: pkLeuk(i.sku), precio: i.precio, ref: i.sku }));
+      return { out, total: items.length };
+    }
+    // competencia: matchear el código del Excel al código/fslug de la entidad
+    const ents = (CATALOGO || []).filter(c => c.marca === marca);
+    const rows = items.map(i => ({ cf: flatSlug(i.sku), precio: i.precio, code: i.sku })).filter(r => r.cf.length >= 3);
+    const out = [];
+    ents.forEach(e => {
+      const fs = flatSlug(e.fslug || ""), ns = flatSlug(e.nombre || "");
+      const hits = rows.filter(r =>
+        (ns && (r.cf === ns || (ns.length >= 5 && r.cf.startsWith(ns)))) ||
+        (fs && (r.cf === fs || (fs.length >= 4 && r.cf.startsWith(fs)))));
+      if (hits.length) out.push({ key: pkComp(marca, e.fslug), precio: Math.min.apply(null, hits.map(h => h.precio)), ref: e.nombre || e.fslug });
+    });
+    return { out, total: items.length };
+  }
   function openPrecios() {
     const ov = el("div", "detail"); ov.id = "preciosModal";
+    const opts = `<option value="LEUK">Leuk</option>` + MARCAS.map(m => `<option value="${m}">${m}</option>`).join("");
     ov.innerHTML = `<div class="detail-inner desc-modal">
       <button class="detail-close" id="pxClose">✕</button>
-      <h2>Actualizar precios de Leuk</h2>
-      <div class="fam-hint">Subí la lista oficial de Leuk en <b>Excel</b> (.xlsx) o CSV, con una columna <b>SKU</b> y una columna <b>Precio</b> (en US$). Actualiza todos los precios de una. Los de competencia los seguimos cargando aparte.</div>
+      <h2>Actualizar precios por lista</h2>
+      <div class="fam-hint">Subí la lista de precios en <b>Excel</b> (.xlsx) o CSV, con una columna de <b>código/SKU</b> y una de <b>Precio</b>. Elegí a qué marca pertenece la lista. Actualiza todos los precios de una y queda registrado quién la subió.</div>
+      <h3>¿De qué marca es esta lista?</h3>
+      <select id="pxMarca" class="lg-in" style="max-width:260px">${opts}</select>
       <div id="pxDrop" class="px-drop">Arrastrá el Excel acá o <b>tocá para elegir</b><input id="pxFile" type="file" accept=".xlsx,.xls,.csv" hidden></div>
       <div id="pxInfo" class="px-info"></div>
       <div class="desc-actions"><button class="btn-ghost" id="pxCancel">Cancelar</button><button class="btn-primary" id="pxApply" disabled>Aplicar</button></div>
     </div>`;
     document.body.appendChild(ov);
     const close = () => ov.remove();
-    let pending = null;
+    let pending = null, lastFile = null;
     ov.querySelector("#pxClose").onclick = close;
     ov.querySelector("#pxCancel").onclick = close;
     ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
-    const drop = ov.querySelector("#pxDrop"), file = ov.querySelector("#pxFile"), info = ov.querySelector("#pxInfo"), apply = ov.querySelector("#pxApply");
+    const drop = ov.querySelector("#pxDrop"), file = ov.querySelector("#pxFile"), info = ov.querySelector("#pxInfo"),
+      apply = ov.querySelector("#pxApply"), marcaSel = ov.querySelector("#pxMarca");
     drop.onclick = () => file.click();
     drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
     drop.ondragleave = () => drop.classList.remove("over");
     drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); };
     file.onchange = () => { if (file.files[0]) handle(file.files[0]); };
+    marcaSel.onchange = () => { if (lastFile) handle(lastFile); };   // re-evaluar si cambia la marca
     function handle(f) {
-      info.innerHTML = "Leyendo…"; apply.disabled = true;
+      lastFile = f; info.innerHTML = "Leyendo…"; apply.disabled = true;
       const reader = new FileReader();
       reader.onload = e => {
         try {
           const wb = XLSX.read(e.target.result, { type: "array" });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
           const { items, err, col } = parsePriceRows(rows);
           if (err) { info.innerHTML = `<span class="px-bad">${err}</span>`; return; }
-          const skusLeuk = new Set(P.map(p => String(p.sku)));
-          const match = items.filter(i => skusLeuk.has(i.sku));
-          const nomatch = items.length - match.length;
-          pending = match;
-          info.innerHTML = `<div><b>${f.name}</b> · columnas: SKU=<b>${col.sku}</b>, Precio=<b>${col.precio}</b></div>
-            <div class="px-ok">✓ ${match.length} precios de Leuk se van a actualizar</div>
-            ${nomatch ? `<div class="px-warn">⚠ ${nomatch} filas sin coincidencia (SKU que no está en el catálogo) — se ignoran</div>` : ""}`;
-          apply.disabled = match.length === 0;
+          const marca = marcaSel.value;
+          const { out } = matchRows(items, marca);
+          const nombre = marca === "LEUK" ? "Leuk" : marca;
+          pending = out;
+          const muestra = out.slice(0, 3).map(o => `${o.ref} → US$ ${o.precio}`).join(" · ");
+          info.innerHTML = `<div><b>${f.name}</b> · ${items.length} filas leídas · columnas: ${col.sku} / ${col.precio}</div>
+            <div class="px-ok">✓ ${out.length} precios de <b>${nombre}</b> se van a actualizar</div>
+            ${out.length ? `<div class="leuk-fam">ej: ${muestra}${out.length > 3 ? "…" : ""}</div>` : ""}
+            ${items.length - out.length > 0 ? `<div class="px-warn">⚠ ${items.length - out.length} filas sin coincidencia — se ignoran</div>` : ""}`;
+          apply.disabled = out.length === 0;
         } catch (ex) { info.innerHTML = `<span class="px-bad">No pude leer el archivo: ${ex.message}</span>`; }
       };
       reader.readAsArrayBuffer(f);
@@ -983,8 +1010,8 @@
     apply.onclick = async () => {
       if (!pending || !pending.length) return;
       apply.disabled = true; apply.textContent = "Aplicando…";
-      const ok = await bulkSavePrices(pending.map(i => ({ key: pkLeuk(i.sku), precio: i.precio })));
-      if (ok) { info.innerHTML = `<div class="px-ok">✓ Listo: ${pending.length} precios actualizados y compartidos.</div>`; applyPriceOverrides(); rerenderActive(); setTimeout(close, 1400); }
+      const ok = await bulkSavePrices(pending.map(i => ({ key: i.key, precio: i.precio })));
+      if (ok) { info.innerHTML = `<div class="px-ok">✓ Listo: ${pending.length} precios actualizados y compartidos.</div>`; applyPriceOverrides(); rerenderActive(); setTimeout(close, 1500); }
       else { info.innerHTML = `<span class="px-bad">No se pudo guardar (¿sesión vencida? volvé a ingresar).</span>`; apply.disabled = false; apply.textContent = "Aplicar"; }
     };
   }

@@ -88,9 +88,17 @@
       if (!r.ok) return;
       const rows = await r.json();
       const remote = {};
-      rows.forEach(row => { remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() }); });
+      Object.keys(PRICEOV).forEach(k => delete PRICEOV[k]);
+      rows.forEach(row => {
+        if (typeof row.key === "string" && row.key.indexOf("precio|") === 0) {
+          PRICEOV[row.key] = { precio: row.datos && row.datos.precio, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() };
+        } else {
+          remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+        }
+      });
       AUTH = remote;                                 // el remoto es la fuente de verdad compartida
       localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH));
+      applyPriceOverrides();
       updateNavCount();
     } catch (e) { /* sin conexión: seguimos con la copia local */ }
   }
@@ -117,6 +125,72 @@
       if (a) localStorage.setItem(AUTOR_KEY, a);
     }
     return a || "Anónimo";
+  }
+
+  /* ---- Precios editables compartidos (overlay sobre los datos, vía Supabase) ---- */
+  const PRICEOV = {};                                   // "precio|LEUK|sku" | "precio|Marca|fslug" -> {precio,autor,ts}
+  const pkLeuk = sku => `precio|LEUK|${sku}`;
+  const pkComp = (marca, fslug) => `precio|${marca}|${fslug}`;
+  function applyPriceOverrides() {
+    P.forEach(p => {
+      if (p._poOrig === undefined) p._poOrig = p.precio_usd;
+      const o = PRICEOV[pkLeuk(p.sku)];
+      p.precio_usd = o ? o.precio : p._poOrig;
+      const props = [];
+      MARCAS.forEach(m => { if (p.mejor_por_marca[m]) props.push(p.mejor_por_marca[m]); });
+      (p.propuestas || []).forEach(x => props.push(x));
+      (p.posibles || []).forEach(x => props.push(x));
+      props.forEach(pr => {
+        if (!pr.precio) return;
+        if (pr.precio._poOrig === undefined) pr.precio._poOrig = pr.precio.usd;
+        const oc = PRICEOV[pkComp(pr.marca, pr.fslug)];
+        pr.precio.usd = oc ? oc.precio : pr.precio._poOrig;
+      });
+    });
+    (CATALOGO || []).forEach(c => {
+      if (c._poOrig === undefined) c._poOrig = c.precio_usd;
+      const oc = PRICEOV[pkComp(c.marca, c.fslug)];
+      c.precio_usd = oc ? oc.precio : c._poOrig;
+    });
+  }
+  async function savePrice(key, precio) {                // precio null = volver al original
+    const autor = getAutor(), ts = Date.now();
+    if (precio == null) delete PRICEOV[key];
+    else PRICEOV[key] = { precio, autor, ts };
+    applyPriceOverrides();
+    if (!sbOn()) return;
+    try {
+      if (precio == null) {
+        await fetch(`${SB.url}/rest/v1/${SB.table}?key=eq.${encodeURIComponent(key)}`, { method: "DELETE", headers: sbHead() });
+      } else {
+        await fetch(`${SB.url}/rest/v1/${SB.table}`, {
+          method: "POST",
+          headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+          body: JSON.stringify([{ key, autor, datos: { precio }, ts: new Date(ts).toISOString() }]),
+        });
+      }
+    } catch (e) { }
+  }
+  function openPriceEditor(key, curList, marca, label) {
+    const ov = PRICEOV[key];
+    const cur = ov ? ov.precio : curList;
+    const quien = marca === "LEUK" ? "Leuk" : marca;
+    const msg = `Precio de LISTA en US$ para:\n${label || key}  (${quien})` +
+      (ov ? `\n\n(editado por ${ov.autor}. Dejalo vacío para volver al valor original)` : "");
+    const inp = prompt(msg, cur != null ? cur : "");
+    if (inp === null) return;
+    const v = inp.trim();
+    if (v === "") { savePrice(key, null).then(afterPriceEdit); return; }
+    const num = Number(v.replace(/\./g, "").replace(",", "."));
+    if (!isFinite(num) || num < 0) { alert("Precio inválido. Poné solo el número, ej: 42.50"); return; }
+    savePrice(key, Math.round(num * 100) / 100).then(afterPriceEdit);
+  }
+  function afterPriceEdit() { const d = $("#detail"); if (d) d.classList.add("hidden"); rerenderActive(); }
+  // ✎ chip para editar un precio (list=null → "＋ precio")
+  function priceEdit(key, listPrice, marca, label) {
+    const has = listPrice != null, ov = PRICEOV[key];
+    const lbl = (label || "").toString().replace(/[<>"]/g, "");
+    return `<span class="price-edit" data-pk="${key}" data-marca="${marca}" data-label="${lbl}" data-list="${has ? listPrice : ""}" title="Editar precio de lista">${has ? "✎" + (ov ? " editado" : "") : "＋ precio"}</span>`;
   }
 
   const keyOf = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
@@ -305,8 +379,8 @@
       <div class="equiv-meta"><div class="equiv-marca">${prop.marca}${prop.manual ? ' · <span class="tag-sug">sugerido</span>' : ""}</div>
         <div class="equiv-name">${prop.nombre || prop.familia}</div>
         <div class="signals">${sigMini(prop.match)} ${confChip(prop.match)}</div></div>
-      <div class="equiv-right">${c.has ? diffHtml(c.diff) : ""}<br>${badge(prop.match.veredicto)}<br>${authBtn(p, prop)}${extra || ""}</div>`;
-    r.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".rm-sug")) openDetail(p, prop); };
+      <div class="equiv-right">${c.has ? diffHtml(c.diff) : '<span class="leuk-fam">sin precio</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}<br>${badge(prop.match.veredicto)}<br>${authBtn(p, prop)}${extra || ""}</div>`;
+    r.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".rm-sug") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
     return r;
   }
   function comparacionView(p) {
@@ -315,7 +389,7 @@
       <div class="comp-head-meta"><div class="leuk-sku">LEUK ${p.sku}</div>
         <h2>${p.nombre || ""}</h2>
         <div class="leuk-fam">${[p.vertical, p.familia, p.subfamilia].filter(Boolean).join(" · ")}</div>
-        <div class="comp-price">${fmtUsd(p.precio_usd)}</div></div>`));
+        <div class="comp-price">${fmtUsd(p.precio_usd)} ${priceEdit(pkLeuk(p.sku), p.precio_usd, "LEUK", p.nombre)}</div></div>`));
 
     // --- Recomendado por tu historial (productos Leuk parecidos) ---
     const recs = recomendaciones(p);
@@ -344,9 +418,9 @@
           <div class="marca-prod">${prop.nombre || prop.familia}</div>
           <div>${badge(prop.match.veredicto)} ${confChip(prop.match)}</div>
           <div class="signals">${sigMini(prop.match)}</div>
-          <div class="marca-price">${c.has ? diffHtml(c.diff) + ' <span class="leuk-fam">' + c.texto + "</span>" : '<span class="leuk-fam">sin precio comp.</span>'}</div>
+          <div class="marca-price">${c.has ? diffHtml(c.diff) + ' <span class="leuk-fam">' + c.texto + "</span>" : '<span class="leuk-fam">sin precio comp.</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}</div>
           ${authBtn(p, prop)}`;
-        card.onclick = ev => { if (!ev.target.closest(".auth-btn")) openDetail(p, prop); };
+        card.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
       } else {
         card.innerHTML = `<div class="marca-name">${m}</div><div class="empty-mini">Sin equivalente claro</div>`;
       }
@@ -570,13 +644,14 @@
     const eImg = e.imagen || e.equivImagen, eFicha = e.ficha || e.equivFicha;
     const cLista = (e.precio && e.precio.usd != null) ? e.precio.usd : e.precioCompUsd;
     const cc = cmp(p.precio_usd, cLista, e.marca);
-    const precioRow = (listPrice, marca) => {
-      if (listPrice == null) return `<div class="ficha-row"><span class="k">Precio neto</span><span>—</span></div>`;
+    const precioRow = (listPrice, marca, key, label) => {
+      const ed = key ? " " + priceEdit(key, listPrice, marca, label) : "";
+      if (listPrice == null) return `<div class="ficha-row"><span class="k">Precio neto${ed}</span><span>—</span></div>`;
       const isLeuk = marca === "LEUK";
       const net = isLeuk ? netLeuk(listPrice) : netComp(listPrice, marca);
       const desc = isLeuk ? descLeuk() : descComp(marca);
       const extra = desc > 0 ? ` <span class="leuk-fam">(lista ${fmtUsd(listPrice)} · −${desc}%)</span>` : "";
-      return `<div class="ficha-row"><span class="k">Precio neto</span><span>${fmtUsd(net)}${extra}</span></div>`;
+      return `<div class="ficha-row"><span class="k">Precio neto${ed}</span><span>${fmtUsd(net)}${extra}</span></div>`;
     };
     const señales = (m.tecnico || m.etiquetacion || m.visual) ? `<div class="signal-box"><h3>Nivel de match — 3 señales</h3>
         ${_sig("🔧 Técnica", m.tecnico, m.tecnico ? `<span class="leuk-fam">score ${m.tecnico.score}</span>` : "")}
@@ -592,10 +667,10 @@
       <div class="vs">
         <div class="col"><div class="equiv-marca">LEUK ${p.sku}</div>
           ${p.imagen ? `<img src="${p.imagen}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ""}
-          ${precioRow(p.precio_usd, "LEUK")}${_rows(p.ficha)}</div>
+          ${precioRow(p.precio_usd, "LEUK", pkLeuk(p.sku), p.nombre)}${_rows(p.ficha)}</div>
         <div class="col"><div class="equiv-marca">${e.marca} · ${eNombre}</div>
           ${eImg ? `<img src="${eImg}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ""}
-          ${precioRow(cLista, e.marca)}${_rows(eFicha)}</div>
+          ${precioRow(cLista, e.marca, e.fslug ? pkComp(e.marca, e.fslug) : null, eNombre)}${_rows(eFicha)}</div>
       </div>`;
   }
   function openDetail(p, e) {
@@ -727,7 +802,8 @@
     updateNavCount(); updateDescBtn();
     if (!$("#page-resultados").classList.contains("hidden")) renderTabla();
     else if (!$("#page-decisiones").classList.contains("hidden")) renderDecisiones();
-    else if (_selected) selectProduct(_selected);
+    else if (_selected && !$("#comparacion").classList.contains("hidden")) selectProduct(_selected);
+    else renderCatalogo();
   }
   function openDescuentos() {
     const ov = el("div", "detail"); ov.id = "descModal";
@@ -780,9 +856,16 @@
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
+  // editor de precios: click en cualquier ✎ / "＋ precio" (delegado)
+  document.addEventListener("click", ev => {
+    const t = ev.target.closest(".price-edit"); if (!t) return;
+    ev.stopPropagation(); ev.preventDefault();
+    openPriceEditor(t.dataset.pk, t.dataset.list === "" ? null : Number(t.dataset.list), t.dataset.marca, t.dataset.label);
+  });
+  applyPriceOverrides();
   buildCatFilters(); renderCatalogo(); updateNavCount(); updateDescBtn();
-  // sincronización inicial + refresco periódico de autorizaciones compartidas
-  sbPull().then(() => { updateNavCount(); if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
+  // sincronización inicial + refresco periódico de autorizaciones + precios compartidos
+  sbPull().then(() => { applyPriceOverrides(); rerenderActive(); });
   setInterval(() => { if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla); }, 20000);
   const meta = DATA.meta || {};
   $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;

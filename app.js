@@ -88,17 +88,9 @@
       if (!r.ok) return;
       const rows = await r.json();
       const remote = {};
-      Object.keys(PRICEOV).forEach(k => delete PRICEOV[k]);
-      rows.forEach(row => {
-        if (typeof row.key === "string" && row.key.indexOf("precio|") === 0) {
-          PRICEOV[row.key] = { precio: row.datos && row.datos.precio, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() };
-        } else {
-          remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
-        }
-      });
+      rows.forEach(row => { remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() }); });
       AUTH = remote;                                 // el remoto es la fuente de verdad compartida
       localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH));
-      applyPriceOverrides();
       updateNavCount();
     } catch (e) { /* sin conexión: seguimos con la copia local */ }
   }
@@ -153,22 +145,41 @@
       c.precio_usd = oc ? oc.precio : c._poOrig;
     });
   }
+  // Los precios editados viven en la tabla `precios` (lectura pública, escritura sólo logueados).
+  async function sbPullPrices() {
+    if (!sbOn()) return;
+    try {
+      const r = await fetch(`${SB.url}/rest/v1/precios?select=*`, { headers: sbHead() });
+      if (!r.ok) return;
+      const rows = await r.json();
+      Object.keys(PRICEOV).forEach(k => delete PRICEOV[k]);
+      rows.forEach(row => { PRICEOV[row.key] = { precio: row.precio, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() }; });
+      applyPriceOverrides();
+    } catch (e) { }
+  }
   async function savePrice(key, precio) {                // precio null = volver al original
-    const autor = getAutor(), ts = Date.now();
+    if (!AUTHSES.logged()) { alert("Ingresá con tu usuario para editar precios."); return; }
+    const autor = AUTHSES.email(), ts = Date.now();
     if (precio == null) delete PRICEOV[key];
     else PRICEOV[key] = { precio, autor, ts };
     applyPriceOverrides();
+    await priceWrite(key, precio, autor, ts, false);
+  }
+  async function priceWrite(key, precio, autor, ts, retried) {
     if (!sbOn()) return;
     try {
+      let r;
       if (precio == null) {
-        await fetch(`${SB.url}/rest/v1/${SB.table}?key=eq.${encodeURIComponent(key)}`, { method: "DELETE", headers: sbHead() });
+        r = await fetch(`${SB.url}/rest/v1/precios?key=eq.${encodeURIComponent(key)}`, { method: "DELETE", headers: AUTHSES.head() });
       } else {
-        await fetch(`${SB.url}/rest/v1/${SB.table}`, {
+        r = await fetch(`${SB.url}/rest/v1/precios`, {
           method: "POST",
-          headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
-          body: JSON.stringify([{ key, autor, datos: { precio }, ts: new Date(ts).toISOString() }]),
+          headers: Object.assign(AUTHSES.head(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+          body: JSON.stringify([{ key, precio, autor, ts: new Date(ts).toISOString() }]),
         });
       }
+      if ((r.status === 401 || r.status === 403) && !retried && await AUTHSES.refresh()) return priceWrite(key, precio, autor, ts, true);
+      if (!r.ok) alert("No se pudo guardar el precio (¿sesión vencida? volvé a ingresar).");
     } catch (e) { }
   }
   function openPriceEditor(key, curList, marca, label) {
@@ -186,12 +197,51 @@
     savePrice(key, Math.round(num * 100) / 100).then(afterPriceEdit);
   }
   function afterPriceEdit() { const d = $("#detail"); if (d) d.classList.add("hidden"); rerenderActive(); }
-  // ✎ chip para editar un precio (list=null → "＋ precio")
+  // ✎ chip para editar un precio (list=null → "＋ precio"). Sólo visible para usuarios logueados.
   function priceEdit(key, listPrice, marca, label) {
+    if (!AUTHSES.logged()) return "";
     const has = listPrice != null, ov = PRICEOV[key];
     const lbl = (label || "").toString().replace(/[<>"]/g, "");
     return `<span class="price-edit" data-pk="${key}" data-marca="${marca}" data-label="${lbl}" data-list="${has ? listPrice : ""}" title="Editar precio de lista">${has ? "✎" + (ov ? " editado" : "") : "＋ precio"}</span>`;
   }
+
+  /* ===================== SESIÓN / LOGIN (Supabase Auth) ===================== */
+  const AUTHSES = (function () {
+    const KEY = "benchmark_leuk_sesion";
+    let S = null; try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { }
+    const save = s => { S = s; s ? localStorage.setItem(KEY, JSON.stringify(s)) : localStorage.removeItem(KEY); if (typeof updateAuthBtn === "function") updateAuthBtn(); };
+    async function login(email, password) {
+      const r = await fetch(`${SB.url}/auth/v1/token?grant_type=password`, {
+        method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" },
+        body: JSON.stringify({ email: (email || "").trim(), password: password || "" }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.access_token) throw new Error(d.error_description || d.msg || d.message || "Email o contraseña incorrectos");
+      save({ access_token: d.access_token, refresh_token: d.refresh_token, email: (d.user && d.user.email) || email });
+    }
+    async function refresh() {
+      if (!S || !S.refresh_token) return false;
+      try {
+        const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: S.refresh_token }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.access_token) { save({ access_token: d.access_token, refresh_token: d.refresh_token, email: S.email }); return true; }
+      } catch (e) { }
+      save(null); return false;
+    }
+    function logout() {
+      try { if (S) fetch(`${SB.url}/auth/v1/logout`, { method: "POST", headers: { apikey: SB.key, Authorization: `Bearer ${S.access_token}` } }); } catch (e) { }
+      save(null);
+    }
+    return {
+      logged: () => !!(S && S.access_token),
+      email: () => (S && S.email) || "",
+      head: () => ({ apikey: SB.key, Authorization: `Bearer ${S && S.access_token}`, "Content-Type": "application/json" }),
+      login, refresh, logout,
+    };
+  })();
 
   const keyOf = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
   const isAuth = k => !!AUTH[k];
@@ -838,6 +888,44 @@
     };
   }
 
+  /* ===================== LOGIN UI ===================== */
+  function updateAuthBtn() {
+    const b = $("#btnAuth"); if (!b) return;
+    if (AUTHSES.logged()) { b.textContent = `👤 ${(AUTHSES.email() || "").split("@")[0]}`; b.title = `Sesión: ${AUTHSES.email()} — clic para salir`; b.classList.add("logged"); }
+    else { b.textContent = "🔒 Ingresar"; b.title = "Iniciar sesión para editar precios"; b.classList.remove("logged"); }
+  }
+  function openLogin() {
+    if (AUTHSES.logged()) {
+      if (confirm(`Sesión iniciada como ${AUTHSES.email()}.\n¿Cerrar sesión?`)) { AUTHSES.logout(); rerenderActive(); }
+      return;
+    }
+    const ov = el("div", "detail"); ov.id = "loginModal";
+    ov.innerHTML = `<div class="detail-inner desc-modal">
+      <button class="detail-close" id="lgClose">✕</button>
+      <h2>Ingresar</h2>
+      <div class="fam-hint">Iniciá sesión para editar precios. Sólo usuarios habilitados por el administrador.</div>
+      <div class="desc-list">
+        <input id="lgEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
+        <input id="lgPass" type="password" placeholder="Contraseña" autocomplete="current-password" class="lg-in">
+        <div id="lgErr" class="lg-err"></div>
+      </div>
+      <div class="desc-actions"><span></span><button class="btn-primary" id="lgGo">Ingresar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector("#lgClose").onclick = close;
+    ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
+    const go = async () => {
+      const errEl = ov.querySelector("#lgErr"); errEl.textContent = "";
+      const btn = ov.querySelector("#lgGo"); btn.disabled = true; btn.textContent = "Ingresando…";
+      try { await AUTHSES.login(ov.querySelector("#lgEmail").value, ov.querySelector("#lgPass").value); close(); rerenderActive(); }
+      catch (e) { errEl.textContent = e.message || "No se pudo ingresar"; btn.disabled = false; btn.textContent = "Ingresar"; }
+    };
+    ov.querySelector("#lgGo").onclick = go;
+    ov.querySelector("#lgPass").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    ov.querySelector("#lgEmail").focus();
+  }
+
   /* ===================== NAV ===================== */
   $("#nav").addEventListener("click", ev => {
     const b = ev.target.closest("button"); if (!b) return;
@@ -856,6 +944,7 @@
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
+  $("#btnAuth").addEventListener("click", openLogin); updateAuthBtn();
   // editor de precios: click en cualquier ✎ / "＋ precio" (delegado)
   document.addEventListener("click", ev => {
     const t = ev.target.closest(".price-edit"); if (!t) return;
@@ -865,8 +954,12 @@
   applyPriceOverrides();
   buildCatFilters(); renderCatalogo(); updateNavCount(); updateDescBtn();
   // sincronización inicial + refresco periódico de autorizaciones + precios compartidos
-  sbPull().then(() => { applyPriceOverrides(); rerenderActive(); });
-  setInterval(() => { if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla); }, 20000);
+  sbPull().then(() => { updateNavCount(); if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
+  sbPullPrices().then(rerenderActive);
+  setInterval(() => {
+    sbPullPrices().then(() => { if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
+    if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla);
+  }, 20000);
   const meta = DATA.meta || {};
   $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;
 })();

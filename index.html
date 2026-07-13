@@ -4,12 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Benchmark Leuk · Comparaciones</title>
-<link rel="stylesheet" href="styles.css?v=43">
+<link rel="stylesheet" href="styles.css?v=44">
 </head>
-<body>
+<body class="locked">
+
+<!-- PANTALLA DE INGRESO (cubre toda la app hasta iniciar sesión) -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <img src="assets/logo-uk.svg?v=44" alt="Ukelele" class="gate-logo">
+    <h1>Benchmark competitivo</h1>
+    <p class="gate-sub">Ingresá con tu usuario para acceder.</p>
+    <input id="gateEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
+    <input id="gatePass" type="password" placeholder="Contraseña" autocomplete="current-password" class="lg-in">
+    <div id="gateErr" class="lg-err"></div>
+    <button id="gateGo" class="btn-primary gate-btn">Ingresar</button>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="brand">
-    <img src="assets/logo-uk.svg?v=43" alt="Ukelele" class="logo">
+    <img src="assets/logo-uk.svg?v=44" alt="Ukelele" class="logo">
     <span class="brand-sub">Benchmark competitivo</span>
   </div>
   <div class="top-right">
@@ -18,8 +32,9 @@
       <button data-page="resultados">Resultados <span id="navCount" class="nav-count"></span></button>
       <button data-page="decisiones">Decisiones</button>
     </nav>
+    <button id="btnPrecios" class="btn-desc" title="Actualizar precios desde una lista (Excel)">⬆ Precios</button>
     <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
-    <button id="btnAuth" class="btn-desc" title="Iniciar sesión para editar precios">🔒 Ingresar</button>
+    <button id="btnAuth" class="btn-desc" title="Cerrar sesión">👤</button>
   </div>
 </header>
 
@@ -62,7 +77,8 @@
 <div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
 <footer class="foot"><span id="metaLine"></span></footer>
 
-<script src="data.js?v=43"></script>
-<script src="app.js?v=43"></script>
+<script src="vendor/xlsx.full.min.js?v=44"></script>
+<script src="data.js?v=44"></script>
+<script src="app.js?v=44"></script>
 </body>
 </html>

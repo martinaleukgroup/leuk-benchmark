@@ -317,9 +317,23 @@ td.muted{color:var(--olive-soft);text-align:center}
 
 .res-autor{font-size:11.5px;color:var(--gray-soft);white-space:nowrap}
 .res-autor b{color:var(--olive);font-weight:600}
-.lg-in{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;margin-bottom:2px}
+.lg-in{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;margin-bottom:2px}
 .lg-err{color:var(--no);font-size:13px;min-height:16px}
-#btnAuth.logged{border-color:var(--olive-soft);color:var(--olive);background:var(--olive-pale)}
+/* Gate: pantalla de login que cubre toda la app */
+.gate{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+body:not(.locked) .gate{display:none}
+body.locked .topbar,body.locked main,body.locked .foot{display:none}
+.gate-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px 28px;max-width:360px;width:100%;text-align:center;box-shadow:var(--shadow)}
+.gate-logo{width:48px;height:48px;border-radius:8px;margin-bottom:12px}
+.gate-card h1{font-size:20px;margin:0 0 4px}
+.gate-sub{color:var(--gray-soft);font-size:13px;margin-bottom:18px}
+.gate-card .lg-in{margin-bottom:10px;text-align:left}
+.gate-btn{width:100%;margin-top:6px}
+/* Carga masiva de precios */
+.px-drop{border:2px dashed var(--olive-soft);border-radius:12px;padding:26px 14px;text-align:center;color:var(--gray);cursor:pointer;margin:8px 0}
+.px-drop.over{background:var(--olive-pale);border-color:var(--olive)}
+.px-info{font-size:13px;margin:6px 0;display:flex;flex-direction:column;gap:6px}
+.px-ok{color:var(--ok);font-weight:600} .px-warn{color:#b7893b} .px-bad{color:var(--no)}
 .price-edit{display:inline-block;cursor:pointer;font-size:11px;line-height:1.5;color:var(--olive);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap;user-select:none;vertical-align:middle}
 .price-edit:hover{background:var(--olive-pale);border-color:var(--olive-soft)}
 .palert{color:#b7893b;cursor:help;font-size:14px}

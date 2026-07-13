@@ -197,13 +197,9 @@
     savePrice(key, Math.round(num * 100) / 100).then(afterPriceEdit);
   }
   function afterPriceEdit() { const d = $("#detail"); if (d) d.classList.add("hidden"); rerenderActive(); }
-  // ✎ chip para editar un precio (list=null → "＋ precio"). Sólo visible para usuarios logueados.
-  function priceEdit(key, listPrice, marca, label) {
-    if (!AUTHSES.logged()) return "";
-    const has = listPrice != null, ov = PRICEOV[key];
-    const lbl = (label || "").toString().replace(/[<>"]/g, "");
-    return `<span class="price-edit" data-pk="${key}" data-marca="${marca}" data-label="${lbl}" data-list="${has ? listPrice : ""}" title="Editar precio de lista">${has ? "✎" + (ov ? " editado" : "") : "＋ precio"}</span>`;
-  }
+  // La edición individual por producto (✎) se desactivó: los precios se actualizan
+  // por CARGA MASIVA de lista (Excel), no producto por producto.
+  function priceEdit() { return ""; }
 
   /* ===================== SESIÓN / LOGIN (Supabase Auth) ===================== */
   const AUTHSES = (function () {
@@ -888,42 +884,128 @@
     };
   }
 
-  /* ===================== LOGIN UI ===================== */
+  /* ===================== LOGIN / GATE (toda la app requiere sesión) ===================== */
   function updateAuthBtn() {
     const b = $("#btnAuth"); if (!b) return;
-    if (AUTHSES.logged()) { b.textContent = `👤 ${(AUTHSES.email() || "").split("@")[0]}`; b.title = `Sesión: ${AUTHSES.email()} — clic para salir`; b.classList.add("logged"); }
-    else { b.textContent = "🔒 Ingresar"; b.title = "Iniciar sesión para editar precios"; b.classList.remove("logged"); }
+    b.textContent = `👤 ${(AUTHSES.email() || "").split("@")[0] || "salir"}`;
+    b.title = `Sesión: ${AUTHSES.email()} — clic para cerrar sesión`;
   }
-  function openLogin() {
-    if (AUTHSES.logged()) {
-      if (confirm(`Sesión iniciada como ${AUTHSES.email()}.\n¿Cerrar sesión?`)) { AUTHSES.logout(); rerenderActive(); }
-      return;
-    }
-    const ov = el("div", "detail"); ov.id = "loginModal";
+  function lock() {
+    document.body.classList.add("locked");
+    const em = $("#gateEmail"); if (em) { em.value = ""; $("#gatePass").value = ""; $("#gateErr").textContent = ""; setTimeout(() => em.focus(), 60); }
+  }
+  function unlock() { document.body.classList.remove("locked"); updateAuthBtn(); }
+  function doLogout() { if (confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) { AUTHSES.logout(); lock(); } }
+  async function bootApp() {                     // carga de datos compartidos una vez logueado
+    await sbPull(); updateNavCount();
+    await sbPullPrices();
+    rerenderActive();
+  }
+  function wireGate() {
+    const go = async () => {
+      const err = $("#gateErr"); err.textContent = "";
+      const btn = $("#gateGo"); btn.disabled = true; btn.textContent = "Ingresando…";
+      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); unlock(); await bootApp(); }
+      catch (e) { err.textContent = e.message || "No se pudo ingresar"; }
+      btn.disabled = false; btn.textContent = "Ingresar";
+    };
+    $("#gateGo").onclick = go;
+    $("#gateEmail").addEventListener("keydown", e => { if (e.key === "Enter") $("#gatePass").focus(); });
+    $("#gatePass").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  }
+
+  /* ===================== CARGA MASIVA DE PRECIOS (Excel) ===================== */
+  const norm2 = s => (s || "").toString().trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  function parsePriceRows(rows) {
+    // detecta columnas SKU y Precio de una hoja (array de objetos)
+    if (!rows.length) return { items: [], err: "La hoja está vacía." };
+    const cols = Object.keys(rows[0]);
+    const find = cands => cols.find(c => cands.some(x => norm2(c) === x || norm2(c).includes(x)));
+    const cSku = find(["sku", "codigo", "código", "code"]);
+    const cPre = find(["precio", "price", "precio usd", "usd", "importe", "valor"]);
+    if (!cSku || !cPre) return { items: [], err: `No encontré las columnas. Necesito una de SKU (${cSku || "falta"}) y una de Precio (${cPre || "falta"}). Columnas vistas: ${cols.join(", ")}` };
+    const items = [];
+    rows.forEach(r => {
+      const sku = String(r[cSku] == null ? "" : r[cSku]).replace(/\.0$/, "").trim();
+      let raw = String(r[cPre] == null ? "" : r[cPre]).replace(/[^\d.,-]/g, "");
+      // normaliza número (maneja 1.234,56 y 1234.56)
+      if (raw.indexOf(",") > -1 && raw.indexOf(".") > -1) raw = raw.replace(/\./g, "").replace(",", ".");
+      else if (raw.indexOf(",") > -1) raw = raw.replace(",", ".");
+      const precio = parseFloat(raw);
+      if (sku && isFinite(precio) && precio > 0) items.push({ sku, precio: Math.round(precio * 100) / 100 });
+    });
+    return { items, col: { sku: cSku, precio: cPre } };
+  }
+  function openPrecios() {
+    const ov = el("div", "detail"); ov.id = "preciosModal";
     ov.innerHTML = `<div class="detail-inner desc-modal">
-      <button class="detail-close" id="lgClose">✕</button>
-      <h2>Ingresar</h2>
-      <div class="fam-hint">Iniciá sesión para editar precios. Sólo usuarios habilitados por el administrador.</div>
-      <div class="desc-list">
-        <input id="lgEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
-        <input id="lgPass" type="password" placeholder="Contraseña" autocomplete="current-password" class="lg-in">
-        <div id="lgErr" class="lg-err"></div>
-      </div>
-      <div class="desc-actions"><span></span><button class="btn-primary" id="lgGo">Ingresar</button></div>
+      <button class="detail-close" id="pxClose">✕</button>
+      <h2>Actualizar precios de Leuk</h2>
+      <div class="fam-hint">Subí la lista oficial de Leuk en <b>Excel</b> (.xlsx) o CSV, con una columna <b>SKU</b> y una columna <b>Precio</b> (en US$). Actualiza todos los precios de una. Los de competencia los seguimos cargando aparte.</div>
+      <div id="pxDrop" class="px-drop">Arrastrá el Excel acá o <b>tocá para elegir</b><input id="pxFile" type="file" accept=".xlsx,.xls,.csv" hidden></div>
+      <div id="pxInfo" class="px-info"></div>
+      <div class="desc-actions"><button class="btn-ghost" id="pxCancel">Cancelar</button><button class="btn-primary" id="pxApply" disabled>Aplicar</button></div>
     </div>`;
     document.body.appendChild(ov);
     const close = () => ov.remove();
-    ov.querySelector("#lgClose").onclick = close;
+    let pending = null;
+    ov.querySelector("#pxClose").onclick = close;
+    ov.querySelector("#pxCancel").onclick = close;
     ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
-    const go = async () => {
-      const errEl = ov.querySelector("#lgErr"); errEl.textContent = "";
-      const btn = ov.querySelector("#lgGo"); btn.disabled = true; btn.textContent = "Ingresando…";
-      try { await AUTHSES.login(ov.querySelector("#lgEmail").value, ov.querySelector("#lgPass").value); close(); rerenderActive(); }
-      catch (e) { errEl.textContent = e.message || "No se pudo ingresar"; btn.disabled = false; btn.textContent = "Ingresar"; }
+    const drop = ov.querySelector("#pxDrop"), file = ov.querySelector("#pxFile"), info = ov.querySelector("#pxInfo"), apply = ov.querySelector("#pxApply");
+    drop.onclick = () => file.click();
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); };
+    file.onchange = () => { if (file.files[0]) handle(file.files[0]); };
+    function handle(f) {
+      info.innerHTML = "Leyendo…"; apply.disabled = true;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: "array" });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          const { items, err, col } = parsePriceRows(rows);
+          if (err) { info.innerHTML = `<span class="px-bad">${err}</span>`; return; }
+          const skusLeuk = new Set(P.map(p => String(p.sku)));
+          const match = items.filter(i => skusLeuk.has(i.sku));
+          const nomatch = items.length - match.length;
+          pending = match;
+          info.innerHTML = `<div><b>${f.name}</b> · columnas: SKU=<b>${col.sku}</b>, Precio=<b>${col.precio}</b></div>
+            <div class="px-ok">✓ ${match.length} precios de Leuk se van a actualizar</div>
+            ${nomatch ? `<div class="px-warn">⚠ ${nomatch} filas sin coincidencia (SKU que no está en el catálogo) — se ignoran</div>` : ""}`;
+          apply.disabled = match.length === 0;
+        } catch (ex) { info.innerHTML = `<span class="px-bad">No pude leer el archivo: ${ex.message}</span>`; }
+      };
+      reader.readAsArrayBuffer(f);
+    }
+    apply.onclick = async () => {
+      if (!pending || !pending.length) return;
+      apply.disabled = true; apply.textContent = "Aplicando…";
+      const ok = await bulkSavePrices(pending.map(i => ({ key: pkLeuk(i.sku), precio: i.precio })));
+      if (ok) { info.innerHTML = `<div class="px-ok">✓ Listo: ${pending.length} precios actualizados y compartidos.</div>`; applyPriceOverrides(); rerenderActive(); setTimeout(close, 1400); }
+      else { info.innerHTML = `<span class="px-bad">No se pudo guardar (¿sesión vencida? volvé a ingresar).</span>`; apply.disabled = false; apply.textContent = "Aplicar"; }
     };
-    ov.querySelector("#lgGo").onclick = go;
-    ov.querySelector("#lgPass").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-    ov.querySelector("#lgEmail").focus();
+  }
+  async function bulkSavePrices(list, retried) {
+    if (!sbOn() || !AUTHSES.logged()) return false;
+    const autor = AUTHSES.email(), ts = new Date().toISOString();
+    const body = list.map(x => ({ key: x.key, precio: x.precio, autor, ts }));
+    // aplica local ya
+    list.forEach(x => { PRICEOV[x.key] = { precio: x.precio, autor, ts: Date.now() }; });
+    try {
+      let okAll = true;
+      for (let i = 0; i < body.length; i += 400) {
+        const r = await fetch(`${SB.url}/rest/v1/precios`, {
+          method: "POST", headers: Object.assign(AUTHSES.head(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+          body: JSON.stringify(body.slice(i, i + 400)),
+        });
+        if ((r.status === 401 || r.status === 403) && !retried) { if (await AUTHSES.refresh()) return bulkSavePrices(list, true); return false; }
+        if (!r.ok) okAll = false;
+      }
+      return okAll;
+    } catch (e) { return false; }
   }
 
   /* ===================== NAV ===================== */
@@ -944,19 +1026,18 @@
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
-  $("#btnAuth").addEventListener("click", openLogin); updateAuthBtn();
-  // editor de precios: click en cualquier ✎ / "＋ precio" (delegado)
-  document.addEventListener("click", ev => {
-    const t = ev.target.closest(".price-edit"); if (!t) return;
-    ev.stopPropagation(); ev.preventDefault();
-    openPriceEditor(t.dataset.pk, t.dataset.list === "" ? null : Number(t.dataset.list), t.dataset.marca, t.dataset.label);
-  });
+  $("#btnPrecios").addEventListener("click", openPrecios);
+  $("#btnAuth").addEventListener("click", doLogout);
+  wireGate();
   applyPriceOverrides();
-  buildCatFilters(); renderCatalogo(); updateNavCount(); updateDescBtn();
-  // sincronización inicial + refresco periódico de autorizaciones + precios compartidos
-  sbPull().then(() => { updateNavCount(); if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
-  sbPullPrices().then(rerenderActive);
+  buildCatFilters(); renderCatalogo(); updateDescBtn();
+  // La app requiere sesión: si hay sesión guardada, validarla; si no, mostrar el login.
+  (async () => {
+    if (AUTHSES.logged() && await AUTHSES.refresh()) { unlock(); await bootApp(); }
+    else { lock(); }
+  })();
   setInterval(() => {
+    if (document.body.classList.contains("locked")) return;
     sbPullPrices().then(() => { if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
     if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla);
   }, 20000);

@@ -705,9 +705,10 @@
     f.forEach(a => {
       const p = P.find(x => x.sku === a.leukSku) || { sku: a.leukSku, nombre: a.leukNombre, vertical: a.leukVertical, familia: a.leukFamilia, precio_usd: a.precioLeukUsd, imagen: a.leukImagen, ficha: {} };
       const pi = posInfo(a);
+      // El % de diferencia es el dato protagonista; el descriptor va abajo, chico.
       const priceBlock = pi.has
-        ? `<div class="res-posicion ${pi.cls}"><span class="rp-text">${pi.texto}</span><span class="rp-dif">${pi.diff > 0 ? "+" : ""}${pi.diff}% · Δ US$ ${Math.abs(pi.delta).toLocaleString("es-AR")}</span>${priceAlert(pi.diff)}</div>`
-        : `<div class="res-posicion p-na"><span class="rp-text">Sin precio comp.</span></div>`;
+        ? `<div class="res-posicion ${pi.cls}"><span class="rp-dif">${pi.diff > 0 ? "+" : ""}${pi.diff}%${priceAlert(pi.diff)}</span><span class="rp-text">${pi.texto} · Δ US$ ${Math.abs(pi.delta).toLocaleString("es-AR")}</span></div>`
+        : `<div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>`;
       const card = el("div", "res-card");
       card.innerHTML = `
         <div class="res-head">
@@ -717,9 +718,11 @@
             <div class="res-side">${imgTag(a.equivImagen, "sm")}<div class="res-txt"><span class="res-lbl">${a.marca}${a.manual ? ' · <span class="tag-sug">sugerido</span>' : ""}</span><span class="res-nom">${a.equivNombre || a.equivFamilia}</span>${priceCell(a.precioCompUsd, a.marca)}</div></div>
           </div>
           <div class="res-meta">
-            ${priceBlock}
+            <div class="res-meta-row">
+              ${priceBlock}
+              <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
+            </div>
             ${a.autor ? `<div class="res-autor">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
-            <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
           </div>
         </div>
         <div class="res-body hidden"></div>`;

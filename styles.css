@@ -1,8 +1,9 @@
 /* ============================================================
    Benchmark Leuk — identidad de marca (paleta oliva oficial,
    extraída del Manual de Marca). Todo parametrizado acá arriba.
-   Tipografías: DIN Next LT Pro (títulos) y Simplifica (texto) no son
-   webfonts libres → fallback cercano. Cambiá las vars si sumás las reales.
+   Tipografías (según leukiluminacion.com): Barlow Condensed es la fuente
+   de marca → sólo para títulos/números grandes (display). Barlow (misma
+   familia, NO condensada) para texto chico/cuerpo → legibilidad.
    ============================================================ */
 :root{
   --olive:        #676B55;   /* Olive Balance — primario */
@@ -20,14 +21,14 @@
   --no:           #b25b4e;   /* no comparable */
   --radius:       14px;
   --shadow:       0 1px 3px rgba(40,42,34,.06), 0 6px 20px rgba(40,42,34,.05);
-  --font-title:   "DIN Next LT Pro","Barlow Semi Condensed","Segoe UI",system-ui,sans-serif;
-  --font-body:    "Simplifica","Inter","Segoe UI",system-ui,sans-serif;
+  --font-title:   "Barlow Condensed","Segoe UI Semibold","Segoe UI",system-ui,sans-serif;
+  --font-body:    "Barlow","Inter","Segoe UI",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:var(--font-body);background:var(--bg);color:var(--ink);
-  -webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
-h1,h2,h3,.brand-sub{font-family:var(--font-title);letter-spacing:.01em}
+  -webkit-font-smoothing:antialiased;font-size:15.5px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-title);letter-spacing:.005em}
 button{font-family:var(--font-body);cursor:pointer}
 .hidden{display:none !important}
 
@@ -71,7 +72,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 .equiv:last-child{border-bottom:0}
 .equiv .thumb{width:52px;height:52px}
 .equiv-meta{flex:1;min-width:0}
-.equiv-marca{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-soft)}
+.equiv-marca{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-soft)}
 .equiv-name{font-size:14px;margin:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .equiv-right{text-align:right;white-space:nowrap}
 .diff{font-family:var(--font-title);font-size:15px}
@@ -89,7 +90,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 
 /* ---- Filtros analista ---- */
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
-.filters label{font-size:11px;color:var(--gray-soft);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.filters label{font-size:11.5px;color:var(--gray-soft);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
 .filters select,.filters input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:13px}
 .filters-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .count{font-size:13px;color:var(--gray-soft)}
@@ -98,7 +99,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 
 /* ---- Tabla ---- */
 .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
-table{border-collapse:collapse;width:100%;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
 th{background:var(--olive-pale);font-family:var(--font-title);font-weight:600;color:var(--gray);position:sticky;top:0;cursor:pointer}
 tr:hover td{background:var(--olive-pale)}
@@ -168,7 +169,7 @@ td.click{cursor:pointer}
 .marca-card:hover{transform:translateY(-2px);border-color:var(--olive-soft)}
 .marca-card.vacia{opacity:.6;cursor:default;box-shadow:none}
 .marca-card.vacia:hover{transform:none}
-.marca-name{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-soft);margin-bottom:8px}
+.marca-name{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-soft);margin-bottom:8px}
 .marca-card .thumb{width:96px;height:96px;margin:0 auto 8px}
 .marca-prod{font-size:13px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .marca-card .signals{justify-content:center;margin:6px 0}
@@ -261,7 +262,7 @@ td.muted{color:var(--olive-soft);text-align:center}
 .p-cheap-t{color:var(--ok)} .p-exp-t{color:var(--no)}
 .dash-sec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
 .dash-sec h3{margin:0 0 4px;font-size:15px}
-.fam-hint{font-size:12px;color:var(--gray-soft);margin-bottom:12px}
+.fam-hint{font-size:12.5px;color:var(--gray-soft);margin-bottom:12px}
 .fam-list{display:flex;flex-direction:column;gap:7px}
 .fam-row{display:grid;grid-template-columns:150px 1fr 56px;align-items:center;gap:10px}
 .fam-name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -378,7 +379,7 @@ button.rm:hover{background:#f4e2df}
 
 @media(max-width:640px){
   .vs{grid-template-columns:1fr}
-  .brand-sub{font-size:10.5px}
+  .brand-sub{font-size:11.5px}
   main{padding:12px}
   .marca-grid{grid-template-columns:1fr;gap:10px}
   .comp-head{flex-direction:column;text-align:center}

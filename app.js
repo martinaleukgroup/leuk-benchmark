@@ -249,7 +249,7 @@
     };
   })();
 
-  /* ---- Sin competidor comparable (oportunidades de monopolio), compartido ---- */
+  /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
   const MONO = {};                                    // sku -> {sku, nombre, vertical, familia, precio_usd, autor, ts}
   const monoKey = sku => `mono|${sku}`;
   const isMono = sku => !!MONO[sku];
@@ -506,10 +506,10 @@
     });
     wrap.appendChild(grid);
 
-    // --- Marcar "sin competidor comparable" (oportunidad de monopolio) ---
+    // --- Marcar "sin producto comparable" (oportunidad de monopolio) ---
     const monoOn = isMono(p.sku);
     const monoBox = el("div", "mono-box" + (monoOn ? " on" : ""));
-    monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? "🏆 Sin competidor comparable" : "¿No existe un producto comparable en el mercado?"}</b>
+    monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? "🏆 Sin producto comparable" : "¿No existe un producto comparable en el mercado?"}</b>
       <span>${monoOn ? "Marcado como sin competencia — aparece en Insights." : "Marcalo si Leuk no tiene equivalente en la competencia: queda mapeado en Insights para captar leads siendo la única opción."}</span></div>
       <button class="btn-ghost mono-btn ${monoOn ? "on" : ""}">${monoOn ? "Quitar marca" : "Marcar sin competencia"}</button>`;
     monoBox.querySelector(".mono-btn").onclick = () => { toggleMono(p); selectProduct(p); };
@@ -785,12 +785,12 @@
     r.onclick = () => { const p = P.find(z => z.sku === a.leukSku); openDetail(p, findProp(a.leukSku, a.marca, a.fslug) || a); };
     return r;
   }
-  // Sección de oportunidades de monopolio (productos sin competidor comparable)
+  // Sección de oportunidades de monopolio (productos sin producto comparable)
   function monoSection(monos) {
     monos = monos.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const sec = el("div", "dash-sec");
     sec.innerHTML = `<h3>🏆 Productos sin competencia <span class="leuk-fam">· ${monos.length}</span></h3>
-      <div class="fam-hint">Productos Leuk marcados como <b>sin competidor comparable</b> en el mercado — para captar leads siendo la única opción. Marcalos desde <b>Catálogo</b>, en cada producto.</div>
+      <div class="fam-hint">Productos Leuk marcados como <b>sin producto comparable</b> en el mercado — para captar leads siendo la única opción. Marcalos desde <b>Catálogo</b>, en cada producto.</div>
       <div class="mono-list">${monos.map(m => `
         <div class="mono-item" data-sku="${m.sku}">
           <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo marcó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>

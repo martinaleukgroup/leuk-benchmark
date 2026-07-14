@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Benchmark Leuk · Comparaciones</title>
-<link rel="stylesheet" href="styles.css?v=49">
+<title>Benchmark Leuk</title>
+<link rel="stylesheet" href="styles.css?v=50">
 </head>
 <body class="locked">
 
 <!-- PANTALLA DE INGRESO (cubre toda la app hasta iniciar sesión) -->
 <div id="gate" class="gate">
   <div class="gate-card">
-    <img src="assets/logo-leuk-ilum.png?v=49" alt="Leuk Iluminación" class="gate-logo">
+    <img src="assets/logo-leuk-ilum.png?v=50" alt="Leuk Iluminación" class="gate-logo">
     <h1>Benchmark competitivo</h1>
     <p class="gate-sub">Ingresá con tu usuario para acceder.</p>
     <input id="gateEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
@@ -23,15 +23,15 @@
 
 <header class="topbar">
   <div class="brand">
-    <img src="assets/isologo-uk.png?v=49" alt="Ukelele" class="logo">
+    <img src="assets/isologo-uk.png?v=50" alt="Ukelele" class="logo">
     <span class="brand-sub">Benchmark competitivo</span>
   </div>
   <div class="top-right">
     <nav class="mode-toggle" id="nav">
       <button data-page="inicio" class="active">Inicio</button>
-      <button data-page="comparaciones">Comparaciones</button>
-      <button data-page="resultados">Resultados <span id="navCount" class="nav-count"></span></button>
-      <button data-page="decisiones">Decisiones</button>
+      <button data-page="comparaciones">Catálogo</button>
+      <button data-page="resultados">Comparaciones <span id="navCount" class="nav-count"></span></button>
+      <button data-page="decisiones">Insights</button>
     </nav>
     <button id="btnPrecios" class="btn-desc" title="Actualizar precios desde una lista (Excel)">⬆ Precios</button>
     <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
@@ -57,13 +57,13 @@
 
   <!-- PÁGINA RESULTADOS (solo comparaciones autorizadas) -->
   <section id="page-resultados" class="page hidden">
-    <div class="res-intro">Comparaciones <b>autorizadas</b> — comparación por <b>precio neto</b> (con el descuento de cada marca). Autorizá desde <b>Comparaciones</b>.</div>
+    <div class="res-intro">Comparaciones <b>seleccionadas</b> — comparación por <b>precio neto</b> (con el descuento de cada marca). Seleccioná desde <b>Catálogo</b>.</div>
     <div class="filters" id="filters"></div>
     <div class="filters-bar">
       <span id="countLabel" class="count"></span>
       <div class="btn-row">
         <button id="importBtn" class="btn-ghost">⬆ Importar</button>
-        <button id="exportJsonBtn" class="btn-ghost">⬇ Autorizaciones (.json)</button>
+        <button id="exportJsonBtn" class="btn-ghost">⬇ Selecciones (.json)</button>
         <button id="exportBtn" class="btn-ghost">⬇ Exportar CSV</button>
         <input id="importFile" type="file" accept="application/json" hidden>
       </div>
@@ -73,7 +73,7 @@
 
   <!-- PÁGINA DECISIONES (tablero sobre lo autorizado) -->
   <section id="page-decisiones" class="page hidden">
-    <div class="res-intro">Tablero de decisión sobre tus comparaciones <b>autorizadas</b>. Cuanto más autorices, más completo.</div>
+    <div class="res-intro">Insights sobre tus comparaciones <b>seleccionadas</b>. Cuantas más selecciones, más completo.</div>
     <div id="dash"></div>
   </section>
 </main>
@@ -81,7 +81,7 @@
 <div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
 <footer class="foot"><span id="metaLine"></span></footer>
 
-<script src="vendor/xlsx.full.min.js?v=49"></script>
-<script src="app.js?v=49"></script>
+<script src="vendor/xlsx.full.min.js?v=50"></script>
+<script src="app.js?v=50"></script>
 </body>
 </html>

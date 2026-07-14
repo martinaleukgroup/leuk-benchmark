@@ -10,15 +10,15 @@ App web para comparar **precios y datos técnicos** de los productos de Leuk con
 
 1. **Ingresar.** La app pide usuario y contraseña. Sin sesión no se ve nada (ni la app ni los datos).
 2. **Inicio.** Página de bienvenida con accesos rápidos y esta guía.
-3. **Comparaciones.** Buscá un producto Leuk por SKU o nombre y abrilo. Vas a ver sus equivalentes en cada marca, con:
+3. **Catálogo.** Buscá un producto Leuk por SKU o nombre y abrilo. Vas a ver sus equivalentes en cada competidor, con:
    - **Precio neto** (con el descuento de cada marca) y la **diferencia %**.
    - **Nivel de match** por 3 señales: **técnica** (ficha), **forma** (etiquetado visual) e **imagen**. Cuantas más señales coinciden, más confiable (≥2 = confiable; 1 = “a revisar”).
-4. **Autorizar.** Con **“＋ Autorizar”** confirmás una comparación válida. Queda **guardada y compartida con todo el equipo** (con tu nombre), y aparece en **Resultados**.
-5. **Resultados.** Todas las comparaciones autorizadas, con la diferencia de precio neto. Se pueden **exportar a CSV**.
-6. **Decisiones.** Tablero para decidir: posición de precio por familia, oportunidades y comparador de escenarios **Partner vs Cliente**.
+4. **Seleccionar.** Con **“＋ Seleccionar”** confirmás una comparación válida. Queda **guardada y compartida con todo el equipo** (con tu nombre), y aparece en **Comparaciones**.
+5. **Comparaciones.** Todas las comparaciones seleccionadas, con la diferencia de precio neto. Se pueden **exportar a CSV**.
+6. **Insights.** Panorama de pricing: posición de precio por familia, oportunidades y comparador de escenarios **Partner vs Cliente**.
 7. **⚙ Descuentos.** Cambiá los descuentos (Leuk Partner/Cliente y competencia) para simular escenarios de precio neto.
 
-> ⚠️ Las comparaciones sin precio o marcadas con **⚠** pueden ser de otra gama — conviene revisarlas antes de autorizar.
+> ⚠️ Las comparaciones sin precio o marcadas con **⚠** pueden ser de otra gama — conviene revisarlas antes de seleccionar.
 
 ---
 

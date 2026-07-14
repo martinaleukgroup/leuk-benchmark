@@ -267,7 +267,7 @@
   }
   const authBtn = (p, prop) => {
     const on = isAuth(keyOf(p.sku, prop));
-    return `<button class="auth-btn ${on ? "on" : ""}" data-sku="${p.sku}" data-marca="${prop.marca}" data-fslug="${prop.fslug}">${on ? "✓ Autorizada" : "＋ Autorizar"}</button>`;
+    return `<button class="auth-btn ${on ? "on" : ""}" data-sku="${p.sku}" data-marca="${prop.marca}" data-fslug="${prop.fslug}">${on ? "✓ Seleccionada" : "＋ Seleccionar"}</button>`;
   };
   const findProp = (sku, marca, fslug) => {
     const p = P.find(x => x.sku === sku); if (!p) return null;
@@ -287,7 +287,7 @@
     if (!p || !prop) return;
     toggleAuth(p, prop);
     const on = isAuth(keyOf(p.sku, prop));
-    b.classList.toggle("on", on); b.textContent = on ? "✓ Autorizada" : "＋ Autorizar";
+    b.classList.toggle("on", on); b.textContent = on ? "✓ Seleccionada" : "＋ Seleccionar";
     if (!$("#page-resultados").classList.contains("hidden")) renderTabla();
   });
 
@@ -403,7 +403,7 @@
         <div class="cat-body"><div class="leuk-sku">LEUK ${p.sku}</div>
           <div class="cat-name">${p.nombre || "—"}</div>
           <div class="leuk-fam">${[p.vertical, p.familia].filter(Boolean).join(" · ")}</div>
-          <div class="cat-foot">${fmtUsd(p.precio_usd)} <span class="cat-badge ${nM ? "on" : ""}">${nM ? nM + " marca" + (nM > 1 ? "s" : "") + " ✓" : "sin equiv."}</span></div></div>`;
+          <div class="cat-foot">${fmtUsd(p.precio_usd)} <span class="cat-badge ${nM ? "on" : ""}">${nM ? nM + " competidor" + (nM > 1 ? "es" : "") + " ✓" : "sin equiv."}</span></div></div>`;
       card.onclick = () => selectProduct(p);
       frag.appendChild(card);
     });
@@ -455,7 +455,7 @@
       wrap.appendChild(rl);
     }
 
-    wrap.appendChild(el("h3", "sec-title", "Mejor equivalente por marca"));
+    wrap.appendChild(el("h3", "sec-title", "Mejor equivalente por competidor"));
     const grid = el("div", "marca-grid");
     MARCAS.forEach(m => {
       const prop = p.mejor_por_marca[m];
@@ -612,10 +612,10 @@
   }
   function renderTabla() {
     const f = authList();
-    $("#countLabel").textContent = `${f.length} comparación(es) autorizada(s)`;
+    $("#countLabel").textContent = `${f.length} comparación(es) seleccionada(s)`;
     const cont = $("#tabla"); cont.innerHTML = "";
     if (!Object.keys(AUTH).length) {
-      cont.innerHTML = `<div class="empty"><div class="big">✓</div>Todavía no autorizaste ninguna comparación.<br>Andá a <b>Comparaciones</b>, buscá un producto y tocá <b>＋ Autorizar</b> en los equivalentes que sirvan.</div>`;
+      cont.innerHTML = `<div class="empty"><div class="big">✓</div>Todavía no seleccionaste ninguna comparación.<br>Andá a <b>Catálogo</b>, buscá un producto y tocá <b>＋ Seleccionar</b> en los equivalentes que sirvan.</div>`;
       return;
     }
     cont.insertAdjacentHTML("beforeend", resumenPrecios(f));
@@ -636,7 +636,7 @@
           </div>
           <div class="res-meta">
             ${priceBlock}
-            ${a.autor ? `<div class="res-autor">Autorizó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
+            ${a.autor ? `<div class="res-autor">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
             <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button><button class="rm" title="Quitar">✕</button></div>
           </div>
         </div>
@@ -750,7 +750,7 @@
     const dash = $("#dash"); dash.innerHTML = "";
     const A = Object.values(AUTH);
     if (!A.length) {
-      dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay decisiones para mostrar.<br>Autorizá comparaciones (desde <b>Comparaciones</b>) y acá se arma el panorama de pricing.</div>`;
+      dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones (desde <b>Catálogo</b>) y acá se arma el panorama de pricing.</div>`;
       return;
     }
     const withP = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);
@@ -760,7 +760,7 @@
     const nB0 = withP.filter(x => x.pi.cls === "p-cheap").length, nC0 = withP.filter(x => x.pi.cls === "p-exp").length, nS0 = withP.filter(x => x.pi.cls === "p-sim").length;
     const prom0 = withP.length ? Math.round(withP.reduce((s, x) => s + x.pi.diff, 0) / withP.length) : null;
     kpiActivo.innerHTML = `
-      <div class="kpi"><div class="kpi-n">${A.length}</div><div class="kpi-l">autorizadas</div></div>
+      <div class="kpi"><div class="kpi-n">${A.length}</div><div class="kpi-l">seleccionadas</div></div>
       <div class="kpi"><div class="kpi-n p-cheap-t">${nB0}</div><div class="kpi-l">Leuk más barato</div></div>
       <div class="kpi"><div class="kpi-n p-exp-t">${nC0}</div><div class="kpi-l">Leuk más caro</div></div>
       <div class="kpi"><div class="kpi-n">${nS0}</div><div class="kpi-l">precio similar</div></div>
@@ -836,7 +836,7 @@
       <div class="fam-hint">Casos donde Leuk equivale y es más barato. Listos para el equipo comercial.</div>`;
     const al = el("div", "arg-list");
     gana.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumento(x.a, x.pi); al.appendChild(d); });
-    if (!gana.length) al.innerHTML = `<div class="empty-mini" style="padding:10px">Autorizá equivalencias donde Leuk sea más barato y aparecen acá.</div>`;
+    if (!gana.length) al.innerHTML = `<div class="empty-mini" style="padding:10px">Seleccioná equivalencias donde Leuk sea más barato y aparecen acá.</div>`;
     secArg.appendChild(al); dash.appendChild(secArg);
     const be = secArg.querySelector("#argExport");
     if (be) be.onclick = () => dl(new Blob(["﻿" + gana.map(x => argumento(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt");
@@ -1077,9 +1077,9 @@
     const nAuth = Object.keys(AUTH).length;
     const nombre = (AUTHSES.email() || "").split("@")[0];
     const cards = [
-      { p: "comparaciones", ic: "🔍", t: "Comparaciones", d: "Buscá un producto Leuk y mirá sus equivalentes en la competencia: precio, ficha técnica e imagen, con el nivel de match." },
-      { p: "resultados", ic: "✅", t: "Resultados", d: "Las comparaciones que tu equipo <b>autorizó</b>, con la diferencia de precio neto. Exportables a CSV." },
-      { p: "decisiones", ic: "📊", t: "Decisiones", d: "Tablero para decidir: posición de precio por familia, oportunidades y escenarios Partner vs Cliente." },
+      { p: "comparaciones", ic: "🔍", t: "Catálogo", d: "Buscá un producto Leuk y mirá sus equivalentes en la competencia: precio, ficha técnica e imagen, con el nivel de match." },
+      { p: "resultados", ic: "✅", t: "Comparaciones", d: "Las comparaciones que tu equipo <b>seleccionó</b>, con la diferencia de precio neto. Exportables a CSV." },
+      { p: "decisiones", ic: "📊", t: "Insights", d: "Panorama de pricing: posición de precio por familia, oportunidades y escenarios Partner vs Cliente." },
     ];
     cont.innerHTML = `
       <div class="home-hero">
@@ -1091,7 +1091,7 @@
           <div class="home-stat"><b>${nProd}</b><span>productos Leuk</span></div>
           <div class="home-stat"><b>${conComp}</b><span>con comparación de precio</span></div>
           <div class="home-stat"><b>${MARCAS.length}</b><span>competidores</span></div>
-          <div class="home-stat"><b>${nAuth}</b><span>comparaciones autorizadas</span></div>
+          <div class="home-stat"><b>${nAuth}</b><span>comparaciones seleccionadas</span></div>
         </div>
       </div>
       <div class="home-cards">
@@ -1100,10 +1100,10 @@
       <div class="home-help">
         <h2>¿Cómo se usa?</h2>
         <ol class="home-steps">
-          <li><b>Buscá un producto</b> en <b>Comparaciones</b> (por SKU o nombre) y abrilo para ver sus equivalentes.</li>
+          <li><b>Buscá un producto</b> en <b>Catálogo</b> (por SKU o nombre) y abrilo para ver sus equivalentes.</li>
           <li><b>Revisá el match:</b> cada equivalente muestra <b>cuántas de las 3 señales coinciden</b> (técnica, forma, imagen). Cuantas más, más confiable.</li>
-          <li><b>Autorizá</b> las comparaciones válidas con “＋ Autorizar”: quedan guardadas y <b>compartidas con todo el equipo</b> en <b>Resultados</b>.</li>
-          <li><b>Analizá</b> en <b>Decisiones</b> la posición de precio y las oportunidades. Ajustá descuentos con <b>⚙ Descuentos</b>.</li>
+          <li><b>Seleccioná</b> las comparaciones válidas con “＋ Seleccionar”: quedan guardadas y <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>.</li>
+          <li><b>Analizá</b> en <b>Insights</b> la posición de precio y las oportunidades. Ajustá descuentos con <b>⚙ Descuentos</b>.</li>
           <li><b>Actualizar precios:</b> con <b>⬆ Precios</b> subís la lista (Excel) de una marca y se actualizan todos juntos.</li>
         </ol>
         <p class="home-note">Los precios de competencia sin coincidencia o marcados con ⚠ pueden ser de otra gama — conviene revisarlos.</p>

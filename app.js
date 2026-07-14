@@ -90,7 +90,15 @@
       if (!r.ok) return;
       const rows = await r.json();
       const remote = {};
-      rows.forEach(row => { remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() }); });
+      Object.keys(MONO).forEach(k => delete MONO[k]);
+      rows.forEach(row => {
+        if (typeof row.key === "string" && row.key.indexOf("mono|") === 0) {
+          const sku = (row.datos && row.datos.sku) || row.key.slice(5);
+          MONO[sku] = Object.assign({}, row.datos, { autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+        } else {
+          remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+        }
+      });
       AUTH = remote;                                 // el remoto es la fuente de verdad compartida
       localStorage.setItem(AUTH_KEY, JSON.stringify(AUTH));
       updateNavCount();
@@ -240,6 +248,28 @@
       login, refresh, logout,
     };
   })();
+
+  /* ---- Sin competidor comparable (oportunidades de monopolio), compartido ---- */
+  const MONO = {};                                    // sku -> {sku, nombre, vertical, familia, precio_usd, autor, ts}
+  const monoKey = sku => `mono|${sku}`;
+  const isMono = sku => !!MONO[sku];
+  function toggleMono(p) {
+    if (MONO[p.sku]) { delete MONO[p.sku]; sbDel(monoKey(p.sku)); }
+    else {
+      MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: (AUTHSES.email() || getAutor()), ts: Date.now() };
+      sbPutMono(p.sku);
+    }
+  }
+  async function sbPutMono(sku) {
+    if (!sbOn()) return;
+    const m = MONO[sku]; if (!m) return;
+    try {
+      await fetch(`${SB.url}/rest/v1/${SB.table}`, {
+        method: "POST", headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+        body: JSON.stringify([{ key: monoKey(sku), autor: m.autor || null, datos: m, ts: new Date(m.ts).toISOString() }]),
+      });
+    } catch (e) { }
+  }
 
   const keyOf = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
   const isAuth = k => !!AUTH[k];
@@ -475,6 +505,15 @@
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
+
+    // --- Marcar "sin competidor comparable" (oportunidad de monopolio) ---
+    const monoOn = isMono(p.sku);
+    const monoBox = el("div", "mono-box" + (monoOn ? " on" : ""));
+    monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? "🏆 Sin competidor comparable" : "¿No existe un producto comparable en el mercado?"}</b>
+      <span>${monoOn ? "Marcado como oportunidad de monopolio — aparece en Insights." : "Marcalo si Leuk no tiene equivalente en la competencia: queda mapeado en Insights para captar leads por monopolio."}</span></div>
+      <button class="btn-ghost mono-btn ${monoOn ? "on" : ""}">${monoOn ? "Quitar marca" : "Marcar sin competencia"}</button>`;
+    monoBox.querySelector(".mono-btn").onclick = () => { toggleMono(p); selectProduct(p); };
+    wrap.appendChild(monoBox);
 
     // --- Sugeridos a mano + botón para sugerir ---
     const sugeridos = suggList(p.sku);
@@ -746,11 +785,30 @@
     r.onclick = () => { const p = P.find(z => z.sku === a.leukSku); openDetail(p, findProp(a.leukSku, a.marca, a.fslug) || a); };
     return r;
   }
+  // Sección de oportunidades de monopolio (productos sin competidor comparable)
+  function monoSection(monos) {
+    monos = monos.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const sec = el("div", "dash-sec");
+    sec.innerHTML = `<h3>🏆 Oportunidades de monopolio <span class="leuk-fam">· ${monos.length}</span></h3>
+      <div class="fam-hint">Productos Leuk marcados como <b>sin competidor comparable</b> en el mercado — para captar leads siendo la única opción. Marcalos desde <b>Catálogo</b>, en cada producto.</div>
+      <div class="mono-list">${monos.map(m => `
+        <div class="mono-item" data-sku="${m.sku}">
+          <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo marcó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>
+          <div class="mono-right">${fmtUsd(m.precio_usd)}<button class="rm mono-rm" title="Quitar">✕</button></div>
+        </div>`).join("")}</div>`;
+    sec.querySelectorAll(".mono-item").forEach(it => {
+      it.querySelector(".mono-rm").onclick = ev => { ev.stopPropagation(); const sku = it.dataset.sku; delete MONO[sku]; sbDel(monoKey(sku)); renderDecisiones(); };
+      it.onclick = () => { const p = P.find(x => String(x.sku) === String(it.dataset.sku)); if (p) { goToPage("comparaciones"); selectProduct(p); } };
+    });
+    return sec;
+  }
   function renderDecisiones() {
     const dash = $("#dash"); dash.innerHTML = "";
     const A = Object.values(AUTH);
+    const monos = Object.values(MONO);
+    if (monos.length) dash.appendChild(monoSection(monos));
     if (!A.length) {
-      dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones (desde <b>Catálogo</b>) y acá se arma el panorama de pricing.</div>`;
+      if (!monos.length) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
       return;
     }
     const withP = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);

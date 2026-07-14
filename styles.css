@@ -356,6 +356,20 @@ body.locked .topbar,body.locked main,body.locked .foot{display:none}
 .home-steps li{font-size:14px;line-height:1.5;color:var(--ink)}
 .home-note{font-size:12.5px;color:var(--gray-soft);margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
 @media(max-width:640px){.home-hero h1{font-size:22px}.home-stat{min-width:44%}}
+/* ===== Sin competidor comparable (monopolio) ===== */
+.mono-box{display:flex;align-items:center;gap:14px;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.mono-box.on{background:var(--olive-pale);border-color:var(--olive-soft)}
+.mono-txt{display:flex;flex-direction:column;gap:2px}
+.mono-txt b{font-size:14px} .mono-txt span{font-size:12.5px;color:var(--gray-soft)}
+.mono-btn{flex:none;white-space:nowrap}
+.mono-btn.on{color:var(--no);border-color:var(--no)}
+.mono-list{display:flex;flex-direction:column;gap:8px}
+.mono-item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.mono-item:hover{border-color:var(--olive-soft);background:var(--olive-pale)}
+.mono-info{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mono-nom{font-family:var(--font-title);font-size:15px}
+.mono-right{display:flex;align-items:center;gap:8px;white-space:nowrap;font-family:var(--font-title);font-size:14px}
+@media(max-width:640px){.mono-box{flex-direction:column;align-items:stretch}}
 .price-edit{display:inline-block;cursor:pointer;font-size:11px;line-height:1.5;color:var(--olive);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap;user-select:none;vertical-align:middle}
 .price-edit:hover{background:var(--olive-pale);border-color:var(--olive-soft)}
 .palert{color:#b7893b;cursor:help;font-size:14px}

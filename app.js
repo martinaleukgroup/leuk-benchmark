@@ -28,7 +28,8 @@
   function cmp(leukList, compList, marca) {
     const ln = netLeuk(leukList), cn = netComp(compList, marca);
     if (ln == null || cn == null) return { has: false, texto: "Sin precio comp.", cls: "p-na", diff: null };
-    const d = Math.round((cn - ln) / ln * 1000) / 10;
+    // diferencia RELATIVA AL COMPETIDOR: + = Leuk más barato (cuánto ahorra el cliente vs el competidor)
+    const d = Math.round((cn - ln) / cn * 1000) / 10;
     return {
       has: true, diff: d, delta: Math.round(cn - ln), leukNet: ln, compNet: cn, leukList, compList,
       descLeuk: descLeuk(), descComp: descComp(marca),
@@ -60,7 +61,7 @@
   };
   const diffHtml = d => d == null ? "" : `<span class="diff ${d > 0 ? "pos" : "neg"}">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
   // alerta de diferencia de precio muy grande (solo se usa en Resultados)
-  const PRICE_HI = 120, PRICE_LO = -55;
+  const PRICE_HI = 85, PRICE_LO = -150;   // relativo al competidor: Leuk >85% más barato o >150% más caro → posible otra gama
   const priceAlert = d => (d != null && (d > PRICE_HI || d < PRICE_LO))
     ? `<span class="palert" title="Diferencia de precio muy grande (${d > 0 ? "+" : ""}${d.toFixed(0)}%) — puede ser de otra gama, revisar">⚠</span>` : "";
   function imgTag(src, cls) {
@@ -717,7 +718,7 @@
     const f = authList();
     const H = ["SKU_Leuk", "Producto_Leuk", "Precio_Leuk_lista", "Precio_Leuk_neto", "Competidor", "Equivalente", "Nivel", "Desc_comp%", "Precio_comp_lista", "Precio_comp_neto", "Dif_neto%", "Dif_lista%", "Autorizo"];
     const lines = [H.join(",")];
-    f.forEach(a => lines.push([a.leukSku, csv(a.leukNombre), a.precioLeukUsd, a.precioLeukNeto, a.marca, csv(a.equivNombre), a.veredicto, a.descComp != null ? a.descComp : "", a.precioCompUsd != null ? a.precioCompUsd : "", a.precioCompNeto != null ? a.precioCompNeto : "", a.diferencia_pct != null ? a.diferencia_pct : "", a.diferencia_lista != null ? a.diferencia_lista : "", csv(a.autor)].join(",")));
+    f.forEach(a => { const pi = posInfo(a); lines.push([a.leukSku, csv(a.leukNombre), a.precioLeukUsd, a.precioLeukNeto, a.marca, csv(a.equivNombre), a.veredicto, a.descComp != null ? a.descComp : "", a.precioCompUsd != null ? a.precioCompUsd : "", a.precioCompNeto != null ? a.precioCompNeto : "", pi.has ? pi.diff : "", a.diferencia_lista != null ? a.diferencia_lista : "", csv(a.autor)].join(",")); });
     dl(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }), "benchmark_leuk_autorizadas.csv");
   }
   function exportJson() {

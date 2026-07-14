@@ -792,6 +792,33 @@
     const eq = a.veredicto === "Equivalente" ? "equivalente" : "comparable";
     return `LEUK ${a.leukNombre} ≈ ${a.marca} ${a.equivNombre}: ${eq}${specs ? " (coincide " + specs + ")" : ""}, y ${Math.abs(pi.diff)}% más económico en precio neto (US$ ${Math.round(pi.leukNet)} vs US$ ${Math.round(pi.compNet)}).`;
   }
+  const _leukFicha = a => ((P.find(z => z.sku === a.leukSku) || {}).ficha) || {};
+  const _fichaGet = (o, keys) => { for (const k of Object.keys(o)) if (keys.some(x => norm(k).includes(x))) return o[k]; return ""; };
+  const _fichaNum = s => { const m = String(s).replace(/\./g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+  // Diferenciadores concretos de Leuk (por qué vale más): sólo lo que está en la ficha técnica.
+  function difsLeuk(a) {
+    const lf = _leukFicha(a), cf = a.equivFicha || {}, out = [];
+    const lFu = norm(_fichaGet(lf, ["fuente de luz", "fuente"])), cFu = norm(_fichaGet(cf, ["fuente de luz", "fuente"]));
+    if (lFu.includes("led") && /gu10|e27|e14|ar111|dicro|par16|par20|par30|halog|lampara/.test(cFu)) out.push("LED integrado (el competidor usa lámpara reemplazable)");
+    const cn = (keys, fmt, mayorMejor) => { const lv = _fichaNum(_fichaGet(lf, keys)), cv = _fichaNum(_fichaGet(cf, keys)); if (lv != null && cv != null && (mayorMejor ? lv > cv : lv < cv)) out.push(fmt(lv, cv)); };
+    cn(["grado ip", "ip", "protecc"], l => "mayor protección al agua/polvo (IP" + l + ")", true);
+    cn(["cri"], l => "mejor reproducción cromática (CRI " + l + ")", true);
+    cn(["garant"], (l, c) => "más garantía (" + l + " vs " + c + " años)", true);
+    cn(["ugr"], l => "menor deslumbramiento (UGR<" + l + ")", false);
+    return out;
+  }
+  function argumentoCaro(a, pi) {
+    const cab = `LEUK ${a.leukNombre} vs ${a.marca} ${a.equivNombre}: ${Math.abs(pi.diff)}% más caro (US$ ${Math.round(pi.leukNet)} vs US$ ${Math.round(pi.compNet)})`;
+    const difs = difsLeuk(a);
+    if (difs.length) return `${cab}, justificado por ${difs.slice(0, 3).join(", ")}.`;
+    // Sin ventaja numérica clara → mostrar los campos de ficha que difieren, para argumentar a mano.
+    const difieren = (a.match && a.match.tecnico && a.match.tecnico.difieren) || [];
+    const lf = _leukFicha(a), cf = a.equivFicha || {};
+    const gv = (o, k) => { for (const kk of Object.keys(o)) if (norm(kk) === norm(k)) return o[kk]; return "—"; };
+    const specs = difieren.slice(0, 2).map(k => `${k} (Leuk ${gv(lf, k)} vs ${gv(cf, k)})`);
+    if (specs.length) return `${cab}. Diferencias de ficha para argumentar: ${specs.join("; ")}.`;
+    return `${cab}. Revisar ficha para justificar el diferencial (misma gama).`;
+  }
   function oppRow(x, tipo) {
     const a = x.a, pi = x.pi;
     const r = el("div", "opp-row");
@@ -905,17 +932,29 @@
     colB.appendChild(lB);
     grid.appendChild(colS); grid.appendChild(colB); dash.appendChild(grid);
 
-    // Argumentos de venta (Leuk gana)
+    // Argumentos de venta: Leuk más barato (precio) + Leuk más caro (cómo defender el precio)
     const gana = withP.filter(x => x.pi.diff >= 10).sort((a, b) => b.pi.diff - a.pi.diff);
+    const pierde = withP.filter(x => x.pi.diff <= -10).sort((a, b) => a.pi.diff - b.pi.diff);
     const secArg = el("div", "dash-sec");
-    secArg.innerHTML = `<h3>🗣️ Argumentos de venta <span class="leuk-fam">(${gana.length})</span> <button class="btn-ghost" id="argExport" style="float:right">⬇ Exportar</button></h3>
-      <div class="fam-hint">Casos donde Leuk equivale y es más barato. Listos para el equipo comercial.</div>`;
-    const al = el("div", "arg-list");
-    gana.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumento(x.a, x.pi); al.appendChild(d); });
-    if (!gana.length) al.innerHTML = `<div class="empty-mini" style="padding:10px">Seleccioná equivalencias donde Leuk sea más barato y aparecen acá.</div>`;
-    secArg.appendChild(al); dash.appendChild(secArg);
+    secArg.innerHTML = `<h3>🗣️ Argumentos de venta <span class="leuk-fam">(${gana.length + pierde.length})</span> <button class="btn-ghost" id="argExport" style="float:right">⬇ Exportar</button></h3>`;
+    if (!gana.length && !pierde.length) {
+      secArg.innerHTML += `<div class="empty-mini" style="padding:10px">Seleccioná comparaciones y acá aparecen los argumentos: dónde Leuk es más barato y cómo defender el precio cuando es más caro.</div>`;
+    } else {
+      secArg.innerHTML += `<div class="fam-hint">✅ Leuk equivale y es <b>más barato</b> — argumento directo de precio.</div>`;
+      const al = el("div", "arg-list");
+      if (gana.length) gana.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumento(x.a, x.pi); al.appendChild(d); });
+      else al.innerHTML = `<div class="empty-mini" style="padding:8px">Sin casos por ahora.</div>`;
+      secArg.appendChild(al);
+      const h2 = el("div", "fam-hint", "💬 Leuk es <b>más caro</b> — por qué vale más (defensa del precio).");
+      h2.style.marginTop = "18px"; secArg.appendChild(h2);
+      const al2 = el("div", "arg-list");
+      if (pierde.length) pierde.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumentoCaro(x.a, x.pi); al2.appendChild(d); });
+      else al2.innerHTML = `<div class="empty-mini" style="padding:8px">Sin casos por ahora.</div>`;
+      secArg.appendChild(al2);
+    }
+    dash.appendChild(secArg);
     const be = secArg.querySelector("#argExport");
-    if (be) be.onclick = () => dl(new Blob(["﻿" + gana.map(x => argumento(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt");
+    if (be) be.onclick = () => dl(new Blob(["﻿LEUK MÁS BARATO (argumento de precio)\n" + gana.map(x => argumento(x.a, x.pi)).join("\n") + "\n\nLEUK MÁS CARO (defensa del precio)\n" + pierde.map(x => argumentoCaro(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt");
   }
 
   /* ===================== DESCUENTOS (modal editable) ===================== */

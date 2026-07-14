@@ -1083,7 +1083,8 @@
     ];
     cont.innerHTML = `
       <div class="home-hero">
-        <div class="home-logo">uk</div>
+        <img src="assets/logo-leuk-ilum.png?v=48" alt="Leuk Iluminación" class="home-logo">
+        <span class="brand-sub home-tag">Benchmark competitivo</span>
         <h1>Hola${nombre ? ", " + nombre : ""} 👋</h1>
         <p>Este es el <b>benchmark competitivo de Leuk</b>: compará precios y datos técnicos de tus productos contra Vonderk, Artelum y World Leds Go.</p>
         <div class="home-stats">

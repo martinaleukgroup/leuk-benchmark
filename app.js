@@ -130,6 +130,8 @@
     }
     return a || "Anónimo";
   }
+  // Autor a registrar: el nombre real (de perfiles) o, si no hay, el del email — SIN preguntar.
+  const autorNombre = () => NOMBRE || (AUTHSES.email() || "").split("@")[0] || "Anónimo";
 
   /* ---- Precios editables compartidos (overlay sobre los datos, vía Supabase) ---- */
   const PRICEOV = {};                                   // "precio|LEUK|sku" | "precio|Marca|fslug" -> {precio,autor,ts}
@@ -271,7 +273,7 @@
   function toggleMono(p) {
     if (MONO[p.sku]) { delete MONO[p.sku]; sbDel(monoKey(p.sku)); }
     else {
-      MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: (AUTHSES.email() || getAutor()), ts: Date.now() };
+      MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: autorNombre(), ts: Date.now() };
       sbPutMono(p.sku);
     }
   }
@@ -304,7 +306,7 @@
   function toggleAuth(p, prop) {
     const k = keyOf(p.sku, prop);
     if (AUTH[k]) { delete AUTH[k]; save(); sbDel(k); }
-    else { const s = snapshot(p, prop); s.autor = getAutor(); AUTH[k] = s; save(); sbPut(k); }
+    else { const s = snapshot(p, prop); s.autor = autorNombre(); AUTH[k] = s; save(); sbPut(k); }
   }
   function updateNavCount() {
     const n = Object.keys(AUTH).length;

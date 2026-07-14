@@ -793,31 +793,16 @@
     return `LEUK ${a.leukNombre} ≈ ${a.marca} ${a.equivNombre}: ${eq}${specs ? " (coincide " + specs + ")" : ""}, y ${Math.abs(pi.diff)}% más económico en precio neto (US$ ${Math.round(pi.leukNet)} vs US$ ${Math.round(pi.compNet)}).`;
   }
   const _leukFicha = a => ((P.find(z => z.sku === a.leukSku) || {}).ficha) || {};
-  const _fichaGet = (o, keys) => { for (const k of Object.keys(o)) if (keys.some(x => norm(k).includes(x))) return o[k]; return ""; };
-  const _fichaNum = s => { const m = String(s).replace(/\./g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
-  // Diferenciadores concretos de Leuk (por qué vale más): sólo lo que está en la ficha técnica.
-  function difsLeuk(a) {
-    const lf = _leukFicha(a), cf = a.equivFicha || {}, out = [];
-    const lFu = norm(_fichaGet(lf, ["fuente de luz", "fuente"])), cFu = norm(_fichaGet(cf, ["fuente de luz", "fuente"]));
-    if (lFu.includes("led") && /gu10|e27|e14|ar111|dicro|par16|par20|par30|halog|lampara/.test(cFu)) out.push("LED integrado (el competidor usa lámpara reemplazable)");
-    const cn = (keys, fmt, mayorMejor) => { const lv = _fichaNum(_fichaGet(lf, keys)), cv = _fichaNum(_fichaGet(cf, keys)); if (lv != null && cv != null && (mayorMejor ? lv > cv : lv < cv)) out.push(fmt(lv, cv)); };
-    cn(["grado ip", "ip", "protecc"], l => "mayor protección al agua/polvo (IP" + l + ")", true);
-    cn(["cri"], l => "mejor reproducción cromática (CRI " + l + ")", true);
-    cn(["garant"], (l, c) => "más garantía (" + l + " vs " + c + " años)", true);
-    cn(["ugr"], l => "menor deslumbramiento (UGR<" + l + ")", false);
-    return out;
-  }
+  // Leuk más caro → mostrar las diferencias de ficha (Leuk vs competidor) para que el comercial argumente.
   function argumentoCaro(a, pi) {
     const cab = `LEUK ${a.leukNombre} vs ${a.marca} ${a.equivNombre}: ${Math.abs(pi.diff)}% más caro (US$ ${Math.round(pi.leukNet)} vs US$ ${Math.round(pi.compNet)})`;
-    const difs = difsLeuk(a);
-    if (difs.length) return `${cab}, justificado por ${difs.slice(0, 3).join(", ")}.`;
-    // Sin ventaja numérica clara → mostrar los campos de ficha que difieren, para argumentar a mano.
-    const difieren = (a.match && a.match.tecnico && a.match.tecnico.difieren) || [];
     const lf = _leukFicha(a), cf = a.equivFicha || {};
     const gv = (o, k) => { for (const kk of Object.keys(o)) if (norm(kk) === norm(k)) return o[kk]; return "—"; };
-    const specs = difieren.slice(0, 2).map(k => `${k} (Leuk ${gv(lf, k)} vs ${gv(cf, k)})`);
-    if (specs.length) return `${cab}. Diferencias de ficha para argumentar: ${specs.join("; ")}.`;
-    return `${cab}. Revisar ficha para justificar el diferencial (misma gama).`;
+    const difieren = ((a.match && a.match.tecnico && a.match.tecnico.difieren) || [])
+      .filter(k => gv(lf, k) !== "—" || gv(cf, k) !== "—");
+    const specs = difieren.slice(0, 5).map(k => `${k}: Leuk ${gv(lf, k)} / ${a.marca} ${gv(cf, k)}`);
+    if (specs.length) return `${cab}. Diferencias técnicas → ${specs.join(" · ")}.`;
+    return `${cab}. Misma gama técnica: revisar ficha completa para argumentar el diferencial.`;
   }
   function oppRow(x, tipo) {
     const a = x.a, pi = x.pi;
@@ -945,7 +930,7 @@
       if (gana.length) gana.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumento(x.a, x.pi); al.appendChild(d); });
       else al.innerHTML = `<div class="empty-mini" style="padding:8px">Sin casos por ahora.</div>`;
       secArg.appendChild(al);
-      const h2 = el("div", "fam-hint", "💬 Leuk es <b>más caro</b> — por qué vale más (defensa del precio).");
+      const h2 = el("div", "fam-hint", "💬 Leuk es <b>más caro</b> — diferencias técnicas vs el competidor para defender el precio.");
       h2.style.marginTop = "18px"; secArg.appendChild(h2);
       const al2 = el("div", "arg-list");
       if (pierde.length) pierde.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumentoCaro(x.a, x.pi); al2.appendChild(d); });

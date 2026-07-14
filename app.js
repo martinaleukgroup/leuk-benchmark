@@ -7,6 +7,7 @@
   let P = DATA.productos;
   let MARCAS = ["Vonderk", "Artelum", "World Leds Go"];
   let ROL = "editor";   // rol del usuario para editar precios ('editor' | 'lector'); se resuelve tras login
+  let NOMBRE = "";      // nombre real del usuario (de la tabla perfiles), para el saludo
   const $ = (s, r = document) => r.querySelector(s);
 
   /* ===================== DESCUENTOS / PRECIO NETO (editable, localStorage) ===================== */
@@ -161,9 +162,9 @@
     if (!sbOn() || !AUTHSES.logged()) return;
     try {
       const email = encodeURIComponent(AUTHSES.email() || "");
-      const r = await fetch(`${SB.url}/rest/v1/perfiles?select=rol&email=ilike.${email}`, { headers: AUTHSES.head() });
+      const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&email=ilike.${email}`, { headers: AUTHSES.head() });
       if (r.status === 404) ROL = "editor";            // sistema de roles no configurado aún → todos editan (como antes)
-      else if (r.ok) { const rows = await r.json(); ROL = rows.length ? (rows[0].rol || "lector") : "lector"; }
+      else if (r.ok) { const rows = await r.json(); if (rows.length) { ROL = rows[0].rol || "lector"; NOMBRE = rows[0].nombre || ""; } else ROL = "lector"; }
     } catch (e) { }
     updatePreciosBtn();
   }
@@ -991,7 +992,7 @@
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();
     await sbPullPrices();                          // llama applyPriceOverrides internamente
-    fetchRol();                                     // resuelve el rol → muestra/oculta "⬆ Precios"
+    await fetchRol();                               // resuelve rol (botón Precios) + nombre (saludo)
     rerenderActive();
   }
   function wireGate() {
@@ -1149,7 +1150,7 @@
     const price = pr => { const pe = pr && pr.precio; return (pe && pe.usd != null) ? pe.usd : null; };
     const conComp = P.filter(p => p.precio_usd && MARCAS.some(m => p.mejor_por_marca[m] && price(p.mejor_por_marca[m]) != null)).length;
     const nAuth = Object.keys(AUTH).length;
-    const nombre = (AUTHSES.email() || "").split("@")[0];
+    const nombre = NOMBRE || (AUTHSES.email() || "").split("@")[0];
     const cards = [
       { p: "comparaciones", ic: "🔍", t: "Catálogo", d: "Buscá un producto Leuk y mirá sus equivalentes en la competencia: precio, ficha técnica e imagen, con el nivel de match." },
       { p: "resultados", ic: "✅", t: "Comparaciones", d: "Las comparaciones que tu equipo <b>seleccionó</b>, con la diferencia de precio neto. Exportables a CSV." },

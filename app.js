@@ -101,9 +101,9 @@
       rows.forEach(row => {
         if (typeof row.key === "string" && row.key.indexOf("mono|") === 0) {
           const sku = (row.datos && row.datos.sku) || row.key.slice(5);
-          MONO[sku] = Object.assign({}, row.datos, { autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+          MONO[sku] = Object.assign({}, row.datos, { autor: row.autor, autor_email: row.autor_email, ts: row.ts ? Date.parse(row.ts) : Date.now() });
         } else {
-          remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+          remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, autor_email: row.autor_email, ts: row.ts ? Date.parse(row.ts) : Date.now() });
         }
       });
       AUTH = remote;                                 // el remoto es la fuente de verdad compartida
@@ -118,7 +118,7 @@
       await fetch(`${SB.url}/rest/v1/${SB.table}`, {
         method: "POST",
         headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
-        body: JSON.stringify([{ key: k, autor: a.autor || null, datos: a, ts: new Date(a.ts || Date.now()).toISOString() }]),
+        body: JSON.stringify([{ key: k, autor: a.autor || null, autor_email: a.autor_email || AUTHSES.email() || null, datos: a, ts: new Date(a.ts || Date.now()).toISOString() }]),
       });
     } catch (e) { }
   }
@@ -166,9 +166,16 @@
   }
   // Rol del usuario (tabla `perfiles`). Jerarquía:
   //   lector → ve y selecciona | editor → + actualiza precios | admin → + elimina comparaciones
-  const esAdmin = () => ROL === "admin";                       // puede ELIMINAR comparaciones / marcas
+  const esAdmin = () => ROL === "admin";                       // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => ROL === "editor" || ROL === "admin";
-  const AVISO_BORRAR = "Sólo un administrador puede eliminar comparaciones. Pedile a un administrador que la quite.";
+  // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
+  // Se compara por EMAIL (identidad real de la sesión), no por nombre.
+  const esMio = a => {
+    const yo = (AUTHSES.email() || "").toLowerCase();
+    return !!(yo && a && a.autor_email && String(a.autor_email).toLowerCase() === yo);
+  };
+  const puedeBorrar = a => esAdmin() || esMio(a);
+  const AVISO_BORRAR = "Sólo podés eliminar las comparaciones que seleccionaste vos. Pedile a un administrador que la quite.";
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
     try {
@@ -281,11 +288,11 @@
   const isMono = sku => !!MONO[sku];
   function toggleMono(p) {
     if (MONO[p.sku]) {
-      if (!esAdmin()) { alert(AVISO_BORRAR); return false; }   // quitar la marca = eliminarla (sólo admin)
+      if (!puedeBorrar(MONO[p.sku])) { alert(AVISO_BORRAR); return false; }   // quitar la marca = eliminarla
       delete MONO[p.sku]; sbDel(monoKey(p.sku));
     }
     else {
-      MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: autorNombre(), ts: Date.now() };
+      MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: autorNombre(), autor_email: AUTHSES.email() || null, ts: Date.now() };
       sbPutMono(p.sku);
     }
   }
@@ -295,7 +302,7 @@
     try {
       await fetch(`${SB.url}/rest/v1/${SB.table}`, {
         method: "POST", headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
-        body: JSON.stringify([{ key: monoKey(sku), autor: m.autor || null, datos: m, ts: new Date(m.ts).toISOString() }]),
+        body: JSON.stringify([{ key: monoKey(sku), autor: m.autor || null, autor_email: m.autor_email || AUTHSES.email() || null, datos: m, ts: new Date(m.ts).toISOString() }]),
       });
     } catch (e) { }
   }
@@ -318,10 +325,14 @@
   function toggleAuth(p, prop) {
     const k = keyOf(p.sku, prop);
     if (AUTH[k]) {
-      if (!esAdmin()) { alert(AVISO_BORRAR); return; }   // quitar una selección = eliminarla (sólo admin)
+      if (!puedeBorrar(AUTH[k])) { alert(AVISO_BORRAR); return; }   // quitar una selección = eliminarla
       delete AUTH[k]; save(); sbDel(k);
     }
-    else { const s = snapshot(p, prop); s.autor = autorNombre(); AUTH[k] = s; save(); sbPut(k); }
+    else {
+      const s = snapshot(p, prop);
+      s.autor = autorNombre(); s.autor_email = AUTHSES.email() || null;
+      AUTH[k] = s; save(); sbPut(k);
+    }
   }
   function updateNavCount() {
     const n = Object.keys(AUTH).length;
@@ -708,7 +719,7 @@
           <div class="res-meta">
             ${priceBlock}
             ${a.autor ? `<div class="res-autor">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
-            <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${esAdmin() ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
+            <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
           </div>
         </div>
         <div class="res-body hidden"></div>`;
@@ -839,7 +850,7 @@
       <div class="mono-list">${monos.map(m => `
         <div class="mono-item" data-sku="${m.sku}">
           <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo marcó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>
-          <div class="mono-right">${fmtUsd(m.precio_usd)}${esAdmin() ? `<button class="rm mono-rm" title="Quitar">✕</button>` : ""}</div>
+          <div class="mono-right">${fmtUsd(m.precio_usd)}${puedeBorrar(m) ? `<button class="rm mono-rm" title="Quitar">✕</button>` : ""}</div>
         </div>`).join("")}</div>`;
     sec.querySelectorAll(".mono-item").forEach(it => {
       const mrm = it.querySelector(".mono-rm");

@@ -85,7 +85,11 @@
   /* ---- Sync remoto (Supabase): autorizaciones compartidas entre todos ---- */
   const SB = { url: "https://cswqoretlhppxkelysny.supabase.co", key: "sb_publishable_Rpbm5uyhUp8aTvoCnHylyA_B0wq8sRs", table: "autorizaciones" };
   const sbOn = () => /^https?:\/\//.test(SB.url) && SB.key.length > 20;
-  const sbHead = () => ({ apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" });
+  // Va con el JWT del usuario logueado (así la base sabe QUIÉN opera y puede aplicar
+  // los permisos por rol); sin sesión cae a la clave pública.
+  const sbHead = () => (typeof AUTHSES !== "undefined" && AUTHSES.logged())
+    ? AUTHSES.head()
+    : ({ apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" });
   async function sbPull() {
     if (!sbOn()) return;
     try {
@@ -160,18 +164,22 @@
       c.precio_usd = oc ? oc.precio : c._poOrig;
     });
   }
-  // Rol del usuario (tabla `perfiles`): sólo 'editor' puede modificar precios.
+  // Rol del usuario (tabla `perfiles`). Jerarquía:
+  //   lector → ve y selecciona | editor → + actualiza precios | admin → + elimina comparaciones
+  const esAdmin = () => ROL === "admin";                       // puede ELIMINAR comparaciones / marcas
+  const puedePrecios = () => ROL === "editor" || ROL === "admin";
+  const AVISO_BORRAR = "Sólo un administrador puede eliminar comparaciones. Pedile a un administrador que la quite.";
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
     try {
       const email = encodeURIComponent(AUTHSES.email() || "");
       const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&email=ilike.${email}`, { headers: AUTHSES.head() });
-      if (r.status === 404) ROL = "editor";            // sistema de roles no configurado aún → todos editan (como antes)
+      if (r.status === 404) ROL = "admin";             // sistema de roles no configurado aún → todos pueden todo (como antes)
       else if (r.ok) { const rows = await r.json(); if (rows.length) { ROL = rows[0].rol || "lector"; NOMBRE = rows[0].nombre || ""; } else ROL = "lector"; }
     } catch (e) { }
     updatePreciosBtn();
   }
-  function updatePreciosBtn() { const b = $("#btnPrecios"); if (b) b.style.display = (ROL === "editor") ? "" : "none"; }
+  function updatePreciosBtn() { const b = $("#btnPrecios"); if (b) b.style.display = puedePrecios() ? "" : "none"; }
 
   // Los precios editados viven en la tabla `precios` (lectura pública, escritura sólo editores).
   async function sbPullPrices() {
@@ -272,7 +280,10 @@
   const monoKey = sku => `mono|${sku}`;
   const isMono = sku => !!MONO[sku];
   function toggleMono(p) {
-    if (MONO[p.sku]) { delete MONO[p.sku]; sbDel(monoKey(p.sku)); }
+    if (MONO[p.sku]) {
+      if (!esAdmin()) { alert(AVISO_BORRAR); return false; }   // quitar la marca = eliminarla (sólo admin)
+      delete MONO[p.sku]; sbDel(monoKey(p.sku));
+    }
     else {
       MONO[p.sku] = { sku: p.sku, nombre: p.nombre, vertical: p.vertical, familia: p.familia, precio_usd: p.precio_usd, autor: autorNombre(), ts: Date.now() };
       sbPutMono(p.sku);
@@ -306,7 +317,10 @@
   }
   function toggleAuth(p, prop) {
     const k = keyOf(p.sku, prop);
-    if (AUTH[k]) { delete AUTH[k]; save(); sbDel(k); }
+    if (AUTH[k]) {
+      if (!esAdmin()) { alert(AVISO_BORRAR); return; }   // quitar una selección = eliminarla (sólo admin)
+      delete AUTH[k]; save(); sbDel(k);
+    }
     else { const s = snapshot(p, prop); s.autor = autorNombre(); AUTH[k] = s; save(); sbPut(k); }
   }
   function updateNavCount() {
@@ -694,7 +708,7 @@
           <div class="res-meta">
             ${priceBlock}
             ${a.autor ? `<div class="res-autor">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
-            <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button><button class="rm" title="Quitar">✕</button></div>
+            <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${esAdmin() ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
           </div>
         </div>
         <div class="res-body hidden"></div>`;
@@ -708,7 +722,8 @@
       };
       exp.onclick = toggle;
       card.querySelector(".res-head").onclick = ev => { if (!ev.target.closest(".rm") && !ev.target.closest(".res-exp")) toggle(); };
-      card.querySelector(".rm").onclick = () => { delete AUTH[a.key]; save(); sbDel(a.key); renderTabla(); };
+      const rmBtn = card.querySelector(".rm");
+      if (rmBtn) rmBtn.onclick = () => { delete AUTH[a.key]; save(); sbDel(a.key); renderTabla(); };
       grid.appendChild(card);
     });
     cont.appendChild(grid);
@@ -824,10 +839,11 @@
       <div class="mono-list">${monos.map(m => `
         <div class="mono-item" data-sku="${m.sku}">
           <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo marcó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>
-          <div class="mono-right">${fmtUsd(m.precio_usd)}<button class="rm mono-rm" title="Quitar">✕</button></div>
+          <div class="mono-right">${fmtUsd(m.precio_usd)}${esAdmin() ? `<button class="rm mono-rm" title="Quitar">✕</button>` : ""}</div>
         </div>`).join("")}</div>`;
     sec.querySelectorAll(".mono-item").forEach(it => {
-      it.querySelector(".mono-rm").onclick = ev => { ev.stopPropagation(); const sku = it.dataset.sku; delete MONO[sku]; sbDel(monoKey(sku)); renderDecisiones(); };
+      const mrm = it.querySelector(".mono-rm");
+      if (mrm) mrm.onclick = ev => { ev.stopPropagation(); const sku = it.dataset.sku; delete MONO[sku]; sbDel(monoKey(sku)); renderDecisiones(); };
       it.onclick = () => { const p = P.find(x => String(x.sku) === String(it.dataset.sku)); if (p) { goToPage("comparaciones"); selectProduct(p); } };
     });
     return sec;
@@ -1079,7 +1095,7 @@
     return { out, total: items.length };
   }
   function openPrecios() {
-    if (ROL !== "editor") { alert("No tenés permiso para actualizar precios. Pedile a un administrador que te habilite como editor."); return; }
+    if (!puedePrecios()) { alert("No tenés permiso para actualizar precios. Pedile a un administrador que te habilite como editor."); return; }
     const ov = el("div", "detail"); ov.id = "preciosModal";
     const opts = `<option value="LEUK">Leuk</option>` + MARCAS.map(m => `<option value="${m}">${m}</option>`).join("");
     ov.innerHTML = `<div class="detail-inner desc-modal">

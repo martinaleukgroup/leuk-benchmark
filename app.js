@@ -6,6 +6,7 @@
   let DATA = { productos: [], meta: {} };
   let P = DATA.productos;
   let MARCAS = ["Vonderk", "Artelum", "World Leds Go"];
+  let ROL = "editor";   // rol del usuario para editar precios ('editor' | 'lector'); se resuelve tras login
   const $ = (s, r = document) => r.querySelector(s);
 
   /* ===================== DESCUENTOS / PRECIO NETO (editable, localStorage) ===================== */
@@ -155,7 +156,20 @@
       c.precio_usd = oc ? oc.precio : c._poOrig;
     });
   }
-  // Los precios editados viven en la tabla `precios` (lectura pública, escritura sólo logueados).
+  // Rol del usuario (tabla `perfiles`): sólo 'editor' puede modificar precios.
+  async function fetchRol() {
+    if (!sbOn() || !AUTHSES.logged()) return;
+    try {
+      const email = encodeURIComponent(AUTHSES.email() || "");
+      const r = await fetch(`${SB.url}/rest/v1/perfiles?select=rol&email=ilike.${email}`, { headers: AUTHSES.head() });
+      if (r.status === 404) ROL = "editor";            // sistema de roles no configurado aún → todos editan (como antes)
+      else if (r.ok) { const rows = await r.json(); ROL = rows.length ? (rows[0].rol || "lector") : "lector"; }
+    } catch (e) { }
+    updatePreciosBtn();
+  }
+  function updatePreciosBtn() { const b = $("#btnPrecios"); if (b) b.style.display = (ROL === "editor") ? "" : "none"; }
+
+  // Los precios editados viven en la tabla `precios` (lectura pública, escritura sólo editores).
   async function sbPullPrices() {
     if (!sbOn()) return;
     try {
@@ -977,6 +991,7 @@
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();
     await sbPullPrices();                          // llama applyPriceOverrides internamente
+    fetchRol();                                     // resuelve el rol → muestra/oculta "⬆ Precios"
     rerenderActive();
   }
   function wireGate() {
@@ -1036,6 +1051,7 @@
     return { out, total: items.length };
   }
   function openPrecios() {
+    if (ROL !== "editor") { alert("No tenés permiso para actualizar precios. Pedile a un administrador que te habilite como editor."); return; }
     const ov = el("div", "detail"); ov.id = "preciosModal";
     const opts = `<option value="LEUK">Leuk</option>` + MARCAS.map(m => `<option value="${m}">${m}</option>`).join("");
     ov.innerHTML = `<div class="detail-inner desc-modal">

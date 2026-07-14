@@ -1,13 +1,15 @@
 /* Benchmark Leuk — app estática (vanilla JS). Dos páginas: Comparaciones y Resultados.
    Matching en vivo (3 señales) generado por el pipeline. Autorización en localStorage. */
 (function () {
-  const DATA = window.BENCHMARK || { productos: [], meta: {} };
-  const P = DATA.productos;
-  const MARCAS = (DATA.meta && DATA.meta.competidores) || ["Vonderk", "Artelum", "World Leds Go"];
+  // Los datos ya NO vienen de un archivo público: se descargan de Supabase DESPUÉS del login
+  // (bucket privado 'datos'). Al arranque están vacíos; se poblan en bootApp().
+  let DATA = { productos: [], meta: {} };
+  let P = DATA.productos;
+  let MARCAS = ["Vonderk", "Artelum", "World Leds Go"];
   const $ = (s, r = document) => r.querySelector(s);
 
   /* ===================== DESCUENTOS / PRECIO NETO (editable, localStorage) ===================== */
-  const DEF_DISC = (DATA.meta && DATA.meta.descuentos) || {};
+  let DEF_DISC = {};
   const DISC_KEY = "benchmark_leuk_descuentos_v1";
   const CFG = (function () {
     const base = { comp: {}, leukPartner: 30, leukCliente: 15, leukTier: "partner" };
@@ -290,7 +292,7 @@
   });
 
   /* ===================== SUGERENCIAS MANUALES (localStorage) ===================== */
-  const CATALOGO = DATA.competencia || [];
+  let CATALOGO = [];
   const SUGG_KEY = "benchmark_leuk_sugeridos_v1";
   let SUGG = (function () { try { return JSON.parse(localStorage.getItem(SUGG_KEY)) || {}; } catch (e) { return {}; } })();
   const saveSugg = () => localStorage.setItem(SUGG_KEY, JSON.stringify(SUGG));
@@ -896,16 +898,32 @@
   }
   function unlock() { document.body.classList.remove("locked"); updateAuthBtn(); }
   function doLogout() { if (confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) { AUTHSES.logout(); lock(); } }
-  async function bootApp() {                     // carga de datos compartidos una vez logueado
+  // descarga los datos del benchmark desde el bucket privado de Supabase (requiere sesión)
+  async function fetchData(retried) {
+    const r = await fetch(`${SB.url}/storage/v1/object/datos/benchmark_data.json`, { headers: AUTHSES.head() });
+    if ((r.status === 400 || r.status === 401 || r.status === 403) && !retried && await AUTHSES.refresh()) return fetchData(true);
+    if (!r.ok) throw new Error("No pude cargar los datos (sesión inválida — reingresá)");
+    return await r.json();
+  }
+  async function bootApp() {                     // tras el login: baja datos + arma la app
+    DATA = await fetchData();
+    P = DATA.productos || [];
+    MARCAS = (DATA.meta && DATA.meta.competidores) || ["Vonderk", "Artelum", "World Leds Go"];
+    DEF_DISC = (DATA.meta && DATA.meta.descuentos) || {};
+    CATALOGO = DATA.competencia || [];
+    MARCAS.forEach(m => { if (CFG.comp[m] === undefined) CFG.comp[m] = DEF_DISC[m] != null ? DEF_DISC[m] : 0; });
+    const meta = DATA.meta || {};
+    $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;
+    buildCatFilters(); renderCatalogo(); updateDescBtn();
     await sbPull(); updateNavCount();
-    await sbPullPrices();
+    await sbPullPrices();                          // llama applyPriceOverrides internamente
     rerenderActive();
   }
   function wireGate() {
     const go = async () => {
       const err = $("#gateErr"); err.textContent = "";
       const btn = $("#gateGo"); btn.disabled = true; btn.textContent = "Ingresando…";
-      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); unlock(); await bootApp(); }
+      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); await bootApp(); unlock(); }
       catch (e) { err.textContent = e.message || "No se pudo ingresar"; }
       btn.disabled = false; btn.textContent = "Ingresar";
     };
@@ -1055,19 +1073,16 @@
   $("#btnDesc").addEventListener("click", openDescuentos);
   $("#btnPrecios").addEventListener("click", openPrecios);
   $("#btnAuth").addEventListener("click", doLogout);
-  wireGate();
-  applyPriceOverrides();
-  buildCatFilters(); renderCatalogo(); updateDescBtn();
-  // La app requiere sesión: si hay sesión guardada, validarla; si no, mostrar el login.
+  wireGate(); updateDescBtn();
+  // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.
   (async () => {
-    if (AUTHSES.logged() && await AUTHSES.refresh()) { unlock(); await bootApp(); }
-    else { lock(); }
+    if (AUTHSES.logged() && await AUTHSES.refresh()) {
+      try { await bootApp(); unlock(); } catch (e) { lock(); }
+    } else { lock(); }
   })();
   setInterval(() => {
     if (document.body.classList.contains("locked")) return;
     sbPullPrices().then(() => { if (!$("#page-resultados").classList.contains("hidden")) renderTabla(); });
     if (!$("#page-resultados").classList.contains("hidden")) sbPull().then(renderTabla);
   }, 20000);
-  const meta = DATA.meta || {};
-  $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;
 })();

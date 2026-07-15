@@ -468,7 +468,8 @@
   function catFiltered() {
     const q = norm(searchEl.value);
     return P.filter(p => {
-      if (q && !norm(p.sku).includes(q) && !norm(p.nombre).includes(q)) return false;
+      // busca por SKU, nombre o familia (incl. subfamilia: "aplique", "lineal"…)
+      if (q && ![p.sku, p.nombre, p.familia, p.subfamilia].some(v => norm(v).includes(q))) return false;
       if (catState.vertical && p.vertical !== catState.vertical) return false;
       if (catState.familia && p.familia !== catState.familia) return false;
       const nM = MARCAS.filter(m => p.mejor_por_marca[m]).length;

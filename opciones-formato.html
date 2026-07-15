@@ -1,45 +1,57 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8">
+<html lang="es"><head><meta charset="UTF-8"><title>Opciones de formato</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="styles.css">
 <style>
 body{padding:24px;background:#fbfbf9}main{max-width:1100px;margin:0 auto}
-.opt{font-family:var(--font-title);font-size:15px;color:#111;margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--olive)}
-.opt small{font-family:var(--font-body);font-size:12px;color:var(--gray-soft);font-weight:400;display:block;margin-top:2px;border:0}
+h1{font-size:20px;margin:0 0 4px}
+.lead{font-size:13px;color:var(--gray-soft);margin:0 0 6px}
+.opt{font-family:var(--font-title);font-size:16px;color:#111;margin:30px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--olive)}
+.opt small{font-family:var(--font-body);font-size:12px;color:var(--gray-soft);font-weight:400;display:block;margin-top:2px}
 
-/* A — punto de color + texto plano (sin píldora) */
-.eq-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-soft);white-space:nowrap}
-.eq-dot i{width:8px;height:8px;border-radius:50%;flex:none}
-.eq-dot.eq-alta i{background:var(--ok)} .eq-dot.eq-media i{background:var(--warn)} .eq-dot.eq-baja i{background:var(--gray-soft)}
+/* ---- D: símbolo matemático en cuadradito de color ---- */
+.eq{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--gray);white-space:nowrap}
+.eq b{font-family:var(--font-title);font-size:14px;font-weight:600;width:22px;height:22px;border-radius:6px;
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.eq.a b{background:#e7f0e1;color:var(--ok)} .eq.m b{background:#f6ecd8;color:var(--warn)} .eq.b_ b{background:#eee;color:var(--gray-soft)}
 
-/* B — señales como puntos */
-.sig-dots{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-soft);white-space:nowrap}
-.sig-dots u{display:inline-flex;gap:3px}
-.sig-dots u i{width:7px;height:7px;border-radius:50%;background:var(--line);border:1px solid var(--olive-soft)}
-.sig-dots u i.on{background:var(--olive);border-color:var(--olive)}
+/* ---- E: barras de señal ---- */
+.eqb{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--gray);white-space:nowrap}
+.eqb u{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+.eqb u s{width:4px;border-radius:1px;background:var(--line);text-decoration:none}
+.eqb u s:nth-child(1){height:6px} .eqb u s:nth-child(2){height:10px} .eqb u s:nth-child(3){height:14px}
+.eqb.a u s.on{background:var(--ok)} .eqb.m u s.on{background:var(--warn)} .eqb.b_ u s.on{background:var(--gray-soft)}
 
-/* C — al pie, junto al autor */
+/* ---- F: sólo icono ---- */
+.eqi{font-family:var(--font-title);font-size:15px;font-weight:600;width:26px;height:26px;border-radius:7px;
+  display:inline-flex;align-items:center;justify-content:center;cursor:help}
+.eqi.a{background:#e7f0e1;color:var(--ok)} .eqi.m{background:#f6ecd8;color:var(--warn)} .eqi.b_{background:#eee;color:var(--gray-soft)}
+
+/* ---- pie (para G) ---- */
 .res-foot{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--gray-soft);white-space:nowrap}
-.res-foot i.dot{width:8px;height:8px;border-radius:50%;flex:none}
-.res-foot i.alta{background:var(--ok)} .res-foot i.media{background:var(--warn)} .res-foot i.baja{background:var(--gray-soft)}
-.res-foot b{color:var(--olive);font-weight:600}
+.res-foot b.ic{font-family:var(--font-title);font-size:12px;font-weight:600;width:18px;height:18px;border-radius:5px;
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.res-foot b.ic.a{background:#e7f0e1;color:var(--ok)} .res-foot b.ic.m{background:#f6ecd8;color:var(--warn)} .res-foot b.ic.b_{background:#eee;color:var(--gray-soft)}
+.res-foot .who b{color:var(--olive);font-weight:600}
 .res-foot .sep{color:var(--olive-soft)}
 </style>
 </head><body><main>
+<h1>Nivel de equivalencia — opciones con iconos</h1>
+<p class="lead">Datos ficticios. El símbolo dice el nivel: <b>=</b> equivalente · <b>≈</b> comparable parcial · <b>?</b> a revisar.</p>
 
-<!-- ============ A ============ -->
-<div class="opt">A · Punto de color + texto (sin píldora)<small>La etiqueta deja de parecer un botón: es un dato con un punto de color. Queda en la fila, antes de las acciones.</small></div>
+<!-- ============ D ============ -->
+<div class="opt">D · Símbolo + texto<small>“=” es literalmente equivalente, “≈” aproximadamente igual. El icono lleva el color; el texto acompaña.</small></div>
 <div class="res-cards">
   <div class="res-card"><div class="res-head">
     <div class="res-pair">
       <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0001</span><span class="res-nom">PRODUCTO A</span><span class="res-price">US$ 10</span><span class="res-plista">lista US$ 12 · −15%</span></div></div>
       <span class="res-arrow">vs</span>
-      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 7</span><span class="res-plista">lista US$ 13 · −18%</span></div></div>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 17</span><span class="res-plista">lista US$ 20 · −18%</span></div></div>
     </div>
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-cheap"><span class="rp-dif">+70%</span><span class="rp-text">Leuk más barato · Δ US$ 7</span></div>
-        <span class="eq-dot eq-alta"><i></i>Equivalente</span>
+        <span class="eq a"><b>=</b>Equivalente</span>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
       <div class="res-autor">Seleccionó <b>Ana García</b></div>
@@ -54,27 +66,42 @@ body{padding:24px;background:#fbfbf9}main{max-width:1100px;margin:0 auto}
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>
-        <span class="eq-dot eq-media"><i></i>Comparable parcial</span>
+        <span class="eq m"><b>≈</b>Comparable parcial</span>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
       <div class="res-autor">Seleccionó <b>Ana García</b></div>
+    </div>
+  </div></div>
+  <div class="res-card"><div class="res-head">
+    <div class="res-pair">
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0003</span><span class="res-nom">PRODUCTO C</span><span class="res-price">US$ 14</span><span class="res-plista">lista US$ 16 · −15%</span></div></div>
+      <span class="res-arrow">vs</span>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 2</span><span class="res-nom">MODELO-Y1</span><span class="res-price">US$ 11</span><span class="res-plista">lista US$ 13 · −15%</span></div></div>
+    </div>
+    <div class="res-meta">
+      <div class="res-meta-row">
+        <div class="res-posicion p-exp"><span class="rp-dif">−29%</span><span class="rp-text">Leuk más caro · Δ US$ 3</span></div>
+        <span class="eq b_"><b>?</b>A revisar</span>
+        <div class="res-btns"><button class="res-exp">▾</button></div>
+      </div>
+      <div class="res-autor">Seleccionó <b>Luis Gómez</b></div>
     </div>
   </div></div>
 </div>
 
-<!-- ============ B ============ -->
-<div class="opt">B · Señales como puntos<small>Muestra el dato crudo: cuántas de las 3 señales (técnica · forma · imagen) coinciden. Compacto y sin jerga.</small></div>
+<!-- ============ E ============ -->
+<div class="opt">E · Barras de señal + texto<small>Como la señal del celular: cuántas de las 3 señales (técnica · forma · imagen) coinciden. Se “siente” la fuerza del match.</small></div>
 <div class="res-cards">
   <div class="res-card"><div class="res-head">
     <div class="res-pair">
       <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0001</span><span class="res-nom">PRODUCTO A</span><span class="res-price">US$ 10</span><span class="res-plista">lista US$ 12 · −15%</span></div></div>
       <span class="res-arrow">vs</span>
-      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 7</span><span class="res-plista">lista US$ 13 · −18%</span></div></div>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 17</span><span class="res-plista">lista US$ 20 · −18%</span></div></div>
     </div>
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-cheap"><span class="rp-dif">+70%</span><span class="rp-text">Leuk más barato · Δ US$ 7</span></div>
-        <span class="sig-dots"><u><i class="on"></i><i class="on"></i><i class="on"></i></u> 3 de 3</span>
+        <span class="eqb a"><u><s class="on"></s><s class="on"></s><s class="on"></s></u>Equivalente</span>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
       <div class="res-autor">Seleccionó <b>Ana García</b></div>
@@ -89,29 +116,94 @@ body{padding:24px;background:#fbfbf9}main{max-width:1100px;margin:0 auto}
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>
-        <span class="sig-dots"><u><i class="on"></i><i class="on"></i><i></i></u> 2 de 3</span>
+        <span class="eqb m"><u><s class="on"></s><s class="on"></s><s></s></u>Comparable parcial</span>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
       <div class="res-autor">Seleccionó <b>Ana García</b></div>
+    </div>
+  </div></div>
+  <div class="res-card"><div class="res-head">
+    <div class="res-pair">
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0003</span><span class="res-nom">PRODUCTO C</span><span class="res-price">US$ 14</span><span class="res-plista">lista US$ 16 · −15%</span></div></div>
+      <span class="res-arrow">vs</span>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 2</span><span class="res-nom">MODELO-Y1</span><span class="res-price">US$ 11</span><span class="res-plista">lista US$ 13 · −15%</span></div></div>
+    </div>
+    <div class="res-meta">
+      <div class="res-meta-row">
+        <div class="res-posicion p-exp"><span class="rp-dif">−29%</span><span class="rp-text">Leuk más caro · Δ US$ 3</span></div>
+        <span class="eqb b_"><u><s class="on"></s><s></s><s></s></u>A revisar</span>
+        <div class="res-btns"><button class="res-exp">▾</button></div>
+      </div>
+      <div class="res-autor">Seleccionó <b>Luis Gómez</b></div>
     </div>
   </div></div>
 </div>
 
-<!-- ============ C ============ -->
-<div class="opt">C · Todo lo informativo al pie<small>La fila de arriba queda limpia: precio (protagonista) + acciones. El nivel y el autor bajan juntos a la línea de abajo, que es "info de la comparación".</small></div>
+<!-- ============ F ============ -->
+<div class="opt">F · Sólo el icono<small>Máximo despeje: el símbolo solo, con el nombre en el tooltip (pasá el mouse por encima). La fila queda mínima.</small></div>
 <div class="res-cards">
   <div class="res-card"><div class="res-head">
     <div class="res-pair">
       <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0001</span><span class="res-nom">PRODUCTO A</span><span class="res-price">US$ 10</span><span class="res-plista">lista US$ 12 · −15%</span></div></div>
       <span class="res-arrow">vs</span>
-      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 7</span><span class="res-plista">lista US$ 13 · −18%</span></div></div>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 17</span><span class="res-plista">lista US$ 20 · −18%</span></div></div>
+    </div>
+    <div class="res-meta">
+      <div class="res-meta-row">
+        <div class="res-posicion p-cheap"><span class="rp-dif">+70%</span><span class="rp-text">Leuk más barato · Δ US$ 7</span></div>
+        <span class="eqi a" title="Equivalente — coinciden las 3 señales">=</span>
+        <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
+      </div>
+      <div class="res-autor">Seleccionó <b>Ana García</b></div>
+    </div>
+  </div></div>
+  <div class="res-card"><div class="res-head">
+    <div class="res-pair">
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0002</span><span class="res-nom">PRODUCTO B</span><span class="res-price">US$ 8</span><span class="res-plista">lista US$ 9 · −15%</span></div></div>
+      <span class="res-arrow">vs</span>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1 · <span class="tag-sug">sugerido</span></span><span class="res-nom">MODELO-X2</span><span class="res-price">s/precio</span></div></div>
+    </div>
+    <div class="res-meta">
+      <div class="res-meta-row">
+        <div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>
+        <span class="eqi m" title="Comparable parcial — coinciden 2 de 3 señales">≈</span>
+        <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
+      </div>
+      <div class="res-autor">Seleccionó <b>Ana García</b></div>
+    </div>
+  </div></div>
+  <div class="res-card"><div class="res-head">
+    <div class="res-pair">
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0003</span><span class="res-nom">PRODUCTO C</span><span class="res-price">US$ 14</span><span class="res-plista">lista US$ 16 · −15%</span></div></div>
+      <span class="res-arrow">vs</span>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 2</span><span class="res-nom">MODELO-Y1</span><span class="res-price">US$ 11</span><span class="res-plista">lista US$ 13 · −15%</span></div></div>
+    </div>
+    <div class="res-meta">
+      <div class="res-meta-row">
+        <div class="res-posicion p-exp"><span class="rp-dif">−29%</span><span class="rp-text">Leuk más caro · Δ US$ 3</span></div>
+        <span class="eqi b_" title="A revisar — coincide 1 de 3 señales">?</span>
+        <div class="res-btns"><button class="res-exp">▾</button></div>
+      </div>
+      <div class="res-autor">Seleccionó <b>Luis Gómez</b></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============ G ============ -->
+<div class="opt">G · Icono + texto al pie<small>La fila de arriba queda con sólo precio y acciones. El icono, el nivel y el autor van juntos abajo.</small></div>
+<div class="res-cards">
+  <div class="res-card"><div class="res-head">
+    <div class="res-pair">
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0001</span><span class="res-nom">PRODUCTO A</span><span class="res-price">US$ 10</span><span class="res-plista">lista US$ 12 · −15%</span></div></div>
+      <span class="res-arrow">vs</span>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 1</span><span class="res-nom">MODELO-X1</span><span class="res-price">US$ 17</span><span class="res-plista">lista US$ 20 · −18%</span></div></div>
     </div>
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-cheap"><span class="rp-dif">+70%</span><span class="rp-text">Leuk más barato · Δ US$ 7</span></div>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
-      <div class="res-foot"><i class="dot alta"></i>Equivalente<span class="sep">·</span>Seleccionó <b>Ana García</b></div>
+      <div class="res-foot"><b class="ic a">=</b>Equivalente<span class="sep">·</span><span class="who">Seleccionó <b>Ana García</b></span></div>
     </div>
   </div></div>
   <div class="res-card"><div class="res-head">
@@ -125,21 +217,21 @@ body{padding:24px;background:#fbfbf9}main{max-width:1100px;margin:0 auto}
         <div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>
         <div class="res-btns"><button class="res-exp">▾</button><button class="rm">✕</button></div>
       </div>
-      <div class="res-foot"><i class="dot media"></i>Comparable parcial<span class="sep">·</span>Seleccionó <b>Ana García</b></div>
+      <div class="res-foot"><b class="ic m">≈</b>Comparable parcial<span class="sep">·</span><span class="who">Seleccionó <b>Ana García</b></span></div>
     </div>
   </div></div>
   <div class="res-card"><div class="res-head">
     <div class="res-pair">
-      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0003</span><span class="res-nom">PRODUCTO C</span><span class="res-price">US$ 14</span><span class="res-plista">lista US$ 7 · −15%</span></div></div>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">LEUK 0003</span><span class="res-nom">PRODUCTO C</span><span class="res-price">US$ 14</span><span class="res-plista">lista US$ 16 · −15%</span></div></div>
       <span class="res-arrow">vs</span>
-      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 2</span><span class="res-nom">MODELO-Y1</span><span class="res-price">US$ 7</span><span class="res-plista">lista US$ 13 · −15%</span></div></div>
+      <div class="res-side"><div class="thumb ph sm">◎</div><div class="res-txt"><span class="res-lbl">COMPETIDOR 2</span><span class="res-nom">MODELO-Y1</span><span class="res-price">US$ 11</span><span class="res-plista">lista US$ 13 · −15%</span></div></div>
     </div>
     <div class="res-meta">
       <div class="res-meta-row">
         <div class="res-posicion p-exp"><span class="rp-dif">−29%</span><span class="rp-text">Leuk más caro · Δ US$ 3</span></div>
         <div class="res-btns"><button class="res-exp">▾</button></div>
       </div>
-      <div class="res-foot"><i class="dot baja"></i>A revisar<span class="sep">·</span>Seleccionó <b>Luis Gómez</b></div>
+      <div class="res-foot"><b class="ic b_">?</b>A revisar<span class="sep">·</span><span class="who">Seleccionó <b>Luis Gómez</b></span></div>
     </div>
   </div></div>
 </div>

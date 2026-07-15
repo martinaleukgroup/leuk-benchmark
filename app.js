@@ -42,6 +42,18 @@
 
   const VC = { "Equivalente": "b-eq", "Comparable parcial": "b-pa", "Posible": "b-pos", "No comparable": "b-no", "Sin datos": "b-sd", "Sugerido": "b-sug" };
   const badge = v => `<span class="badge ${VC[v] || "b-sd"}">${v || "Sin datos"}</span>`;
+  // Nivel de equivalencia como barras de señal: cuántas de las 3 señales coinciden.
+  // Las comparaciones agregadas a mano no las evaluó el motor → sin barras.
+  const EQ_N = { "Equivalente": 3, "Comparable parcial": 2, "Posible": 1, "No comparable": 0, "Sin datos": 0 };
+  function eqSignal(a) {
+    const m = a.match || {};
+    const v = m.veredicto || a.veredicto || "Sin datos";
+    if (a.manual || v === "Sugerido") return `<span class="eqb eq-b" title="Comparación agregada a mano: el motor no la evaluó">Sugerido</span>`;
+    const n = typeof m.n_senales === "number" ? m.n_senales : (EQ_N[v] || 0);
+    const cls = n >= 3 ? "eq-a" : n === 2 ? "eq-m" : "eq-b";
+    const bars = [1, 2, 3].map(i => `<s class="${i <= n ? "on" : ""}"></s>`).join("");
+    return `<span class="eqb ${cls}" title="${v} — coinciden ${n} de 3 señales (técnica · forma · imagen)"><u>${bars}</u>${v}</span>`;
+  }
   // indicador de confianza: cuántas señales coinciden (≥2 = confiable, 1 = revisar)
   const confChip = m => {
     if (!m) return "";
@@ -720,9 +732,9 @@
           <div class="res-meta">
             <div class="res-meta-row">
               ${priceBlock}
-              <div class="res-btns">${badge(a.veredicto)}<button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
+              <div class="res-btns"><button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
             </div>
-            ${a.autor ? `<div class="res-autor">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></div>` : ""}
+            <div class="res-foot">${eqSignal(a)}${a.autor ? `<span class="sep">·</span><span class="who">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></span>` : ""}</div>
           </div>
         </div>
         <div class="res-body hidden"></div>`;

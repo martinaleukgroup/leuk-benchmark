@@ -323,6 +323,15 @@ td.muted{color:var(--olive-soft);text-align:center}
 
 .res-autor{font-size:11.5px;color:var(--gray-soft);white-space:nowrap}
 .res-autor b{color:var(--olive);font-weight:600}
+/* Pie de la tarjeta: nivel de equivalencia (barras de señal) + quién la seleccionó */
+.res-foot{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--gray-soft);white-space:nowrap}
+.res-foot .sep{color:var(--olive-soft)}
+.res-foot .who b{color:var(--olive);font-weight:600}
+.eqb{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.eqb u{display:inline-flex;align-items:flex-end;gap:2px;height:12px;text-decoration:none}
+.eqb u s{width:3.5px;border-radius:1px;background:var(--line);text-decoration:none}
+.eqb u s:nth-child(1){height:5px} .eqb u s:nth-child(2){height:8.5px} .eqb u s:nth-child(3){height:12px}
+.eqb.eq-a u s.on{background:var(--ok)} .eqb.eq-m u s.on{background:var(--warn)} .eqb.eq-b u s.on{background:var(--gray-soft)}
 .lg-in{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;margin-bottom:2px}
 .lg-err{color:var(--no);font-size:13px;min-height:16px}
 /* Gate: pantalla de login que cubre toda la app */

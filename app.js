@@ -42,17 +42,21 @@
 
   const VC = { "Equivalente": "b-eq", "Comparable parcial": "b-pa", "Posible": "b-pos", "No comparable": "b-no", "Sin datos": "b-sd", "Sugerido": "b-sug" };
   const badge = v => `<span class="badge ${VC[v] || "b-sd"}">${v || "Sin datos"}</span>`;
-  // Nivel de equivalencia como barras de señal: cuántas de las 3 señales coinciden.
+  // Nivel de equivalencia como barras de señal.
+  // OJO: las barras siguen al VEREDICTO, no a n_senales. No son lo mismo: el motor pondera
+  // qué señal coincide y con qué score, así que hay "Equivalente" con 2 señales y
+  // "Comparable parcial" con 3. n_senales queda como detalle en el tooltip.
   // Las comparaciones agregadas a mano no las evaluó el motor → sin barras.
   const EQ_N = { "Equivalente": 3, "Comparable parcial": 2, "Posible": 1, "No comparable": 0, "Sin datos": 0 };
   function eqSignal(a) {
     const m = a.match || {};
     const v = m.veredicto || a.veredicto || "Sin datos";
     if (a.manual || v === "Sugerido") return `<span class="eqb eq-b" title="Comparación agregada a mano: el motor no la evaluó">Sugerido</span>`;
-    const n = typeof m.n_senales === "number" ? m.n_senales : (EQ_N[v] || 0);
+    const n = EQ_N[v] != null ? EQ_N[v] : 0;
     const cls = n >= 3 ? "eq-a" : n === 2 ? "eq-m" : "eq-b";
     const bars = [1, 2, 3].map(i => `<s class="${i <= n ? "on" : ""}"></s>`).join("");
-    return `<span class="eqb ${cls}" title="${v} — coinciden ${n} de 3 señales (técnica · forma · imagen)"><u>${bars}</u>${v}</span>`;
+    const det = typeof m.n_senales === "number" ? ` · coinciden ${m.n_senales} de 3 señales (técnica · forma · imagen)` : "";
+    return `<span class="eqb ${cls}" title="${v}${det}"><u>${bars}</u>${v}</span>`;
   }
   // indicador de confianza: cuántas señales coinciden (≥2 = confiable, 1 = revisar)
   const confChip = m => {

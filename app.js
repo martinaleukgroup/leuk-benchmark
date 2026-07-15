@@ -493,21 +493,30 @@
           <div class="cat-name">${p.nombre || "—"}</div>
           <div class="leuk-fam">${[p.vertical, p.familia].filter(Boolean).join(" · ")}</div>
           <div class="cat-foot">${fmtUsd(p.precio_usd)} <span class="cat-badge ${nM ? "on" : ""}">${nM ? nM + " competidor" + (nM > 1 ? "es" : "") + " ✓" : "sin equiv."}</span></div></div>`;
-      card.onclick = () => selectProduct(p);
+      card.onclick = () => { _catScroll = window.scrollY; selectProduct(p); };   // recordar dónde estabas
       frag.appendChild(card);
     });
     catalogo.appendChild(frag);
   }
   let _selected = null;
-  function selectProduct(p) {
+  let _catScroll = 0;              // posición del catálogo, para volver al mismo lugar
+  // keepScroll = re-render interno (marcar/sugerir): no mover la vista de donde está.
+  function selectProduct(p, keepScroll) {
     _selected = p;
     catalogo.classList.add("hidden"); catFilters.classList.add("hidden"); catCount.classList.add("hidden");
     comp.classList.remove("hidden"); comp.innerHTML = "";
     const back = el("button", "btn-back", "← Volver al catálogo");
-    back.onclick = () => { renderCatalogo(); window.scrollTo({ top: 0 }); };
+    back.onclick = () => volverAlCatalogo();
     comp.appendChild(back);
     comp.appendChild(comparacionView(p));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!keepScroll) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  // Vuelve al catálogo dejándote donde estabas (no arriba de todo).
+  function volverAlCatalogo() {
+    _selected = null;
+    renderCatalogo();
+    // esperar al layout de la grilla antes de restaurar la posición
+    requestAnimationFrame(() => window.scrollTo({ top: _catScroll }));
   }
   function rankRow(p, prop, extra) {
     const c = cmp(p && p.precio_usd, prop.precio && prop.precio.usd, prop.marca);
@@ -571,7 +580,7 @@
     monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? "🏆 Sin producto comparable" : "¿No existe un producto comparable en el mercado?"}</b>
       <span>${monoOn ? "Marcado como sin competencia — aparece en Insights." : "Marcalo si Leuk no tiene equivalente en la competencia: queda mapeado en Insights para captar leads siendo la única opción."}</span></div>
       <button class="btn-ghost mono-btn ${monoOn ? "on" : ""}">${monoOn ? "Quitar marca" : "Marcar sin competencia"}</button>`;
-    monoBox.querySelector(".mono-btn").onclick = () => { toggleMono(p); selectProduct(p); };
+    monoBox.querySelector(".mono-btn").onclick = () => { toggleMono(p); selectProduct(p, true); };
     wrap.appendChild(monoBox);
 
     // --- Sugeridos a mano + botón para sugerir ---
@@ -585,7 +594,7 @@
     if (!sugeridos.length) sl.innerHTML = `<div class="empty-mini" style="padding:12px">Todavía no sugeriste ninguno. Tocá “Sugerir equivalente” para buscar en todo el catálogo.</div>`;
     sugeridos.forEach(prop => {
       const row = rankRow(p, prop, ` <button class="rm-sug" title="Quitar sugerencia">✕</button>`);
-      row.querySelector(".rm-sug").onclick = () => { rmSugg(p.sku, prop.marca, prop.fslug); selectProduct(p); };
+      row.querySelector(".rm-sug").onclick = () => { rmSugg(p.sku, prop.marca, prop.fslug); selectProduct(p, true); };
       sl.appendChild(row);
     });
     wrap.appendChild(sl);
@@ -636,7 +645,7 @@
             <div class="srow-name">${c.nombre || c.familia}</div>
             <div class="leuk-fam">${c.familia || ""}</div></div>
           <button class="auth-btn ${ya ? "on" : ""}" ${ya ? "disabled" : ""}>${ya ? "✓ Agregado" : "＋ Agregar"}</button>`;
-        row.querySelector("button").onclick = ev => { ev.stopPropagation(); addSugg(p.sku, c); close(); selectProduct(p); };
+        row.querySelector("button").onclick = ev => { ev.stopPropagation(); addSugg(p.sku, c); close(); selectProduct(p, true); };
         results.appendChild(row);
       });
     };
@@ -874,7 +883,7 @@
     sec.querySelectorAll(".mono-item").forEach(it => {
       const mrm = it.querySelector(".mono-rm");
       if (mrm) mrm.onclick = ev => { ev.stopPropagation(); const sku = it.dataset.sku; delete MONO[sku]; sbDel(monoKey(sku)); renderDecisiones(); };
-      it.onclick = () => { const p = P.find(x => String(x.sku) === String(it.dataset.sku)); if (p) { goToPage("comparaciones"); selectProduct(p); } };
+      it.onclick = () => { const p = P.find(x => String(x.sku) === String(it.dataset.sku)); if (p) { _catScroll = 0; goToPage("comparaciones"); selectProduct(p); } };   // no venís del catálogo
     });
     return sec;
   }
@@ -997,7 +1006,7 @@
     if (!$("#page-inicio").classList.contains("hidden")) renderInicio();
     else if (!$("#page-resultados").classList.contains("hidden")) renderTabla();
     else if (!$("#page-decisiones").classList.contains("hidden")) renderDecisiones();
-    else if (_selected && !$("#comparacion").classList.contains("hidden")) selectProduct(_selected);
+    else if (_selected && !$("#comparacion").classList.contains("hidden")) selectProduct(_selected, true);
     else renderCatalogo();
   }
   function openDescuentos() {

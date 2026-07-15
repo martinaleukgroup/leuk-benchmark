@@ -877,7 +877,7 @@
       <div class="fam-hint">Productos Leuk marcados como <b>sin producto comparable</b> en el mercado — para captar leads siendo la única opción. Marcalos desde <b>Catálogo</b>, en cada producto.</div>
       <div class="mono-list">${monos.map(m => `
         <div class="mono-item" data-sku="${m.sku}">
-          <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo marcó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>
+          <div class="mono-info"><span class="leuk-sku">LEUK ${m.sku}</span><span class="mono-nom">${m.nombre || ""}</span><span class="leuk-fam">${[m.vertical, m.familia].filter(Boolean).join(" · ")}${m.autor ? " · lo seleccionó " + String(m.autor).replace(/[<>]/g, "").split("@")[0] : ""}</span></div>
           <div class="mono-right">${fmtUsd(m.precio_usd)}${puedeBorrar(m) ? `<button class="rm mono-rm" title="Quitar">✕</button>` : ""}</div>
         </div>`).join("")}</div>`;
     sec.querySelectorAll(".mono-item").forEach(it => {

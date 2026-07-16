@@ -1070,7 +1070,14 @@
     CATALOGO = DATA.competencia || [];
     MARCAS.forEach(m => { if (CFG.comp[m] === undefined) CFG.comp[m] = DEF_DISC[m] != null ? DEF_DISC[m] : 0; });
     const meta = DATA.meta || {};
-    $("#metaLine").textContent = `${meta.n_productos_leuk || P.length} productos Leuk · ${meta.n_con_propuesta || 0} con propuesta · matching por 3 señales (técnica · etiquetación · visual) · generado ${(meta.generado || "").replace("T", " ")}`;
+    // Frescura primero: la comparación vale lo que valen el TC y los descuentos vigentes.
+    const gen = meta.generado ? new Date(meta.generado) : null;
+    const dias = gen ? Math.floor((Date.now() - gen.getTime()) / 864e5) : null;
+    const fecha = gen ? gen.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+    const vejez = dias == null ? "" : dias > 30 ? ` ⚠️ hace ${dias} días — pedir actualización` : dias > 0 ? ` (hace ${dias} día${dias > 1 ? "s" : ""})` : " (hoy)";
+    const abrev = m => m === "World Leds Go" ? "WLG" : m;
+    const descTxt = MARCAS.map(m => `${abrev(m)} −${DEF_DISC[m] != null ? DEF_DISC[m] : 0}%`).join(" · ");
+    $("#metaLine").textContent = `Datos al ${fecha}${vejez} · TC blue $${(meta.tc_blue || 0).toLocaleString("es-AR")} · Descuentos: ${descTxt} · ${meta.n_productos_leuk || P.length} productos · matching por 3 señales`;
     buildCatFilters(); renderCatalogo(); updateDescBtn();
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();

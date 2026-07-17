@@ -362,10 +362,16 @@
     const p = P.find(x => x.sku === sku); if (!p) return null;
     const inList = arr => (arr || []).find(x => x && x.marca === marca && x.fslug === fslug);
     // buscar en TODAS las secciones con botón Autorizar (antes faltaba 'posibles' → esos no se guardaban)
-    return inList(p.propuestas)
+    const found = inList(p.propuestas)
       || Object.values(p.mejor_por_marca || {}).find(x => x && x.marca === marca && x.fslug === fslug)
       || inList(p.posibles)
-      || suggList(sku).find(x => x.marca === marca && x.fslug === fslug) || null;
+      || suggList(sku).find(x => x.marca === marca && x.fslug === fslug);
+    if (found) return found;
+    // "Recomendado por tu historial": el prop se arma desde el CATÁLOGO global (equivalente
+    // autorizado en un producto parecido), su fslug NO está en las listas de ESTE producto.
+    // Reconstruirlo desde el catálogo (mismo camino que usa el render con suggProp).
+    const comp = CATALOGO.find(c => c.marca === marca && c.fslug === fslug);
+    return comp ? suggProp(comp, p) : null;
   };
   // click delegado en botones de autorizar
   document.addEventListener("click", ev => {

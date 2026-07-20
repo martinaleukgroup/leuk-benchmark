@@ -17,11 +17,11 @@
 .fichas-note{font-size:12px;color:#8a8f82;width:100%}
 .fichas-note b{color:#c08a2e}
 
-#ficha-stage{display:flex;justify-content:center}
+#ficha-stage{display:flex;flex-direction:column;align-items:center;gap:24px}
 
 /* --- La ficha A4 --- */
 #ficha-stage .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#2c4a9a;--red:#e2231a;--mag:#b5299b;
-  width:210mm;min-height:297mm;background:#fff;padding:14mm 13mm 10mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
+  width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:11mm 12mm 7mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
 #ficha-stage .f-page *{box-sizing:border-box}
 /* imprimir/PDF respetando fondos (cebra, swatch, fondo de imagen, punto) */
 #ficha-stage .f-page, #ficha-stage .f-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -30,17 +30,18 @@
 #ficha-stage .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
 #ficha-stage .f-logo{height:56px;width:auto;display:block}
 #ficha-stage .f-hr{height:1px;background:var(--ink);margin:0 0 12px}
-#ficha-stage .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+#ficha-stage .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:11px}
 #ficha-stage .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
-#ficha-stage .f-photo{height:290px;background:#ececec}
-#ficha-stage .f-drawing{height:290px}
+#ficha-stage .f-photo{height:255px;background:#ececec}
+#ficha-stage .f-drawing{height:255px}
 #ficha-stage .f-imgbox img{max-width:100%;max-height:100%;object-fit:contain}
 #ficha-stage .f-ph{border:1px dashed #c4c4c4;color:#b0b0b0;flex-direction:column;gap:6px;text-align:center;font-family:'DINCond',sans-serif;font-size:9px;letter-spacing:1px;padding:8px}
 #ficha-stage .f-ph .f-ic{font-size:22px;opacity:.5}
 #ficha-stage .f-ph code{font-family:monospace;font-size:8px;color:#8a8a8a}
 #ficha-stage .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
 #ficha-stage .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
-#ficha-stage .f-dot{width:12px;height:12px;border-radius:50%;background:var(--ink);display:inline-block}
+#ficha-stage .f-dots{display:inline-flex;gap:5px;align-items:center}
+#ficha-stage .f-dot{width:12px;height:12px;border-radius:50%;background:var(--ink);display:inline-block;box-sizing:border-box}
 #ficha-stage .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
 #ficha-stage .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
 #ficha-stage .f-spec td{padding:5px 10px;line-height:1.15;border:none}
@@ -72,5 +73,8 @@
   body.fichas-printing #ficha-stage{position:absolute;left:0;top:0;margin:0;display:block}
   body.fichas-printing .f-page{box-shadow:none!important;margin:0!important}
   body.fichas-printing #page-fichas .fichas-bar,body.fichas-printing #page-fichas .fichas-note{display:none!important}
+  body.fichas-printing #ficha-stage{gap:0}
+  body.fichas-printing #ficha-stage .f-page{break-after:page;page-break-after:always}
+  body.fichas-printing #ficha-stage .f-page:last-child{break-after:auto;page-break-after:auto}
   @page{size:A4;margin:0}
 }

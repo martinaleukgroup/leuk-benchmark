@@ -2,8 +2,14 @@
 /* Lee window.FICHAS (generado por pipeline/fichas_build.py → fichas-data.js). */
 (function () {
   const FICHAS = (window.FICHAS || []).filter(f => f.sku || f.titulo);
-  const bySku = {};
-  FICHAS.forEach(f => { bySku[f.sku] = f; });
+  // Documentos: agrupar fichas por "Agrupación de fichas técnicas" (varias hojas por archivo)
+  const DOCS = []; const _byAg = {};
+  FICHAS.forEach(f => {
+    const k = f.agrupacion || f.titulo;
+    if (!_byAg[k]) { _byAg[k] = { ag: k, fichas: [] }; DOCS.push(_byAg[k]); }
+    _byAg[k].fichas.push(f);
+  });
+  DOCS.sort((a, b) => a.ag.localeCompare(b.ag, "es"));
   const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ICON = "assets/ficha/";
 
@@ -28,6 +34,8 @@
     const dibujo = media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo);
     const polar = media(a.curva_polar_url, "f-curve", "", a.curva_polar);
     const cono = media(a.curva_cono_url, "f-curve", "", a.curva_cono);
+    const cols = (f.colores && f.colores.length) ? f.colores : [{ hex: "#1a1a1a", light: false }];
+    const dots = cols.map(c => `<span class="f-dot" style="${c.light ? "background:#fff;border:1.4px solid #1a1a1a" : "background:" + esc(c.hex)}"></span>`).join("");
 
     return `<div class="f-page">
       <div class="f-head">
@@ -38,7 +46,7 @@
       <div class="f-top">${foto}${dibujo}</div>
       <div class="f-cols">
         <div>
-          <div class="f-h">Especificaciones Técnicas <span class="f-dot"></span></div>
+          <div class="f-h">Especificaciones Técnicas <span class="f-dots">${dots}</span></div>
           <table class="f-spec">${rows}</table>
         </div>
         <div>
@@ -77,16 +85,16 @@
   function mount() {
     const page = document.getElementById("page-fichas");
     if (!page) return;
-    const opts = FICHAS.map((f, i) => `<option value="${i}">${esc(f.sku)} · ${esc(f.titulo)}</option>`).join("");
+    const opts = DOCS.map((d, i) => `<option value="${i}">${esc(d.ag)}${d.fichas.length > 1 ? " · " + d.fichas.length + " hojas" : ""}</option>`).join("");
     page.innerHTML = `
       <div class="fichas-bar">
         <div class="fb-field">
-          <label>Producto</label>
+          <label>Ficha / Línea</label>
           <select id="fichaSel">${opts}</select>
         </div>
         <div class="fb-field">
           <label>Buscar</label>
-          <input id="fichaSearch" type="search" placeholder="SKU o nombre…">
+          <input id="fichaSearch" type="search" placeholder="Nombre o línea…">
         </div>
         <button class="fb-btn" id="fichaPdf">Descargar PDF</button>
         <div class="fichas-note" id="fichaNote"></div>
@@ -97,17 +105,12 @@
     const stage = document.getElementById("ficha-stage");
     const note = document.getElementById("fichaNote");
     const draw = i => {
-      const f = FICHAS[i]; if (!f) return;
+      const d = DOCS[i]; if (!d) return;
       sel.value = i;
-      stage.innerHTML = fichaHTML(f);
-      const A = f.assets || {}; const falt = [];
-      if (!f.foto_url) falt.push("foto");
-      if (!A.dibujo_url) falt.push("dibujo");
-      if (!A.curva_polar_url) falt.push("curva polar");
-      if (!A.curva_cono_url) falt.push("curva cono");
-      note.innerHTML = falt.length
-        ? `<b>Faltan assets:</b> ${falt.join(", ")} — revisá el nombre del archivo o que la carpeta de Drive esté pública.`
-        : `✓ Ficha completa (foto, dibujo, curvas y archivos conectados).`;
+      stage.innerHTML = d.fichas.map(fichaHTML).join("");
+      note.innerHTML = d.fichas.length > 1
+        ? `Documento <b>${esc(d.ag)}</b> — ${d.fichas.length} hojas. "Descargar PDF" las baja todas en un archivo.`
+        : `1 ficha.`;
     };
     sel.addEventListener("change", e => draw(+e.target.value));
     document.getElementById("fichaSearch").addEventListener("input", e => {

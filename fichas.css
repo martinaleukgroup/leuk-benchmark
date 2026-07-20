@@ -1,0 +1,76 @@
+/* ===================== FICHAS TÉCNICAS ===================== */
+/* Todo va namespaced bajo #ficha-stage / .f-* para no colisionar con el resto de la app. */
+
+@font-face{font-family:'DINLightCond';src:url('assets/fonts/DINNextLTPro-LightCondensed.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINCond';src:url('assets/fonts/DINNextLTPro-Condensed.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINReg';src:url('assets/fonts/DINNextLTPro-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINMed';src:url('assets/fonts/DINNextLTPro-Medium.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINBold';src:url('assets/fonts/DINNextLTPro-Bold.ttf') format('truetype');font-display:swap}
+
+/* --- Barra de controles --- */
+.fichas-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:14px 18px;background:#f4f5f2;border:1px solid #e2e4de;border-radius:12px;margin-bottom:20px}
+.fichas-bar .fb-field{display:flex;flex-direction:column;gap:3px}
+.fichas-bar label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8a8f82}
+.fichas-bar select,.fichas-bar input{padding:8px 11px;border:1px solid #c9ccc2;border-radius:8px;font-size:13px;min-width:240px;background:#fff}
+.fichas-bar .fb-btn{margin-left:auto;background:#676B55;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
+.fichas-bar .fb-btn:hover{background:#565a45}
+.fichas-note{font-size:12px;color:#8a8f82;width:100%}
+.fichas-note b{color:#c08a2e}
+
+#ficha-stage{display:flex;justify-content:center}
+
+/* --- La ficha A4 --- */
+#ficha-stage .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#2c4a9a;--red:#e2231a;--mag:#b5299b;
+  width:210mm;min-height:297mm;background:#fff;padding:14mm 13mm 10mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
+#ficha-stage .f-page *{box-sizing:border-box}
+/* imprimir/PDF respetando fondos (cebra, swatch, fondo de imagen, punto) */
+#ficha-stage .f-page, #ficha-stage .f-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#ficha-stage .f-head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px}
+#ficha-stage .f-name{font-family:'DINLightCond',sans-serif;font-size:52px;line-height:.9;letter-spacing:3px;font-weight:300}
+#ficha-stage .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
+#ficha-stage .f-logo{height:56px;width:auto;display:block}
+#ficha-stage .f-hr{height:1px;background:var(--ink);margin:0 0 12px}
+#ficha-stage .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+#ficha-stage .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
+#ficha-stage .f-photo{height:290px;background:#ececec}
+#ficha-stage .f-drawing{height:290px}
+#ficha-stage .f-imgbox img{max-width:100%;max-height:100%;object-fit:contain}
+#ficha-stage .f-ph{border:1px dashed #c4c4c4;color:#b0b0b0;flex-direction:column;gap:6px;text-align:center;font-family:'DINCond',sans-serif;font-size:9px;letter-spacing:1px;padding:8px}
+#ficha-stage .f-ph .f-ic{font-size:22px;opacity:.5}
+#ficha-stage .f-ph code{font-family:monospace;font-size:8px;color:#8a8a8a}
+#ficha-stage .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
+#ficha-stage .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
+#ficha-stage .f-dot{width:12px;height:12px;border-radius:50%;background:var(--ink);display:inline-block}
+#ficha-stage .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
+#ficha-stage .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
+#ficha-stage .f-spec td{padding:5px 10px;line-height:1.15;border:none}
+#ficha-stage .f-spec td.k{color:var(--ink);width:40%}
+#ficha-stage .f-spec td.k small{font-size:7.6px}
+#ficha-stage .f-spec tr:nth-child(even){background:var(--zebra)}
+#ficha-stage .f-swatch{height:11px;width:11px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px;border:1px solid rgba(0,0,0,.25)}
+#ficha-stage .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
+#ficha-stage .f-curve{height:150px}
+#ficha-stage .f-ctitle{font-family:'DINCond',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1px;line-height:1.25;text-transform:uppercase;margin-bottom:7px}
+#ficha-stage .f-legend{font-size:8.5px;line-height:1.7}
+#ficha-stage .f-legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
+#ficha-stage .f-note{font-size:8px;color:var(--gray);line-height:1.4}
+#ficha-stage .f-buttons{display:flex;gap:26px;margin-top:4px}
+#ficha-stage .f-btn{text-align:center;text-decoration:none;color:var(--ink)}
+#ficha-stage .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
+#ficha-stage .f-btn .lb{font-family:'DINCond',sans-serif;font-size:8.5px;letter-spacing:.5px;line-height:1.15;margin-top:5px;text-transform:uppercase}
+#ficha-stage .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
+#ficha-stage .f-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:8px}
+#ficha-stage .f-web{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:1px}
+#ficha-stage .f-seals{display:flex;align-items:center;gap:12px}
+#ficha-stage .f-seal{height:23px}
+#ficha-stage .f-sealS{width:34px;height:26px}
+
+/* --- Impresión: aislar la ficha (gated por body.fichas-printing) --- */
+@media print{
+  body.fichas-printing *{visibility:hidden!important}
+  body.fichas-printing #ficha-stage, body.fichas-printing #ficha-stage *{visibility:visible!important}
+  body.fichas-printing #ficha-stage{position:absolute;left:0;top:0;margin:0;display:block}
+  body.fichas-printing .f-page{box-shadow:none!important;margin:0!important}
+  body.fichas-printing #page-fichas .fichas-bar,body.fichas-printing #page-fichas .fichas-note{display:none!important}
+  @page{size:A4;margin:0}
+}

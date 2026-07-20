@@ -1227,7 +1227,7 @@
   }
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas"];
   function goToPage(page) {
     if (!PAGES.includes(page)) page = "inicio";
     $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.page === page));
@@ -1235,6 +1235,7 @@
     if (page === "inicio") renderInicio();
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
+    if (page === "fichas" && window.renderFichas) window.renderFichas();
     window.scrollTo({ top: 0 });
   }
   $("#nav").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) goToPage(b.dataset.page); });

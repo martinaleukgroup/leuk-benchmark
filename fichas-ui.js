@@ -10,6 +10,11 @@
     _byAg[k].fichas.push(f);
   });
   DOCS.sort((a, b) => a.ag.localeCompare(b.ag, "es"));
+  // texto de búsqueda por documento: nombre de agrupación + títulos + todos los SKU
+  DOCS.forEach(d => {
+    const skus = d.fichas.reduce((acc, f) => acc.concat(f.skus || [f.sku]), []);
+    d._s = (d.ag + " " + d.fichas.map(f => f.titulo).join(" ") + " " + skus.join(" ")).toLowerCase();
+  });
   const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ICON = "assets/ficha/";
 
@@ -89,7 +94,7 @@
       <div class="fichas-bar">
         <div class="fb-field fb-combo">
           <label>Ficha / Línea</label>
-          <input id="fichaInput" type="text" placeholder="Buscá una ficha o línea…" autocomplete="off">
+          <input id="fichaInput" type="text" placeholder="Buscá por nombre, línea o SKU…" autocomplete="off">
           <div id="fichaList" class="fb-list" hidden></div>
         </div>
         <button class="fb-btn" id="fichaPdf">Descargar PDF</button>
@@ -111,7 +116,7 @@
     };
     const renderList = q => {
       q = (q || "").toLowerCase().trim();
-      const hits = DOCS.map((d, i) => ({ d, i })).filter(o => !q || o.d.ag.toLowerCase().includes(q)).slice(0, 80);
+      const hits = DOCS.map((d, i) => ({ d, i })).filter(o => !q || o.d._s.includes(q)).slice(0, 80);
       list.innerHTML = hits.length
         ? hits.map(o => `<div class="fb-item" data-i="${o.i}">${esc(o.d.ag)}${o.d.fichas.length > 1 ? `<span class="fb-badge">${o.d.fichas.length} hojas</span>` : ""}</div>`).join("")
         : `<div class="fb-empty">Sin resultados</div>`;

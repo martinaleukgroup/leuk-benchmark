@@ -1071,7 +1071,16 @@
     if (!r.ok) throw new Error("No pude cargar los datos (sesión inválida — reingresá)");
     return await r.json();
   }
+  // Vuelve la topbar a modo COMPLETO. Necesario porque el logout no recarga la página:
+  // si venías de una sesión de rol 'fichas', sus restricciones quedaban pegadas al reingresar.
+  function resetModoCompleto() {
+    document.body.classList.remove("solo-fichas");
+    $("#nav").querySelectorAll("button").forEach(b => { b.style.display = ""; });
+    ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = ""; });
+    const sub = document.querySelector(".brand-sub"); if (sub) sub.textContent = "Benchmark competitivo";
+  }
   async function bootApp() {                     // tras el login: baja datos + arma la app
+    resetModoCompleto();                           // partir siempre de modo completo (ver logout)
     await fetchRol();                              // EL ROL PRIMERO: decide qué se baja
     if (esFichas()) { bootFichas(); return; }      // usuario solo-fichas: NO se baja el benchmark
     DATA = await fetchData();

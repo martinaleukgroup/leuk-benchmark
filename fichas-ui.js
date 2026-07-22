@@ -41,6 +41,11 @@
     const cono = media(a.curva_cono_url, "f-curve", "", a.curva_cono);
     const cols = (f.colores && f.colores.length) ? f.colores : [{ hex: "#1a1a1a", light: false }];
     const dots = cols.map(c => `<span class="f-dot" style="${c.light ? "background:#fff;border:1.4px solid #1a1a1a" : "background:" + esc(c.hex)}"></span>`).join("");
+    // Información complementaria: solo los botones cuyos archivos existen
+    const btns = [];
+    if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>`);
+    if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo CAD</div></a>`);
+    const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
 
     return `<div class="f-page">
       <div class="f-head">
@@ -68,13 +73,7 @@
               <div class="f-note"><b>Nota:</b> Las curvas indican el área iluminada y la iluminancia promedio según la distancia de la luminaria.</div>
             </div>
           </div>
-          <div>
-            <div class="f-h">Información Complementaria</div>
-            <div class="f-buttons">
-              <a class="f-btn" ${a.ldt_url ? `href="${esc(a.ldt_url)}" download` : ""}><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>
-              <a class="f-btn" ${a.cad_url ? `href="${esc(a.cad_url)}" download` : ""}><img src="${ICON}cad.png"><div class="lb">Archivo CAD</div></a>
-            </div>
-          </div>
+          ${infoComp}
         </div>
       </div>
       <div class="f-foot">

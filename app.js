@@ -184,6 +184,9 @@
   //   lector → ve y selecciona | editor → + actualiza precios | admin → + elimina comparaciones
   const esAdmin = () => ROL === "admin";                       // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => ROL === "editor" || ROL === "admin";
+  // rol 'fichas' = SOLO la página de Fichas técnicas. No ve el benchmark (precios de
+  // competencia / descuentos / márgenes) y ni siquiera se le baja ese archivo (ver bootApp).
+  const esFichas = () => ROL === "fichas";
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
   // Se compara por EMAIL (identidad real de la sesión), no por nombre.
   const esMio = a => {
@@ -1069,6 +1072,8 @@
     return await r.json();
   }
   async function bootApp() {                     // tras el login: baja datos + arma la app
+    await fetchRol();                              // EL ROL PRIMERO: decide qué se baja
+    if (esFichas()) { bootFichas(); return; }      // usuario solo-fichas: NO se baja el benchmark
     DATA = await fetchData();
     P = DATA.productos || [];
     MARCAS = (DATA.meta && DATA.meta.competidores) || ["Vonderk", "Artelum", "World Leds Go"];
@@ -1088,8 +1093,17 @@
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();
     await sbPullPrices();                          // llama applyPriceOverrides internamente
-    await fetchRol();                               // resuelve rol (botón Precios) + nombre (saludo)
+    updatePreciosBtn();                             // el rol ya se resolvió al principio
     rerenderActive();
+  }
+  // Arranque para el rol 'fichas': solo la página de Fichas técnicas, sin tocar el benchmark.
+  function bootFichas() {
+    document.body.classList.add("solo-fichas");
+    $("#nav").querySelectorAll("button").forEach(b => { if (b.dataset.page !== "fichas") b.style.display = "none"; });
+    ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = "none"; });
+    const sub = document.querySelector(".brand-sub"); if (sub) sub.textContent = "Fichas técnicas";
+    $("#metaLine").textContent = "";
+    goToPage("fichas");
   }
   function wireGate() {
     const go = async () => {
@@ -1229,6 +1243,7 @@
   /* ===================== NAV ===================== */
   const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas"];
   function goToPage(page) {
+    if (esFichas()) page = "fichas";               // rol solo-fichas: nunca sale de Fichas
     if (!PAGES.includes(page)) page = "inicio";
     $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.page === page));
     PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== page); });

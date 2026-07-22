@@ -45,6 +45,7 @@
     const btns = [];
     if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>`);
     if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo CAD</div></a>`);
+    if (a.manual_url) btns.push(`<a class="f-btn" href="${esc(a.manual_url)}" target="_blank" rel="noopener"><img src="${ICON}manual.png"><div class="lb">Manual de Instalación</div></a>`);
     const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
     // Datos fotométricos: cada curva se muestra SOLO si existe. Si no hay ninguna,
     // "Información Complementaria" sube a ese lugar.

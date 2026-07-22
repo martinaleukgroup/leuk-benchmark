@@ -46,6 +46,22 @@
     if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>`);
     if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo CAD</div></a>`);
     const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
+    // Datos fotométricos: solo si hay curvas. Si no, "Información Complementaria" sube a ese lugar.
+    const hasFoto = !!(a.curva_polar_url || a.curva_cono_url);
+    const fotoBlock = hasFoto ? `
+          <div class="f-h">Datos Fotométricos</div>
+          <div class="f-pblock">${polar}
+            <div>
+              <div class="f-ctitle">Curva de distribución de la intensidad luminosa (CD)</div>
+              <div class="f-legend"><div><i style="background:var(--blue)"></i>C0-C180</div><div><i style="background:var(--red)"></i>C90-C270</div><div><i style="background:var(--mag)"></i>G3</div></div>
+            </div>
+          </div>
+          <div class="f-pblock">${cono}
+            <div>
+              <div class="f-ctitle">Distribución de iluminancia a distancia (LUX)</div>
+              <div class="f-note"><b>Nota:</b> Las curvas indican el área iluminada y la iluminancia promedio según la distancia de la luminaria.</div>
+            </div>
+          </div>` : "";
 
     return `<div class="f-page">
       <div class="f-head">
@@ -60,19 +76,7 @@
           <table class="f-spec">${rows}</table>
         </div>
         <div>
-          <div class="f-h">Datos Fotométricos</div>
-          <div class="f-pblock">${polar}
-            <div>
-              <div class="f-ctitle">Curva de distribución de la intensidad luminosa (CD)</div>
-              <div class="f-legend"><div><i style="background:var(--blue)"></i>C0-C180</div><div><i style="background:var(--red)"></i>C90-C270</div><div><i style="background:var(--mag)"></i>G3</div></div>
-            </div>
-          </div>
-          <div class="f-pblock">${cono}
-            <div>
-              <div class="f-ctitle">Distribución de iluminancia a distancia (LUX)</div>
-              <div class="f-note"><b>Nota:</b> Las curvas indican el área iluminada y la iluminancia promedio según la distancia de la luminaria.</div>
-            </div>
-          </div>
+          ${fotoBlock}
           ${infoComp}
         </div>
       </div>

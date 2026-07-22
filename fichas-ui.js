@@ -85,44 +85,56 @@
   function mount() {
     const page = document.getElementById("page-fichas");
     if (!page) return;
-    const opts = DOCS.map((d, i) => `<option value="${i}">${esc(d.ag)}${d.fichas.length > 1 ? " · " + d.fichas.length + " hojas" : ""}</option>`).join("");
     page.innerHTML = `
       <div class="fichas-bar">
-        <div class="fb-field">
+        <div class="fb-field fb-combo">
           <label>Ficha / Línea</label>
-          <select id="fichaSel">${opts}</select>
-        </div>
-        <div class="fb-field">
-          <label>Buscar</label>
-          <input id="fichaSearch" type="search" placeholder="Nombre o línea…">
+          <input id="fichaInput" type="text" placeholder="Buscá una ficha o línea…" autocomplete="off">
+          <div id="fichaList" class="fb-list" hidden></div>
         </div>
         <button class="fb-btn" id="fichaPdf">Descargar PDF</button>
         <div class="fichas-note" id="fichaNote"></div>
       </div>
       <div id="ficha-stage"></div>`;
 
-    const sel = document.getElementById("fichaSel");
+    const input = document.getElementById("fichaInput");
+    const list = document.getElementById("fichaList");
     const stage = document.getElementById("ficha-stage");
     const note = document.getElementById("fichaNote");
+
     const draw = i => {
       const d = DOCS[i]; if (!d) return;
-      sel.value = i;
       stage.innerHTML = d.fichas.map(fichaHTML).join("");
       note.innerHTML = d.fichas.length > 1
         ? `Documento <b>${esc(d.ag)}</b> — ${d.fichas.length} hojas. "Descargar PDF" las baja todas en un archivo.`
         : `1 ficha.`;
     };
-    sel.addEventListener("change", e => draw(+e.target.value));
-    document.getElementById("fichaSearch").addEventListener("input", e => {
-      const q = e.target.value.toLowerCase();
-      for (const o of sel.options) o.hidden = q && !o.textContent.toLowerCase().includes(q);
+    const renderList = q => {
+      q = (q || "").toLowerCase().trim();
+      const hits = DOCS.map((d, i) => ({ d, i })).filter(o => !q || o.d.ag.toLowerCase().includes(q)).slice(0, 80);
+      list.innerHTML = hits.length
+        ? hits.map(o => `<div class="fb-item" data-i="${o.i}">${esc(o.d.ag)}${o.d.fichas.length > 1 ? `<span class="fb-badge">${o.d.fichas.length} hojas</span>` : ""}</div>`).join("")
+        : `<div class="fb-empty">Sin resultados</div>`;
+      list.hidden = false;
+    };
+    const pick = i => { input.value = DOCS[i].ag; list.hidden = true; draw(i); };
+
+    input.addEventListener("focus", () => renderList(input.value));
+    input.addEventListener("input", () => renderList(input.value));
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { const f = list.querySelector(".fb-item"); if (f) pick(+f.dataset.i); }
+      else if (e.key === "Escape") { list.hidden = true; input.blur(); }
     });
+    list.addEventListener("mousedown", e => { const it = e.target.closest(".fb-item"); if (it) pick(+it.dataset.i); });
+    input.addEventListener("blur", () => setTimeout(() => { list.hidden = true; }, 150));
+
     document.getElementById("fichaPdf").addEventListener("click", () => {
       document.body.classList.add("fichas-printing");
       window.print();
       setTimeout(() => document.body.classList.remove("fichas-printing"), 500);
     });
-    draw(0);
+
+    pick(0);
     mounted = true;
   }
 

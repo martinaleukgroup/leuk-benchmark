@@ -180,13 +180,25 @@
       c.precio_usd = oc ? oc.precio : c._poOrig;
     });
   }
-  // Rol del usuario (tabla `perfiles`). Jerarquía:
-  //   lector → ve y selecciona | editor → + actualiza precios | admin → + elimina comparaciones
-  const esAdmin = () => ROL === "admin";                       // puede eliminar CUALQUIER comparación / marca
-  const puedePrecios = () => ROL === "editor" || ROL === "admin";
-  // rol 'fichas' = SOLO la página de Fichas técnicas. No ve el benchmark (precios de
-  // competencia / descuentos / márgenes) y ni siquiera se le baja ese archivo (ver bootApp).
-  const esFichas = () => ROL === "fichas";
+  // ---- ROLES ----------------------------------------------------------------
+  // Un solo lugar define qué ve y qué puede hacer cada rol. La navegación, la Home y
+  // los permisos leen de acá, así que sumar un rol o un módulo no se replica por el código.
+  const ROLES = {
+    admin:     { label: "Admin",     mods: ["benchmark", "diseno"], precios: true,  borrarTodo: true },
+    lider:     { label: "Líder",     mods: ["benchmark", "diseno"], precios: true,  borrarTodo: false },
+    comercial: { label: "Comercial", mods: ["benchmark"],           precios: false, borrarTodo: false },
+    diseno:    { label: "Diseño",    mods: ["diseno"],              precios: false, borrarTodo: false },
+  };
+  // Nombres viejos → nuevos, para que nada se rompa antes/después de migrar la tabla.
+  const ROL_ALIAS = { editor: "lider", lector: "comercial", fichas: "diseno" };
+  const rolReal = () => ROL_ALIAS[ROL] || ROL;
+  const SIN_ACCESO = { label: "Sin acceso", mods: [], precios: false, borrarTodo: false };
+  const rolCfg = () => SIN_PERFIL ? SIN_ACCESO : (ROLES[rolReal()] || ROLES.comercial);
+  const puedeVer = mod => rolCfg().mods.includes(mod);
+  const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
+  const puedePrecios = () => rolCfg().precios;
+  // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
+  const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
   // Se compara por EMAIL (identidad real de la sesión), no por nombre.
   const esMio = a => {
@@ -195,13 +207,20 @@
   };
   const puedeBorrar = a => esAdmin() || esMio(a);
   const AVISO_BORRAR = "Sólo podés eliminar las comparaciones que seleccionaste vos. Pedile a un administrador que la quite.";
+  let SIN_PERFIL = false;                            // tiene cuenta pero nadie le asignó rol
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
+    SIN_PERFIL = false;
     try {
       const email = encodeURIComponent(AUTHSES.email() || "");
       const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&email=ilike.${email}`, { headers: AUTHSES.head() });
       if (r.status === 404) ROL = "admin";             // sistema de roles no configurado aún → todos pueden todo (como antes)
-      else if (r.ok) { const rows = await r.json(); if (rows.length) { ROL = rows[0].rol || "lector"; NOMBRE = rows[0].nombre || ""; } else ROL = "lector"; }
+      else if (r.ok) {
+        const rows = await r.json();
+        if (rows.length) { ROL = rows[0].rol || "comercial"; NOMBRE = rows[0].nombre || ""; }
+        // El registro es abierto: tener cuenta NO da acceso. Sin perfil asignado, nada.
+        else { ROL = ""; SIN_PERFIL = true; }
+      }
     } catch (e) { }
     updatePreciosBtn();
   }
@@ -1072,17 +1091,23 @@
     if (!r.ok) throw new Error("No pude cargar los datos (sesión inválida — reingresá)");
     return await r.json();
   }
-  // Vuelve la topbar a modo COMPLETO. Necesario porque el logout no recarga la página:
-  // si venías de una sesión de rol 'fichas', sus restricciones quedaban pegadas al reingresar.
-  function resetModoCompleto() {
-    document.body.classList.remove("solo-fichas");
-    $("#nav").querySelectorAll("button").forEach(b => { b.style.display = ""; });
-    ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = ""; });
+  // Aplica el rol a la interfaz: qué módulos se ven y qué herramientas quedan disponibles.
+  // Se llama SIEMPRE al arrancar (el logout no recarga la página, así que hay que
+  // recalcular desde cero o quedan pegadas las restricciones del usuario anterior).
+  function aplicarRol() {
+    $("#nav").querySelectorAll("button").forEach(b => {
+      const m = b.dataset.mod;
+      b.style.display = (m === "inicio" || puedeVer(m)) ? "" : "none";
+    });
+    const p = $("#btnPrecios"); if (p) p.style.display = puedePrecios() ? "" : "none";
+    const d = $("#btnDesc"); if (d) d.style.display = puedeVer("benchmark") ? "" : "none";
+    document.body.classList.toggle("solo-fichas", !puedeVer("benchmark"));
   }
   async function bootApp() {                     // tras el login: baja datos + arma la app
-    resetModoCompleto();                           // partir siempre de modo completo (ver logout)
     await fetchRol();                              // EL ROL PRIMERO: decide qué se baja
-    if (esFichas()) { bootFichas(); return; }      // usuario solo-fichas: NO se baja el benchmark
+    aplicarRol();
+    if (SIN_PERFIL) { bootSinAcceso(); return; }                  // cuenta sin rol asignado
+    if (!puedeVer("benchmark")) { bootSinBenchmark(); return; }   // NO se le baja el benchmark
     DATA = await fetchData();
     P = DATA.productos || [];
     MARCAS = (DATA.meta && DATA.meta.competidores) || ["Vonderk", "Artelum", "World Leds Go"];
@@ -1105,13 +1130,23 @@
     updatePreciosBtn();                             // el rol ya se resolvió al principio
     rerenderActive();
   }
-  // Arranque para el rol 'fichas': solo la página de Fichas técnicas, sin tocar el benchmark.
-  function bootFichas() {
-    document.body.classList.add("solo-fichas");
-    $("#nav").querySelectorAll("button").forEach(b => { if (b.dataset.mod !== "diseno") b.style.display = "none"; });
-    ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = "none"; });
+  // Arranque para roles SIN benchmark (ej. Diseño): no se descarga ese archivo.
+  function bootSinBenchmark() {
     $("#metaLine").textContent = "";
-    goToPage("fichas");
+    goToPage("inicio");                            // la Home ya se filtra por rol
+  }
+  // Tiene cuenta pero nadie le asignó rol: no ve nada y se le dice por qué.
+  function bootSinAcceso() {
+    $("#metaLine").textContent = "";
+    PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== "inicio"); });
+    $("#subbar").classList.add("hidden");
+    $("#inicio").innerHTML = `<div class="home-hero">
+      <img src="assets/logo-leuk-ilum.png" alt="Leuk Iluminación" class="home-logo">
+      <span class="brand-sub home-tag">Leuk Marketing</span>
+      <h1>Tu cuenta todavía no tiene acceso</h1>
+      <p>Ya podés entrar, pero un administrador tiene que asignarte un rol para que veas
+      el contenido. Escribile a quien administra la plataforma con este mail:
+      <b>${(AUTHSES.email() || "").replace(/[<>]/g, "")}</b>.</p></div>`;
   }
   function wireGate() {
     const go = async () => {
@@ -1285,9 +1320,10 @@
   }
 
   function goToPage(page) {
-    if (esFichas()) page = "fichas";               // rol solo-fichas: nunca sale de Fichas
     if (!PAGES.includes(page)) page = "inicio";
-    const mod = MOD_DE[page] || "inicio";
+    let mod = MOD_DE[page] || "inicio";
+    // sin permiso sobre ese módulo → a Inicio (la Home ya se filtra por rol)
+    if (mod !== "inicio" && !puedeVer(mod)) { page = "inicio"; mod = "inicio"; }
     if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
     $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.mod === mod));
     renderSubbar(mod, page);
@@ -1335,7 +1371,7 @@
         ayuda: ["<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
                 "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
                 "<b>Descargá el PDF</b> — si la línea tiene varias hojas, salen todas en un archivo."] },
-    ].filter(m => MODULOS[m.mod]);
+    ].filter(m => MODULOS[m.mod] && puedeVer(m.mod));   // sólo los módulos del rol
 
     const card = m => {
       const M = MODULOS[m.mod];

@@ -1,7 +1,6 @@
 /* ===================== FICHAS TÉCNICAS · UI ===================== */
 /* Lee window.FICHAS (generado por pipeline/fichas_build.py → fichas-data.js). */
 (function () {
-  const ZIP_URL = "";   // URL de descarga del ZIP con TODAS las fichas (se completa cuando esté en Drive)
   const FICHAS = (window.FICHAS || []).filter(f => f.sku || f.titulo);
   // Documentos: agrupar fichas por "Agrupación de fichas técnicas" (varias hojas por archivo)
   const DOCS = []; const _byAg = {};
@@ -133,6 +132,70 @@
     </div>`;
   }
 
+  // ---------- Descarga masiva: un PDF por documento, todo dentro de un ZIP ----------
+  // Se arma entero en el navegador: se dibuja cada hoja en un canvas y se mete en un PDF.
+  // Las imágenes de Drive lo permiten porque el CDN responde con CORS habilitado.
+  const ESCALA = 1.6;      // ~155 dpi sobre A4: nítido y sin archivos gigantes
+  const CALIDAD = 0.82;
+
+  function esperarImagenes(cont) {
+    const imgs = Array.from(cont.querySelectorAll("img")).filter(i => !i.complete);
+    return Promise.all(imgs.map(i => new Promise(ok => {
+      i.addEventListener("load", ok, { once: true });
+      i.addEventListener("error", ok, { once: true });
+      setTimeout(ok, 12000);                       // que una imagen colgada no frene todo
+    })));
+  }
+
+  async function descargarTodas(btn, note) {
+    if (btn.disabled) return;
+    if (!window.jspdf || !window.JSZip || !window.html2canvas) {
+      alert("No se pudieron cargar las librerías para generar los PDF. Recargá la página (Cmd+Shift+R) e intentá de nuevo.");
+      return;
+    }
+    const textoPrevio = btn.textContent;
+    btn.disabled = true;
+    const zip = new JSZip();
+    const jaula = document.createElement("div");
+    jaula.id = "ficha-export";
+    jaula.className = "f-host";
+    document.body.appendChild(jaula);
+    const t0 = Date.now();
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      for (let i = 0; i < DOCS.length; i++) {
+        const d = DOCS[i];
+        btn.textContent = `Generando ${i + 1}/${DOCS.length}…`;
+        jaula.innerHTML = d.fichas.map(fichaHTML).join("");
+        await esperarImagenes(jaula);
+        const hojas = jaula.querySelectorAll(".f-page");
+        const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+        for (let h = 0; h < hojas.length; h++) {
+          const cv = await html2canvas(hojas[h], { scale: ESCALA, useCORS: true, backgroundColor: "#fff", logging: false });
+          if (h) pdf.addPage();
+          pdf.addImage(cv.toDataURL("image/jpeg", CALIDAD), "JPEG", 0, 0, 210, 297);
+        }
+        zip.file(`Ficha Técnica - ${d.ag}.pdf`, pdf.output("blob"));
+      }
+      btn.textContent = "Comprimiendo…";
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Fichas Técnicas Leuk.zip";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      const min = Math.round((Date.now() - t0) / 60000);
+      note.innerHTML = `Listo: <b>${DOCS.length}</b> fichas en un ZIP de ${(blob.size / 1e6).toFixed(0)} MB` +
+        (min ? ` (tardó ${min} min).` : ".");
+    } catch (e) {
+      alert("Se cortó la generación del ZIP: " + e.message);
+    } finally {
+      jaula.remove();
+      btn.disabled = false;
+      btn.textContent = textoPrevio;
+    }
+  }
+
   let mounted = false;
   function mount() {
     const page = document.getElementById("page-fichas");
@@ -148,7 +211,7 @@
         <button class="fb-btn fb-btn-alt" id="fichaZip">Descargar todas (ZIP)</button>
         <div class="fichas-note" id="fichaNote"></div>
       </div>
-      <div id="ficha-stage"></div>`;
+      <div id="ficha-stage" class="f-host"></div>`;
 
     const input = document.getElementById("fichaInput");
     const list = document.getElementById("fichaList");
@@ -194,10 +257,8 @@
         document.title = tituloPrevio;
       }, 500);
     });
-    document.getElementById("fichaZip").addEventListener("click", () => {
-      if (ZIP_URL) window.open(ZIP_URL, "_blank");
-      else alert("El ZIP con todas las fichas se genera al correr el pipeline (run_all.sh) y se sube a Drive. Falta configurar el link de descarga.");
-    });
+    const btnZip = document.getElementById("fichaZip");
+    btnZip.addEventListener("click", () => descargarTodas(btnZip, note));
 
     pick(0);
     mounted = true;

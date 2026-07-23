@@ -1,5 +1,6 @@
 /* ===================== FICHAS TÉCNICAS ===================== */
-/* Todo va namespaced bajo #ficha-stage / .f-* para no colisionar con el resto de la app. */
+/* Todo va namespaced bajo .f-host / .f-* para no colisionar con el resto de la app.
+   .f-host lo llevan el visor (#ficha-stage) y la jaula de export (#ficha-export). */
 
 @font-face{font-family:'DINLightCond';src:url('assets/fonts/DINNextLTPro-LightCondensed.ttf') format('truetype');font-display:swap}
 @font-face{font-family:'DINCond';src:url('assets/fonts/DINNextLTPro-Condensed.ttf') format('truetype');font-display:swap}
@@ -31,72 +32,76 @@
 
 #ficha-stage{display:flex;flex-direction:column;align-items:center;gap:24px}
 
+/* Jaula de render para la descarga masiva: fuera de pantalla y sin sombras */
+#ficha-export{position:fixed;left:-10000px;top:0;width:210mm;z-index:-1}
+#ficha-export .f-page{box-shadow:none!important;margin:0!important}
+
 /* --- La ficha A4 --- */
-#ficha-stage .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#2c4a9a;--red:#e2231a;--mag:#b5299b;
+.f-host .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#2c4a9a;--red:#e2231a;--mag:#b5299b;
   width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:11mm 12mm 7mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
-#ficha-stage .f-page *{box-sizing:border-box}
+.f-host .f-page *{box-sizing:border-box}
 /* imprimir/PDF respetando fondos (cebra, swatch, fondo de imagen, punto) */
-#ficha-stage .f-page, #ficha-stage .f-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#ficha-stage .f-head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px}
-#ficha-stage .f-name{font-family:'DINLightCond',sans-serif;font-size:52px;line-height:.9;letter-spacing:3px;font-weight:300}
-#ficha-stage .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
-#ficha-stage .f-logo{height:56px;width:auto;display:block}
-#ficha-stage .f-hr{height:1px;background:var(--ink);margin:0 0 12px}
-#ficha-stage .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:11px}
-#ficha-stage .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
-#ficha-stage .f-photo{height:255px;background:#ececec}
-#ficha-stage .f-drawing{height:255px}
-#ficha-stage .f-imgbox img{max-width:100%;max-height:100%;object-fit:contain}
-#ficha-stage .f-ph{border:1px dashed #c4c4c4;color:#b0b0b0;flex-direction:column;gap:6px;text-align:center;font-family:'DINCond',sans-serif;font-size:9px;letter-spacing:1px;padding:8px}
-#ficha-stage .f-ph .f-ic{font-size:22px;opacity:.5}
-#ficha-stage .f-ph code{font-family:monospace;font-size:8px;color:#8a8a8a}
-#ficha-stage .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
-#ficha-stage .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
-#ficha-stage .f-dots{display:inline-flex;gap:5px;align-items:center}
+.f-host .f-page, .f-host .f-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.f-host .f-head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px}
+.f-host .f-name{font-family:'DINLightCond',sans-serif;font-size:52px;line-height:.9;letter-spacing:3px;font-weight:300}
+.f-host .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
+.f-host .f-logo{height:56px;width:auto;display:block}
+.f-host .f-hr{height:1px;background:var(--ink);margin:0 0 12px}
+.f-host .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:11px}
+.f-host .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.f-host .f-photo{height:255px;background:#ececec}
+.f-host .f-drawing{height:255px}
+.f-host .f-imgbox img{max-width:100%;max-height:100%;object-fit:contain}
+.f-host .f-ph{border:1px dashed #c4c4c4;color:#b0b0b0;flex-direction:column;gap:6px;text-align:center;font-family:'DINCond',sans-serif;font-size:9px;letter-spacing:1px;padding:8px}
+.f-host .f-ph .f-ic{font-size:22px;opacity:.5}
+.f-host .f-ph code{font-family:monospace;font-size:8px;color:#8a8a8a}
+.f-host .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
+.f-host .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
+.f-host .f-dots{display:inline-flex;gap:5px;align-items:center}
 /* Ícono de color: anillo exterior + aire + disco interior (guía de íconos de diseño) */
-#ficha-stage .f-dot{width:15px;height:15px;border-radius:50%;border:1px solid var(--ink);background:#fff;
+.f-host .f-dot{width:15px;height:15px;border-radius:50%;border:1px solid var(--ink);background:#fff;
   display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:none}
-#ficha-stage .f-dot-in{width:11px;height:11px;border-radius:50%;display:block;box-sizing:border-box}
-#ficha-stage .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
-#ficha-stage .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
-#ficha-stage .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
-#ficha-stage .f-spec td{padding:5px 10px;line-height:1.15;border:none}
-#ficha-stage .f-spec td.k{color:var(--ink);width:40%}
-#ficha-stage .f-spec td.k small{font-size:7.6px}
-#ficha-stage .f-spec tr:nth-child(even){background:var(--zebra)}
+.f-host .f-dot-in{width:11px;height:11px;border-radius:50%;display:block;box-sizing:border-box}
+.f-host .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
+.f-host .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
+.f-host .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
+.f-host .f-spec td{padding:5px 10px;line-height:1.15;border:none}
+.f-host .f-spec td.k{color:var(--ink);width:40%}
+.f-host .f-spec td.k small{font-size:7.6px}
+.f-host .f-spec tr:nth-child(even){background:var(--zebra)}
 /* Calado: ícono + medida debajo de la tabla, con nota al pie opcional */
-#ficha-stage .f-calado{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:9.6px}
-#ficha-stage .f-cal-ic{width:20px;height:auto;flex:none;display:block}
-#ficha-stage .f-calado-nota{font-size:8px;color:var(--gray);line-height:1.45;margin-top:6px}
-#ficha-stage .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
-#ficha-stage .f-curve{height:150px}
-#ficha-stage .f-ctitle{font-family:'DINCond',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1px;line-height:1.25;text-transform:uppercase;margin-bottom:7px}
-#ficha-stage .f-legend{font-size:8.5px;line-height:1.7}
-#ficha-stage .f-legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
-#ficha-stage .f-note{font-size:8px;color:var(--gray);line-height:1.4}
-#ficha-stage .f-buttons{display:flex;gap:26px;margin-top:4px}
-#ficha-stage .f-btn{text-align:center;text-decoration:none;color:var(--ink);max-width:95px}
-#ficha-stage .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
-#ficha-stage .f-btn .lb{font-family:'DINCond',sans-serif;font-size:8.5px;letter-spacing:.5px;line-height:1.15;margin-top:5px;text-transform:uppercase}
-#ficha-stage .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
+.f-host .f-calado{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:9.6px}
+.f-host .f-cal-ic{width:20px;height:auto;flex:none;display:block}
+.f-host .f-calado-nota{font-size:8px;color:var(--gray);line-height:1.45;margin-top:6px}
+.f-host .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
+.f-host .f-curve{height:150px}
+.f-host .f-ctitle{font-family:'DINCond',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1px;line-height:1.25;text-transform:uppercase;margin-bottom:7px}
+.f-host .f-legend{font-size:8.5px;line-height:1.7}
+.f-host .f-legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
+.f-host .f-note{font-size:8px;color:var(--gray);line-height:1.4}
+.f-host .f-buttons{display:flex;gap:26px;margin-top:4px}
+.f-host .f-btn{text-align:center;text-decoration:none;color:var(--ink);max-width:95px}
+.f-host .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
+.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:8.5px;letter-spacing:.5px;line-height:1.15;margin-top:5px;text-transform:uppercase}
+.f-host .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
 /* --- Hoja de accesorios (grilla) --- */
-#ficha-stage .f-acc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 26px;
+.f-host .f-acc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 26px;
   flex:1;align-content:start;margin-top:16px}
-#ficha-stage .f-acc-cell{display:flex;flex-direction:column;min-width:0}
-#ficha-stage .f-acc-img{height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 6px}
-#ficha-stage .f-acc-img img{max-width:100%;max-height:100%;object-fit:contain}
-#ficha-stage .f-acc-cap{border-top:1px solid var(--ink);margin-top:8px;padding-top:6px;text-align:center;
+.f-host .f-acc-cell{display:flex;flex-direction:column;min-width:0}
+.f-host .f-acc-img{height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 6px}
+.f-host .f-acc-img img{max-width:100%;max-height:100%;object-fit:contain}
+.f-host .f-acc-cap{border-top:1px solid var(--ink);margin-top:8px;padding-top:6px;text-align:center;
   font-family:'DINCond',sans-serif;font-size:7.6px;letter-spacing:.5px;text-transform:uppercase;line-height:1.65;
   word-wrap:break-word;overflow-wrap:break-word}
-#ficha-stage .f-acc-grid.is-dense{gap:12px 20px}
-#ficha-stage .f-acc-grid.is-dense .f-acc-img{height:92px}
-#ficha-stage .f-acc-grid.is-dense .f-acc-cap{font-size:7px;line-height:1.5}
+.f-host .f-acc-grid.is-dense{gap:12px 20px}
+.f-host .f-acc-grid.is-dense .f-acc-img{height:92px}
+.f-host .f-acc-grid.is-dense .f-acc-cap{font-size:7px;line-height:1.5}
 
-#ficha-stage .f-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:8px}
-#ficha-stage .f-web{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:1px}
-#ficha-stage .f-seals{display:flex;align-items:center;gap:12px}
-#ficha-stage .f-seal{height:23px}
-#ficha-stage .f-sealS{width:34px;height:26px}
+.f-host .f-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:8px}
+.f-host .f-web{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:1px}
+.f-host .f-seals{display:flex;align-items:center;gap:12px}
+.f-host .f-seal{height:23px}
+.f-host .f-sealS{width:34px;height:26px}
 
 /* --- Impresión: aislar la ficha (gated por body.fichas-printing) --- */
 @media print{
@@ -106,7 +111,7 @@
   body.fichas-printing .f-page{box-shadow:none!important;margin:0!important}
   body.fichas-printing #page-fichas .fichas-bar,body.fichas-printing #page-fichas .fichas-note{display:none!important}
   body.fichas-printing #ficha-stage{gap:0}
-  body.fichas-printing #ficha-stage .f-page{break-after:page;page-break-after:always}
-  body.fichas-printing #ficha-stage .f-page:last-child{break-after:auto;page-break-after:auto}
+  body.fichas-printing .f-host .f-page{break-after:page;page-break-after:always}
+  body.fichas-printing .f-host .f-page:last-child{break-after:auto;page-break-after:auto}
   @page{size:A4;margin:0}
 }

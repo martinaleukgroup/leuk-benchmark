@@ -174,6 +174,16 @@
           const cv = await html2canvas(hojas[h], { scale: ESCALA, useCORS: true, backgroundColor: "#fff", logging: false });
           if (h) pdf.addPage();
           pdf.addImage(cv.toDataURL("image/jpeg", CALIDAD), "JPEG", 0, 0, 210, 297);
+          // la hoja quedó como imagen → los botones LDT/CAD/manual dejarían de ser
+          // clicleables: se les vuelve a poner el link encima, en la misma posición
+          const caja = hojas[h].getBoundingClientRect();
+          const aMM = 210 / caja.width;                 // px → mm
+          hojas[h].querySelectorAll("a[href]").forEach(a => {
+            if (!a.href) return;
+            const r = a.getBoundingClientRect();
+            pdf.link((r.left - caja.left) * aMM, (r.top - caja.top) * aMM,
+                     r.width * aMM, r.height * aMM, { url: a.href });
+          });
         }
         zip.file(`Ficha Técnica - ${d.ag}.pdf`, pdf.output("blob"));
       }

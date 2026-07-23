@@ -153,9 +153,11 @@
     const list = document.getElementById("fichaList");
     const stage = document.getElementById("ficha-stage");
     const note = document.getElementById("fichaNote");
+    let actual = null;   // documento en pantalla (da el nombre del PDF al descargar)
 
     const draw = i => {
       const d = DOCS[i]; if (!d) return;
+      actual = d;
       stage.innerHTML = d.fichas.map(fichaHTML).join("");
       note.innerHTML = d.fichas.length > 1
         ? `Documento <b>${esc(d.ag)}</b> — ${d.fichas.length} hojas. "Descargar PDF" las baja todas en un archivo.`
@@ -181,9 +183,15 @@
     input.addEventListener("blur", () => setTimeout(() => { list.hidden = true; }, 150));
 
     document.getElementById("fichaPdf").addEventListener("click", () => {
+      // el navegador propone el <title> como nombre del archivo al "Guardar como PDF"
+      const tituloPrevio = document.title;
+      if (actual) document.title = `Ficha Técnica - ${actual.ag}`;
       document.body.classList.add("fichas-printing");
       window.print();
-      setTimeout(() => document.body.classList.remove("fichas-printing"), 500);
+      setTimeout(() => {
+        document.body.classList.remove("fichas-printing");
+        document.title = tituloPrevio;
+      }, 500);
     });
     document.getElementById("fichaZip").addEventListener("click", () => {
       if (ZIP_URL) window.open(ZIP_URL, "_blank");

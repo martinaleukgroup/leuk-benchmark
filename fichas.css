@@ -64,6 +64,10 @@
 #ficha-stage .f-spec td.k{color:var(--ink);width:40%}
 #ficha-stage .f-spec td.k small{font-size:7.6px}
 #ficha-stage .f-spec tr:nth-child(even){background:var(--zebra)}
+/* Calado: ícono + medida debajo de la tabla, con nota al pie opcional */
+#ficha-stage .f-calado{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:9.6px}
+#ficha-stage .f-cal-ic{width:19px;height:18px;flex:none}
+#ficha-stage .f-calado-nota{font-size:8px;color:var(--gray);line-height:1.45;margin-top:6px}
 #ficha-stage .f-swatch{height:11px;width:11px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px;border:1px solid rgba(0,0,0,.25)}
 #ficha-stage .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
 #ficha-stage .f-curve{height:150px}

@@ -18,6 +18,11 @@
   });
   const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ICON = "assets/ficha/";
+  // Ícono de calado (dibujado en SVG). Reemplazable por el original de diseño.
+  const CALADO_SVG = `<svg class="f-cal-ic" viewBox="0 0 26 24" fill="none" stroke="#1a1a1a"
+    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 4.5h18M6 9h16M9 13.5h13M12 18h10"/>
+    <path d="M4.5 12v7.5M2 17l2.5 3 2.5-3"/></svg>`;
 
   window._fichaImgErr = function (img, label, fname) {
     const box = img.parentNode; box.classList.add("f-ph");
@@ -99,6 +104,12 @@
           </div>` : "";
     const fotoBlock = (polarBlock || conoBlock) ? `<div class="f-h">Datos Fotométricos</div>${polarBlock}${conoBlock}` : "";
 
+    // Calado: ícono + "Ø80-85 x 70 mm*" debajo de la tabla, con la nota al pie si hay asterisco
+    const caladoBlock = f.calado ? `
+          <div class="f-calado">${CALADO_SVG}<span>${esc(f.calado.txt)}</span></div>` +
+      (f.calado.nota ? `<div class="f-calado-nota">* Profundidad de calado total aproximada. Considera dicroica y zócalo estándar.</div>` : "")
+      : "";
+
     return `<div class="f-page">
       <div class="f-head">
         <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
@@ -110,6 +121,7 @@
         <div>
           <div class="f-h">Especificaciones Técnicas <span class="f-dots">${dots}</span></div>
           <table class="f-spec">${rows}</table>
+          ${caladoBlock}
         </div>
         <div>
           ${fotoBlock}

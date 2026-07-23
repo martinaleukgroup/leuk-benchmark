@@ -18,12 +18,9 @@
   });
   const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ICON = "assets/ficha/";
-  // Ícono "Dimensión de Calado" (versión sin recuadro, la de uso en reducciones).
-  const CALADO_SVG = `<svg class="f-cal-ic" viewBox="0 0 34 30" fill="none" stroke="#1a1a1a"
-    stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2.5 19.5 L14.5 11.5 L31.5 18.5 L19 26.5 Z"/>
-    <path d="M14.5 11.5 L12.5 2.5"/>
-    <path d="M18 2.5 L13.5 5 L18.5 7.5 L13.5 10 L18.5 12.5 L15.2 14.8"/></svg>`;
+  // Ícono "Dimensión de Calado" — original de la guía de diseño (versión sin recuadro,
+  // la indicada "para uso en reducciones").
+  const CALADO_SVG = `<img class="f-cal-ic" src="${"assets/ficha/"}calado.png" alt="">`;
 
   window._fichaImgErr = function (img, label, fname) {
     const box = img.parentNode; box.classList.add("f-ph");

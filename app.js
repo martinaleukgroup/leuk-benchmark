@@ -355,7 +355,8 @@
   }
   function updateNavCount() {
     const n = Object.keys(AUTH).length;
-    $("#navCount").textContent = n ? n : "";
+    // El contador vive en la sub-barra de Benchmark: no existe si estás en Inicio o Diseño.
+    const el = $("#navCount"); if (el) el.textContent = n ? n : "";
   }
   const authBtn = (p, prop) => {
     const on = isAuth(keyOf(p.sku, prop));
@@ -1107,7 +1108,7 @@
   // Arranque para el rol 'fichas': solo la página de Fichas técnicas, sin tocar el benchmark.
   function bootFichas() {
     document.body.classList.add("solo-fichas");
-    $("#nav").querySelectorAll("button").forEach(b => { if (b.dataset.page !== "fichas") b.style.display = "none"; });
+    $("#nav").querySelectorAll("button").forEach(b => { if (b.dataset.mod !== "diseno") b.style.display = "none"; });
     ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = "none"; });
     $("#metaLine").textContent = "";
     goToPage("fichas");
@@ -1249,10 +1250,42 @@
 
   /* ===================== NAV ===================== */
   const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas"];
+  // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
+  // Sumar una página a Diseño = agregar una línea acá, nada más.
+  const MODULOS = {
+    benchmark: {
+      label: "Benchmark",
+      pages: [{ p: "comparaciones", t: "Catálogo" },
+              { p: "resultados", t: "Comparaciones", count: true },
+              { p: "decisiones", t: "Insights" }],
+    },
+    diseno: {
+      label: "Diseño",
+      pages: [{ p: "fichas", t: "Fichas técnicas" }],
+    },
+  };
+  const MOD_DE = {};                                // página -> módulo al que pertenece
+  Object.entries(MODULOS).forEach(([m, o]) => o.pages.forEach(x => { MOD_DE[x.p] = m; }));
+  const ULTIMA_PAG = {};                            // módulo -> última página visitada (para volver donde estabas)
+
+  function renderSubbar(mod, page) {
+    const bar = $("#subbar"); if (!bar) return;
+    const m = MODULOS[mod];
+    if (!m) { bar.classList.add("hidden"); bar.innerHTML = ""; return; }   // Inicio no tiene sub-barra
+    bar.classList.remove("hidden");
+    bar.innerHTML = `<span class="sb-lbl">${m.label}</span>` + m.pages.map(x =>
+      `<button class="sb-item ${x.p === page ? "on" : ""}" data-page="${x.p}">${x.t}` +
+      (x.count ? ` <span id="navCount" class="nav-count"></span>` : "") + `</button>`).join("");
+    updateNavCount();
+  }
+
   function goToPage(page) {
     if (esFichas()) page = "fichas";               // rol solo-fichas: nunca sale de Fichas
     if (!PAGES.includes(page)) page = "inicio";
-    $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.page === page));
+    const mod = MOD_DE[page] || "inicio";
+    if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
+    $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.mod === mod));
+    renderSubbar(mod, page);
     PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== page); });
     if (page === "inicio") renderInicio();
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
@@ -1260,7 +1293,17 @@
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     window.scrollTo({ top: 0 });
   }
-  $("#nav").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) goToPage(b.dataset.page); });
+  // nivel 1: click en módulo → su última página vista (o la primera)
+  $("#nav").addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if (!b) return;
+    const mod = b.dataset.mod;
+    if (mod === "inicio" || !MODULOS[mod]) return goToPage("inicio");
+    goToPage(ULTIMA_PAG[mod] || MODULOS[mod].pages[0].p);
+  });
+  // nivel 2: click en página del módulo
+  $("#subbar").addEventListener("click", ev => {
+    const b = ev.target.closest(".sb-item"); if (b) goToPage(b.dataset.page);
+  });
 
   /* ===================== INICIO (home) ===================== */
   function renderInicio() {

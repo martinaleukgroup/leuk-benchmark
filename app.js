@@ -184,7 +184,7 @@
   // Un solo lugar define qué ve y qué puede hacer cada rol. La navegación, la Home y
   // los permisos leen de acá, así que sumar un rol o un módulo no se replica por el código.
   const ROLES = {
-    admin:     { label: "Admin",     mods: ["benchmark", "diseno"], precios: true,  borrarTodo: true },
+    admin:     { label: "Admin",     mods: ["benchmark", "diseno", "usuarios"], precios: true, borrarTodo: true },
     lider:     { label: "Líder",     mods: ["benchmark", "diseno"], precios: true,  borrarTodo: false },
     comercial: { label: "Comercial", mods: ["benchmark"],           precios: false, borrarTodo: false },
     diseno:    { label: "Diseño",    mods: ["diseno"],              precios: false, borrarTodo: false },
@@ -1284,7 +1284,7 @@
   }
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1297,6 +1297,10 @@
     diseno: {
       label: "Diseño",
       pages: [{ p: "fichas", t: "Fichas técnicas" }],
+    },
+    usuarios: {                                     // sólo admin (ver ROLES)
+      label: "Usuarios",
+      pages: [{ p: "usuarios", t: "Equipo" }],
     },
   };
   const MOD_DE = {};                                // página -> módulo al que pertenece
@@ -1332,6 +1336,7 @@
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
     if (page === "fichas" && window.renderFichas) window.renderFichas();
+    if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
   // nivel 1: click en módulo → su última página vista (o la primera)
@@ -1345,6 +1350,125 @@
   $("#subbar").addEventListener("click", ev => {
     const b = ev.target.closest(".sb-item"); if (b) goToPage(b.dataset.page);
   });
+
+  /* ===================== USUARIOS (panel, sólo admin) ===================== */
+  // Los roles/nombres se editan directo contra la tabla `perfiles` (RLS: sólo admin escribe).
+  // Crear o eliminar la CUENTA de acceso necesita la llave maestra, que no puede estar en el
+  // navegador → eso pasa por la función `gestion-usuarios` del servidor.
+  const FN_USUARIOS = `${SB.url}/functions/v1/gestion-usuarios`;
+  const ROL_OPCIONES = [
+    ["admin", "Admin — todo, incluido gestionar usuarios"],
+    ["lider", "Líder — todo, pero borra sólo lo suyo"],
+    ["comercial", "Comercial — sólo Benchmark, sin precios"],
+    ["diseno", "Diseño — sólo Fichas técnicas"],
+  ];
+  async function llamarFn(accion, datos) {
+    const r = await fetch(FN_USUARIOS, {
+      method: "POST", headers: AUTHSES.head(),
+      body: JSON.stringify(Object.assign({ accion }, datos)),
+    });
+    if (r.status === 404) throw new Error("FALTA_FN");
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "No se pudo completar la acción");
+    return d;
+  }
+  async function traerPerfiles() {
+    const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&order=rol`, { headers: AUTHSES.head() });
+    return r.ok ? await r.json() : [];
+  }
+  async function renderUsuarios() {
+    const cont = $("#usuarios"); if (!cont) return;
+    if (!esAdmin()) { cont.innerHTML = `<div class="empty">Sólo un administrador puede ver esta sección.</div>`; return; }
+    cont.innerHTML = `<div class="empty-mini">Cargando equipo…</div>`;
+    const perfiles = await traerPerfiles();
+    const yo = (AUTHSES.email() || "").toLowerCase();
+    const rolLabel = r => (ROLES[ROL_ALIAS[r] || r] || {}).label || r;
+
+    cont.innerHTML = `
+      <div class="res-intro">Gestioná quién entra a <b>Leuk Marketing</b> y qué ve cada uno.
+        Los cambios de rol se aplican la próxima vez que la persona entre.</div>
+      <div class="us-add">
+        <h3>Agregar persona</h3>
+        <div class="us-form">
+          <input id="usEmail" type="email" placeholder="mail@leukiluminacion.com.ar" autocomplete="off">
+          <input id="usNombre" type="text" placeholder="Nombre y apellido" autocomplete="off">
+          <select id="usRol">${ROL_OPCIONES.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
+          <input id="usPass" type="text" placeholder="Contraseña temporal (mín. 8)" autocomplete="off">
+          <button id="usAdd" class="btn-primary">Crear acceso</button>
+        </div>
+        <div id="usMsg" class="us-msg"></div>
+      </div>
+      <table class="us-tabla">
+        <thead><tr><th>Persona</th><th>Rol</th><th>Ve</th><th></th></tr></thead>
+        <tbody>${perfiles.map(p => {
+          const cfg = ROLES[ROL_ALIAS[p.rol] || p.rol] || {};
+          const soyYo = String(p.email).toLowerCase() === yo;
+          return `<tr data-email="${p.email}">
+            <td><b>${(p.nombre || "—").replace(/[<>]/g, "")}</b><br><span class="leuk-fam">${p.email}</span>
+              ${soyYo ? ' <span class="tag-sug">vos</span>' : ""}</td>
+            <td><select class="us-rol" ${soyYo ? "disabled" : ""}>
+              ${ROL_OPCIONES.map(([v, t]) => `<option value="${v}" ${(ROL_ALIAS[p.rol] || p.rol) === v ? "selected" : ""}>${rolLabel(v)}</option>`).join("")}
+            </select></td>
+            <td class="leuk-fam">${(cfg.mods || []).map(m => (MODULOS[m] || {}).label || m).join(" · ") || "—"}</td>
+            <td class="us-acc">${soyYo ? "" :
+              `<button class="btn-ghost us-pass" title="Asignar una contraseña nueva">🔑</button>
+               <button class="btn-ghost us-del" title="Quitar acceso">✕</button>`}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>`;
+
+    const msg = (t, ok) => { const m = $("#usMsg"); m.textContent = t; m.className = "us-msg " + (ok ? "px-ok" : "px-err"); };
+
+    // cambiar rol → directo a la tabla
+    cont.querySelectorAll(".us-rol").forEach(sel => sel.onchange = async () => {
+      const email = sel.closest("tr").dataset.email;
+      const r = await fetch(`${SB.url}/rest/v1/perfiles?email=eq.${encodeURIComponent(email)}`, {
+        method: "PATCH", headers: Object.assign(AUTHSES.head(), { Prefer: "return=representation" }),
+        body: JSON.stringify({ rol: sel.value }),
+      });
+      const d = await r.json().catch(() => []);
+      if (r.ok && d.length) msg(`Listo: ${email} ahora es ${sel.value}.`, true);
+      else msg("No se pudo cambiar el rol (¿corriste el SQL de permisos?).", false);
+    });
+
+    // crear acceso (necesita la función del servidor)
+    $("#usAdd").onclick = async () => {
+      const email = $("#usEmail").value.trim(), nombre = $("#usNombre").value.trim();
+      const rol = $("#usRol").value, pass = $("#usPass").value;
+      if (!email || !pass) return msg("Completá el mail y una contraseña temporal.", false);
+      $("#usAdd").disabled = true; msg("Creando…", true);
+      try {
+        await llamarFn("crear", { email, nombre, rol, password: pass });
+        msg(`✓ Listo. Pasale a ${nombre || email} su mail y la contraseña temporal.`, true);
+        renderUsuarios();
+      } catch (e) {
+        msg(e.message === "FALTA_FN"
+          ? "Falta desplegar la función 'gestion-usuarios' en Supabase para crear cuentas. Mientras tanto podés crear la cuenta en Supabase y asignarle el rol acá."
+          : e.message, false);
+      } finally { $("#usAdd").disabled = false; }
+    };
+
+    // contraseña nueva / quitar acceso
+    cont.querySelectorAll(".us-pass").forEach(b => b.onclick = async () => {
+      const email = b.closest("tr").dataset.email;
+      const p = prompt(`Contraseña nueva para ${email} (mín. 8):`);
+      if (!p) return;
+      try { await llamarFn("password", { email, password: p }); msg(`✓ Contraseña actualizada para ${email}.`, true); }
+      catch (e) { msg(e.message === "FALTA_FN" ? "Falta desplegar la función 'gestion-usuarios'." : e.message, false); }
+    });
+    cont.querySelectorAll(".us-del").forEach(b => b.onclick = async () => {
+      const email = b.closest("tr").dataset.email;
+      if (!confirm(`¿Quitar el acceso de ${email}?\n\nSe elimina su cuenta y su rol.`)) return;
+      try { await llamarFn("eliminar", { email }); msg(`✓ ${email} ya no tiene acceso.`, true); renderUsuarios(); }
+      catch (e) {
+        if (e.message !== "FALTA_FN") return msg(e.message, false);
+        // sin función: al menos se le saca el rol → queda sin acceso a nada
+        const r = await fetch(`${SB.url}/rest/v1/perfiles?email=eq.${encodeURIComponent(email)}`, { method: "DELETE", headers: AUTHSES.head() });
+        if (r.ok) { msg(`✓ Se le quitó el rol a ${email} (queda sin acceso). La cuenta sigue existiendo en Supabase.`, true); renderUsuarios(); }
+        else msg("No se pudo quitar el acceso.", false);
+      }
+    });
+  }
 
   /* ===================== INICIO (home) ===================== */
   function renderInicio() {
@@ -1371,6 +1495,12 @@
         ayuda: ["<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
                 "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
                 "<b>Descargá el PDF</b> — si la línea tiene varias hojas, salen todas en un archivo."] },
+      { mod: "usuarios", ic: "👥",
+        d: "Quién entra a la plataforma y qué ve cada uno.",
+        stats: [],
+        ayuda: ["<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
+                "<b>Cambiá el rol</b> cuando cambie de equipo — se aplica la próxima vez que entre.",
+                "<b>Quitá el acceso</b> con ✕: se elimina su cuenta y su rol."] },
     ].filter(m => MODULOS[m.mod] && puedeVer(m.mod));   // sólo los módulos del rol
 
     const card = m => {

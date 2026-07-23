@@ -412,6 +412,26 @@ body.locked .topbar,body.locked main,body.locked .foot{display:none}
 .home-mod-stats span{font-size:11px;color:var(--gray-soft)}
 .home-mod-pages{font-size:12px;color:var(--gray-soft);padding-top:9px;border-top:1px dashed var(--line)}
 
+/* ---- Panel de usuarios (sólo admin) ---- */
+.us-add{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.us-add h3{margin:0 0 12px;font-size:16px}
+.us-form{display:grid;grid-template-columns:1.4fr 1.2fr 1.6fr 1.2fr auto;gap:9px;align-items:center}
+.us-form input,.us-form select{padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg);font-size:13px;font-family:var(--font-body);min-width:0}
+.us-msg{font-size:12.5px;margin-top:10px;min-height:1em}
+.us-msg.px-ok{color:var(--ok)} .us-msg.px-err{color:var(--no)}
+.us-tabla{width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13.5px}
+.us-tabla th{background:var(--olive-pale);font-family:var(--font-title);font-weight:600;
+  color:var(--gray);text-align:left;padding:10px 14px;font-size:12.5px}
+.us-tabla td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:middle}
+.us-tabla .us-rol{padding:6px 9px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg);font-size:12.5px;font-family:var(--font-body)}
+.us-tabla .us-rol:disabled{opacity:.55;cursor:not-allowed}
+.us-acc{white-space:nowrap;text-align:right}
+.us-acc .btn-ghost{padding:5px 10px;margin-left:5px}
+@media(max-width:760px){ .us-form{grid-template-columns:1fr} .us-tabla{font-size:12.5px} }
+
 .home-help{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:20px}
 .home-help h2{font-size:18px;margin:0 0 12px}
 .home-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}

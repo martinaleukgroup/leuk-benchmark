@@ -61,7 +61,8 @@
       ? `<div class="f-imgbox ${cls}"><img src="${esc(url)}" alt="" onerror="window._fichaImgErr(this,'${label}','${esc(fname || "")}')"></div>`
       : `<div class="f-imgbox ${cls} f-ph">${ph(label, fname)}</div>`;
     const foto = media(f.foto_url, "f-photo", "FOTO DE PRODUCTO", a.foto);
-    const dibujo = media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo);
+    // si no hay dibujo técnico no se muestra el recuadro: la foto queda sola
+    const dibujo = a.dibujo_url ? media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo) : "";
     const polar = media(a.curva_polar_url, "f-curve", "", a.curva_polar);
     const cono = media(a.curva_cono_url, "f-curve", "", a.curva_cono);
     // Íconos de color: anillo exterior + disco interior; los bicolores van partidos al medio

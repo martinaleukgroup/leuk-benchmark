@@ -40,8 +40,17 @@
     const dibujo = media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo);
     const polar = media(a.curva_polar_url, "f-curve", "", a.curva_polar);
     const cono = media(a.curva_cono_url, "f-curve", "", a.curva_cono);
-    const cols = (f.colores && f.colores.length) ? f.colores : [{ hex: "#1a1a1a", light: false }];
-    const dots = cols.map(c => `<span class="f-dot" style="${c.light ? "background:#fff;border:1.4px solid #1a1a1a" : "background:" + esc(c.hex)}"></span>`).join("");
+    // Íconos de color: anillo exterior + disco interior; los bicolores van partidos al medio
+    // (según la guía "Íconos y dibujos índice" de diseño).
+    const cols = (f.colores && f.colores.length) ? f.colores : [{ hexes: ["#1a1a1a"], light: false }];
+    const dots = cols.map(c => {
+      const hs = (c.hexes && c.hexes.length) ? c.hexes : (c.hex ? [c.hex] : []);
+      if (!hs.length) return "";   // color sin dato → no se dibuja el ícono
+      const fill = hs.length > 1
+        ? `background:linear-gradient(90deg,${esc(hs[0])} 0 50%,${esc(hs[1])} 50% 100%)`
+        : `background:${esc(hs[0])}`;
+      return `<span class="f-dot"><span class="f-dot-in${c.light ? " is-light" : ""}" style="${fill}"></span></span>`;
+    }).join("");
     // Información complementaria: solo los botones cuyos archivos existen
     const btns = [];
     if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>`);

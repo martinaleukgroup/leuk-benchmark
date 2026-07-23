@@ -53,7 +53,11 @@
 #ficha-stage .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
 #ficha-stage .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
 #ficha-stage .f-dots{display:inline-flex;gap:5px;align-items:center}
-#ficha-stage .f-dot{width:12px;height:12px;border-radius:50%;background:var(--ink);display:inline-block;box-sizing:border-box}
+/* Ícono de color: anillo exterior + aire + disco interior (guía de íconos de diseño) */
+#ficha-stage .f-dot{width:15px;height:15px;border-radius:50%;border:1px solid var(--ink);background:#fff;
+  display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:none}
+#ficha-stage .f-dot-in{width:11px;height:11px;border-radius:50%;display:block;box-sizing:border-box}
+#ficha-stage .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
 #ficha-stage .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
 #ficha-stage .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
 #ficha-stage .f-spec td{padding:5px 10px;line-height:1.15;border:none}

@@ -24,6 +24,8 @@
 .fb-empty{padding:11px 12px;color:#8a8f82;font-size:13px}
 .fichas-bar .fb-btn{margin-left:auto;background:#676B55;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
 .fichas-bar .fb-btn:hover{background:#565a45}
+.fichas-bar .fb-btn-alt{margin-left:10px;background:#fff;color:#676B55;border:1.5px solid #676B55}
+.fichas-bar .fb-btn-alt:hover{background:#f0f1ec}
 .fichas-note{font-size:12px;color:#8a8f82;width:100%}
 .fichas-note b{color:#c08a2e}
 

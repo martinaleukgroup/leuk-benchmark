@@ -1,6 +1,7 @@
 /* ===================== FICHAS TÉCNICAS · UI ===================== */
 /* Lee window.FICHAS (generado por pipeline/fichas_build.py → fichas-data.js). */
 (function () {
+  const ZIP_URL = "";   // URL de descarga del ZIP con TODAS las fichas (se completa cuando esté en Drive)
   const FICHAS = (window.FICHAS || []).filter(f => f.sku || f.titulo);
   // Documentos: agrupar fichas por "Agrupación de fichas técnicas" (varias hojas por archivo)
   const DOCS = []; const _byAg = {};
@@ -102,7 +103,8 @@
           <input id="fichaInput" type="text" placeholder="Buscá por nombre, línea o SKU…" autocomplete="off">
           <div id="fichaList" class="fb-list" hidden></div>
         </div>
-        <button class="fb-btn" id="fichaPdf">Descargar PDF</button>
+        <button class="fb-btn" id="fichaPdf">Descargar esta ficha</button>
+        <button class="fb-btn fb-btn-alt" id="fichaZip">Descargar todas (ZIP)</button>
         <div class="fichas-note" id="fichaNote"></div>
       </div>
       <div id="ficha-stage"></div>`;
@@ -143,6 +145,10 @@
       window.print();
       setTimeout(() => document.body.classList.remove("fichas-printing"), 500);
     });
+    document.getElementById("fichaZip").addEventListener("click", () => {
+      if (ZIP_URL) window.open(ZIP_URL, "_blank");
+      else alert("El ZIP con todas las fichas se genera al correr el pipeline (run_all.sh) y se sube a Drive. Falta configurar el link de descarga.");
+    });
 
     pick(0);
     mounted = true;
@@ -150,4 +156,7 @@
 
   // Expuesto para goToPage('fichas')
   window.renderFichas = function () { if (!mounted) mount(); };
+  // Helpers para el exportador de PDFs (pipeline/fichas_export_pdf.py)
+  window._fichasDocs = DOCS;
+  window._fichaHTML = fichaHTML;
 })();

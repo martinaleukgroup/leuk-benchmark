@@ -7,15 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=116">
-<link rel="stylesheet" href="fichas.css?v=116">
+<link rel="stylesheet" href="styles.css?v=117">
+<link rel="stylesheet" href="fichas.css?v=117">
 </head>
 <body class="locked">
 
 <!-- PANTALLA DE INGRESO (cubre toda la app hasta iniciar sesión) -->
 <div id="gate" class="gate">
   <div class="gate-card">
-    <img src="assets/logo-leuk-ilum.png?v=116" alt="Leuk Iluminación" class="gate-logo">
+    <img src="assets/logo-leuk-ilum.png?v=117" alt="Leuk Iluminación" class="gate-logo">
     <h1>Leuk Marketing</h1>
     <p class="gate-sub">Ingresá con tu usuario para acceder.</p>
     <input id="gateEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
@@ -28,7 +28,7 @@
 <div class="topwrap">
 <header class="topbar">
   <div class="brand">
-    <img src="assets/isologo-uk.png?v=116" alt="Ukelele" class="logo">
+    <img src="assets/isologo-uk.png?v=117" alt="Ukelele" class="logo">
     <span class="brand-sub">Leuk Marketing</span>
   </div>
   <div class="top-right">
@@ -38,13 +38,19 @@
       <button data-mod="benchmark">Benchmark</button>
       <button data-mod="diseno">Diseño</button>
     </nav>
-    <button id="btnPrecios" class="btn-desc" title="Actualizar precios desde una lista (Excel)">⬆ Precios</button>
-    <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
     <button id="btnAuth" class="btn-desc" title="Cerrar sesión">👤</button>
   </div>
 </header>
-<!-- nivel 2: páginas del módulo activo (se arma en app.js) -->
-<div id="subbar" class="subbar hidden"></div>
+<!-- nivel 2: páginas del módulo activo + sus herramientas (se arma en app.js) -->
+<div id="subbar" class="subbar hidden">
+  <span class="sb-lbl" id="sbLabel"></span>
+  <div class="sb-pages" id="sbPages"></div>
+  <!-- herramientas DEL MÓDULO: sólo aplican a Benchmark, por eso viven acá y no en el header -->
+  <div class="sb-tools" id="sbTools">
+    <button id="btnPrecios" class="btn-desc" title="Actualizar precios desde una lista (Excel)">⬆ Precios</button>
+    <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
+  </div>
+</div>
 </div>
 
 <main>
@@ -92,13 +98,13 @@
 <div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
 <footer class="foot"><span id="metaLine"></span></footer>
 
-<script src="vendor/xlsx.full.min.js?v=116"></script>
+<script src="vendor/xlsx.full.min.js?v=117"></script>
 <!-- generación del ZIP con todas las fichas, desde el navegador -->
-<script src="vendor/html2canvas.min.js?v=116"></script>
-<script src="vendor/jspdf.umd.min.js?v=116"></script>
-<script src="vendor/jszip.min.js?v=116"></script>
-<script src="app.js?v=116"></script>
-<script src="fichas-data.js?v=116"></script>
-<script src="fichas-ui.js?v=116"></script>
+<script src="vendor/html2canvas.min.js?v=117"></script>
+<script src="vendor/jspdf.umd.min.js?v=117"></script>
+<script src="vendor/jszip.min.js?v=117"></script>
+<script src="app.js?v=117"></script>
+<script src="fichas-data.js?v=117"></script>
+<script src="fichas-ui.js?v=117"></script>
 </body>
 </html>

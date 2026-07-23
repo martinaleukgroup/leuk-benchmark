@@ -46,9 +46,13 @@ button{font-family:var(--font-body);cursor:pointer}
 
 /* ---- Sub-barra: páginas del módulo activo (nivel 2) ---- */
 .subbar{display:flex;align-items:center;gap:4px;padding:9px 16px;
-  background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto}
+  background:var(--bg);border-bottom:1px solid var(--line)}
 .subbar .sb-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
   color:var(--gray-soft);margin-right:8px;white-space:nowrap;flex:none}
+.sb-pages{display:flex;align-items:center;gap:4px;min-width:0;overflow-x:auto}
+/* herramientas del módulo (Precios/Descuentos) pegadas a la derecha */
+.sb-tools{margin-left:auto;display:flex;gap:8px;flex:none}
+.sb-tools.hidden{display:none}
 .sb-item{border:0;background:transparent;color:var(--gray);padding:6px 13px;border-radius:999px;
   font-size:13px;cursor:pointer;font-family:var(--font-body);white-space:nowrap;flex:none}
 .sb-item:hover{background:var(--olive-pale)}
@@ -336,14 +340,17 @@ td.muted{color:var(--olive-soft);text-align:center}
   .brand-sub{letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis}
   .btn-desc{padding:8px 10px;font-size:12px}
   #btnAuth{order:2;flex:none;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  /* flex-basis grande a propósito: obliga a Precios+Descuentos a saltar a la fila 2 */
-  #btnPrecios{order:3;flex:1 1 35%;text-align:center}
-  #btnDesc{order:4;flex:1 1 52%;text-align:center}
-  .mode-toggle{order:5;width:100%;justify-content:space-between;padding:3px}
+  /* Precios/Descuentos ya no están en el header (bajaron a la sub-barra del módulo),
+     así que el header queda en 2 filas: marca+sesión / módulos. */
+  .mode-toggle{order:3;width:100%;justify-content:space-between;padding:3px}
   .mode-toggle button{flex:1;text-align:center;justify-content:center;padding:9px 6px;font-size:13px}
-  .subbar{padding:8px 12px;gap:2px}
+  /* sub-barra en 2 filas: páginas arriba, herramientas del módulo abajo */
+  .subbar{padding:8px 12px;gap:6px;flex-wrap:wrap}
   .subbar .sb-lbl{display:none}          /* el módulo ya se ve marcado arriba */
+  .sb-pages{width:100%}
   .sb-item{padding:6px 11px;font-size:12.5px}
+  .sb-tools{width:100%;margin-left:0}
+  .sb-tools .btn-desc{flex:1;text-align:center}
 }
 
 .res-autor{font-size:11.5px;color:var(--gray-soft);white-space:nowrap}

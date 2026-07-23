@@ -1271,11 +1271,16 @@
   function renderSubbar(mod, page) {
     const bar = $("#subbar"); if (!bar) return;
     const m = MODULOS[mod];
-    if (!m) { bar.classList.add("hidden"); bar.innerHTML = ""; return; }   // Inicio no tiene sub-barra
+    if (!m) { bar.classList.add("hidden"); return; }        // Inicio no tiene sub-barra
     bar.classList.remove("hidden");
-    bar.innerHTML = `<span class="sb-lbl">${m.label}</span>` + m.pages.map(x =>
+    $("#sbLabel").textContent = m.label;
+    // OJO: sólo se re-dibuja la parte de páginas. Las herramientas (#sbTools) son nodos
+    // fijos con listeners enganchados al arrancar; si entraran acá se destruirían.
+    $("#sbPages").innerHTML = m.pages.map(x =>
       `<button class="sb-item ${x.p === page ? "on" : ""}" data-page="${x.p}">${x.t}` +
       (x.count ? ` <span id="navCount" class="nav-count"></span>` : "") + `</button>`).join("");
+    // Precios/Descuentos son herramientas de Benchmark: no aplican a otros módulos.
+    $("#sbTools").classList.toggle("hidden", mod !== "benchmark");
     updateNavCount();
   }
 

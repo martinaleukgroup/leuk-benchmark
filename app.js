@@ -1,4 +1,4 @@
-/* Benchmark Leuk — app estática (vanilla JS). Dos páginas: Comparaciones y Resultados.
+/* Leuk Marketing — plataforma interna (vanilla JS). Módulos: Benchmark y Fichas técnicas.
    Matching en vivo (3 señales) generado por el pipeline. Autorización en localStorage. */
 (function () {
   // Los datos ya NO vienen de un archivo público: se descargan de Supabase DESPUÉS del login
@@ -1077,7 +1077,6 @@
     document.body.classList.remove("solo-fichas");
     $("#nav").querySelectorAll("button").forEach(b => { b.style.display = ""; });
     ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = ""; });
-    const sub = document.querySelector(".brand-sub"); if (sub) sub.textContent = "Benchmark competitivo";
   }
   async function bootApp() {                     // tras el login: baja datos + arma la app
     resetModoCompleto();                           // partir siempre de modo completo (ver logout)
@@ -1110,7 +1109,6 @@
     document.body.classList.add("solo-fichas");
     $("#nav").querySelectorAll("button").forEach(b => { if (b.dataset.page !== "fichas") b.style.display = "none"; });
     ["#btnPrecios", "#btnDesc"].forEach(sel => { const b = $(sel); if (b) b.style.display = "none"; });
-    const sub = document.querySelector(".brand-sub"); if (sub) sub.textContent = "Fichas técnicas";
     $("#metaLine").textContent = "";
     goToPage("fichas");
   }
@@ -1280,9 +1278,9 @@
     cont.innerHTML = `
       <div class="home-hero">
         <img src="assets/logo-leuk-ilum.png?v=48" alt="Leuk Iluminación" class="home-logo">
-        <span class="brand-sub home-tag">Benchmark competitivo</span>
+        <span class="brand-sub home-tag">Leuk Marketing</span>
         <h1>Hola${nombre ? ", " + nombre : ""} 👋</h1>
-        <p>Este es el <b>benchmark competitivo de Leuk</b>: compará precios y datos técnicos de tus productos contra el mercado.</p>
+        <p>Esta es la <b>plataforma de marketing de Leuk</b>: compará tus productos contra el mercado y generá las fichas técnicas, todo en un solo lugar.</p>
         <div class="home-stats">
           <div class="home-stat"><b>${nProd}</b><span>productos Leuk</span></div>
           <div class="home-stat"><b>${conComp}</b><span>con comparación de precio</span></div>

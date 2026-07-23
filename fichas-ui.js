@@ -52,11 +52,8 @@
 
   function fichaHTML(f) {
     if (f.tipo === "accesorios") return accHTML(f);
-    const rows = f.filas.map(r => {
-      const v = r.color ? `<span class="f-swatch" style="background:${r.color}"></span>${esc(r.v)}` : esc(r.v);
-      // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta
-      return `<tr><td class="k">${r.k}</td><td>${v}</td></tr>`;
-    }).join("");
+    // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta
+    const rows = f.filas.map(r => `<tr><td class="k">${r.k}</td><td>${esc(r.v)}</td></tr>`).join("");
 
     const a = f.assets || {};
     const ph = (label, fname) => `<div class="f-ic">🖼️</div><div>${label}</div>${fname ? `<code>${esc(fname)}</code>` : ""}`;

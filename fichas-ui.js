@@ -24,7 +24,31 @@
     box.innerHTML = `<div class="f-ic">🖼️</div><div>${label}</div>` + (fname ? `<code>${fname}</code>` : "");
   };
 
+  // Hoja de accesorios: grilla de 3 columnas con foto + SKUs (Chill / Rieles / Dyna)
+  function accHTML(f) {
+    const items = f.items || [];
+    const cells = items.map(it => {
+      const img = it.foto_url
+        ? `<img src="${esc(it.foto_url)}" alt="" onerror="window._fichaImgErr(this,'SIN FOTO','')">`
+        : "";
+      const box = it.foto_url ? `<div class="f-acc-img">${img}</div>`
+        : `<div class="f-acc-img f-ph"><div class="f-ic">🖼️</div><div>SIN FOTO</div></div>`;
+      const caps = (it.lineas || []).map(l => `<div>SKU ${esc(l.sku)} - ${esc(l.nombre)}</div>`).join("");
+      return `<div class="f-acc-cell">${box}<div class="f-acc-cap">${caps}</div></div>`;
+    }).join("");
+    return `<div class="f-page f-page-acc">
+      <div class="f-head">
+        <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
+        <img class="f-logo" src="${ICON}logo.png" alt="Leuk">
+      </div>
+      <div class="f-hr"></div>
+      <div class="f-acc-grid${items.length > 12 ? " is-dense" : ""}">${cells}</div>
+      <div class="f-foot"><div class="f-web">www.leukiluminacion.com</div></div>
+    </div>`;
+  }
+
   function fichaHTML(f) {
+    if (f.tipo === "accesorios") return accHTML(f);
     const rows = f.filas.map(r => {
       const v = r.color ? `<span class="f-swatch" style="background:${r.color}"></span>${esc(r.v)}` : esc(r.v);
       // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta

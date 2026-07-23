@@ -1318,39 +1318,58 @@
     const conComp = P.filter(p => p.precio_usd && MARCAS.some(m => p.mejor_por_marca[m] && price(p.mejor_por_marca[m]) != null)).length;
     const nAuth = Object.keys(AUTH).length;
     const nombre = NOMBRE || (AUTHSES.email() || "").split("@")[0];
-    const cards = [
-      { p: "comparaciones", ic: "🔍", t: "Catálogo", d: "Buscá un producto Leuk y mirá sus equivalentes en la competencia: precio, ficha técnica e imagen, con el nivel de match." },
-      { p: "resultados", ic: "✅", t: "Comparaciones", d: "Las comparaciones que tu equipo <b>seleccionó</b>, con la diferencia de precio neto. Exportables a CSV." },
-      { p: "decisiones", ic: "📊", t: "Insights", d: "Panorama de pricing: posición de precio por familia, oportunidades y escenarios Partner vs Cliente." },
-    ];
+    const nFichas = (window.FICHAS || []).length;
+    // La Home se arma desde los MÓDULOS: sumar uno (o esconderlo por rol) se refleja acá solo.
+    const mods = [
+      { mod: "benchmark", ic: "📊",
+        d: "Compará precios y datos técnicos de tus productos contra el mercado.",
+        stats: [[nProd, "productos"], [conComp, "con comparación"], [nAuth, "seleccionadas"]],
+        ayuda: ["<b>Buscá un producto</b> en <b>Catálogo</b> (por SKU, nombre o familia) y abrilo para ver sus equivalentes.",
+                "<b>Revisá el match:</b> cada equivalente muestra <b>cuántas de las 3 señales coinciden</b> (técnica, forma, imagen). Cuantas más, más confiable.",
+                "<b>Seleccioná</b> las válidas con “＋ Seleccionar”: quedan <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>.",
+                "<b>Analizá</b> en <b>Insights</b> la posición de precio y las oportunidades.",
+                "Con <b>⬆ Precios</b> subís la lista (Excel) de una marca y con <b>⚙ Descuentos</b> simulás escenarios."] },
+      { mod: "diseno", ic: "📄",
+        d: "Fichas técnicas de producto, listas para descargar y compartir con clientes.",
+        stats: [[nFichas, "fichas"]],
+        ayuda: ["<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
+                "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
+                "<b>Descargá el PDF</b> — si la línea tiene varias hojas, salen todas en un archivo."] },
+    ].filter(m => MODULOS[m.mod]);
+
+    const card = m => {
+      const M = MODULOS[m.mod];
+      return `<button class="home-mod" data-mod="${m.mod}">
+        <div class="home-mod-head"><span class="home-ic">${m.ic}</span>
+          <h3>${M.label}</h3><span class="home-arrow">→</span></div>
+        <p class="home-mod-d">${m.d}</p>
+        <div class="home-mod-stats">${m.stats.map(([n, l]) =>
+          `<div><b>${n}</b><span>${l}</span></div>`).join("")}</div>
+        <div class="home-mod-pages">${M.pages.map(p => p.t).join(" · ")}</div>
+      </button>`;
+    };
+
     cont.innerHTML = `
       <div class="home-hero">
         <img src="assets/logo-leuk-ilum.png?v=48" alt="Leuk Iluminación" class="home-logo">
         <span class="brand-sub home-tag">Leuk Marketing</span>
         <h1>Hola${nombre ? ", " + nombre : ""} 👋</h1>
         <p>Esta es la <b>plataforma de marketing de Leuk</b>: compará tus productos contra el mercado y generá las fichas técnicas, todo en un solo lugar.</p>
-        <div class="home-stats">
-          <div class="home-stat"><b>${nProd}</b><span>productos Leuk</span></div>
-          <div class="home-stat"><b>${conComp}</b><span>con comparación de precio</span></div>
-          <div class="home-stat"><b>${MARCAS.length}</b><span>competidores</span></div>
-          <div class="home-stat"><b>${nAuth}</b><span>comparaciones seleccionadas</span></div>
-        </div>
       </div>
-      <div class="home-cards">
-        ${cards.map(c => `<button class="home-card" data-go="${c.p}"><div class="home-ic">${c.ic}</div><div class="home-ct"><h3>${c.t}</h3><p>${c.d}</p></div><span class="home-arrow">→</span></button>`).join("")}
-      </div>
+      <div class="home-mods">${mods.map(card).join("")}</div>
       <div class="home-help">
         <h2>¿Cómo se usa?</h2>
-        <ol class="home-steps">
-          <li><b>Buscá un producto</b> en <b>Catálogo</b> (por SKU o nombre) y abrilo para ver sus equivalentes.</li>
-          <li><b>Revisá el match:</b> cada equivalente muestra <b>cuántas de las 3 señales coinciden</b> (técnica, forma, imagen). Cuantas más, más confiable.</li>
-          <li><b>Seleccioná</b> las comparaciones válidas con “＋ Seleccionar”: quedan guardadas y <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>.</li>
-          <li><b>Analizá</b> en <b>Insights</b> la posición de precio y las oportunidades. Ajustá descuentos con <b>⚙ Descuentos</b>.</li>
-          <li><b>Actualizar precios:</b> con <b>⬆ Precios</b> subís la lista (Excel) de una marca y se actualizan todos juntos.</li>
-        </ol>
-        <p class="home-note">Los precios de competencia sin coincidencia o marcados con ⚠ pueden ser de otra gama — conviene revisarlos.</p>
+        <div class="home-help-grid">
+          ${mods.map(m => `<div><h4>${m.ic} ${MODULOS[m.mod].label}</h4>
+            <ol class="home-steps">${m.ayuda.map(t => `<li>${t}</li>`).join("")}</ol></div>`).join("")}
+        </div>
+        <p class="home-note">En Benchmark, los equivalentes sin precio o marcados con ⚠ pueden ser de otra gama — conviene revisarlos antes de seleccionarlos.</p>
       </div>`;
-    cont.querySelectorAll(".home-card").forEach(b => b.onclick = () => goToPage(b.dataset.go));
+    // cada tarjeta entra al módulo (a su última página vista, o a la primera)
+    cont.querySelectorAll(".home-mod").forEach(b => b.onclick = () => {
+      const m = b.dataset.mod;
+      goToPage(ULTIMA_PAG[m] || MODULOS[m].pages[0].p);
+    });
   }
 
   searchEl.addEventListener("input", () => renderCatalogo());

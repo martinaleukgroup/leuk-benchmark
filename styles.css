@@ -397,8 +397,25 @@ body.locked .topbar,body.locked main,body.locked .foot{display:none}
 .home-ic{font-size:26px;flex:none}
 .home-ct{flex:1} .home-ct h3{margin:0 0 3px;font-size:16px} .home-ct p{margin:0;font-size:12.5px;color:var(--gray-soft);line-height:1.45}
 .home-arrow{color:var(--olive-soft);font-size:20px;flex:none}
+/* ---- Home: tarjetas de MÓDULO (nivel 1 de la plataforma) ---- */
+.home-mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:26px 0}
+.home-mod{display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:20px 22px;cursor:pointer;
+  transition:transform .12s,border-color .12s;box-shadow:var(--shadow);font-family:var(--font-body)}
+.home-mod:hover{transform:translateY(-3px);border-color:var(--olive-soft)}
+.home-mod-head{display:flex;align-items:center;gap:11px}
+.home-mod-head h3{margin:0;font-size:19px;flex:1}
+.home-mod-d{margin:0;font-size:13px;color:var(--gray-soft);line-height:1.5}
+.home-mod-stats{display:flex;gap:10px;flex-wrap:wrap}
+.home-mod-stats>div{background:var(--olive-pale);border-radius:10px;padding:8px 14px;min-width:78px}
+.home-mod-stats b{display:block;font-family:var(--font-title);font-size:20px;color:var(--olive);line-height:1.1}
+.home-mod-stats span{font-size:11px;color:var(--gray-soft)}
+.home-mod-pages{font-size:12px;color:var(--gray-soft);padding-top:9px;border-top:1px dashed var(--line)}
+
 .home-help{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:20px}
 .home-help h2{font-size:18px;margin:0 0 12px}
+.home-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+.home-help-grid h4{margin:0 0 9px;font-size:14.5px;font-family:var(--font-title)}
 .home-steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px}
 .home-steps li{font-size:14px;line-height:1.5;color:var(--ink)}
 .home-note{font-size:12.5px;color:var(--gray-soft);margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}

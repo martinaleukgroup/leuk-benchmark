@@ -18,11 +18,12 @@
   });
   const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ICON = "assets/ficha/";
-  // Ícono de calado (dibujado en SVG). Reemplazable por el original de diseño.
-  const CALADO_SVG = `<svg class="f-cal-ic" viewBox="0 0 26 24" fill="none" stroke="#1a1a1a"
-    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M4 4.5h18M6 9h16M9 13.5h13M12 18h10"/>
-    <path d="M4.5 12v7.5M2 17l2.5 3 2.5-3"/></svg>`;
+  // Ícono "Dimensión de Calado" (versión sin recuadro, la de uso en reducciones).
+  const CALADO_SVG = `<svg class="f-cal-ic" viewBox="0 0 34 30" fill="none" stroke="#1a1a1a"
+    stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2.5 19.5 L14.5 11.5 L31.5 18.5 L19 26.5 Z"/>
+    <path d="M14.5 11.5 L12.5 2.5"/>
+    <path d="M18 2.5 L13.5 5 L18.5 7.5 L13.5 10 L18.5 12.5 L15.2 14.8"/></svg>`;
 
   window._fichaImgErr = function (img, label, fname) {
     const box = img.parentNode; box.classList.add("f-ph");

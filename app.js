@@ -1643,9 +1643,18 @@
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.
   (async () => {
-    // ¿Volvemos del mail de recuperación? Entonces primero elegir la contraseña nueva.
+    // ¿Volvemos del mail de recuperación? El token viene en el # (a veces en el ?).
     const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
-    if (h.get("type") === "recovery" && h.get("access_token")) { lock(); pantallaRecuperar(h.get("access_token")); return; }
+    const q = new URLSearchParams(location.search || "");
+    // Supabase sólo pone un access_token en la URL al volver de un mail (recovery/magic link).
+    const tok = h.get("access_token") || q.get("access_token");
+    const errH = h.get("error_description") || q.get("error_description") || h.get("error") || q.get("error");
+    if (tok) { lock(); pantallaRecuperar(tok); return; }
+    if (errH) {                                     // el link no volvió con token: link vencido o URL no autorizada
+      history.replaceState(null, "", location.pathname);
+      lock(); $("#gateErr").textContent = "El link de recuperación no es válido o venció. Pedí uno nuevo desde “¿Olvidaste tu contraseña?”.";
+      return;
+    }
     if (AUTHSES.logged() && await AUTHSES.refresh()) {
       try { await bootApp(); unlock(); } catch (e) { lock(); }
     } else { lock(); }

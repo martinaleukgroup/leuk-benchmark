@@ -412,6 +412,12 @@ body.locked .topbar,body.locked main,body.locked .foot{display:none}
 .home-mod-stats span{font-size:11px;color:var(--gray-soft)}
 .home-mod-pages{font-size:12px;color:var(--gray-soft);padding-top:9px;border-top:1px dashed var(--line)}
 
+/* ---- Herramienta embebida (Firmas de mail) ---- */
+/* Ocupa el alto útil bajo el header; la herramienta scrollea por dentro. */
+.embed-frame{width:100%;height:calc(100vh - 150px);min-height:520px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--card);display:block}
+#page-firmas{padding:0}
+
 /* ---- Login: link de recuperación ---- */
 .lg-link{display:block;margin:12px auto 0;background:none;border:0;color:var(--gray-soft);
   font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:var(--font-body)}

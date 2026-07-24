@@ -1378,7 +1378,7 @@
   }
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "firmas", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1390,7 +1390,8 @@
     },
     diseno: {
       label: "Diseño",
-      pages: [{ p: "fichas", t: "Fichas técnicas" }],
+      pages: [{ p: "fichas", t: "Fichas técnicas" },
+              { p: "firmas", t: "Firmas de mail" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -1430,6 +1431,8 @@
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
     if (page === "fichas" && window.renderFichas) window.renderFichas();
+    // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
+    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=124"; }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }

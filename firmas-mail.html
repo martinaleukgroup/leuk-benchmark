@@ -97,7 +97,7 @@
 
 <!-- Carga de datos -->
 <div class="card">
-  <h2>📂 Cargar base de datos (.xlsx / .csv)</h2>
+  <h2>Cargar base de datos (.xlsx / .csv)</h2>
   <div class="drop-zone" id="dropZone">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12M8 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -110,7 +110,7 @@
 
 <!-- Preview de datos -->
 <div class="card" id="previewSection">
-  <h2>📋 Datos cargados — <span id="rowCount" class="badge">0 personas</span></h2>
+  <h2>Datos cargados <span id="rowCount" class="badge">0 personas</span></h2>
   <div class="data-table-wrap">
     <table class="data-table" id="dataTable">
       <thead><tr>
@@ -121,15 +121,15 @@
     </table>
   </div>
   <div class="btn-row">
-    <button class="btn-primary" id="btnGenerate">⚡ Generar todos los PDFs</button>
-    <button class="btn-secondary" id="btnPreview">👁 Vista previa (primer registro)</button>
-    <button class="btn-secondary" id="btnClear">✕ Limpiar</button>
+    <button class="btn-primary" id="btnGenerate">Generar todos los PDFs</button>
+    <button class="btn-secondary" id="btnPreview">Vista previa</button>
+    <button class="btn-secondary" id="btnClear">Limpiar</button>
   </div>
 </div>
 
 <!-- Progreso -->
 <div class="card" id="progressSection">
-  <h2>⚙️ Generando firmas…</h2>
+  <h2>Generando firmas…</h2>
   <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
   <p id="progressText">Iniciando…</p>
   <div id="logArea"></div>
@@ -401,7 +401,7 @@ async function generateAll() {
     await new Promise(r => setTimeout(r, 0));
   }
 
-  progText.textContent = `✅ Listo — ${total} firmas generadas. Descargando ZIP…`;
+  progText.textContent = `Listo — ${total} firmas generadas. Descargando ZIP…`;
   logArea.innerHTML += `<br><span class="log-ok">Empaquetando ZIP…</span>`;
 
   const zipBlob = await zip.generateAsync({ type: 'blob' });

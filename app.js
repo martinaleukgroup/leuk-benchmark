@@ -184,20 +184,24 @@
   // ---- ROLES ----------------------------------------------------------------
   // Un solo lugar define qué ve y qué puede hacer cada rol. La navegación, la Home y
   // los permisos leen de acá, así que sumar un rol o un módulo no se replica por el código.
+  // `precios` = ve/edita precios de venta y descuentos. `costos` = ve el costo interno / margen
+  // (dato sensible): sólo Admin y Líder. Coordinación ve todo menos costos.
   const ROLES = {
-    admin:     { label: "Admin",     mods: ["benchmark", "diseno", "usuarios"], precios: true, borrarTodo: true },
-    lider:     { label: "Líder",     mods: ["benchmark", "diseno"], precios: true,  borrarTodo: false },
-    comercial: { label: "Comercial", mods: ["benchmark"],           precios: false, borrarTodo: false },
-    diseno:    { label: "Diseño",    mods: ["diseno"],              precios: false, borrarTodo: false },
+    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
+    lider:        { label: "Líder",        mods: ["benchmark", "diseno"], precios: true,  costos: true,  borrarTodo: false },
+    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno"], precios: true,  costos: false, borrarTodo: false },
+    comercial:    { label: "Comercial",    mods: ["benchmark"],           precios: false, costos: false, borrarTodo: false },
+    diseno:       { label: "Diseño",       mods: ["diseno"],              precios: false, costos: false, borrarTodo: false },
   };
   // Nombres viejos → nuevos, para que nada se rompa antes/después de migrar la tabla.
   const ROL_ALIAS = { editor: "lider", lector: "comercial", fichas: "diseno" };
   const rolReal = () => ROL_ALIAS[ROL] || ROL;
-  const SIN_ACCESO = { label: "Sin acceso", mods: [], precios: false, borrarTodo: false };
+  const SIN_ACCESO = { label: "Sin acceso", mods: [], precios: false, costos: false, borrarTodo: false };
   const rolCfg = () => SIN_PERFIL ? SIN_ACCESO : (ROLES[rolReal()] || ROLES.comercial);
   const puedeVer = mod => rolCfg().mods.includes(mod);
   const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => rolCfg().precios;
+  const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
   // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
   const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
@@ -1459,7 +1463,8 @@
   const FN_USUARIOS = `${SB.url}/functions/v1/gestion-usuarios`;
   const ROL_OPCIONES = [
     ["admin", "Admin — todo, incluido gestionar usuarios"],
-    ["lider", "Líder — todo, pero borra sólo lo suyo"],
+    ["lider", "Líder — todo (incluye costos), borra sólo lo suyo"],
+    ["coordinacion", "Coordinación — todo menos costos"],
     ["comercial", "Comercial — sólo Benchmark, sin precios"],
     ["diseno", "Diseño — sólo Fichas técnicas"],
   ];

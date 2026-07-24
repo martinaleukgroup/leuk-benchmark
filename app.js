@@ -1432,7 +1432,7 @@
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
-    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=125"; }
+    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=126"; }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }

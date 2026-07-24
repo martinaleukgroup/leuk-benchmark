@@ -212,6 +212,30 @@
   };
   const puedeBorrar = a => esAdmin() || esMio(a);
   const AVISO_BORRAR = "Sólo podés eliminar las comparaciones que seleccionaste vos. Pedile a un administrador que la quite.";
+
+  /* ---- COSTOS (margen, sólo admin/líder) ----------------------------------
+   Los costos NO están en el archivo público del benchmark: viven en la tabla `costos`
+   con RLS (sólo admin/líder leen o escriben). Doble candado: la base no se los entrega
+   al resto, y aunque los tuviera, la pantalla los muestra sólo si puedeCostos(). */
+  const COSTOS = {};                                    // sku -> costo en US$
+  async function fetchCostos() {
+    Object.keys(COSTOS).forEach(k => delete COSTOS[k]);
+    if (!sbOn() || !AUTHSES.logged() || !puedeCostos()) return;
+    try {
+      const r = await fetch(`${SB.url}/rest/v1/costos?select=sku,costo`, { headers: AUTHSES.head() });
+      if (!r.ok) return;
+      (await r.json()).forEach(row => { COSTOS[row.sku] = Number(row.costo); });
+    } catch (e) { /* sin costos, la app sigue igual */ }
+  }
+  // margen en US$ y % sobre el precio de venta (neto). null si no hay costo o no está permitido.
+  function margen(sku, ventaNet) {
+    if (!puedeCostos() || ventaNet == null) return null;
+    const c = COSTOS[sku];
+    if (c == null) return null;
+    const m = ventaNet - c;
+    return { usd: Math.round(m), pct: ventaNet ? Math.round(m / ventaNet * 1000) / 10 : null, costo: c, neg: m < 0 };
+  }
+  const margenTxt = mg => mg == null ? "—" : `US$ ${mg.usd.toLocaleString("es-AR")}${mg.pct != null ? ` · ${mg.pct}%` : ""}`;
   let SIN_PERFIL = false;                            // tiene cuenta pero nadie le asignó rol
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
@@ -566,11 +590,15 @@
   }
   function comparacionView(p) {
     const wrap = el("div", "comp-wrap");
+    const mgLeuk = margen(p.sku, netLeuk(p.precio_usd));
+    const margenHead = mgLeuk
+      ? `<div class="comp-margen${mgLeuk.neg ? " neg" : ""}" title="Margen sobre tu precio neto (costo US$ ${mgLeuk.costo.toLocaleString("es-AR")}). Sólo lo ves vos.">Margen ${margenTxt(mgLeuk)}${mgLeuk.neg ? " ⚠" : ""}</div>`
+      : "";
     wrap.appendChild(el("div", "comp-head", `${imgTag(p.imagen, "big")}
       <div class="comp-head-meta"><div class="leuk-sku">LEUK ${p.sku}</div>
         <h2>${p.nombre || ""}</h2>
         <div class="leuk-fam">${[p.vertical, p.familia, p.subfamilia].filter(Boolean).join(" · ")}</div>
-        <div class="comp-price">${fmtUsd(p.precio_usd)} ${priceEdit(pkLeuk(p.sku), p.precio_usd, "LEUK", p.nombre)}</div></div>`));
+        <div class="comp-price">${fmtUsd(p.precio_usd)} ${priceEdit(pkLeuk(p.sku), p.precio_usd, "LEUK", p.nombre)}</div>${margenHead}</div>`));
 
     // --- Recomendado por tu historial (productos Leuk parecidos) ---
     const recs = recomendaciones(p);
@@ -853,10 +881,19 @@
         ${_sig("🏷️ Etiquetación", m.etiquetacion, m.etiquetacion ? `<span class="leuk-fam">${(m.etiquetacion.score * 100).toFixed(0)}%</span>` : "")}
         ${m.etiquetacion ? `<div class="chips">${_chips(m.etiquetacion.coinciden, "ok")}${_chips(m.etiquetacion.difieren, "no")}</div>` : ""}
         ${_sig("👁️ Visual", m.visual, m.visual ? `<span class="leuk-fam">sim ${m.visual.similitud}</span>` : "")}</div>` : "";
+    // Margen (sólo admin/líder con costo cargado): con tu precio neto y si igualás al competidor.
+    const vNet = netLeuk(p.precio_usd);
+    const cNet = cLista != null ? netComp(cLista, e.marca) : null;
+    const mgL = margen(p.sku, vNet), mgV = margen(p.sku, cNet);
+    const margenBox = mgL ? `<div class="margen-box"><h3>Margen · sólo lo ves vos</h3>
+      <div class="margen-row"><span>Con tu precio neto <span class="leuk-fam">(US$ ${Math.round(vNet)})</span></span><b class="${mgL.neg ? "neg" : ""}">${margenTxt(mgL)}${mgL.neg ? " ⚠" : ""}</b></div>
+      ${mgV ? `<div class="margen-row"><span>Si igualás a ${e.marca} <span class="leuk-fam">(US$ ${Math.round(cNet)})</span></span><b class="${mgV.neg ? "neg" : ""}">${margenTxt(mgV)}${mgV.neg ? " ⚠" : ""}</b></div>` : ""}
+      <div class="margen-note">Costo US$ ${mgL.costo.toLocaleString("es-AR")}</div></div>` : "";
     return `${opts.header !== false ? `<div class="leuk-sku">LEUK ${p.sku} · ${p.vertical || ""} ${p.familia || ""}</div>
       <h2>${p.nombre || ""} <span class="vs-lbl">vs</span> ${e.marca} · ${eNombre}</h2>
       <div>${badge(m.veredicto || e.veredicto)} &nbsp; ${cc.has ? diffHtml(cc.diff) + ' <span class="leuk-fam">' + cc.texto + " (neto)</span>" : '<span class="leuk-fam">sin precio comp.</span>'}</div>` : ""}
       ${(p && e.fslug) ? `<div style="margin:10px 0">${authBtn(p, e)}</div>` : ""}
+      ${margenBox}
       ${señales}
       <div class="vs">
         <div class="col"><div class="equiv-marca">LEUK ${p.sku}</div>
@@ -1152,6 +1189,7 @@
       b.style.display = (m === "inicio" || puedeVer(m)) ? "" : "none";
     });
     const p = $("#btnPrecios"); if (p) p.style.display = puedePrecios() ? "" : "none";
+    const co = $("#btnCostos"); if (co) co.style.display = puedeCostos() ? "" : "none";
     const d = $("#btnDesc"); if (d) d.style.display = puedeVer("benchmark") ? "" : "none";
     document.body.classList.toggle("solo-fichas", !puedeVer("benchmark"));
   }
@@ -1181,6 +1219,7 @@
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();
     await sbPullPrices();                          // llama applyPriceOverrides internamente
+    await fetchCostos();                            // costos sólo para admin/líder (la RLS filtra el resto)
     updatePreciosBtn();                             // el rol ya se resolvió al principio
     rerenderActive();
   }
@@ -1378,6 +1417,101 @@
           body: JSON.stringify(body.slice(i, i + 400)),
         });
         if ((r.status === 401 || r.status === 403) && !retried) { if (await AUTHSES.refresh()) return bulkSavePrices(list, true); return false; }
+        if (!r.ok) okAll = false;
+      }
+      return okAll;
+    } catch (e) { return false; }
+  }
+
+  /* ---- Subir COSTOS por lista (sólo admin/líder) ---- */
+  function parseCostoRows(rows) {
+    if (!rows.length) return { items: [], err: "La hoja está vacía." };
+    const cols = Object.keys(rows[0]);
+    const find = cands => cols.find(c => cands.some(x => norm2(c) === x || norm2(c).includes(x)));
+    const cSku = find(["sku", "codigo", "código", "code"]);
+    const cCosto = find(["costo", "cost", "coste", "costo usd"]) || find(["precio", "valor", "importe", "usd"]);
+    if (!cSku || !cCosto) return { items: [], err: `No encontré las columnas. Necesito una de SKU (${cSku || "falta"}) y una de Costo (${cCosto || "falta"}). Columnas vistas: ${cols.join(", ")}` };
+    const items = [];
+    rows.forEach(r => {
+      const sku = String(r[cSku] == null ? "" : r[cSku]).replace(/\.0$/, "").trim();
+      let raw = String(r[cCosto] == null ? "" : r[cCosto]).replace(/[^\d.,-]/g, "");
+      if (raw.indexOf(",") > -1 && raw.indexOf(".") > -1) raw = raw.replace(/\./g, "").replace(",", ".");
+      else if (raw.indexOf(",") > -1) raw = raw.replace(",", ".");
+      const costo = parseFloat(raw);
+      if (sku && isFinite(costo) && costo >= 0) items.push({ sku, costo: Math.round(costo * 100) / 100 });
+    });
+    return { items, col: { sku: cSku, costo: cCosto } };
+  }
+  // los costos son de nuestros productos → sólo SKUs de Leuk
+  function matchCostos(items) {
+    const skus = new Set(P.map(p => String(p.sku)));
+    return { out: items.filter(i => skus.has(i.sku)), total: items.length };
+  }
+  function openCostos() {
+    if (!puedeCostos()) { alert("Sólo Admin y Líder pueden actualizar costos."); return; }
+    const ov = el("div", "detail"); ov.id = "costosModal";
+    ov.innerHTML = `<div class="detail-inner desc-modal">
+      <button class="detail-close" id="cxClose">✕</button>
+      <h2>Actualizar costos por lista</h2>
+      <div class="fam-hint">Subí la lista de <b>costos en US$</b> (Excel .xlsx o CSV), con una columna de <b>SKU</b> y una de <b>Costo</b>. Sólo se cargan los SKU de Leuk. Los costos quedan guardados de forma privada: los ven únicamente Admin y Líder.</div>
+      <div id="cxDrop" class="px-drop">Arrastrá el Excel acá o <b>tocá para elegir</b><input id="cxFile" type="file" accept=".xlsx,.xls,.csv" hidden></div>
+      <div id="cxInfo" class="px-info"></div>
+      <div class="desc-actions"><button class="btn-ghost" id="cxCancel">Cancelar</button><button class="btn-primary" id="cxApply" disabled>Aplicar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    let pending = null;
+    ov.querySelector("#cxClose").onclick = close;
+    ov.querySelector("#cxCancel").onclick = close;
+    ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
+    const drop = ov.querySelector("#cxDrop"), file = ov.querySelector("#cxFile"), info = ov.querySelector("#cxInfo"), apply = ov.querySelector("#cxApply");
+    drop.onclick = () => file.click();
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); };
+    file.onchange = () => { if (file.files[0]) handle(file.files[0]); };
+    function handle(f) {
+      info.innerHTML = "Leyendo…"; apply.disabled = true;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: "array" });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+          const { items, err, col } = parseCostoRows(rows);
+          if (err) { info.innerHTML = `<span class="px-bad">${err}</span>`; return; }
+          const { out } = matchCostos(items);
+          pending = out;
+          const muestra = out.slice(0, 3).map(o => `${o.sku} → US$ ${o.costo}`).join(" · ");
+          info.innerHTML = `<div><b>${f.name}</b> · ${items.length} filas leídas · columnas: ${col.sku} / ${col.costo}</div>
+            <div class="px-ok">✓ ${out.length} costos de <b>Leuk</b> se van a actualizar</div>
+            ${out.length ? `<div class="leuk-fam">ej: ${muestra}${out.length > 3 ? "…" : ""}</div>` : ""}
+            ${items.length - out.length > 0 ? `<div class="px-warn">⚠ ${items.length - out.length} filas sin coincidencia con un SKU de Leuk — se ignoran</div>` : ""}`;
+          apply.disabled = out.length === 0;
+        } catch (ex) { info.innerHTML = `<span class="px-bad">No pude leer el archivo: ${ex.message}</span>`; }
+      };
+      reader.readAsArrayBuffer(f);
+    }
+    apply.onclick = async () => {
+      if (!pending || !pending.length) return;
+      apply.disabled = true; apply.textContent = "Aplicando…";
+      const ok = await bulkSaveCostos(pending);
+      if (ok) { info.innerHTML = `<div class="px-ok">✓ Listo: ${pending.length} costos actualizados.</div>`; rerenderActive(); setTimeout(close, 1500); }
+      else { info.innerHTML = `<span class="px-bad">No se pudo guardar. ¿Corriste el SQL de la tabla 'costos'? ¿Sesión vencida?</span>`; apply.disabled = false; apply.textContent = "Aplicar"; }
+    };
+  }
+  async function bulkSaveCostos(list, retried) {
+    if (!sbOn() || !AUTHSES.logged() || !puedeCostos()) return false;
+    const autor = AUTHSES.email(), ts = new Date().toISOString();
+    const body = list.map(x => ({ sku: x.sku, costo: x.costo, autor, ts }));
+    list.forEach(x => { COSTOS[x.sku] = x.costo; });     // aplica local ya
+    try {
+      let okAll = true;
+      for (let i = 0; i < body.length; i += 400) {
+        const r = await fetch(`${SB.url}/rest/v1/costos`, {
+          method: "POST", headers: Object.assign(AUTHSES.head(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+          body: JSON.stringify(body.slice(i, i + 400)),
+        });
+        if ((r.status === 401 || r.status === 403) && !retried) { if (await AUTHSES.refresh()) return bulkSaveCostos(list, true); return false; }
         if (!r.ok) okAll = false;
       }
       return okAll;
@@ -1651,6 +1785,7 @@
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
   $("#btnPrecios").addEventListener("click", openPrecios);
+  $("#btnCostos").addEventListener("click", openCostos);
   $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.

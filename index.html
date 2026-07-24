@@ -7,28 +7,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=120">
-<link rel="stylesheet" href="fichas.css?v=120">
+<link rel="stylesheet" href="styles.css?v=121">
+<link rel="stylesheet" href="fichas.css?v=121">
 </head>
 <body class="locked">
 
 <!-- PANTALLA DE INGRESO (cubre toda la app hasta iniciar sesión) -->
 <div id="gate" class="gate">
   <div class="gate-card">
-    <img src="assets/logo-leuk-ilum.png?v=120" alt="Leuk Iluminación" class="gate-logo">
+    <img src="assets/logo-leuk-ilum.png?v=121" alt="Leuk Iluminación" class="gate-logo">
     <h1>Leuk Marketing</h1>
     <p class="gate-sub">Ingresá con tu usuario para acceder.</p>
     <input id="gateEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
     <input id="gatePass" type="password" placeholder="Contraseña" autocomplete="current-password" class="lg-in">
     <div id="gateErr" class="lg-err"></div>
     <button id="gateGo" class="btn-primary gate-btn">Ingresar</button>
+    <button id="gateForgot" class="lg-link">¿Olvidaste tu contraseña?</button>
   </div>
 </div>
 
 <div class="topwrap">
 <header class="topbar">
   <div class="brand">
-    <img src="assets/isologo-uk.png?v=120" alt="Ukelele" class="logo">
+    <img src="assets/isologo-uk.png?v=121" alt="Ukelele" class="logo">
     <span class="brand-sub">Leuk Marketing</span>
   </div>
   <div class="top-right">
@@ -102,13 +103,13 @@
 <div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
 <footer class="foot"><span id="metaLine"></span></footer>
 
-<script src="vendor/xlsx.full.min.js?v=120"></script>
+<script src="vendor/xlsx.full.min.js?v=121"></script>
 <!-- generación del ZIP con todas las fichas, desde el navegador -->
-<script src="vendor/html2canvas.min.js?v=120"></script>
-<script src="vendor/jspdf.umd.min.js?v=120"></script>
-<script src="vendor/jszip.min.js?v=120"></script>
-<script src="app.js?v=120"></script>
-<script src="fichas-data.js?v=120"></script>
-<script src="fichas-ui.js?v=120"></script>
+<script src="vendor/html2canvas.min.js?v=121"></script>
+<script src="vendor/jspdf.umd.min.js?v=121"></script>
+<script src="vendor/jszip.min.js?v=121"></script>
+<script src="app.js?v=121"></script>
+<script src="fichas-data.js?v=121"></script>
+<script src="fichas-ui.js?v=121"></script>
 </body>
 </html>

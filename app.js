@@ -1084,6 +1084,51 @@
   }
   function unlock() { document.body.classList.remove("locked"); updateAuthBtn(); }
   function doLogout() { if (confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) { AUTHSES.logout(); lock(); } }
+
+  // Cambia la contraseña del usuario logueado (con su propio token, no hace falta admin).
+  async function cambiarMiPassword(nueva) {
+    const r = await fetch(`${SB.url}/auth/v1/user`, {
+      method: "PUT", headers: AUTHSES.head(), body: JSON.stringify({ password: nueva }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.msg || d.error_description || d.message || "No se pudo cambiar la contraseña");
+  }
+  // Panel de cuenta: quién sos, qué rol tenés, cambiar contraseña y salir.
+  function openCuenta() {
+    const ov = el("div", "detail"); ov.id = "cuentaModal";
+    ov.innerHTML = `<div class="detail-inner cuenta-modal">
+      <button class="detail-close" id="cuClose">✕</button>
+      <h2>Mi cuenta</h2>
+      <div class="cu-info"><b>${(NOMBRE || "").replace(/[<>]/g, "") || "—"}</b>
+        <span class="leuk-fam">${(AUTHSES.email() || "").replace(/[<>]/g, "")}</span>
+        <span class="cu-rol">${rolCfg().label}</span></div>
+      <h3>Cambiar mi contraseña</h3>
+      <div class="cu-form">
+        <input id="cuPass1" type="password" placeholder="Contraseña nueva (mín. 8)" autocomplete="new-password">
+        <input id="cuPass2" type="password" placeholder="Repetila" autocomplete="new-password">
+        <button class="btn-primary" id="cuSave">Guardar</button>
+      </div>
+      <div id="cuMsg" class="us-msg"></div>
+      <div class="desc-actions"><button class="btn-ghost" id="cuOut">Cerrar sesión</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    $("#cuClose").onclick = close;
+    ov.addEventListener("click", e => { if (e.target === ov) close(); });
+    $("#cuOut").onclick = () => { close(); doLogout(); };
+    $("#cuSave").onclick = async () => {
+      const a = $("#cuPass1").value, b = $("#cuPass2").value, m = $("#cuMsg");
+      const err = t => { m.textContent = t; m.className = "us-msg px-err"; };
+      if (a.length < 8) return err("Tiene que tener al menos 8 caracteres.");
+      if (a !== b) return err("Las dos contraseñas no coinciden.");
+      $("#cuSave").disabled = true;
+      try {
+        await cambiarMiPassword(a);
+        m.textContent = "✓ Listo. La próxima vez entrá con la nueva."; m.className = "us-msg px-ok";
+        $("#cuPass1").value = $("#cuPass2").value = "";
+      } catch (e) { err(e.message); } finally { $("#cuSave").disabled = false; }
+    };
+  }
   // descarga los datos del benchmark desde el bucket privado de Supabase (requiere sesión)
   async function fetchData(retried) {
     const r = await fetch(`${SB.url}/storage/v1/object/datos/benchmark_data.json`, { headers: AUTHSES.head() });
@@ -1159,6 +1204,53 @@
     $("#gateGo").onclick = go;
     $("#gateEmail").addEventListener("keydown", e => { if (e.key === "Enter") $("#gatePass").focus(); });
     $("#gatePass").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+
+    // "¿Olvidaste tu contraseña?": manda el mail de recuperación. Responde siempre igual,
+    // exista o no la cuenta, para no revelar qué mails están registrados.
+    $("#gateForgot").onclick = async () => {
+      const err = $("#gateErr");
+      const mail = ($("#gateEmail").value || "").trim();
+      if (!mail) { err.textContent = "Escribí tu email arriba y volvé a tocar el link."; return; }
+      err.textContent = "Enviando…";
+      try {
+        await fetch(`${SB.url}/auth/v1/recover`, {
+          method: "POST",
+          headers: { apikey: SB.key, "Content-Type": "application/json" },
+          body: JSON.stringify({ email: mail, redirect_to: location.origin + location.pathname }),
+        });
+      } catch (e) { }
+      err.textContent = "Si ese mail tiene cuenta, te llega un link para elegir una contraseña nueva.";
+    };
+  }
+
+  // Vuelta desde el mail de recuperación: Supabase deja el token en el # de la URL.
+  // Se muestra una pantalla para elegir la contraseña nueva antes de entrar.
+  function pantallaRecuperar(token) {
+    history.replaceState(null, "", location.pathname);      // limpiar el token de la barra
+    const card = document.querySelector("#gate .gate-card");
+    card.innerHTML = `<img src="assets/logo-leuk-ilum.png" alt="Leuk Iluminación" class="gate-logo">
+      <h1>Elegí tu contraseña</h1>
+      <p class="gate-sub">Poné una contraseña nueva para entrar a Leuk Marketing.</p>
+      <input id="rcPass1" type="password" placeholder="Contraseña nueva (mín. 8)" class="lg-in" autocomplete="new-password">
+      <input id="rcPass2" type="password" placeholder="Repetila" class="lg-in" autocomplete="new-password">
+      <div id="rcErr" class="lg-err"></div>
+      <button id="rcGo" class="btn-primary gate-btn">Guardar y entrar</button>`;
+    $("#rcGo").onclick = async () => {
+      const a = $("#rcPass1").value, b = $("#rcPass2").value, e = $("#rcErr");
+      if (a.length < 8) { e.textContent = "Tiene que tener al menos 8 caracteres."; return; }
+      if (a !== b) { e.textContent = "Las dos contraseñas no coinciden."; return; }
+      $("#rcGo").disabled = true; e.textContent = "";
+      try {
+        const r = await fetch(`${SB.url}/auth/v1/user`, {
+          method: "PUT",
+          headers: { apikey: SB.key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ password: a }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.msg || d.message || "El link venció — pedí uno nuevo desde el login.");
+        location.reload();                                   // ya puede entrar con la nueva
+      } catch (err) { e.textContent = err.message; $("#rcGo").disabled = false; }
+    };
   }
 
   /* ===================== CARGA MASIVA DE PRECIOS (Excel) ===================== */
@@ -1393,7 +1485,7 @@
           <input id="usEmail" type="email" placeholder="mail@leukiluminacion.com.ar" autocomplete="off">
           <input id="usNombre" type="text" placeholder="Nombre y apellido" autocomplete="off">
           <select id="usRol">${ROL_OPCIONES.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
-          <input id="usPass" type="text" placeholder="Contraseña temporal (mín. 8)" autocomplete="off">
+          <input id="usPass" type="text" placeholder="Contraseña inicial (mín. 8)" autocomplete="off">
           <button id="usAdd" class="btn-primary">Crear acceso</button>
         </div>
         <div id="usMsg" class="us-msg"></div>
@@ -1439,7 +1531,7 @@
       $("#usAdd").disabled = true; msg("Creando…", true);
       try {
         await llamarFn("crear", { email, nombre, rol, password: pass });
-        msg(`✓ Listo. Pasale a ${nombre || email} su mail y la contraseña temporal.`, true);
+        msg(`✓ Listo. Pasale a ${nombre || email} su mail y esta contraseña; puede cambiarla desde 👤 Mi cuenta.`, true);
         renderUsuarios();
       } catch (e) {
         msg(e.message === "FALTA_FN"
@@ -1545,10 +1637,13 @@
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
   $("#btnPrecios").addEventListener("click", openPrecios);
-  $("#btnAuth").addEventListener("click", doLogout);
+  $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.
   (async () => {
+    // ¿Volvemos del mail de recuperación? Entonces primero elegir la contraseña nueva.
+    const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+    if (h.get("type") === "recovery" && h.get("access_token")) { lock(); pantallaRecuperar(h.get("access_token")); return; }
     if (AUTHSES.logged() && await AUTHSES.refresh()) {
       try { await bootApp(); unlock(); } catch (e) { lock(); }
     } else { lock(); }

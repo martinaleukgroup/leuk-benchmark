@@ -412,6 +412,21 @@ body.locked .topbar,body.locked main,body.locked .foot{display:none}
 .home-mod-stats span{font-size:11px;color:var(--gray-soft)}
 .home-mod-pages{font-size:12px;color:var(--gray-soft);padding-top:9px;border-top:1px dashed var(--line)}
 
+/* ---- Login: link de recuperación ---- */
+.lg-link{display:block;margin:12px auto 0;background:none;border:0;color:var(--gray-soft);
+  font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:var(--font-body)}
+.lg-link:hover{color:var(--olive)}
+
+/* ---- Mi cuenta ---- */
+.cuenta-modal{max-width:440px}
+.cu-info{display:flex;flex-direction:column;gap:2px;background:var(--olive-pale);
+  border-radius:10px;padding:12px 14px;margin-bottom:16px}
+.cu-rol{align-self:flex-start;margin-top:6px;background:var(--olive);color:#fff;
+  font-size:11px;padding:2px 10px;border-radius:999px}
+.cu-form{display:flex;flex-direction:column;gap:9px}
+.cu-form input{padding:10px 12px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg);font-size:13.5px;font-family:var(--font-body)}
+
 /* ---- Panel de usuarios (sólo admin) ---- */
 .us-add{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .us-add h3{margin:0 0 12px;font-size:16px}

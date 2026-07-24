@@ -147,6 +147,30 @@
     })));
   }
 
+  // Hojas con muchas filas de specs no entran en la A4 (max-height:297mm + overflow:hidden),
+  // así que el pie se recorta — en pantalla y en el PDF. Se detecta cuál se pasa del borde y
+  // se le compactan las filas (clase f-fit). Sólo afecta las que se cortan.
+  function autofit(container) {
+    container.querySelectorAll(".f-page").forEach(p => {
+      p.classList.remove("f-fit");
+      const last = p.lastElementChild; if (!last) return;
+      if (last.getBoundingClientRect().bottom > p.getBoundingClientRect().bottom + 1) p.classList.add("f-fit");
+    });
+  }
+
+  // El alto definitivo recién se conoce con las fuentes DIN aplicadas. Con font-display:swap las
+  // TTF se piden on-demand, así que document.fonts.ready puede resolver ANTES de que carguen (mide
+  // con el fallback y no ve el recorte). Se fuerza su carga y recién ahí se hace el autofit; un
+  // segundo pase por las dudas si el reflow llega tarde.
+  const FUENTES_FICHA = ["300 52px DINLightCond", "400 11px DINCond", "400 9px DINReg", "500 11px DINMed", "700 11px DINBold"];
+  function autofitCuandoListo(container) {
+    const correr = () => autofit(container);
+    const cargar = document.fonts && document.fonts.load
+      ? Promise.all(FUENTES_FICHA.map(f => document.fonts.load(f).catch(() => {})))
+      : Promise.resolve();
+    cargar.then(() => { requestAnimationFrame(correr); setTimeout(correr, 400); });
+  }
+
   async function descargarTodas(btn, note) {
     if (btn.disabled) return;
     if (!window.jspdf || !window.JSZip || !window.html2canvas) {
@@ -168,6 +192,11 @@
         btn.textContent = `Generando ${i + 1}/${DOCS.length}…`;
         jaula.innerHTML = d.fichas.map(fichaHTML).join("");
         await esperarImagenes(jaula);
+        // fuentes cargadas antes de medir y capturar, si no el PDF también recorta
+        if (document.fonts && document.fonts.load) {
+          try { await Promise.all(FUENTES_FICHA.map(f => document.fonts.load(f))); } catch (e) { /* seguimos igual */ }
+        }
+        autofit(jaula);                              // mismo ajuste que en pantalla, antes del PDF
         const hojas = jaula.querySelectorAll(".f-page");
         const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
         for (let h = 0; h < hojas.length; h++) {
@@ -233,6 +262,7 @@
       const d = DOCS[i]; if (!d) return;
       actual = d;
       stage.innerHTML = d.fichas.map(fichaHTML).join("");
+      autofitCuandoListo(stage);                     // compactar las hojas que no entren (tras fuentes)
       note.innerHTML = d.fichas.length > 1
         ? `Documento <b>${esc(d.ag)}</b> — ${d.fichas.length} hojas. "Descargar PDF" las baja todas en un archivo.`
         : `1 ficha.`;

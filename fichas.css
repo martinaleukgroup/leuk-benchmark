@@ -66,6 +66,9 @@
 .f-host .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
 .f-host .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
 .f-host .f-spec td{padding:5px 10px;line-height:1.15;border:none}
+/* Fichas con muchas filas que no entran en la A4 → filas más compactas para que quepan.
+   Lo aplica autofit() en fichas-ui.js, sólo a las hojas que se pasan del borde. */
+.f-host .f-page.f-fit .f-spec td{padding-top:3px;padding-bottom:3px;line-height:1.1}
 .f-host .f-spec td.k{color:var(--ink);width:40%}
 .f-host .f-spec td.k small{font-size:7.6px}
 .f-host .f-spec tr:nth-child(even){background:var(--zebra)}

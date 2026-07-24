@@ -1075,8 +1075,10 @@
   /* ===================== LOGIN / GATE (toda la app requiere sesión) ===================== */
   function updateAuthBtn() {
     const b = $("#btnAuth"); if (!b) return;
-    b.textContent = `👤 ${(AUTHSES.email() || "").split("@")[0] || "salir"}`;
-    b.title = `Sesión: ${AUTHSES.email()} — clic para cerrar sesión`;
+    // El nombre real (de `perfiles`); si todavía no cargó, la parte del mail.
+    const quien = NOMBRE || (AUTHSES.email() || "").split("@")[0] || "cuenta";
+    b.textContent = `👤 ${quien}`;
+    b.title = `${quien} · ${AUTHSES.email()} — clic para ver tu cuenta`;
   }
   function lock() {
     document.body.classList.add("locked");

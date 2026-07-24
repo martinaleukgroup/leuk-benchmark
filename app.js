@@ -8,6 +8,7 @@
   let MARCAS = ["Vonderk", "Artelum", "World Leds Go"];
   let ROL = "editor";   // rol del usuario para editar precios ('editor' | 'lector'); se resuelve tras login
   let NOMBRE = "";      // nombre real del usuario (de la tabla perfiles), para el saludo
+  let META_BENCH = ""; // pie con TC/descuentos/frescura; sólo se muestra en el módulo Benchmark
   const $ = (s, r = document) => r.querySelector(s);
 
   /* ===================== DESCUENTOS / PRECIO NETO (editable, localStorage) ===================== */
@@ -1169,7 +1170,9 @@
     const vejez = dias == null ? "" : dias > 30 ? ` ⚠️ hace ${dias} días — pedir actualización` : dias > 0 ? ` (hace ${dias} día${dias > 1 ? "s" : ""})` : " (hoy)";
     const abrev = m => m === "World Leds Go" ? "WLG" : m;
     const descTxt = MARCAS.map(m => `${abrev(m)} −${DEF_DISC[m] != null ? DEF_DISC[m] : 0}%`).join(" · ");
-    $("#metaLine").textContent = `Datos al ${fecha}${vejez} · TC blue $${(meta.tc_blue || 0).toLocaleString("es-AR")} · Descuentos: ${descTxt} · ${meta.n_productos_leuk || P.length} productos · matching por 3 señales`;
+    // Pie del Benchmark (TC, descuentos, frescura): sólo aplica a ese módulo. Se guarda
+    // y goToPage lo muestra/oculta según dónde estés (antes quedaba fijo en todos lados).
+    META_BENCH = `Datos al ${fecha}${vejez} · TC blue $${(meta.tc_blue || 0).toLocaleString("es-AR")} · Descuentos: ${descTxt} · ${meta.n_productos_leuk || P.length} productos · matching por 3 señales`;
     buildCatFilters(); renderCatalogo(); updateDescBtn();
     goToPage("inicio");                            // la home es la vista de entrada
     await sbPull(); updateNavCount();
@@ -1425,6 +1428,7 @@
     if (mod !== "inicio" && !puedeVer(mod)) { page = "inicio"; mod = "inicio"; }
     if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
     $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.mod === mod));
+    $("#metaLine").textContent = mod === "benchmark" ? META_BENCH : "";   // pie sólo en Benchmark
     renderSubbar(mod, page);
     PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== page); });
     if (page === "inicio") renderInicio();

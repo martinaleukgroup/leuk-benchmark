@@ -231,7 +231,7 @@
   function margen(sku, ventaNet) {
     if (!puedeCostos() || ventaNet == null) return null;
     const c = COSTOS[sku];
-    if (c == null) return null;
+    if (c == null || !(c > 0)) return null;           // costo 0 / vacío = sin costo cargado
     const m = ventaNet - c;
     return { usd: Math.round(m), pct: ventaNet ? Math.round(m / ventaNet * 1000) / 10 : null, costo: c, neg: m < 0 };
   }
@@ -1424,6 +1424,36 @@
   }
 
   /* ---- Subir COSTOS por lista (sólo admin/líder) ---- */
+  // Lee un archivo a filas (array de objetos por encabezado). OJO CSV: si se lo pasás a XLSX,
+  // interpreta "5,31" como coma de miles y lo vuelve 531 (×100). Por eso el CSV se parsea a
+  // mano respetando ; como separador y dejando la coma decimal intacta (la normaliza el parser).
+  function leerArchivoFilas(f) {
+    const esCsv = /\.csv$/i.test(f.name);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("No pude leer el archivo"));
+      reader.onload = e => {
+        try {
+          if (esCsv) {
+            const txt = String(e.target.result).replace(/^﻿/, "");
+            const lineas = txt.split(/\r?\n/).filter(l => l.trim() !== "");
+            if (!lineas.length) return resolve([]);
+            const sep = lineas[0].includes(";") ? ";" : lineas[0].includes("\t") ? "\t" : ",";
+            const heads = lineas[0].split(sep).map(h => h.trim());
+            resolve(lineas.slice(1).map(l => {
+              const cells = l.split(sep), o = {};
+              heads.forEach((h, i) => o[h] = (cells[i] == null ? "" : cells[i]).trim());
+              return o;
+            }));
+          } else {
+            const wb = XLSX.read(e.target.result, { type: "array" });
+            resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+          }
+        } catch (ex) { reject(ex); }
+      };
+      if (esCsv) reader.readAsText(f, "utf-8"); else reader.readAsArrayBuffer(f);
+    });
+  }
   function parseCostoRows(rows) {
     if (!rows.length) return { items: [], err: "La hoja está vacía." };
     const cols = Object.keys(rows[0]);
@@ -1438,7 +1468,7 @@
       if (raw.indexOf(",") > -1 && raw.indexOf(".") > -1) raw = raw.replace(/\./g, "").replace(",", ".");
       else if (raw.indexOf(",") > -1) raw = raw.replace(",", ".");
       const costo = parseFloat(raw);
-      if (sku && isFinite(costo) && costo >= 0) items.push({ sku, costo: Math.round(costo * 100) / 100 });
+      if (sku && isFinite(costo) && costo > 0) items.push({ sku, costo: Math.round(costo * 100) / 100 });
     });
     return { items, col: { sku: cSku, costo: cCosto } };
   }
@@ -1470,26 +1500,21 @@
     drop.ondragleave = () => drop.classList.remove("over");
     drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); };
     file.onchange = () => { if (file.files[0]) handle(file.files[0]); };
-    function handle(f) {
+    async function handle(f) {
       info.innerHTML = "Leyendo…"; apply.disabled = true;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const wb = XLSX.read(e.target.result, { type: "array" });
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-          const { items, err, col } = parseCostoRows(rows);
-          if (err) { info.innerHTML = `<span class="px-bad">${err}</span>`; return; }
-          const { out } = matchCostos(items);
-          pending = out;
-          const muestra = out.slice(0, 3).map(o => `${o.sku} → US$ ${o.costo}`).join(" · ");
-          info.innerHTML = `<div><b>${f.name}</b> · ${items.length} filas leídas · columnas: ${col.sku} / ${col.costo}</div>
-            <div class="px-ok">✓ ${out.length} costos de <b>Leuk</b> se van a actualizar</div>
-            ${out.length ? `<div class="leuk-fam">ej: ${muestra}${out.length > 3 ? "…" : ""}</div>` : ""}
-            ${items.length - out.length > 0 ? `<div class="px-warn">⚠ ${items.length - out.length} filas sin coincidencia con un SKU de Leuk — se ignoran</div>` : ""}`;
-          apply.disabled = out.length === 0;
-        } catch (ex) { info.innerHTML = `<span class="px-bad">No pude leer el archivo: ${ex.message}</span>`; }
-      };
-      reader.readAsArrayBuffer(f);
+      try {
+        const rows = await leerArchivoFilas(f);
+        const { items, err, col } = parseCostoRows(rows);
+        if (err) { info.innerHTML = `<span class="px-bad">${err}</span>`; return; }
+        const { out } = matchCostos(items);
+        pending = out;
+        const muestra = out.slice(0, 3).map(o => `${o.sku} → US$ ${o.costo}`).join(" · ");
+        info.innerHTML = `<div><b>${f.name}</b> · ${items.length} filas con costo · columnas: ${col.sku} / ${col.costo}</div>
+          <div class="px-ok">✓ ${out.length} costos de <b>Leuk</b> se van a actualizar</div>
+          ${out.length ? `<div class="leuk-fam">ej: ${muestra}${out.length > 3 ? "…" : ""}</div>` : ""}
+          ${items.length - out.length > 0 ? `<div class="px-warn">⚠ ${items.length - out.length} filas sin coincidencia con un SKU de Leuk — se ignoran</div>` : ""}`;
+        apply.disabled = out.length === 0;
+      } catch (ex) { info.innerHTML = `<span class="px-bad">No pude leer el archivo: ${ex.message}</span>`; }
     }
     apply.onclick = async () => {
       if (!pending || !pending.length) return;

@@ -187,11 +187,11 @@
   // `precios` = ve/edita precios de venta y descuentos. `costos` = ve el costo interno / margen
   // (dato sensible): sólo Admin y Líder. Coordinación ve todo menos costos.
   const ROLES = {
-    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
-    lider:        { label: "Líder",        mods: ["benchmark", "diseno"], precios: true,  costos: true,  borrarTodo: false },
-    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno"], precios: true,  costos: false, borrarTodo: false },
-    comercial:    { label: "Comercial",    mods: ["benchmark"],           precios: false, costos: false, borrarTodo: false },
-    diseno:       { label: "Diseño",       mods: ["diseno"],              precios: false, costos: false, borrarTodo: false },
+    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
+    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos"], precios: true,  costos: true,  borrarTodo: false },
+    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos"], precios: true,  costos: false, borrarTodo: false },
+    comercial:    { label: "Comercial",    mods: ["benchmark", "eventos"], precios: false, costos: false, borrarTodo: false },
+    diseno:       { label: "Diseño",       mods: ["diseno", "eventos"],   precios: false, costos: false, borrarTodo: false },
   };
   // Nombres viejos → nuevos, para que nada se rompa antes/después de migrar la tabla.
   const ROL_ALIAS = { editor: "lider", lector: "comercial", fichas: "diseno" };
@@ -1544,7 +1544,7 @@
   }
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "firmas", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "firmas", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1558,6 +1558,10 @@
       label: "Diseño",
       pages: [{ p: "fichas", t: "Fichas técnicas" },
               { p: "firmas", t: "Firmas de mail" }],
+    },
+    eventos: {
+      label: "Eventos",
+      pages: [{ p: "eventos", t: "Check-in & Sorteo" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -1600,6 +1604,8 @@
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=130"; }
+    // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=135"; }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }

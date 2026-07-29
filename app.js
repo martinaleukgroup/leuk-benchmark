@@ -1605,7 +1605,7 @@
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=130"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
-    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=137"; }
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=138"; }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }

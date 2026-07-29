@@ -1,6 +1,6 @@
 // eventos.app.js — componente Check-in & Sorteo PRE-COMPILADO (JSX → JS plano).
-// Generado transpilando el JSX de eventos.html con Babel. NO editar a mano: si cambia
-// el componente, re-transpilar. Se sirve sin Babel en runtime → carga liviana.
+// FUENTE EDITABLE: eventos.src.jsx (no servido). Para regenerar: transpilar ese JSX con
+// Babel runtime clásico → volcar acá. Tematizado con la paleta de la plataforma (claro/olivo/Barlow).
 /* eslint-disable */
 const {
   useState,
@@ -383,16 +383,16 @@ function toSurveyRespondents(headerRow, dataRows) {
 }
 const PROP_COLORS = {
   "Fernando Mazzetti": {
-    bg: "#0f2744",
-    text: "#7eb8f7"
+    bg: "#e6edf5",
+    text: "#3a6ea5"
   },
   "Marketing Leuk": {
-    bg: "#0f2a1a",
-    text: "#6fcf97"
+    bg: "#e7f0e1",
+    text: "#4f7a3f"
   },
   "Asistente Agencia Paulo Lucia": {
-    bg: "#2a1040",
-    text: "#c9a0f7"
+    bg: "#efe6f7",
+    text: "#7a54b0"
   }
 };
 function Badge({
@@ -400,8 +400,8 @@ function Badge({
 }) {
   if (!name) return null;
   const c = PROP_COLORS[name] || {
-    bg: "#1e2130",
-    text: "#778"
+    bg: "#e4e6dd",
+    text: "#8a8c82"
   };
   const short = name === "Asistente Agencia Paulo Lucia" ? "Agencia P.L." : name;
   return /*#__PURE__*/React.createElement("span", {
@@ -409,7 +409,7 @@ function Badge({
       background: c.bg,
       color: c.text,
       fontSize: 10,
-      fontFamily: "'DM Mono',monospace",
+      fontFamily: "'Barlow',monospace",
       padding: "2px 8px",
       borderRadius: 4,
       whiteSpace: "nowrap",
@@ -702,8 +702,8 @@ function App() {
 
   // ─── styles ───────────────────────────────────────────────────────────
   const card = {
-    background: "#13151c",
-    border: "1px solid #1c1f2e",
+    background: "#ffffff",
+    border: "1px solid #e4e6dd",
     borderRadius: 12,
     padding: wide ? "24px 28px" : "18px 16px"
   };
@@ -712,62 +712,62 @@ function App() {
     borderRadius: 8,
     padding: "10px 20px",
     cursor: "pointer",
-    fontFamily: "'DM Sans',sans-serif",
+    fontFamily: "'Barlow',sans-serif",
     fontSize: 13,
     fontWeight: 600,
-    background: grad ? "linear-gradient(135deg,#c9a84c,#7a5a10)" : "#1a1d26",
-    color: grad ? "#fff" : "#778"
+    background: grad ? "linear-gradient(135deg,#676b55,#565a45)" : "#eef0e8",
+    color: grad ? "#fff" : "#8a8c82"
   });
   const inp = {
     width: "100%",
-    background: "#0d0f14",
-    border: "1px solid #1e2130",
+    background: "#fbfbf9",
+    border: "1px solid #e4e6dd",
     borderRadius: 8,
     padding: "9px 13px",
-    color: "#ddd",
+    color: "#2b2c26",
     fontSize: 13,
-    fontFamily: "'DM Sans',sans-serif",
+    fontFamily: "'Barlow',sans-serif",
     outline: "none"
   };
   const stateBtn = (active, activeBg, activeBorder) => ({
     width: 34,
     height: 34,
     borderRadius: 8,
-    border: `1px solid ${active ? activeBorder : "#1e2130"}`,
+    border: `1px solid ${active ? activeBorder : "#e4e6dd"}`,
     cursor: "pointer",
     flexShrink: 0,
     fontSize: 13,
     fontWeight: 700,
-    background: active ? activeBg : "#1a1d26",
-    color: active ? "#fff" : "#334",
+    background: active ? activeBg : "#eef0e8",
+    color: active ? "#fff" : "#a2a498",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontFamily: "'DM Mono',monospace"
+    fontFamily: "'Barlow',monospace"
   });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
-      background: "#0d0f14",
-      color: "#e8e8e8",
-      fontFamily: "'DM Sans',sans-serif"
+      background: "#fbfbf9",
+      color: "#2b2c26",
+      fontFamily: "'Barlow',sans-serif"
     }
   }, /*#__PURE__*/React.createElement("link", {
-    href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap",
     rel: "stylesheet"
   }), /*#__PURE__*/React.createElement("style", null, `
 *{box-sizing:border-box}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pop{0%{transform:scale(.7);opacity:0}65%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
-.row:hover{background:rgba(255,255,255,.025)!important}
+.row:hover{background:rgba(0,0,0,.035)!important}
 .chk{transition:all .15s}.chk:hover{transform:scale(1.08);opacity:.85}
-input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#13151c}::-webkit-scrollbar-thumb{background:#252835;border-radius:99px}
+input:focus,textarea:focus{border-color:#676b55!important;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#d6d8cd;border-radius:99px}
 `), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "#10121a",
-      borderBottom: "1px solid #1c1f2e",
+      background: "#ffffff",
+      borderBottom: "1px solid #e4e6dd",
       padding: "0 20px",
       position: "sticky",
       top: 0,
@@ -798,28 +798,28 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       width: 30,
       height: 30,
       borderRadius: 7,
-      background: "linear-gradient(135deg,#c9a84c,#7a5a10)",
+      background: "linear-gradient(135deg,#676b55,#565a45)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 13
     }
-  }, "\u2726"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "✦"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontWeight: 700,
       fontSize: 14,
-      color: "#fff",
+      color: "#2b2c26",
       lineHeight: 1
     }
   }, "Check-in & Sorteo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
-      color: "#334",
-      fontFamily: "'DM Mono',monospace",
+      color: "#a2a498",
+      fontFamily: "'Barlow',monospace",
       marginTop: 1
     }
-  }, "Leuk \xB7 Eventos"))), /*#__PURE__*/React.createElement("div", {
+  }, "Leuk · Eventos"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -828,44 +828,44 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, syncMsg && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#6fcf97",
-      fontFamily: "'DM Mono',monospace",
+      color: "#4f7a3f",
+      fontFamily: "'Barlow',monospace",
       animation: "fadeUp .2s"
     }
   }, syncMsg), [{
     v: elegibles.length,
     l: "EN SORTEO",
-    c: "#6fcf97"
+    c: "#4f7a3f"
   }, {
     v: presentes.length,
     l: "PRESENTES",
-    c: "#c9a84c"
+    c: "#676b55"
   }, {
     v: attendees.length,
     l: "INSCRIPTOS",
-    c: "#445"
+    c: "#8a8c82"
   }].map(s => /*#__PURE__*/React.createElement("div", {
     key: s.l,
     style: {
       textAlign: "center",
       padding: "3px 12px",
-      background: "#1a1d26",
+      background: "#eef0e8",
       borderRadius: 8,
-      border: "1px solid #1e2130"
+      border: "1px solid #e4e6dd"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 17,
       fontWeight: 700,
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       color: s.c,
       lineHeight: 1.1
     }
   }, s.v), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
-      color: "#334",
-      fontFamily: "'DM Mono',monospace"
+      color: "#a2a498",
+      fontFamily: "'Barlow',monospace"
     }
   }, s.l))))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -891,13 +891,13 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     style: {
       background: "none",
       border: "none",
-      borderBottom: tab === t.k ? "2px solid #c9a84c" : "2px solid transparent",
+      borderBottom: tab === t.k ? "2px solid #676b55" : "2px solid transparent",
       cursor: "pointer",
       padding: "11px 16px",
       fontSize: 12,
       fontWeight: 500,
-      fontFamily: "'DM Sans',sans-serif",
-      color: tab === t.k ? "#c9a84c" : "#445",
+      fontFamily: "'Barlow',sans-serif",
+      color: tab === t.k ? "#676b55" : "#8a8c82",
       whiteSpace: "nowrap",
       transition: "all .2s",
       flexShrink: 0
@@ -914,13 +914,13 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "#101a14",
-      border: "1px solid #1c3324",
+      background: "#eef3ea",
+      border: "1px solid #cfe0d2",
       borderRadius: 10,
       padding: "10px 14px",
       marginBottom: 12,
       fontSize: 12,
-      color: "#7fbf9a",
+      color: "#4f7a3f",
       display: "flex",
       alignItems: "center",
       gap: 8,
@@ -928,25 +928,25 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      ...stateBtn(true, "linear-gradient(135deg,#c9a84c,#7a5a10)", "#c9a84c20"),
+      ...stateBtn(true, "linear-gradient(135deg,#676b55,#565a45)", "#676b5520"),
       width: 24,
       height: 24,
       fontSize: 11
     }
-  }, "\u2713"), /*#__PURE__*/React.createElement("span", null, "Presente (a mano)"), /*#__PURE__*/React.createElement("span", {
+  }, "✓"), /*#__PURE__*/React.createElement("span", null, "Presente (a mano)"), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: "#334"
+      color: "#a2a498"
     }
   }, "+"), /*#__PURE__*/React.createElement("span", {
     style: {
-      ...stateBtn(true, "linear-gradient(135deg,#2f9e6e,#1c6b48)", "#2f9e6e30"),
+      ...stateBtn(true, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f30"),
       width: 24,
       height: 24,
       fontSize: 11
     }
-  }, "F"), /*#__PURE__*/React.createElement("span", null, "Encuesta (autom\xE1tico)"), /*#__PURE__*/React.createElement("span", {
+  }, "F"), /*#__PURE__*/React.createElement("span", null, "Encuesta (automático)"), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: "#334",
+      color: "#a2a498",
       marginLeft: "auto"
     }
   }, "=\xA0entra al sorteo")), /*#__PURE__*/React.createElement("div", {
@@ -972,19 +972,19 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace"
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace"
     }
   }, "Asistencia"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#c9a84c",
-      fontFamily: "'DM Mono',monospace"
+      color: "#676b55",
+      fontFamily: "'Barlow',monospace"
     }
-  }, pct, "% \xB7 ", presentes.length, "/", attendees.length)), /*#__PURE__*/React.createElement("div", {
+  }, pct, "% · ", presentes.length, "/", attendees.length)), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 4,
-      background: "#1e2130",
+      background: "#e4e6dd",
       borderRadius: 99,
       overflow: "hidden"
     }
@@ -992,15 +992,15 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     style: {
       height: "100%",
       width: `${pct}%`,
-      background: "linear-gradient(90deg,#7a5a10,#c9a84c)",
+      background: "linear-gradient(90deg,#565a45,#676b55)",
       borderRadius: 99,
       transition: "width .5s"
     }
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#6fcf97",
-      fontFamily: "'DM Mono',monospace",
+      color: "#4f7a3f",
+      fontFamily: "'Barlow',monospace",
       marginTop: 6
     }
   }, elegibles.length, " habilitado", elegibles.length !== 1 ? "s" : "", " para el sorteo (presente + encuesta)"))), /*#__PURE__*/React.createElement("div", {
@@ -1020,14 +1020,14 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       left: 11,
       top: "50%",
       transform: "translateY(-50%)",
-      color: "#334",
+      color: "#a2a498",
       fontSize: 15,
       pointerEvents: "none"
     }
-  }, "\u2315"), /*#__PURE__*/React.createElement("input", {
+  }, "⌕"), /*#__PURE__*/React.createElement("input", {
     value: search,
     onChange: e => setSearch(e.target.value),
-    placeholder: "Buscar nombre, apellido, empresa o mail\u2026",
+    placeholder: "Buscar nombre, apellido, empresa o mail…",
     style: {
       ...inp,
       paddingLeft: 32
@@ -1052,10 +1052,10 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       gridTemplateColumns: "34px 1.7fr 1.6fr 1.8fr 84px",
       gap: 12,
       padding: "9px 20px",
-      borderBottom: "1px solid #1e2130",
+      borderBottom: "1px solid #e4e6dd",
       fontSize: 10,
-      color: "#334",
-      fontFamily: "'DM Mono',monospace",
+      color: "#a2a498",
+      fontFamily: "'Barlow',monospace",
       letterSpacing: ".05em",
       alignItems: "center"
     }
@@ -1063,11 +1063,11 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     style: {
       textAlign: "center"
     }
-  }, "P \xB7 F")), filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "P · F")), filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 40,
       textAlign: "center",
-      color: "#334",
+      color: "#a2a498",
       fontSize: 13
     }
   }, "Sin resultados"), filtered.map((a, i) => {
@@ -1081,8 +1081,8 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
         alignItems: "center",
         gap: wide ? 12 : 10,
         padding: wide ? "10px 20px" : "10px 12px",
-        borderBottom: i < filtered.length - 1 ? "1px solid #181a22" : "none",
-        background: eleg ? "rgba(201,168,76,.06)" : a.presente ? "rgba(201,168,76,.02)" : "transparent",
+        borderBottom: i < filtered.length - 1 ? "1px solid #edeee7" : "none",
+        background: eleg ? "rgba(103,107,85,.06)" : a.presente ? "rgba(103,107,85,.02)" : "transparent",
         transition: "background .12s"
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -1091,15 +1091,15 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
         height: 34,
         borderRadius: 8,
         flexShrink: 0,
-        background: eleg ? "linear-gradient(135deg,#7a5a10,#c9a84c)" : "#1a1d26",
+        background: eleg ? "linear-gradient(135deg,#565a45,#676b55)" : "#eef0e8",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 11,
         fontWeight: 700,
-        color: eleg ? "#fff" : "#334",
-        fontFamily: "'DM Mono',monospace",
-        border: `1px solid ${eleg ? "#c9a84c20" : "#1e2130"}`
+        color: eleg ? "#fff" : "#a2a498",
+        fontFamily: "'Barlow',monospace",
+        border: `1px solid ${eleg ? "#676b5520" : "#e4e6dd"}`
       }
     }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1109,7 +1109,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       style: {
         fontSize: 13,
         fontWeight: 500,
-        color: a.presente ? "#fff" : "#889",
+        color: a.presente ? "#2b2c26" : "#6b6d62",
         display: "flex",
         alignItems: "center",
         gap: 5,
@@ -1118,31 +1118,31 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }, a.nombre, " ", a.apellidos, a.manual && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9,
-        background: "#0f2a1a",
-        color: "#6fcf97",
+        background: "#e7f0e1",
+        color: "#4f7a3f",
         padding: "1px 5px",
         borderRadius: 3,
-        fontFamily: "'DM Mono',monospace"
+        fontFamily: "'Barlow',monospace"
       }
     }, "walk-in"), eleg && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9,
-        background: "#1a1408",
-        color: "#c9a84c",
+        background: "#efe7d2",
+        color: "#676b55",
         padding: "1px 5px",
         borderRadius: 3,
-        fontFamily: "'DM Mono',monospace"
+        fontFamily: "'Barlow',monospace"
       }
     }, "en sorteo")), !wide && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
-        color: "#445",
+        color: "#8a8c82",
         marginTop: 1
       }
     }, a.empresa, a.mail ? ` · ${a.mail}` : "")), wide && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
-        color: "#667",
+        color: "#6b6d62",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
@@ -1150,7 +1150,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }, a.empresa || "—"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
-        color: "#445",
+        color: "#8a8c82",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
@@ -1166,12 +1166,12 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       className: "chk",
       title: "Presente en el evento (manual)",
       onClick: () => toggle(a.id),
-      style: stateBtn(a.presente, "linear-gradient(135deg,#c9a84c,#7a5a10)", "#c9a84c30")
+      style: stateBtn(a.presente, "linear-gradient(135deg,#676b55,#565a45)", "#676b5530")
     }, a.presente ? "✓" : "○"), /*#__PURE__*/React.createElement("button", {
       className: "chk",
       title: "Encuesta completada (auto, o toggle manual)",
       onClick: () => toggleForm(a.id),
-      style: stateBtn(a.formulario, "linear-gradient(135deg,#2f9e6e,#1c6b48)", "#2f9e6e40")
+      style: stateBtn(a.formulario, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f40")
     }, a.formulario ? "✓" : "F")));
   }))), tab === "eligibles" && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1186,39 +1186,39 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: 17,
       fontWeight: 700,
-      color: "#fff",
+      color: "#2b2c26",
       marginBottom: 4
     }
   }, "Habilitados para el sorteo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#556",
+      color: "#8a8c82",
       lineHeight: 1.7
     }
-  }, "Cruce autom\xE1tico: solo aparece quien ", /*#__PURE__*/React.createElement("strong", {
+  }, "Cruce automático: solo aparece quien ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#c9a84c"
+      color: "#676b55"
     }
-  }, "asisti\xF3"), " (marcado a mano) y adem\xE1s ", /*#__PURE__*/React.createElement("strong", {
+  }, "asistió"), " (marcado a mano) y además ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#6fcf97"
+      color: "#4f7a3f"
     }
-  }, "complet\xF3 la encuesta"), " (matcheado por mail o nombre). Son ", /*#__PURE__*/React.createElement("strong", {
+  }, "completó la encuesta"), " (matcheado por mail o nombre). Son ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#6fcf97"
+      color: "#4f7a3f"
     }
   }, elegibles.length), " persona", elegibles.length !== 1 ? "s" : "", ".")), elegibles.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
       textAlign: "center",
       padding: "54px 24px",
-      color: "#445",
+      color: "#8a8c82",
       fontSize: 14
     }
-  }, "Todav\xEDa no hay nadie que cumpla las dos condiciones.") : /*#__PURE__*/React.createElement("div", {
+  }, "Todavía no hay nadie que cumpla las dos condiciones.") : /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
       padding: 0,
@@ -1231,7 +1231,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       alignItems: "center",
       gap: 12,
       padding: wide ? "11px 20px" : "10px 14px",
-      borderBottom: i < elegibles.length - 1 ? "1px solid #181a22" : "none"
+      borderBottom: i < elegibles.length - 1 ? "1px solid #edeee7" : "none"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1239,14 +1239,14 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       height: 32,
       borderRadius: 8,
       flexShrink: 0,
-      background: "linear-gradient(135deg,#7a5a10,#c9a84c)",
+      background: "linear-gradient(135deg,#565a45,#676b55)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 11,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'DM Mono',monospace"
+      fontFamily: "'Barlow',monospace"
     }
   }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1257,20 +1257,20 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     style: {
       fontSize: 13,
       fontWeight: 500,
-      color: "#eee"
+      color: "#2b2c26"
     }
   }, a.nombre, " ", a.apellidos), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#556"
+      color: "#8a8c82"
     }
   }, a.empresa, a.mail ? ` · ${a.mail}` : "")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
-      color: "#6fcf97",
-      fontFamily: "'DM Mono',monospace"
+      color: "#4f7a3f",
+      fontFamily: "'Barlow',monospace"
     }
-  }, "\u2713 habilitado")))), elegibles.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "✓ habilitado")))), elegibles.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 16,
       textAlign: "center"
@@ -1281,7 +1281,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       ...btn(true),
       padding: "12px 36px"
     }
-  }, "Ir al sorteo \u2192"))), tab === "raffle" && /*#__PURE__*/React.createElement("div", {
+  }, "Ir al sorteo →"))), tab === "raffle" && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .3s",
       maxWidth: 680,
@@ -1298,24 +1298,24 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       fontSize: 40,
       marginBottom: 10
     }
-  }, "\uD83C\uDF9F"), /*#__PURE__*/React.createElement("div", {
+  }, "🎟"), /*#__PURE__*/React.createElement("div", {
     style: {
-      color: "#445",
+      color: "#8a8c82",
       fontSize: 14,
       lineHeight: 1.6
     }
   }, "Para entrar al sorteo cada persona tiene que estar", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#c9a84c"
+      color: "#676b55"
     }
   }, "presente"), " y haber ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#6fcf97"
+      color: "#4f7a3f"
     }
   }, "completado la encuesta"), ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "linear-gradient(160deg,#10121a,#16101e)",
-      border: "1px solid #252835",
+      background: "linear-gradient(160deg,#ffffff,#eef0e8)",
+      border: "1px solid #d6d8cd",
       borderRadius: 16,
       padding: wide ? "56px 48px" : "40px 20px",
       textAlign: "center",
@@ -1331,40 +1331,40 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       transform: "translateX(-50%)",
       width: 200,
       height: 1,
-      background: "linear-gradient(90deg,transparent,#c9a84c,transparent)"
+      background: "linear-gradient(90deg,transparent,#676b55,transparent)"
     }
   }), raffleState === "idle" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 44,
       marginBottom: 10
     }
-  }, "\u2726"), /*#__PURE__*/React.createElement("div", {
+  }, "✦"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: wide ? 28 : 22,
       fontWeight: 700,
-      color: "#c9a84c",
+      color: "#676b55",
       marginBottom: 6
     }
   }, "Sorteo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#445",
+      color: "#8a8c82",
       marginBottom: 32
     }
   }, restantes.length, " participante", restantes.length !== 1 ? "s" : "", " habilitado", restantes.length !== 1 ? "s" : "", " en juego", winners.length > 0 && ` · ${winners.length} ya sorteado${winners.length !== 1 ? "s" : ""}`), /*#__PURE__*/React.createElement("button", {
     onClick: doRaffle,
     disabled: restantes.length === 0,
     style: {
-      background: restantes.length === 0 ? "#1a1d26" : "linear-gradient(135deg,#c9a84c,#7a5a10)",
+      background: restantes.length === 0 ? "#eef0e8" : "linear-gradient(135deg,#676b55,#565a45)",
       border: "none",
       borderRadius: 10,
       padding: "14px 48px",
-      color: restantes.length === 0 ? "#445" : "#fff",
+      color: restantes.length === 0 ? "#8a8c82" : "#fff",
       cursor: restantes.length === 0 ? "not-allowed" : "pointer",
       fontSize: 15,
       fontWeight: 700,
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       letterSpacing: ".03em"
     }
   }, restantes.length === 0 ? "NO QUEDAN PARTICIPANTES" : "INICIAR SORTEO")), raffleState === "spinning" && winner && /*#__PURE__*/React.createElement("div", {
@@ -1374,31 +1374,31 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       marginBottom: 14
     }
-  }, "SORTEANDO\u2026"), /*#__PURE__*/React.createElement("div", {
+  }, "SORTEANDO…"), /*#__PURE__*/React.createElement("div", {
     style: {
       width: 68,
       height: 68,
       borderRadius: 12,
       margin: "0 auto 14px",
-      background: "linear-gradient(135deg,#7a5a10,#c9a84c)",
+      background: "linear-gradient(135deg,#565a45,#676b55)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 22,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'DM Mono',monospace"
+      fontFamily: "'Barlow',monospace"
     }
   }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: wide ? 28 : 22,
       fontWeight: 700,
-      color: "#c9a84c"
+      color: "#676b55"
     }
   }, winner.nombre, " ", winner.apellidos)), raffleState === "winner" && winner && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1409,48 +1409,48 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       fontSize: 34,
       marginBottom: 8
     }
-  }, "\uD83C\uDF89"), /*#__PURE__*/React.createElement("div", {
+  }, "🎉"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#c9a84c",
-      fontFamily: "'DM Mono',monospace",
+      color: "#676b55",
+      fontFamily: "'Barlow',monospace",
       letterSpacing: ".12em",
       marginBottom: 14
     }
-  }, "\xA1GANADOR/A!"), /*#__PURE__*/React.createElement("div", {
+  }, "¡GANADOR/A!"), /*#__PURE__*/React.createElement("div", {
     style: {
       width: 78,
       height: 78,
       borderRadius: 14,
       margin: "0 auto 18px",
-      background: "linear-gradient(135deg,#c9a84c,#f0d080)",
+      background: "linear-gradient(135deg,#676b55,#9aa07a)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 26,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'DM Mono',monospace",
-      boxShadow: "0 0 48px rgba(201,168,76,.5)"
+      fontFamily: "'Barlow',monospace",
+      boxShadow: "0 0 48px rgba(103,107,85,.5)"
     }
   }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: wide ? 32 : 24,
       fontWeight: 700,
-      color: "#fff",
+      color: "#2b2c26",
       marginBottom: 4
     }
   }, winner.nombre, " ", winner.apellidos), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
-      color: "#c9a84c",
+      color: "#676b55",
       marginBottom: 4
     }
   }, winner.empresa), winner.mail && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
-      color: "#445",
+      color: "#8a8c82",
       marginBottom: 10
     }
   }, winner.mail), /*#__PURE__*/React.createElement("div", {
@@ -1471,8 +1471,8 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, "Reiniciar")))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#334",
-      fontFamily: "'DM Mono',monospace",
+      color: "#a2a498",
+      fontFamily: "'Barlow',monospace",
       marginBottom: 8,
       letterSpacing: ".05em"
     }
@@ -1490,18 +1490,18 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
         padding: "4px 12px",
         borderRadius: 6,
         fontSize: 12,
-        background: won ? "#13151c" : "rgba(201,168,76,.08)",
-        border: `1px solid ${won ? "#1a1d26" : "rgba(201,168,76,.2)"}`,
-        color: won ? "#2a2d38" : "#99a",
+        background: won ? "#ffffff" : "rgba(103,107,85,.08)",
+        border: `1px solid ${won ? "#eef0e8" : "rgba(103,107,85,.2)"}`,
+        color: won ? "#c0c2b7" : "#8a8c82",
         textDecoration: won ? "line-through" : "none"
       }
     }, p.nombre, " ", p.apellidos, won && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 10,
         marginLeft: 4,
-        color: "#c9a84c"
+        color: "#676b55"
       }
-    }, "\u2713"));
+    }, "✓"));
   })))), tab === "config" && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .3s",
@@ -1525,7 +1525,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       width: 22,
       height: 22,
       borderRadius: 6,
-      background: "linear-gradient(135deg,#c9a84c,#7a5a10)",
+      background: "linear-gradient(135deg,#676b55,#565a45)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -1535,24 +1535,24 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, "1"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: 16,
       fontWeight: 700,
-      color: "#fff"
+      color: "#2b2c26"
     }
   }, "Lista de inscriptos")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#556",
+      color: "#8a8c82",
       lineHeight: 1.7,
       marginBottom: 16
     }
-  }, "Las respuestas del formulario de inscripci\xF3n. Public\xE1 esa hoja como CSV (Archivo \u2192 Compartir \u2192 Publicar en la web \u2192 CSV) y peg\xE1 el link, o sub\xED un Excel."), /*#__PURE__*/React.createElement("div", {
+  }, "Las respuestas del formulario de inscripción. Publicá esa hoja como CSV (Archivo → Compartir → Publicar en la web → CSV) y pegá el link, o subí un Excel."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
-      background: "#0d0f14",
-      border: "1px solid #1e2130",
+      background: "#fbfbf9",
+      border: "1px solid #e4e6dd",
       borderRadius: 9,
       padding: 4,
       marginBottom: 16
@@ -1569,27 +1569,27 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       borderRadius: 6,
       padding: "8px 10px",
       cursor: "pointer",
-      fontFamily: "'DM Sans',sans-serif",
+      fontFamily: "'Barlow',sans-serif",
       fontSize: 13,
       fontWeight: 600,
-      background: listMode === k ? "linear-gradient(135deg,#c9a84c,#7a5a10)" : "transparent",
-      color: listMode === k ? "#fff" : "#556"
+      background: listMode === k ? "linear-gradient(135deg,#676b55,#565a45)" : "transparent",
+      color: listMode === k ? "#fff" : "#8a8c82"
     }
   }, l))), listMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       display: "block",
       marginBottom: 6
     }
   }, "URL publicada (CSV)"), /*#__PURE__*/React.createElement("input", {
     value: listUrl,
     onChange: e => setListUrl(e.target.value),
-    placeholder: "https://docs.google.com/spreadsheets/d/e/\u2026/pub?output=csv",
+    placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
     style: {
       ...inp,
-      fontFamily: "'DM Mono',monospace",
+      fontFamily: "'Barlow',monospace",
       fontSize: 11,
       marginBottom: 10
     }
@@ -1611,21 +1611,21 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       ...btn(true),
       display: "inline-block"
     }
-  }, "Elegir archivo (.xlsx / .csv)\u2026")), /*#__PURE__*/React.createElement("div", {
+  }, "Elegir archivo (.xlsx / .csv)…")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 14,
       paddingTop: 14,
-      borderTop: "1px solid #1a1d26"
+      borderTop: "1px solid #eef0e8"
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       display: "block",
       marginBottom: 6
     }
-  }, "Mostrar inscriptos desde (opcional \xB7 usa la columna \"Marca temporal\")"), /*#__PURE__*/React.createElement("input", {
+  }, "Mostrar inscriptos desde (opcional · usa la columna \"Marca temporal\")"), /*#__PURE__*/React.createElement("input", {
     type: "date",
     value: listSince,
     onChange: e => setListSince(e.target.value),
@@ -1636,21 +1636,21 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#334",
+      color: "#a2a498",
       marginTop: 6
     }
-  }, "Si la hoja acumula varios eventos, pon\xE9 la fecha del evento actual para traer solo a los nuevos.")), listSt && /*#__PURE__*/React.createElement("div", {
+  }, "Si la hoja acumula varios eventos, poné la fecha del evento actual para traer solo a los nuevos.")), listSt && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontSize: 12,
-      fontFamily: "'DM Mono',monospace",
-      color: listSt.startsWith("✓") ? "#6fcf97" : listSt.startsWith("Error") ? "#f47" : "#c9a84c"
+      fontFamily: "'Barlow',monospace",
+      color: listSt.startsWith("✓") ? "#4f7a3f" : listSt.startsWith("Error") ? "#c0392b" : "#676b55"
     }
   }, listSt)), /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
       marginBottom: 16,
-      border: "1px solid #163026"
+      border: "1px solid #cfe0d2"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1664,7 +1664,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       width: 22,
       height: 22,
       borderRadius: 6,
-      background: "linear-gradient(135deg,#2f9e6e,#1c6b48)",
+      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -1674,32 +1674,32 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, "2"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: 16,
       fontWeight: 700,
-      color: "#fff"
+      color: "#2b2c26"
     }
   }, "Respuestas de la encuesta")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#556",
+      color: "#8a8c82",
       lineHeight: 1.7,
       marginBottom: 16
     }
   }, "La encuesta post-evento (la del QR). Al cargarla, se marca el formulario ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#6fcf97"
+      color: "#4f7a3f"
     }
-  }, "autom\xE1ticamente"), " cruzando por ", /*#__PURE__*/React.createElement("strong", {
+  }, "automáticamente"), " cruzando por ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#ccc"
+      color: "#3a3b34"
     }
   }, "mail"), " (o nombre + apellido) contra la lista. Importante: la encuesta tiene que pedir el mail."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
-      background: "#0d0f14",
-      border: "1px solid #1e2130",
+      background: "#fbfbf9",
+      border: "1px solid #e4e6dd",
       borderRadius: 9,
       padding: 4,
       marginBottom: 16
@@ -1716,27 +1716,27 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       borderRadius: 6,
       padding: "8px 10px",
       cursor: "pointer",
-      fontFamily: "'DM Sans',sans-serif",
+      fontFamily: "'Barlow',sans-serif",
       fontSize: 13,
       fontWeight: 600,
-      background: surveyMode === k ? "linear-gradient(135deg,#2f9e6e,#1c6b48)" : "transparent",
-      color: surveyMode === k ? "#fff" : "#556"
+      background: surveyMode === k ? "linear-gradient(135deg,#4f7a3f,#3d6130)" : "transparent",
+      color: surveyMode === k ? "#fff" : "#8a8c82"
     }
   }, l))), surveyMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       display: "block",
       marginBottom: 6
     }
   }, "URL publicada (CSV) de la hoja de la encuesta"), /*#__PURE__*/React.createElement("input", {
     value: surveyUrl,
     onChange: e => setSurveyUrl(e.target.value),
-    placeholder: "https://docs.google.com/spreadsheets/d/e/\u2026/pub?output=csv",
+    placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
     style: {
       ...inp,
-      fontFamily: "'DM Mono',monospace",
+      fontFamily: "'Barlow',monospace",
       fontSize: 11,
       marginBottom: 10
     }
@@ -1744,7 +1744,7 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     onClick: loadSurveySheets,
     style: {
       ...btn(false),
-      background: "linear-gradient(135deg,#2f9e6e,#1c6b48)",
+      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
       color: "#fff"
     }
   }, "Cruzar encuesta desde Sheets")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
@@ -1760,21 +1760,21 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     htmlFor: "survey-file",
     style: {
       ...btn(false),
-      background: "linear-gradient(135deg,#2f9e6e,#1c6b48)",
+      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
       color: "#fff",
       display: "inline-block"
     }
-  }, "Elegir archivo de encuesta\u2026")), /*#__PURE__*/React.createElement("div", {
+  }, "Elegir archivo de encuesta…")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 14,
       paddingTop: 14,
-      borderTop: "1px solid #14241c"
+      borderTop: "1px solid #cfe0d2"
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       display: "block",
       marginBottom: 6
     }
@@ -1789,26 +1789,26 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#334",
+      color: "#a2a498",
       marginTop: 6
     }
-  }, "Como la hoja acumula eventos, pon\xE9 la fecha del evento para no arrastrar encuestas viejas.")), surveySt && /*#__PURE__*/React.createElement("div", {
+  }, "Como la hoja acumula eventos, poné la fecha del evento para no arrastrar encuestas viejas.")), surveySt && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontSize: 12,
-      fontFamily: "'DM Mono',monospace",
-      color: surveySt.startsWith("✓") ? "#6fcf97" : surveySt.startsWith("Error") ? "#f47" : "#c9a84c"
+      fontFamily: "'Barlow',monospace",
+      color: surveySt.startsWith("✓") ? "#4f7a3f" : surveySt.startsWith("Error") ? "#c0392b" : "#676b55"
     }
   }, surveySt)), /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
-      border: "1px solid #2a1c1c"
+      border: "1px solid #e8cdc9"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#f47",
-      fontFamily: "'DM Mono',monospace",
+      color: "#c0392b",
+      fontFamily: "'Barlow',monospace",
       marginBottom: 14,
       letterSpacing: ".05em"
     }
@@ -1827,9 +1827,9 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     onClick: clearMarks,
     style: {
       ...btn(false),
-      border: "1px solid #3a1515",
-      color: "#f47",
-      background: "#1a1014"
+      border: "1px solid #d9a9a4",
+      color: "#c0392b",
+      background: "#f7eae8"
     }
   }, "Confirmar: limpiar tildados"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setConfirmReset(null),
@@ -1840,13 +1840,13 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, "Limpiar tildados (mantener lista actual)"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#445",
+      color: "#8a8c82",
       marginTop: 8
     }
   }, "Borra presentes, encuestas y ganadores, pero conserva la lista cargada. Es el reseteo de cada evento.")), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 1,
-      background: "#1e1418",
+      background: "#eeddda",
       marginBottom: 18
     }
   }), /*#__PURE__*/React.createElement("div", null, confirmReset === "base" ? /*#__PURE__*/React.createElement("div", {
@@ -1860,9 +1860,9 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     onClick: resetToBase,
     style: {
       ...btn(false),
-      border: "1px solid #3a1515",
-      color: "#f47",
-      background: "#1a1014"
+      border: "1px solid #d9a9a4",
+      color: "#c0392b",
+      background: "#f7eae8"
     }
   }, "Confirmar: volver a lista base"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setConfirmReset(null),
@@ -1871,12 +1871,12 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     onClick: () => setConfirmReset("base"),
     style: {
       ...btn(false),
-      border: "1px solid #2a1c1c"
+      border: "1px solid #e8cdc9"
     }
   }, "Volver a la lista base"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#334",
+      color: "#a2a498",
       marginTop: 8
     }
   }, "Descarta lo importado y restaura los contactos originales del sistema."))))), showAdd && /*#__PURE__*/React.createElement("div", {
@@ -1892,8 +1892,8 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "#13151c",
-      border: "1px solid #252835",
+      background: "#ffffff",
+      border: "1px solid #d6d8cd",
       borderRadius: 14,
       padding: 28,
       width: "100%",
@@ -1902,11 +1902,11 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Syne',sans-serif",
+      fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: 16,
       fontWeight: 700,
       marginBottom: 20,
-      color: "#fff"
+      color: "#2b2c26"
     }
   }, "Agregar walk-in"), [["nombre", "Nombre *"], ["apellidos", "Apellido"], ["mail", "Mail"], ["empresa", "Empresa"], ["cargo", "Perfil / cargo"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
     key: k,
@@ -1916,8 +1916,8 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#445",
-      fontFamily: "'DM Mono',monospace",
+      color: "#8a8c82",
+      fontFamily: "'Barlow',monospace",
       display: "block",
       marginBottom: 4
     }
@@ -1939,23 +1939,23 @@ input:focus,textarea:focus{border-color:#c9a84c!important;outline:none}
       gap: 10,
       marginTop: 6,
       padding: "10px 12px",
-      background: "#0d0f14",
-      border: `1px solid ${newP.formulario ? "#2f9e6e40" : "#1e2130"}`,
+      background: "#fbfbf9",
+      border: `1px solid ${newP.formulario ? "#4f7a3f40" : "#e4e6dd"}`,
       borderRadius: 8,
       cursor: "pointer"
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: stateBtn(newP.formulario, "linear-gradient(135deg,#2f9e6e,#1c6b48)", "#2f9e6e40")
+    style: stateBtn(newP.formulario, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f40")
   }, newP.formulario ? "✓" : "F"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#ccc",
+      color: "#3a3b34",
       fontWeight: 500
     }
-  }, "Ya complet\xF3 la encuesta"), /*#__PURE__*/React.createElement("div", {
+  }, "Ya completó la encuesta"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#445"
+      color: "#8a8c82"
     }
   }, "Necesario para entrar al sorteo"))), /*#__PURE__*/React.createElement("div", {
     style: {

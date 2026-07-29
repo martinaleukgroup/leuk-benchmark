@@ -47,7 +47,8 @@
 .f-host .f-name{font-family:'DINLightCond',sans-serif;font-size:52px;line-height:.9;letter-spacing:3px;font-weight:300}
 .f-host .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
 .f-host .f-logo{height:68px;width:auto;display:block}
-.f-host .f-hr{height:1px;background:var(--ink);margin:0 0 12px}
+/* línea con border (no colapsa por redondeo de píxeles como sí lo hace un div de 1px+fondo) */
+.f-host .f-hr{height:0;border-top:1px solid var(--ink);margin:0 0 12px}
 .f-host .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:11px}
 .f-host .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
 .f-host .f-photo{height:255px;background:#ececec}

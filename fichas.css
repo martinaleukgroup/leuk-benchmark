@@ -77,15 +77,19 @@
 .f-host .f-cal-ic{width:20px;height:auto;flex:none;display:block}
 .f-host .f-calado-nota{font-size:8px;color:var(--gray);line-height:1.45;margin-top:6px}
 .f-host .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
+/* aire debajo de la raya (igual al que hay entre el título y su línea) */
+.f-host .f-h + .f-pblock{margin-top:9px}
 .f-host .f-curve{height:150px}
 .f-host .f-ctitle{font-family:'DINCond',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1px;line-height:1.25;text-transform:uppercase;margin-bottom:7px}
 .f-host .f-legend{font-size:8.5px;line-height:1.7}
 .f-host .f-legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
 .f-host .f-note{font-size:8px;color:var(--gray);line-height:1.4}
-.f-host .f-buttons{display:flex;gap:26px;margin-top:4px}
-.f-host .f-btn{text-align:center;text-decoration:none;color:var(--ink);max-width:95px}
+/* íconos equidistantes: cada botón tiene ancho fijo, así el texto de abajo (más largo o
+   más corto) no corre la posición de los íconos. Aire bajo la raya igual al del título. */
+.f-host .f-buttons{display:flex;gap:6px;margin-top:9px}
+.f-host .f-btn{width:84px;text-align:center;text-decoration:none;color:var(--ink)}
 .f-host .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
-.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:8.5px;letter-spacing:.5px;line-height:1.15;margin-top:5px;text-transform:uppercase}
+.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:.5px;line-height:1.2;margin-top:8px;text-transform:uppercase}
 .f-host .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
 /* --- Hoja de accesorios (grilla) --- */
 .f-host .f-acc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 26px;

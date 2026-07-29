@@ -76,10 +76,11 @@
       return `<span class="f-dot"><span class="f-dot-in${c.light ? " is-light" : ""}" style="${fill}"></span></span>`;
     }).join("");
     // Información complementaria: solo los botones cuyos archivos existen
+    // label en dos líneas (como la ficha original): permite letra más grande sin separar los íconos
     const btns = [];
-    if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo LDT</div></a>`);
-    if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo CAD</div></a>`);
-    if (a.manual_url) btns.push(`<a class="f-btn" href="${esc(a.manual_url)}" target="_blank" rel="noopener"><img src="${ICON}manual.png"><div class="lb">Manual de Instalación</div></a>`);
+    if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo<br>LDT</div></a>`);
+    if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo<br>CAD</div></a>`);
+    if (a.manual_url) btns.push(`<a class="f-btn" href="${esc(a.manual_url)}" target="_blank" rel="noopener"><img src="${ICON}manual.png"><div class="lb">Manual de<br>Instalación</div></a>`);
     const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
     // Datos fotométricos: cada curva se muestra SOLO si existe. Si no hay ninguna,
     // "Información Complementaria" sube a ese lugar.

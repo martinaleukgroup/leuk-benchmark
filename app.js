@@ -1605,7 +1605,7 @@
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=130"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
-    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=135"; }
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=136"; }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
@@ -1766,6 +1766,13 @@
         ayuda: ["<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
                 "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
                 "<b>Descargá el PDF</b> — si la línea tiene varias hojas, salen todas en un archivo."] },
+      { mod: "eventos", ic: "🎟️",
+        d: "Check-in de eventos y sorteo en vivo, compartido con todo el equipo.",
+        stats: [],
+        ayuda: ["<b>Marcá presente</b> a cada persona cuando llega (a mano) — el estado se comparte en vivo con quien tenga la app abierta.",
+                "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
+                "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
+                "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
       { mod: "usuarios", ic: "👥",
         d: "Quién entra a la plataforma y qué ve cada uno.",
         stats: [],

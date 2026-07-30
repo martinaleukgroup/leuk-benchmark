@@ -327,6 +327,24 @@ td.muted{color:var(--olive-soft);text-align:center}
 .btn-desc:hover{background:var(--olive-pale)}
 .desc-modal{max-width:460px}
 .desc-modal h3{font-size:14px;margin:16px 0 8px;color:var(--olive)}
+/* --- Integrar competencia (asistente) --- */
+.ci-modal{max-width:560px}
+.ci-form{display:flex;flex-direction:column}
+.ci-form label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-soft);margin:12px 0 5px}
+.ci-form .lg-in{width:100%}
+.ci-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ci-file{display:inline-flex;align-items:center;gap:6px;background:var(--olive-pale);border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 11px;font-size:12px;color:var(--olive)}
+.ci-file-x{border:none;background:none;color:var(--gray);cursor:pointer;font-size:12px;line-height:1;padding:2px}
+.ci-form .btn-primary{margin-top:14px;align-self:flex-start}
+.ci-h3{font-size:14px;margin:20px 0 8px;color:var(--olive)}
+.ci-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
+.ci-job{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px}
+.ci-job-meta{min-width:0}
+.ci-badge{flex-shrink:0;font-size:11px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.ci-b-wait{background:#f6ecd8;color:var(--warn)}
+.ci-b-run{background:#f6ecd8;color:var(--warn)}
+.ci-b-ok{background:#e7f0e1;color:var(--ok)}
+.ci-b-err{background:#f4e2df;color:var(--no)}
 .desc-leuk{display:flex;flex-direction:column;gap:8px}
 .desc-tier{display:flex;align-items:center;gap:8px;background:var(--olive-pale);border-radius:10px;padding:10px 12px;font-size:14px;cursor:pointer}
 .desc-list{display:flex;flex-direction:column;gap:6px}

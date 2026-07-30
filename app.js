@@ -202,6 +202,7 @@
   const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
+  const puedeIntegrar = () => ["admin", "lider"].includes(rolReal());   // integrar competencia (PDF + web → catálogo)
   // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
   const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
@@ -1190,6 +1191,7 @@
     });
     const p = $("#btnPrecios"); if (p) p.style.display = puedePrecios() ? "" : "none";
     const co = $("#btnCostos"); if (co) co.style.display = puedeCostos() ? "" : "none";
+    const ci = $("#btnComp"); if (ci) ci.style.display = puedeIntegrar() ? "" : "none";
     const d = $("#btnDesc"); if (d) d.style.display = puedeVer("benchmark") ? "" : "none";
     document.body.classList.toggle("solo-fichas", !puedeVer("benchmark"));
   }
@@ -1543,6 +1545,124 @@
     } catch (e) { return false; }
   }
 
+  /* ===================== INTEGRAR COMPETENCIA (Fase 1: carga + cola) ===================== */
+  // La app sólo ENCOLA el trabajo (sube el PDF + crea el job). El procesamiento pesado
+  // (scrape de imágenes, embeddings, etiquetado, matching) lo hace un worker aparte que
+  // lee la tabla `integracion_jobs` con la service key. Acá: subir PDF, crear job, listar.
+  const slugMarca = s => (s || "").toString().toLowerCase().normalize("NFD")
+    .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "marca";
+
+  async function subirPDFIntegracion(mslug, f) {
+    const path = `${mslug}/${Date.now()}-${f.name.replace(/[^\w.\-]+/g, "_")}`;
+    const h = Object.assign({}, AUTHSES.head());
+    h["Content-Type"] = f.type || "application/pdf"; h["x-upsert"] = "true";
+    const r = await fetch(`${SB.url}/storage/v1/object/integracion/${encodeURI(path)}`, { method: "POST", headers: h, body: f });
+    if (!r.ok) throw new Error(`No se pudo subir ${f.name}`);
+    return path;
+  }
+  async function crearJobIntegracion(job) {
+    const r = await fetch(`${SB.url}/rest/v1/integracion_jobs`, {
+      method: "POST", headers: Object.assign(AUTHSES.head(), { Prefer: "return=representation" }),
+      body: JSON.stringify(job),
+    });
+    if (!r.ok) throw new Error((await r.text()).slice(0, 180));
+    return (await r.json())[0];
+  }
+  async function traerJobsIntegracion() {
+    const r = await fetch(`${SB.url}/rest/v1/integracion_jobs?select=*&order=creado.desc&limit=15`, { headers: AUTHSES.head() });
+    return r.ok ? await r.json() : [];
+  }
+
+  function openIntegrar() {
+    if (!puedeIntegrar()) { alert("Sólo Admin y Líder pueden integrar competencia."); return; }
+    const ov = el("div", "detail"); ov.id = "integrarModal";
+    const opts = MARCAS.map(m => `<option value="${m}">${m}</option>`).join("") + `<option value="__nueva__">➕ Nueva marca…</option>`;
+    ov.innerHTML = `<div class="detail-inner desc-modal ci-modal">
+      <button class="detail-close" id="ciClose">✕</button>
+      <h2>Integrar competencia</h2>
+      <div class="fam-hint">Subí la <b>lista de precios o catálogo en PDF</b> y el <b>link del sitio</b> del competidor. El sistema extrae los productos, saca la ficha técnica y las imágenes, las etiqueta y las suma al catálogo. Se procesa en segundo plano — abajo ves el estado de cada carga.</div>
+      <div class="ci-form">
+        <label>Marca</label>
+        <select id="ciMarca" class="lg-in">${opts}</select>
+        <input id="ciMarcaNueva" class="lg-in" placeholder="Nombre de la marca nueva" hidden>
+        <label>Sitio web del competidor (URL)</label>
+        <input id="ciUrl" class="lg-in" placeholder="https://www.competidor.com/productos" inputmode="url">
+        <label>Lista de precios / catálogo (PDF)</label>
+        <div id="ciDrop" class="px-drop">Arrastrá el/los PDF acá o <b>tocá para elegir</b><input id="ciFile" type="file" accept="application/pdf,.pdf" multiple hidden></div>
+        <div id="ciFiles" class="ci-files"></div>
+        <div id="ciMsg" class="px-info"></div>
+        <button id="ciCrear" class="btn-primary">Crear integración</button>
+      </div>
+      <h3 class="ci-h3">Integraciones recientes</h3>
+      <div id="ciList" class="ci-list"><div class="empty-mini">Cargando…</div></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const $$ = s => ov.querySelector(s);
+    const close = () => { clearInterval(poll); ov.remove(); };
+    $$("#ciClose").onclick = close;
+    ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
+    const marca = $$("#ciMarca"), marcaNueva = $$("#ciMarcaNueva"), url = $$("#ciUrl"),
+      drop = $$("#ciDrop"), file = $$("#ciFile"), filesBox = $$("#ciFiles"),
+      msg = $$("#ciMsg"), crear = $$("#ciCrear"), lista = $$("#ciList");
+    let files = [];
+    marca.onchange = () => { marcaNueva.hidden = marca.value !== "__nueva__"; if (!marcaNueva.hidden) marcaNueva.focus(); };
+    drop.onclick = () => file.click();
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); };
+    file.onchange = () => addFiles(file.files);
+    function addFiles(fl) {
+      for (const f of fl) if (/\.pdf$/i.test(f.name) && !files.some(x => x.name === f.name)) files.push(f);
+      filesBox.innerHTML = files.map((f, i) => `<span class="ci-file">${f.name.replace(/[<>]/g, "")} <button data-i="${i}" class="ci-file-x">✕</button></span>`).join("");
+      filesBox.querySelectorAll(".ci-file-x").forEach(b => b.onclick = () => { files.splice(+b.dataset.i, 1); addFiles([]); });
+    }
+    crear.onclick = async () => {
+      const marcaFinal = marca.value === "__nueva__" ? marcaNueva.value.trim() : marca.value;
+      if (!marcaFinal) { msg.innerHTML = `<span class="px-bad">Elegí o escribí la marca.</span>`; return; }
+      if (!url.value.trim() && !files.length) { msg.innerHTML = `<span class="px-bad">Cargá al menos un PDF o la URL del sitio.</span>`; return; }
+      crear.disabled = true; crear.textContent = "Subiendo…";
+      try {
+        const mslug = slugMarca(marcaFinal), paths = [];
+        for (const f of files) { msg.textContent = `Subiendo ${f.name}…`; paths.push(await subirPDFIntegracion(mslug, f)); }
+        msg.textContent = "Creando integración…";
+        await crearJobIntegracion({
+          marca: marcaFinal, marca_nueva: marca.value === "__nueva__",
+          url: url.value.trim() || null, pdf_paths: paths, autor: AUTHSES.email() || null,
+        });
+        msg.innerHTML = `<span class="px-ok">✓ Integración en cola. Se procesa en segundo plano.</span>`;
+        files = []; addFiles([]); url.value = "";
+        crear.textContent = "Crear integración"; crear.disabled = false;
+        renderLista();
+      } catch (ex) {
+        msg.innerHTML = `<span class="px-bad">${ex.message}. ¿Corriste el SQL de 'integracion_jobs'?</span>`;
+        crear.textContent = "Crear integración"; crear.disabled = false;
+      }
+    };
+    const EST = { pendiente: ["ci-b-wait", "⏳ En cola"], procesando: ["ci-b-run", "⚙ Procesando…"], listo: ["ci-b-ok", "✓ Listo"], error: ["ci-b-err", "✕ Error"] };
+    async function renderLista() {
+      const jobs = await traerJobsIntegracion();
+      if (!jobs.length) { lista.innerHTML = `<div class="empty-mini">Todavía no cargaste ninguna integración.</div>`; return; }
+      lista.innerHTML = jobs.map(j => {
+        const [cls, txt] = EST[j.estado] || ["", j.estado || "?"];
+        const r = j.resultado || {};
+        const fecha = j.creado ? new Date(j.creado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+        const resumen = j.estado === "listo"
+          ? `<div class="leuk-fam">${r.productos_nuevos || 0} productos · ${r.con_imagen || 0} con imagen · ${r.con_ficha || 0} con ficha</div>`
+          : j.estado === "error" ? `<div class="px-bad" style="font-size:11px">${(j.error || "").slice(0, 140)}</div>` : "";
+        return `<div class="ci-job">
+          <div class="ci-job-meta"><b>${(j.marca || "—").replace(/[<>]/g, "")}</b>${j.marca_nueva ? ' <span class="tag-sug">nueva</span>' : ""}
+            <span class="leuk-fam"> · ${fecha}</span>
+            ${j.url ? `<div class="leuk-fam" style="font-size:11px">${j.url.replace(/[<>]/g, "").slice(0, 64)}</div>` : ""}
+            ${j.pdf_paths && j.pdf_paths.length ? `<div class="leuk-fam" style="font-size:11px">${j.pdf_paths.length} PDF</div>` : ""}
+            ${resumen}</div>
+          <span class="ci-badge ${cls}">${txt}</span>
+        </div>`;
+      }).join("");
+    }
+    renderLista();
+    const poll = setInterval(renderLista, 5000);
+  }
+
   /* ===================== NAV ===================== */
   const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "firmas", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
@@ -1824,6 +1944,7 @@
   $("#btnDesc").addEventListener("click", openDescuentos);
   $("#btnPrecios").addEventListener("click", openPrecios);
   $("#btnCostos").addEventListener("click", openCostos);
+  $("#btnComp").addEventListener("click", openIntegrar);
   $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.

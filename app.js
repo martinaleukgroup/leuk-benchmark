@@ -202,7 +202,7 @@
   const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
-  const puedeIntegrar = () => ["admin", "lider"].includes(rolReal());   // integrar competencia (PDF + web → catálogo)
+  const puedeIntegrar = () => ["admin", "lider", "coordinacion"].includes(rolReal());   // integrar competencia (PDF + web → catálogo)
   // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
   const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
@@ -1574,7 +1574,7 @@
   }
 
   function openIntegrar() {
-    if (!puedeIntegrar()) { alert("Sólo Admin y Líder pueden integrar competencia."); return; }
+    if (!puedeIntegrar()) { alert("Sólo Admin, Líder y Coordinación pueden integrar competencia."); return; }
     const ov = el("div", "detail"); ov.id = "integrarModal";
     const opts = MARCAS.map(m => `<option value="${m}">${m}</option>`).join("") + `<option value="__nueva__">➕ Nueva marca…</option>`;
     ov.innerHTML = `<div class="detail-inner desc-modal ci-modal">

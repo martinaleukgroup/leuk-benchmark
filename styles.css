@@ -516,3 +516,35 @@ button.rm:hover{background:#f4e2df}
   .comp-head{flex-direction:column;text-align:center}
   .filters-bar{flex-direction:column;align-items:flex-start;gap:8px}
 }
+
+/* ---- Nuevas integraciones (Fase 3: revisar / aprobar lo importado) ---- */
+.intg-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.intg-search{flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;
+  background:var(--card);font-family:var(--font-body);font-size:14px;color:var(--ink)}
+.intg-search:focus{outline:none;border-color:var(--olive-soft);box-shadow:0 0 0 3px var(--olive-pale)}
+.intg-stat{font-size:12px;color:var(--gray-soft)}
+.intg-marca{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.intg-marca-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 16px;background:var(--olive-pale);border-bottom:1px solid var(--line)}
+.intg-marca-head h3{margin:0;color:var(--olive);font-size:20px}
+.intg-bulk{display:flex;gap:8px}
+.intg-list{max-height:62vh;overflow-y:auto}
+.intg-row{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 16px;border-bottom:1px solid var(--line)}
+.intg-row:last-child{border-bottom:none}
+.intg-row.aprobado{background:rgba(79,122,63,.06)}
+.intg-row.descartado{opacity:.5}
+.intg-info b{font-weight:600}
+.intg-specs{font-size:12px;margin-top:2px}
+.intg-acts{display:flex;gap:6px;flex-shrink:0}
+.intg-b{border:1px solid var(--line);background:var(--card);border-radius:999px;
+  padding:5px 12px;font-size:12px;color:var(--gray);white-space:nowrap;transition:all .12s}
+.intg-b:hover{border-color:var(--olive-soft)}
+.intg-b:disabled{opacity:.5;cursor:default}
+.intg-ok.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.intg-no.on{background:var(--no);border-color:var(--no);color:#fff}
+@media(max-width:640px){
+  .intg-row{flex-direction:column;align-items:flex-start}
+  .intg-marca-head{flex-direction:column;align-items:flex-start}
+}

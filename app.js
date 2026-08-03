@@ -1663,8 +1663,102 @@
     const poll = setInterval(renderLista, 5000);
   }
 
+  /* ============ NUEVAS INTEGRACIONES (Fase 3: revisar / aprobar lo importado) ============ */
+  // Lo que el worker cargó en `competencia_extra` está "crudo" (specs + precio, sin matchear
+  // con un SKU de Leuk). Acá se revisa: aprobar todo el portfolio o uno por uno. Los aprobados
+  // (aprobado=true) quedan listos para el paso siguiente (matching → comparación head-to-head).
+  let INTEG = [];
+  async function traerIntegraciones() {
+    const rows = [], step = 1000;                     // PostgREST corta en 1000: pagino con Range
+    for (let from = 0; ; from += step) {
+      const r = await fetch(`${SB.url}/rest/v1/competencia_extra?select=id,marca,nombre,familia,precio_usd,ficha,aprobado&order=marca.asc,familia.asc,nombre.asc`,
+        { headers: Object.assign(AUTHSES.head(), { Range: `${from}-${from + step - 1}` }) });
+      if (!r.ok) break;
+      const chunk = await r.json(); rows.push(...chunk);
+      if (chunk.length < step) break;
+    }
+    return rows;
+  }
+  async function guardarAprob(filtro, val, retried) {  // filtro = query PostgREST (id=eq… o marca=eq…)
+    const r = await fetch(`${SB.url}/rest/v1/competencia_extra?${filtro}`, {
+      method: "PATCH", headers: Object.assign(AUTHSES.head(), { Prefer: "return=minimal" }),
+      body: JSON.stringify({ aprobado: val }),
+    });
+    if ((r.status === 401 || r.status === 403) && !retried) { if (await AUTHSES.refresh()) return guardarAprob(filtro, val, true); }
+    return r.ok;
+  }
+  const estAprob = a => a === true ? "aprobado" : a === false ? "descartado" : "pendiente";
+
+  async function renderIntegraciones() {
+    const host = $("#page-integraciones"); if (!host) return;
+    if (!puedeIntegrar()) { host.innerHTML = `<div class="res-intro">No tenés permiso para ver esta sección.</div>`; return; }
+    host.innerHTML = `<div class="res-intro">Productos <b>importados</b> de competidores, listos para revisar. Aprobá todo el portfolio o seleccioná uno por uno. Los <b>aprobados</b> pasan al paso siguiente (comparación head-to-head contra Leuk).</div>
+      <div class="intg-bar"><input id="intgSearch" type="search" class="intg-search" placeholder="Buscar por nombre o familia…" autocomplete="off"><span id="intgStat" class="intg-stat"></span></div>
+      <div id="intgBody"><div class="empty-mini">Cargando integraciones…</div></div>`;
+    INTEG = await traerIntegraciones();
+    const s = $("#intgSearch"); if (s) s.addEventListener("input", () => paintInteg(s.value));
+    paintInteg("");
+  }
+  function paintInteg(filtro) {
+    const body = $("#intgBody"), stat = $("#intgStat"); if (!body) return;
+    if (!INTEG.length) { body.innerHTML = `<div class="empty-mini">Todavía no hay productos importados. Cargá un competidor desde <b>➕ Competencia</b> y esperá a que el worker lo procese.</div>`; if (stat) stat.textContent = ""; return; }
+    const f = norm(filtro);
+    const ap = INTEG.filter(p => p.aprobado === true).length, de = INTEG.filter(p => p.aprobado === false).length;
+    if (stat) stat.textContent = `${INTEG.length} productos · ${ap} aprobados · ${de} descartados · ${INTEG.length - ap - de} sin revisar`;
+    const porMarca = {};
+    INTEG.forEach(p => { (porMarca[p.marca] = porMarca[p.marca] || []).push(p); });
+    const CAP = 400;
+    body.innerHTML = Object.entries(porMarca).map(([marca, prods]) => {
+      const vis = f ? prods.filter(p => norm(p.nombre).includes(f) || norm(p.familia).includes(f)) : prods;
+      const a = prods.filter(p => p.aprobado === true).length, d = prods.filter(p => p.aprobado === false).length;
+      const rows = vis.slice(0, CAP).map(p => {
+        const specs = Object.values(p.ficha || {}).slice(0, 3).map(String).join(" · ").replace(/[<>]/g, "");
+        return `<div class="intg-row ${estAprob(p.aprobado)}">
+          <div class="intg-info"><b>${(p.nombre || "—").replace(/[<>]/g, "")}</b> <span class="leuk-fam">${(p.familia || "").replace(/[<>]/g, "")}</span>
+            <div class="leuk-fam intg-specs">${fmtUsd(p.precio_usd)}${specs ? " · " + specs : ""}</div></div>
+          <div class="intg-acts">
+            <button class="intg-b intg-ok ${p.aprobado === true ? "on" : ""}" data-act="ok" data-id="${p.id}">✓ Aprobar</button>
+            <button class="intg-b intg-no ${p.aprobado === false ? "on" : ""}" data-act="no" data-id="${p.id}">✕ Descartar</button>
+          </div></div>`;
+      }).join("");
+      return `<div class="intg-marca">
+        <div class="intg-marca-head">
+          <div><h3>${marca.replace(/[<>]/g, "")}</h3><span class="leuk-fam">${prods.length} productos · ${a} aprobados · ${d} descartados</span></div>
+          <div class="intg-bulk">
+            <button class="btn-ghost" data-bulk="ok" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar todo</button>
+            <button class="btn-ghost" data-bulk="no" data-marca="${marca.replace(/"/g, "")}">✕ Descartar todo</button>
+          </div></div>
+        <div class="intg-list">${rows || `<div class="empty-mini">Sin resultados para “${(filtro || "").replace(/[<>]/g, "")}”.</div>`}</div>
+        ${vis.length > CAP ? `<div class="leuk-fam" style="padding:8px 4px">Mostrando ${CAP} de ${vis.length}. Usá el buscador para acotar.</div>` : ""}
+      </div>`;
+    }).join("");
+  }
+  // acciones de aprobar/descartar (delegado, una sola vez)
+  document.addEventListener("click", async ev => {
+    const one = ev.target.closest(".intg-b[data-act]");
+    if (one) {
+      const id = one.dataset.id, val = one.dataset.act === "ok";
+      const p = INTEG.find(x => x.id === id); if (!p) return;
+      const nuevo = (p.aprobado === val) ? null : val;   // volver a tocar el mismo = des-marcar (sin revisar)
+      one.disabled = true;
+      const ok = await guardarAprob(`id=eq.${id}`, nuevo);
+      if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3 (columna 'aprobado' + policy)?"); one.disabled = false; return; }
+      p.aprobado = nuevo; paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
+      return;
+    }
+    const bulk = ev.target.closest("[data-bulk]");
+    if (bulk && $("#page-integraciones") && !$("#page-integraciones").classList.contains("hidden")) {
+      const marca = bulk.dataset.marca, val = bulk.dataset.bulk === "ok";
+      if (!confirm(`¿${val ? "Aprobar" : "Descartar"} TODO el portfolio de ${marca}? (${INTEG.filter(p => p.marca === marca).length} productos)`)) return;
+      const ok = await guardarAprob(`marca=eq.${encodeURIComponent(marca)}`, val);
+      if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3?"); return; }
+      INTEG.forEach(p => { if (p.marca === marca) p.aprobado = val; });
+      paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
+    }
+  });
+
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "fichas", "firmas", "eventos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "firmas", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1672,7 +1766,8 @@
       label: "Benchmark",
       pages: [{ p: "comparaciones", t: "Catálogo" },
               { p: "resultados", t: "Comparaciones", count: true },
-              { p: "decisiones", t: "Insights" }],
+              { p: "decisiones", t: "Insights" },
+              { p: "integraciones", t: "Nuevas integraciones", gate: () => puedeIntegrar() }],
     },
     diseno: {
       label: "Diseño",
@@ -1700,7 +1795,7 @@
     $("#sbLabel").textContent = m.label;
     // OJO: sólo se re-dibuja la parte de páginas. Las herramientas (#sbTools) son nodos
     // fijos con listeners enganchados al arrancar; si entraran acá se destruirían.
-    $("#sbPages").innerHTML = m.pages.map(x =>
+    $("#sbPages").innerHTML = m.pages.filter(x => !x.gate || x.gate()).map(x =>
       `<button class="sb-item ${x.p === page ? "on" : ""}" data-page="${x.p}">${x.t}` +
       (x.count ? ` <span id="navCount" class="nav-count"></span>` : "") + `</button>`).join("");
     // Precios/Descuentos son herramientas de Benchmark: no aplican a otros módulos.
@@ -1713,6 +1808,9 @@
     let mod = MOD_DE[page] || "inicio";
     // sin permiso sobre ese módulo → a Inicio (la Home ya se filtra por rol)
     if (mod !== "inicio" && !puedeVer(mod)) { page = "inicio"; mod = "inicio"; }
+    // páginas con candado propio (ej: Nuevas integraciones = sólo puedeIntegrar())
+    const pcfg = (MODULOS[mod] && MODULOS[mod].pages || []).find(x => x.p === page);
+    if (pcfg && pcfg.gate && !pcfg.gate()) { page = "inicio"; mod = "inicio"; }
     if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
     $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.mod === mod));
     $("#metaLine").textContent = mod === "benchmark" ? META_BENCH : "";   // pie sólo en Benchmark
@@ -1721,6 +1819,7 @@
     if (page === "inicio") renderInicio();
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
+    if (page === "integraciones") renderIntegraciones();
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=130"; }
@@ -1909,7 +2008,7 @@
         <p class="home-mod-d">${m.d}</p>
         <div class="home-mod-stats">${m.stats.map(([n, l]) =>
           `<div><b>${n}</b><span>${l}</span></div>`).join("")}</div>
-        <div class="home-mod-pages">${M.pages.map(p => p.t).join(" · ")}</div>
+        <div class="home-mod-pages">${M.pages.filter(p => !p.gate || p.gate()).map(p => p.t).join(" · ")}</div>
       </button>`;
     };
 

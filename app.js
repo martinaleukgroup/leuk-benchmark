@@ -1834,7 +1834,7 @@
     if (page === "integraciones") renderIntegraciones();
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
-    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=156"; }
+    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=157"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=138"; }
     if (page === "usuarios") renderUsuarios();

@@ -327,7 +327,9 @@ async function buildPdf(person) {
     // 1) NFKC pasa dígitos "de ancho completo" (típicos de copiar-pegar) a dígitos normales;
     // 2) dejar SOLO caracteres válidos de teléfono: elimina cualquier invisible/raro
     // (zero-width, direccionales, etc.) que la tipografía dibuja como un □.
-    const telOk = tel.normalize("NFKC").replace(/[^\d+()\-.\s]/g, "").replace(/\s+/g, " ").replace(/^\++/, "").trim();
+    // normalizar cualquier variante de guión (–, —, ‑, − …) a un guión común, si no el filtro
+    // de abajo lo borraría (solo permite el "-" ASCII) y el número perdería el guión de la base.
+    const telOk = tel.normalize("NFKC").replace(/[‐-―⁃−﹘﹣－]/g, "-").replace(/[^\d+()\-.\s]/g, "").replace(/\s+/g, " ").replace(/^\++/, "").trim();
     if (telOk) draw(`Whatsapp: +${telOk}`, COORDS.whatsapp, fontReg);
   }
   if (person.direccion) {

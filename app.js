@@ -1671,7 +1671,7 @@
   async function traerIntegraciones() {
     const rows = [], step = 1000;                     // PostgREST corta en 1000: pagino con Range
     for (let from = 0; ; from += step) {
-      const r = await fetch(`${SB.url}/rest/v1/competencia_extra?select=id,marca,nombre,familia,precio_usd,ficha,aprobado&order=marca.asc,familia.asc,nombre.asc`,
+      const r = await fetch(`${SB.url}/rest/v1/competencia_extra?select=id,marca,nombre,familia,precio_usd,ficha,aprobado,imagen&order=marca.asc,familia.asc,nombre.asc`,
         { headers: Object.assign(AUTHSES.head(), { Range: `${from}-${from + step - 1}` }) });
       if (!r.ok) break;
       const chunk = await r.json(); rows.push(...chunk);
@@ -1713,7 +1713,11 @@
       const a = prods.filter(p => p.aprobado === true).length, d = prods.filter(p => p.aprobado === false).length;
       const rows = vis.slice(0, CAP).map(p => {
         const specs = Object.values(p.ficha || {}).slice(0, 3).map(String).join(" · ").replace(/[<>]/g, "");
+        const thumb = p.imagen
+          ? `<img class="intg-thumb" src="${p.imagen}" loading="lazy" alt="" data-full="${p.imagen}">`
+          : `<div class="intg-thumb intg-thumb-none">sin foto</div>`;
         return `<div class="intg-row ${estAprob(p.aprobado)}">
+          ${thumb}
           <div class="intg-info"><b>${(p.nombre || "—").replace(/[<>]/g, "")}</b> <span class="leuk-fam">${(p.familia || "").replace(/[<>]/g, "")}</span>
             <div class="leuk-fam intg-specs">${fmtUsd(p.precio_usd)}${specs ? " · " + specs : ""}</div></div>
           <div class="intg-acts">
@@ -1734,7 +1738,15 @@
     }).join("");
   }
   // acciones de aprobar/descartar (delegado, una sola vez)
+  function abrirLightbox(src) {
+    const ov = el("div", "intg-lb");
+    ov.innerHTML = `<img src="${src}" alt=""><button class="intg-lb-x" title="Cerrar">✕</button>`;
+    ov.addEventListener("click", () => ov.remove());
+    document.body.appendChild(ov);
+  }
   document.addEventListener("click", async ev => {
+    const th = ev.target.closest(".intg-thumb[data-full]");
+    if (th) { abrirLightbox(th.dataset.full); return; }
     const one = ev.target.closest(".intg-b[data-act]");
     if (one) {
       const id = one.dataset.id, val = one.dataset.act === "ok";

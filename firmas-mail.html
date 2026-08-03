@@ -331,9 +331,7 @@ async function buildPdf(person) {
     if (telOk) draw(`Whatsapp: +${telOk}`, COORDS.whatsapp, fontReg);
   }
   if (person.direccion) {
-    // sin guión separador en la dirección: "3330 - CABA" → "3330 CABA"
-    const dir = String(person.direccion).replace(/\s*-\s*/g, " ").replace(/\s+/g, " ").trim();
-    draw(`Dirección: ${dir}`, COORDS.direccion, fontReg);
+    draw(`Dirección: ${person.direccion}`, COORDS.direccion, fontReg);
   }
   draw(person.web, COORDS.web, fontReg);
 

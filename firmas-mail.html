@@ -324,7 +324,11 @@ async function buildPdf(person) {
 
   if (person.telefono) {
     const tel = person.telefono.replace(/[\u202a\u202c\u200e\u200f]/g,'').replace(/\u00a0/g,' ').trim();
-    draw(`Whatsapp: +${tel.replace(/^\++/, "")}`, COORDS.whatsapp, fontReg);
+    // 1) NFKC pasa dígitos "de ancho completo" (típicos de copiar-pegar) a dígitos normales;
+    // 2) dejar SOLO caracteres válidos de teléfono: elimina cualquier invisible/raro
+    // (zero-width, direccionales, etc.) que la tipografía dibuja como un □.
+    const telOk = tel.normalize("NFKC").replace(/[^\d+()\-.\s]/g, "").replace(/\s+/g, " ").replace(/^\++/, "").trim();
+    if (telOk) draw(`Whatsapp: +${telOk}`, COORDS.whatsapp, fontReg);
   }
   if (person.direccion) {
     draw(`Dirección: ${person.direccion}`, COORDS.direccion, fontReg);

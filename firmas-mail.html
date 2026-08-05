@@ -121,9 +121,16 @@
     </table>
   </div>
   <div class="btn-row">
-    <button class="btn-primary" id="btnGenerate">Generar todos los PDFs</button>
+    <button class="btn-primary" id="btnGenerate">Generar todas las firmas</button>
     <button class="btn-secondary" id="btnPreview">Vista previa</button>
     <button class="btn-secondary" id="btnClear">Limpiar</button>
+    <label style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)">
+      Formato:
+      <select id="fmtSel" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;background:#fff">
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+      </select>
+    </label>
   </div>
 </div>
 
@@ -135,9 +142,9 @@
   <div id="logArea"></div>
 </div>
 
-<!-- Vista previa PDF -->
+<!-- Vista previa (imagen) -->
 <div class="card" id="previewPdf">
-  <iframe id="previewFrame" title="Vista previa firma"></iframe>
+  <img id="previewImg" alt="Vista previa firma" style="width:100%;display:block;background:#fff">
   <p id="previewLabel"></p>
 </div>
 
@@ -148,8 +155,10 @@
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
 <!-- SheetJS para leer Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- JSZip para empaquetar todos los PDFs -->
+<!-- JSZip para empaquetar todas las firmas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- pdf.js para rasterizar la firma a PNG/JPG -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
 // ──────────────────────────────────────────────────────────────────────────────
@@ -340,6 +349,32 @@ async function buildPdf(person) {
   return await pdfDoc.save();
 }
 
+// Rasterizar el PDF de la firma a imagen (PNG/JPG) con pdf.js. La firma para email va como
+// imagen, no como PDF. scale=3 → nitidez buena sin archivos pesados.
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+async function pdfToImageBlob(pdfBytes, fmt = "png", scale = 3) {
+  const doc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+  const page = await doc.getPage(1);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  const ctx = canvas.getContext("2d");
+  if (fmt === "jpg") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  const type = fmt === "jpg" ? "image/jpeg" : "image/png";
+  return await new Promise(res => canvas.toBlob(res, type, 0.92));
+}
+
+const outFmt = () => (document.getElementById("fmtSel") || {}).value || "png";
+
+async function buildImage(person, fmt) {
+  const bytes = await buildPdf(person);
+  return await pdfToImageBlob(bytes, fmt);
+}
+
 function safeName(str) {
   return str
     .normalize('NFD').replace(/\p{M}/gu, '')
@@ -362,14 +397,13 @@ document.getElementById('btnClear').addEventListener('click', () => {
 
 async function previewFirst() {
   if (!rows.length) return;
-  const bytes = await buildPdf(rows[0]);
-  const blob  = new Blob([bytes], { type: 'application/pdf' });
+  const blob  = await buildImage(rows[0], outFmt());   // preview = misma imagen que se exporta
   const url   = URL.createObjectURL(blob);
-  const frame = document.getElementById('previewFrame');
-  frame.src   = url;
+  const img   = document.getElementById('previewImg');
+  img.src     = url;
   document.getElementById('previewPdf').style.display = 'block';
   document.getElementById('previewLabel').textContent =
-    `Vista previa: ${rows[0].nombre}`;
+    `Vista previa: ${rows[0].nombre} (${outFmt().toUpperCase()})`;
   document.getElementById('previewPdf').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -387,13 +421,14 @@ async function generateAll() {
 
   const zip   = new JSZip();
   const total = rows.length;
+  const fmt   = outFmt();
 
   for (let i = 0; i < total; i++) {
     const person = rows[i];
     try {
-      const bytes    = await buildPdf(person);
-      const filename = `${safeName(person.nombre)}.pdf`;
-      zip.file(filename, bytes);
+      const blob     = await buildImage(person, fmt);
+      const filename = `${safeName(person.nombre)}.${fmt}`;
+      zip.file(filename, blob);
 
       const pct = Math.round(((i + 1) / total) * 100);
       progBar.style.width = pct + '%';

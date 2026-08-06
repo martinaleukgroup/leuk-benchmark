@@ -76,7 +76,10 @@
     const desc = isLeuk ? descLeuk() : descComp(marca);
     return `<span class="res-price" title="Precio neto (con descuento)">${fmtUsd(n)}</span>${desc > 0 ? `<span class="res-plista">lista ${fmtUsd(listPrice)} · −${desc}%</span>` : ""}`;
   };
-  const diffHtml = d => d == null ? "" : `<span class="diff ${d > 0 ? "pos" : "neg"}">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
+  // El % es SIEMPRE relativo al precio del COMPETIDOR (+ = Leuk más barato). El tooltip lo deja
+  // explícito para que nadie lo lea al revés al pasarlo a una slide (un −115% = Leuk 115% más caro).
+  const diffLabel = d => d > 0 ? `Leuk ${d.toFixed(0)}% más barato que el competidor` : d < 0 ? `Leuk ${Math.abs(d).toFixed(0)}% más caro que el competidor` : "Precio igual al competidor";
+  const diffHtml = d => d == null ? "" : `<span class="diff ${d > 0 ? "pos" : "neg"}" title="${diffLabel(d)} (base: precio del competidor)">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
   // alerta de diferencia de precio muy grande (solo se usa en Resultados)
   const PRICE_HI = 85, PRICE_LO = -150;   // relativo al competidor: Leuk >85% más barato o >150% más caro → posible otra gama
   const priceAlert = d => (d != null && (d > PRICE_HI || d < PRICE_LO))
@@ -468,7 +471,9 @@
     const cNet = comp.precio_neto != null ? comp.precio_neto : comp.precio_usd;
     let dif = null, pos = null;
     if (lNet != null && cNet != null) {
-      dif = Math.round((cNet - lNet) / lNet * 1000) / 10;
+      // base = COMPETIDOR (igual que cmp()): + = Leuk más barato. Antes dividía por lNet (base Leuk),
+      // lo que daba magnitudes distintas a la vista principal para el mismo par.
+      dif = Math.round((cNet - lNet) / cNet * 1000) / 10;
       pos = dif > 3 ? "Leuk más barato" : dif < -3 ? "Leuk más caro" : "Precio similar";
     }
     return {
@@ -796,7 +801,7 @@
       const pi = posInfo(a);
       // El % de diferencia es el dato protagonista; el descriptor va abajo, chico.
       const priceBlock = pi.has
-        ? `<div class="res-posicion ${pi.cls}"><span class="rp-dif">${pi.diff > 0 ? "+" : ""}${pi.diff}%${priceAlert(pi.diff)}</span><span class="rp-text">${pi.texto} · Δ US$ ${Math.abs(pi.delta).toLocaleString("es-AR")}</span></div>`
+        ? `<div class="res-posicion ${pi.cls}" title="${diffLabel(pi.diff)} (base: precio del competidor)"><span class="rp-dif">${pi.diff > 0 ? "+" : ""}${pi.diff}%${priceAlert(pi.diff)}</span><span class="rp-text">${pi.texto} · Δ US$ ${Math.abs(pi.delta).toLocaleString("es-AR")}</span></div>`
         : `<div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>`;
       const card = el("div", "res-card");
       card.innerHTML = `
@@ -838,6 +843,36 @@
     const lines = [H.join(",")];
     f.forEach(a => { const pi = posInfo(a); lines.push([a.leukSku, csv(a.leukNombre), a.precioLeukUsd, a.precioLeukNeto, a.marca, csv(a.equivNombre), a.veredicto, a.descComp != null ? a.descComp : "", a.precioCompUsd != null ? a.precioCompUsd : "", a.precioCompNeto != null ? a.precioCompNeto : "", pi.has ? pi.diff : "", a.diferencia_lista != null ? a.diferencia_lista : "", csv(a.autor)].join(",")); });
     dl(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }), "benchmark_leuk_autorizadas.csv");
+  }
+  // Exporta las comparaciones seleccionadas a EXCEL: una hoja por competidor, con producto Leuk y
+  // competidor, precios de lista y con descuento (neto) de ambos, y la diferencia. Nombre de archivo
+  // con el competidor. Usa la config de descuentos vigente (mismos números que muestra la app).
+  function exportXLSX() {
+    if (typeof XLSX === "undefined") { alert("No se pudo cargar el generador de Excel."); return; }
+    const f = authList();
+    if (!f.length) { alert("No hay comparaciones seleccionadas para exportar."); return; }
+    const HEAD = ["Competidor", "Producto Leuk", "SKU Leuk", "Producto competidor", "Equivalencia",
+      "Lista Leuk (US$)", "Desc. Leuk %", "Neto Leuk (US$)",
+      "Lista competidor (US$)", "Desc. comp. %", "Neto competidor (US$)",
+      "Diferencia % (vs comp.)", "Lectura"];
+    const rowOf = a => {
+      const pi = posInfo(a);
+      return [a.marca, a.leukNombre, a.leukSku, a.equivNombre, a.veredicto,
+        a.precioLeukUsd ?? "", descLeuk(), netLeuk(a.precioLeukUsd) ?? "",
+        a.precioCompUsd ?? "", descComp(a.marca), netComp(a.precioCompUsd, a.marca) ?? "",
+        pi.has ? pi.diff : "", pi.has ? diffLabel(pi.diff) : ""];
+    };
+    const clean = s => (s || "Competidor").toString().replace(/[\\/?*\[\]:]/g, " ").trim().slice(0, 31) || "Competidor";
+    const marcas = [...new Set(f.map(a => a.marca))].sort();
+    const wb = XLSX.utils.book_new();
+    marcas.forEach(m => {
+      const rows = f.filter(a => a.marca === m).map(rowOf);
+      const ws = XLSX.utils.aoa_to_sheet([HEAD, ...rows]);
+      ws["!cols"] = [13, 30, 12, 30, 15, 14, 11, 14, 16, 12, 17, 16, 34].map(w => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, clean(m));
+    });
+    const base = marcas.length === 1 ? `Benchmark_Leuk_vs_${clean(marcas[0]).replace(/\s+/g, "_")}` : "Benchmark_Leuk_competencia";
+    XLSX.writeFile(wb, base + ".xlsx");
   }
   function exportJson() {
     dl(new Blob([JSON.stringify(AUTH, null, 1)], { type: "application/json" }), "benchmark_leuk_autorizaciones.json");
@@ -937,7 +972,7 @@
     r.innerHTML = `${imgTag(a.leukImagen, "sm")}
       <div class="opp-meta"><div class="res-nom">${a.leukNombre} <span class="leuk-fam">· ${a.leukFamilia || ""}</span></div>
         <div class="leuk-fam">vs ${a.marca} ${a.equivNombre} · ${badge(a.veredicto)}</div></div>
-      <div class="opp-price"><span class="res-posicion ${pi.cls}" style="display:inline-flex"><span class="rp-text">${pi.diff > 0 ? "+" : ""}${pi.diff}%</span></span>
+      <div class="opp-price"><span class="res-posicion ${pi.cls}" style="display:inline-flex" title="${diffLabel(pi.diff)} (base: precio del competidor)"><span class="rp-text">${pi.diff > 0 ? "+" : ""}${pi.diff}%</span></span>
         <div class="leuk-fam">US$ ${Math.round(a.precioLeukUsd)} vs ${Math.round(a.precioCompUsd)}</div></div>`;
     r.onclick = () => { const p = P.find(z => z.sku === a.leukSku); openDetail(p, findProp(a.leukSku, a.marca, a.fslug) || a); };
     return r;
@@ -2048,7 +2083,7 @@
   }
 
   searchEl.addEventListener("input", () => renderCatalogo());
-  $("#exportBtn").addEventListener("click", exportCSV);
+  $("#exportBtn").addEventListener("click", exportXLSX);
   $("#exportJsonBtn").addEventListener("click", exportJson);
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });

@@ -706,6 +706,21 @@ body{background:var(--lk-bg);font-family:"Barlow","Roboto",sans-serif}
 .custom-reset:hover{background:#fff;border-color:var(--lk-olive-mid)}
 .preview-hint{color:var(--lk-muted)}
 .overlay-bar-fill{background:var(--lk-olive)}
+
+/* ---- Barra de control: agrupada, con jerarquía y prolija ---- */
+.panel{flex-direction:column;align-items:stretch;padding:10px 20px;gap:9px}
+.panel-stat{flex:0 0 auto;font-size:12px;min-width:0}
+.opt-group{width:100%;flex:1 1 auto;gap:10px}
+.tb-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tb-div{width:1px;align-self:center;height:24px;background:var(--lk-line);flex:none}
+.tb-status{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:2px}
+.panel-top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.tb-actions{margin-left:auto;gap:10px}
+@media (max-width:720px){
+  .tb-div{display:none}
+  .tb-actions{margin-left:0;width:100%}
+  .tb-actions .btn-pdf,.tb-actions .btn-jpg{flex:1 1 0;justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -719,50 +734,73 @@ body{background:var(--lk-bg);font-family:"Barlow","Roboto",sans-serif}
 <!-- ====================== PANEL ====================== -->
 <div class="panel">
   <div class="panel-logo">LEUK<em>.</em></div>
-  <div class="panel-stat">
-    <strong id="st-prods">628</strong> productos ·
-    <strong id="st-secs">35</strong> secciones ·
-    actualizado <strong id="st-fecha"></strong>
+  <div class="panel-top">
+    <div class="panel-stat">
+      <strong id="st-prods">628</strong> productos ·
+      <strong id="st-secs">35</strong> secciones ·
+      actualizado <strong id="st-fecha"></strong>
+    </div>
+    <div class="tb-group tb-actions">
+      <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+        </svg>
+        DESCARGAR PDF
+      </button>
+      <button class="btn-jpg" id="btn-jpg" onclick="generateJPGs()" title="Descargar todas las hojas como JPGs 300 DPI dentro de un .zip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+        </svg>
+        DESCARGAR JPG (ZIP)
+      </button>
+    </div>
   </div>
   <div class="opt-group">
-    <label class="date-picker" title="Fecha que se muestra en la portada del PDF">
-      📅 <input type="date" id="opt-fecha" onchange="onFechaChange()">
-    </label>
-    <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
-    <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
-    <label class="drop-xlsx" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
-      <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
-      🖼️ Cargar fotos (zip)
-    </label>
-    <label class="drop-xlsx" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
-      <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
-      📂 Stock Excel
-    </label>
-    <label class="drop-xlsx" id="drop-familias" title="Subí el Excel con la organización de SKU → Familia/Subfamilia/Vertical/Estado">
-      <input type="file" accept=".xlsx" id="inp-familias" onchange="loadFamilias(this.files[0])">
-      📁 Familias Excel
-    </label>
-    <button class="btn-custom" id="btn-custom" onclick="toggleCustom()">
-      ⚙️ Personalizar
-    </button>
-    <button class="btn-custom" onclick="exportarDiagnostico()" title="Exporta un .txt con el detalle de qué fotos se vincularon y cuáles no">
-      📋 Diagnóstico
-    </button>
-    <button class="guides-toggle" id="btn-guides" onclick="toggleGuides()" title="Muestra las líneas rojas donde caería el corte automático de página A4. Sirve para ver dónde insertar cortes manuales.">
-      📐 Guías A4
-    </button>
-    <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-      </svg>
-      DESCARGAR PDF
-    </button>
-    <button class="btn-jpg" id="btn-jpg" onclick="generateJPGs()" title="Descargar todas las hojas como JPGs 300 DPI dentro de un .zip">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-      </svg>
-      DESCARGAR JPG (ZIP)
-    </button>
+
+    <!-- Fecha de portada -->
+    <div class="tb-group">
+      <label class="date-picker" title="Fecha que se muestra en la portada del PDF">
+        📅 <input type="date" id="opt-fecha" onchange="onFechaChange()">
+      </label>
+    </div>
+
+    <span class="tb-div"></span>
+
+    <!-- Cargar datos + estado -->
+    <div class="tb-group">
+      <label class="drop-xlsx" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
+        <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
+        🖼️ Cargar fotos (zip)
+      </label>
+      <label class="drop-xlsx" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
+        <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
+        📂 Stock Excel
+      </label>
+      <label class="drop-xlsx" id="drop-familias" title="Subí el Excel con la organización de SKU → Familia/Subfamilia/Vertical/Estado">
+        <input type="file" accept=".xlsx" id="inp-familias" onchange="loadFamilias(this.files[0])">
+        📁 Familias Excel
+      </label>
+      <span class="tb-status">
+        <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
+        <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
+      </span>
+    </div>
+
+    <span class="tb-div"></span>
+
+    <!-- Herramientas -->
+    <div class="tb-group">
+      <button class="btn-custom" id="btn-custom" onclick="toggleCustom()">
+        ⚙️ Personalizar
+      </button>
+      <button class="btn-custom" onclick="exportarDiagnostico()" title="Exporta un .txt con el detalle de qué fotos se vincularon y cuáles no">
+        📋 Diagnóstico
+      </button>
+      <button class="guides-toggle" id="btn-guides" onclick="toggleGuides()" title="Muestra las líneas rojas donde caería el corte automático de página A4. Sirve para ver dónde insertar cortes manuales.">
+        📐 Guías A4
+      </button>
+    </div>
+
   </div>
 </div>
 

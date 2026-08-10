@@ -1302,8 +1302,7 @@ function render() {
     // PORTADA (con logo custom si existe, o texto LEUK/GROUP de fallback)
     const logoHTML = CUSTOM.logoUrl
       ? `<img src="${CUSTOM.logoUrl}" class="leuk-logo-img-custom" alt="LEUK Group">`
-      : `<div class="leuk-logo-txt">LEUK</div>
-         <div class="leuk-logo-sub">GROUP</div>`;
+      : `<img src="assets/logo-leukgroup.png" class="leuk-logo-img-custom" alt="LEUK Group">`;
 
     const portada = document.createElement('div');
     portada.className = 'portada';

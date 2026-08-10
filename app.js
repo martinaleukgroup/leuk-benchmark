@@ -1872,7 +1872,7 @@
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
     // Stock diario: app autocontenida embebida.
-    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=2"; }
+    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=3"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=138"; }
     if (page === "usuarios") renderUsuarios();

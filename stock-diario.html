@@ -707,20 +707,28 @@ body{background:var(--lk-bg);font-family:"Barlow","Roboto",sans-serif}
 .preview-hint{color:var(--lk-muted)}
 .overlay-bar-fill{background:var(--lk-olive)}
 
-/* ---- Barra de control: agrupada, con jerarquía y prolija ---- */
-.panel{flex-direction:column;align-items:stretch;padding:10px 20px;gap:9px}
+/* ---- Barra de control: paso a paso, claro y sin ruido ---- */
+.panel{flex-direction:column;align-items:stretch;padding:11px 20px;gap:10px}
 .panel-stat{flex:0 0 auto;font-size:12px;min-width:0}
-.opt-group{width:100%;flex:1 1 auto;gap:10px}
-.tb-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tb-div{width:1px;align-self:center;height:24px;background:var(--lk-line);flex:none}
-.tb-status{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:2px}
-.panel-top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
-.tb-actions{margin-left:auto;gap:10px}
-@media (max-width:720px){
-  .tb-div{display:none}
-  .tb-actions{margin-left:0;width:100%}
-  .tb-actions .btn-pdf,.tb-actions .btn-jpg{flex:1 1 0;justify-content:center}
-}
+
+/* pasos numerados 1 · 2 · 3 */
+.opt-group{width:100%;display:flex;align-items:flex-start;gap:14px 24px;flex-wrap:wrap}
+.step{display:flex;align-items:flex-start;gap:9px}
+.step-n{flex:none;width:21px;height:21px;border-radius:50%;background:var(--lk-olive);color:#fff;
+  font-size:12px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.step-body{display:flex;flex-direction:column;gap:6px}
+.step-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lk-ink)}
+.step-lbl em{font-style:normal;font-weight:500;letter-spacing:0;text-transform:none;color:var(--lk-muted);margin-left:5px}
+.step-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.tb-status{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* opciones avanzadas: separadas y discretas */
+.opt-adv{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding-top:9px;border-top:1px solid var(--lk-line)}
+.opt-adv-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--lk-olive-soft);margin-right:2px}
+.opt-adv .btn-custom,.opt-adv .guides-toggle{font-size:11.5px;padding:5px 11px;color:var(--lk-muted);border-color:var(--lk-line);font-weight:500}
+.opt-adv .btn-custom:hover,.opt-adv .guides-toggle:hover{color:var(--lk-olive);border-color:var(--lk-olive-mid)}
+
+@media (max-width:720px){ .opt-group{gap:12px 16px} .step{width:100%} }
 </style>
 </head>
 <body>
@@ -734,73 +742,83 @@ body{background:var(--lk-bg);font-family:"Barlow","Roboto",sans-serif}
 <!-- ====================== PANEL ====================== -->
 <div class="panel">
   <div class="panel-logo">LEUK<em>.</em></div>
-  <div class="panel-top">
-    <div class="panel-stat">
-      <strong id="st-prods">628</strong> productos ·
-      <strong id="st-secs">35</strong> secciones ·
-      actualizado <strong id="st-fecha"></strong>
-    </div>
-    <div class="tb-group tb-actions">
-      <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-        </svg>
-        DESCARGAR PDF
-      </button>
-      <button class="btn-jpg" id="btn-jpg" onclick="generateJPGs()" title="Descargar todas las hojas como JPGs 300 DPI dentro de un .zip">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
-        </svg>
-        DESCARGAR JPG (ZIP)
-      </button>
-    </div>
+
+  <div class="panel-stat">
+    <strong id="st-prods">628</strong> productos ·
+    <strong id="st-secs">35</strong> secciones ·
+    actualizado <strong id="st-fecha"></strong>
   </div>
+
+  <!-- ===== Paso a paso ===== -->
   <div class="opt-group">
 
-    <!-- Fecha de portada -->
-    <div class="tb-group">
-      <label class="date-picker" title="Fecha que se muestra en la portada del PDF">
-        📅 <input type="date" id="opt-fecha" onchange="onFechaChange()">
-      </label>
+    <!-- Paso 1 -->
+    <div class="step">
+      <span class="step-n">1</span>
+      <div class="step-body">
+        <span class="step-lbl">Fecha</span>
+        <label class="date-picker" title="Fecha que se muestra en la portada del PDF">
+          <input type="date" id="opt-fecha" onchange="onFechaChange()">
+        </label>
+      </div>
     </div>
 
-    <span class="tb-div"></span>
-
-    <!-- Cargar datos + estado -->
-    <div class="tb-group">
-      <label class="drop-xlsx" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
-        <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
-        🖼️ Cargar fotos (zip)
-      </label>
-      <label class="drop-xlsx" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
-        <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
-        📂 Stock Excel
-      </label>
-      <label class="drop-xlsx" id="drop-familias" title="Subí el Excel con la organización de SKU → Familia/Subfamilia/Vertical/Estado">
-        <input type="file" accept=".xlsx" id="inp-familias" onchange="loadFamilias(this.files[0])">
-        📁 Familias Excel
-      </label>
-      <span class="tb-status">
-        <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
-        <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
-      </span>
+    <!-- Paso 2 -->
+    <div class="step">
+      <span class="step-n">2</span>
+      <div class="step-body">
+        <span class="step-lbl">Datos <em>si hace falta actualizar</em></span>
+        <div class="step-controls">
+          <label class="drop-xlsx" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
+            <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
+            Stock (.xlsx)
+          </label>
+          <label class="drop-xlsx" id="drop-familias" title="Subí el Excel con la organización de SKU → Familia/Subfamilia/Vertical/Estado">
+            <input type="file" accept=".xlsx" id="inp-familias" onchange="loadFamilias(this.files[0])">
+            Familias (.xlsx)
+          </label>
+          <label class="drop-xlsx" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
+            <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
+            Fotos (.zip)
+          </label>
+          <span class="tb-status">
+            <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
+            <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
+          </span>
+        </div>
+      </div>
     </div>
 
-    <span class="tb-div"></span>
-
-    <!-- Herramientas -->
-    <div class="tb-group">
-      <button class="btn-custom" id="btn-custom" onclick="toggleCustom()">
-        ⚙️ Personalizar
-      </button>
-      <button class="btn-custom" onclick="exportarDiagnostico()" title="Exporta un .txt con el detalle de qué fotos se vincularon y cuáles no">
-        📋 Diagnóstico
-      </button>
-      <button class="guides-toggle" id="btn-guides" onclick="toggleGuides()" title="Muestra las líneas rojas donde caería el corte automático de página A4. Sirve para ver dónde insertar cortes manuales.">
-        📐 Guías A4
-      </button>
+    <!-- Paso 3 -->
+    <div class="step">
+      <span class="step-n">3</span>
+      <div class="step-body">
+        <span class="step-lbl">Descargá</span>
+        <div class="step-controls">
+          <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+            </svg>
+            PDF
+          </button>
+          <button class="btn-jpg" id="btn-jpg" onclick="generateJPGs()" title="Descargar todas las hojas como JPGs 300 DPI dentro de un .zip">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+            </svg>
+            JPG
+          </button>
+        </div>
+      </div>
     </div>
 
+  </div>
+
+  <!-- ===== Opciones avanzadas (discretas) ===== -->
+  <div class="opt-adv">
+    <span class="opt-adv-lbl">Opciones</span>
+    <button class="btn-custom" id="btn-custom" onclick="toggleCustom()">Personalizar</button>
+    <button class="btn-custom" onclick="exportarDiagnostico()" title="Exporta un .txt con el detalle de qué fotos se vincularon y cuáles no">Diagnóstico</button>
+    <button class="guides-toggle" id="btn-guides" onclick="toggleGuides()" title="Muestra las líneas rojas donde caería el corte automático de página A4. Sirve para ver dónde insertar cortes manuales.">Guías A4</button>
   </div>
 </div>
 

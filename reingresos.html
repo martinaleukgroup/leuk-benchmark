@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leuk — Reingresos 27/07/2026 (borrador)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--olive:#676B55;--sage:#8B9174;--quiet:#B6BAA4;--graphite:#4D4D4D;--steel:#808080;--pearl:#CCCCCC;
+ --paper:#FAFAF8;--paper-warm:#F2F2EC;--hairline:#E6E6E0;--fg1:#000;--fg3:#808080;
+ --sfc:#111;--sfc2:#181818;--bd:#222;--bd2:#2a2a2a;--dim:#555}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;display:flex;flex-direction:column;min-height:100vh}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--bd);background:#0d0d0d;position:sticky;top:0;z-index:100}
+.app-logo{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);font-weight:300}
+.app-logo span{color:#fff;font-weight:700;letter-spacing:2px}
+.app-badge{font-size:9px;padding:3px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;color:#8B9174;letter-spacing:1px}
+.workspace{display:grid;grid-template-columns:350px 1fr;flex:1;min-height:0;height:calc(100vh - 49px)}
+.panel{background:var(--sfc);border-right:1px solid var(--bd);overflow-y:auto;scrollbar-width:thin}
+.panel::-webkit-scrollbar{width:4px}.panel::-webkit-scrollbar-thumb{background:#222}
+.section{border-bottom:1px solid var(--bd);padding:16px 20px}
+.section-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:12px;font-weight:600}
+.section-title.std{color:var(--sage)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:4px}
+.field input[type="text"]{width:100%;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px 10px;font-size:12px;border-radius:3px;outline:none;font-family:inherit}
+.field input[type="text"]:focus{border-color:#555}
+.field input[type="range"]{width:100%;accent-color:var(--sage);cursor:pointer}
+.range-val{font-size:9px;color:#666;float:right}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dropzone{border:1.5px dashed #252525;border-radius:4px;padding:10px;text-align:center;cursor:pointer;position:relative;background:#131313}
+.dropzone:hover,.dropzone.active{border-color:#555;background:#191919}
+.dropzone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dropzone-label{font-size:10px;color:#444}.dropzone-label strong{color:#777;display:block;font-size:11px}
+.status-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.pill{font-size:9px;padding:2px 7px;border-radius:20px;text-transform:uppercase;font-weight:600}
+.pill-ok{background:#0f1f0f;color:#4a8a4a;border:1px solid #1a3a1a}.pill-warn{background:#1f1f0f;color:#8a7a3a;border:1px solid #3a2f0f}
+.brand-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);font-weight:700;margin:10px 0 6px}
+.prod-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #161616}
+.prod-thumb{width:26px;height:26px;object-fit:contain;border-radius:2px;background:#1e1e1e;border:1px solid #2a2a2a;flex-shrink:0}
+.prod-thumb.missing{border:1px dashed #333}
+.prod-name{flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prod-sku{font-size:10px;color:#555;width:38px;flex-shrink:0}
+.prod-color{background:var(--sfc2);border:1px solid var(--bd2);color:#ccc;font-size:10px;border-radius:3px;padding:3px 4px;font-family:inherit;width:92px;flex-shrink:0}
+.prod-color option{background:#1a1a1a}
+.btn-primary{width:100%;padding:13px;background:var(--sage);color:#fff;border:none;cursor:pointer;font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;font-family:inherit;border-radius:2px}
+.btn-primary:hover{background:#7a815f}
+.btn-outline{width:100%;padding:9px;background:transparent;color:#666;border:1px solid var(--bd2);cursor:pointer;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-top:7px;font-family:inherit;border-radius:2px}
+.btn-outline:hover{border-color:#8B9174;color:#aaa}
+.btn-std{background:#14200f;border-color:#2a3a1a;color:#9ab07a}
+.btn-std:hover{border-color:#8B9174;color:#c3d6a5}
+.preview-area{background:#2b2d24;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:24px 24px 80px}
+.preview-toolbar{width:100%;max-width:650px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.preview-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8B9174}
+.zoom-controls{display:flex;gap:6px;align-items:center}
+.zoom-btn{background:#1a1a1a;border:1px solid #3a3d30;color:#9aa085;width:26px;height:26px;border-radius:3px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.zoom-val{font-size:10px;color:#8B9174;min-width:34px;text-align:center}
+#stage{transform-origin:top center;transition:transform .2s}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;border:1px solid #2a2a2a;color:#bbb;padding:10px 16px;border-radius:4px;font-size:11px;transform:translateY(60px);opacity:0;transition:all .25s;z-index:9999;max-width:340px}
+.toast.show{transform:translateY(0);opacity:1}
+.note{font-size:9px;color:#3a3a3a;margin-top:4px;line-height:1.5}
+.note.std{color:#4a5a3a}
+
+/* ══ CATÁLOGO (650px, línea gráfica Leuk) ══ */
+#catalog{width:650px;background:var(--paper);color:var(--fg1);box-shadow:0 12px 60px rgba(0,0,0,.5);font-family:var(--fbody)}
+.leuk-hero{position:relative;height:365px;overflow:hidden;background:#111}
+.leuk-hero img.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.leuk-hero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.05) 45%,rgba(0,0,0,.72) 100%)}
+.leuk-hero .group-logo{position:absolute;width:auto;opacity:.95;object-fit:contain}
+.leuk-hero .hero-txt{position:absolute;left:30px;right:30px;bottom:30px}
+.leuk-hero h1{font-family:var(--fdisplay);font-size:62px;line-height:.9;letter-spacing:.01em;color:#fff;text-transform:uppercase;margin:0;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.leuk-badge{display:inline-flex;align-items:center;gap:9px;margin-top:16px;background:var(--olive);color:#fff;padding:8px 15px;border-radius:2px}
+.leuk-badge .d{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block}
+.leuk-badge span.t{font-family:var(--fcond);font-weight:500;font-size:13px;letter-spacing:.07em;text-transform:uppercase}
+.brand-head{padding:26px 30px 10px}
+.brand-head .line{border-bottom:2px solid var(--fg1);padding-bottom:9px;position:relative;min-height:54px}
+.brand-head .line img{position:absolute;bottom:9px;width:auto;object-fit:contain}
+.brand-head .ph{position:absolute;bottom:9px;font-family:var(--fdisplay);font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg1)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:#ffffff;margin:0 30px}
+.card{background:#efefec;padding:18px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:9px;min-height:196px}
+.card .pimg{width:100%;height:106px;object-fit:contain;mix-blend-mode:multiply}
+.card .pimg-ph{width:100%;height:106px;display:flex;align-items:center;justify-content:center;color:#b8b8b2;font-family:var(--fcond);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.card .pname{font-family:var(--fcond);font-weight:500;font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--fg1);text-align:center;line-height:1.15}
+.card .dots-row{display:inline-flex;gap:6px;align-items:center;justify-content:center}
+.card .meta{width:100%;margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:5px}
+.card .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--fcond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3)}
+.card .mrow .v{color:var(--fg1);font-weight:500}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.dot.negro{background:#111}.dot.blanco{background:#fff;border:1.5px solid #999}.dot.dorado{background:#c9a43c}.dot.natural{background:#b98d5f}
+.gridcell-empty{background:#fff}
+.leuk-foot{background:var(--olive);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:28px;border-top:3px solid var(--sage)}
+.leuk-foot .web{font-family:var(--fdisplay);letter-spacing:.18em;text-transform:uppercase;font-weight:600}
+.leuk-foot .subweb{font-family:var(--fcond);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-top:3px}
+.leuk-foot .socials{display:flex;flex-shrink:0}
+.leuk-foot .socials a{border:1px solid rgba(255,255,255,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.leuk-foot .socials svg{width:50%;height:50%}
+</style>
+<!-- ===== Integración visual con la plataforma Leuk Marketing ===== -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--lk-olive:#676B55;--lk-sage:#8B9174;--lk-quiet:#B6BAA4;--lk-pale:#EEF0E8;--lk-ink:#2b2c26;--lk-line:#e4e6dd;--lk-bg:#fbfbf9;--lk-muted:#7a7d70}
+body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family:"Barlow","Helvetica Neue",Arial,sans-serif!important}
+.app-header{background:#fff!important;border-bottom:1px solid var(--lk-line)!important}
+.app-logo{color:var(--lk-muted)!important}
+.app-logo span{color:var(--lk-ink)!important}
+.app-badge{background:var(--lk-pale)!important;border:1px solid var(--lk-line)!important;color:var(--lk-olive)!important}
+.panel{background:#fff!important;border-right:1px solid var(--lk-line)!important}
+.panel::-webkit-scrollbar-thumb{background:var(--lk-quiet)!important}
+.section{border-bottom:1px solid var(--lk-line)!important}
+.section-title{color:var(--lk-muted)!important}
+.section-title.std{color:var(--lk-olive)!important}
+.field label{color:var(--lk-muted)!important}
+.field input[type="text"]{background:#fff!important;border:1px solid var(--lk-quiet)!important;color:var(--lk-ink)!important}
+.field input[type="text"]:focus{border-color:var(--lk-olive)!important}
+.field input[type="range"]{accent-color:var(--lk-olive)!important}
+.range-val{color:var(--lk-muted)!important}
+.dropzone{border:1.5px dashed var(--lk-quiet)!important;background:var(--lk-pale)!important}
+.dropzone:hover,.dropzone.active{border-color:var(--lk-olive)!important;background:#fff!important}
+.dropzone-label{color:var(--lk-muted)!important}
+.dropzone-label strong{color:var(--lk-ink)!important}
+.pill-ok{background:#eef3e6!important;color:#5a7a3a!important;border:1px solid #cde0b8!important}
+.pill-warn{background:#f6efdd!important;color:#8a6a2a!important;border:1px solid #e7d6a8!important}
+.brand-tag{color:var(--lk-olive)!important}
+.prod-row{border-bottom:1px solid var(--lk-line)!important}
+.prod-thumb{background:var(--lk-pale)!important;border:1px solid var(--lk-line)!important}
+.prod-thumb.missing{border:1px dashed var(--lk-quiet)!important}
+.prod-name{color:var(--lk-ink)!important}
+.prod-sku{color:var(--lk-muted)!important}
+.prod-color{background:#fff!important;border:1px solid var(--lk-quiet)!important;color:var(--lk-ink)!important}
+.prod-color option{background:#fff!important}
+#add-sku,#add-name{background:#fff!important;border:1px solid var(--lk-quiet)!important;color:var(--lk-ink)!important}
+.btn-primary{background:var(--lk-olive)!important;color:#fff!important}
+.btn-primary:hover{background:var(--lk-sage)!important}
+.btn-outline{background:#fff!important;color:var(--lk-olive)!important;border:1px solid var(--lk-quiet)!important}
+.btn-outline:hover{border-color:var(--lk-olive)!important;color:var(--lk-olive)!important;background:var(--lk-pale)!important}
+.btn-std{background:var(--lk-pale)!important;border-color:var(--lk-quiet)!important;color:var(--lk-olive)!important}
+.btn-std:hover{border-color:var(--lk-olive)!important;color:var(--lk-olive)!important}
+.preview-area{background:var(--lk-pale)!important}
+.preview-label{color:var(--lk-olive)!important}
+.zoom-btn{background:#fff!important;border:1px solid var(--lk-quiet)!important;color:var(--lk-olive)!important}
+.zoom-val{color:var(--lk-olive)!important}
+.toast{background:#fff!important;border:1px solid var(--lk-line)!important;color:var(--lk-ink)!important;box-shadow:0 6px 20px rgba(40,42,34,.12)!important}
+.note{color:var(--lk-muted)!important}
+.note.std{color:var(--lk-sage)!important}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="app-logo"><span>Leuk</span> Iluminación</div>
+  <div class="app-logo" style="color:#333;letter-spacing:1px">Generador de Reingresos · 650px alta calidad</div>
+  <div class="app-badge">v7.2 · 27/07</div>
+</header>
+
+<div class="workspace">
+<aside class="panel">
+
+  <!-- ESTÁNDAR / PLANTILLA -->
+  <div class="section">
+    <div class="section-title std">★ Plantilla / estándar de marca</div>
+    <button class="btn-outline btn-std" onclick="saveStandard()">★ Guardar estándar en este equipo</button>
+    <button class="btn-outline btn-std" onclick="exportPlantilla()">⇧ Exportar plantilla (.json) para compartir</button>
+    <div class="field" style="margin-top:7px"><div class="dropzone" id="dz-plantilla" style="padding:8px"><input type="file" id="inp-plantilla" accept=".json"><div class="dropzone-label"><strong>⇩ Cargar plantilla (.json)</strong>De un compañero o tuya</div></div></div>
+    <button class="btn-outline" onclick="clearStandard()" style="margin-top:2px">Borrar estándar guardado</button>
+    <div class="note std">Guardá una vez el logo, la portada, las fuentes y los tamaños: quedan cargados para los próximos reingresos. Podés actualizarlos cuando quieras (guardá de nuevo). Lo que cambia por reingreso (título, fecha, productos y fotos) NO se guarda como estándar.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">1 · Encabezado</div>
+    <div class="field"><label>Título (usá “/” para 2 líneas)</label><input type="text" id="cat-title" value="REINGRESOS/JULIO"></div>
+    <div class="field"><label>Aviso de disponibilidad</label><input type="text" id="cat-avail" value="Fecha de disponibilidad a confirmar"></div>
+    <div class="field"><label>Tamaño del título <span class="range-val" id="title-size-val">62 px</span></label><input type="range" id="title-size" min="28" max="96" value="62"></div>
+    <div class="field"><label>Tamaño del aviso <span class="range-val" id="avail-size-val">13 px</span></label><input type="range" id="avail-size" min="9" max="22" value="13"></div>
+    <div class="field"><label>Zoom de la portada <span class="range-val" id="hero-zoom-val">100%</span></label><input type="range" id="hero-zoom" min="100" max="220" value="100"></div>
+    <div class="field"><label>Posición vertical de la portada <span class="range-val" id="hero-pos-val">38%</span></label><input type="range" id="hero-pos" min="0" max="100" value="38"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2 · Logos e imagen (estándar)</div>
+    <div class="field"><label>Portada / hero</label>
+      <div class="dropzone" id="dz-hero"><input type="file" id="inp-hero" accept="image/*"><div class="dropzone-label"><strong>Portada del header</strong>JPG / PNG</div></div>
+      <div id="hero-status" class="status-row"></div></div>
+    <div class="field"><label>Logo Leuk Iluminación (header)</label>
+      <div class="dropzone" id="dz-logo-group"><input type="file" id="inp-logo-group" accept="image/*"><div class="dropzone-label"><strong>Logo Leuk Iluminación</strong>PNG transparente</div></div>
+      <div id="logo-group-status" class="status-row"></div></div>
+    <div class="field"><label>Tamaño logo Iluminación <span class="range-val" id="group-size-val">120 px</span></label><input type="range" id="group-size" min="40" max="260" value="120"></div>
+    <div class="field"><label>Posición horizontal <span class="range-val" id="group-x-val">88%</span></label><input type="range" id="group-x" min="0" max="100" value="88"></div>
+    <div class="field"><label>Posición vertical <span class="range-val" id="group-y-val">22%</span></label><input type="range" id="group-y" min="0" max="100" value="22"></div>
+    <div class="field"><label>Logo de la sección de productos (opcional)</label>
+      <div class="dropzone" id="dz-logo-leuk"><input type="file" id="inp-logo-leuk" accept="image/*"><div class="dropzone-label"><strong>Logo sección Leuk</strong>si no cargás, dice “LEUK”</div></div>
+      <div id="logo-leuk-status" class="status-row"></div></div>
+    <div class="field"><label>Tamaño logo de sección <span class="range-val" id="leuk-size-val">44 px</span></label><input type="range" id="leuk-size" min="20" max="110" value="44"></div>
+    <div class="field"><label>Posición horizontal sección <span class="range-val" id="leuk-x-val">4%</span></label><input type="range" id="leuk-x" min="0" max="100" value="4"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">3 · Tipografía (estándar, opcional)</div>
+    <div class="row3">
+      <div class="field"><label>Display</label><div class="dropzone" id="dz-font-disp" style="padding:7px"><input type="file" id="inp-font-disp" accept=".ttf,.otf,.woff,.woff2"><div class="dropzone-label"><strong>Simplifica</strong></div></div></div>
+      <div class="field"><label>Body</label><div class="dropzone" id="dz-font-body" style="padding:7px"><input type="file" id="inp-font-body" accept=".ttf,.otf,.woff,.woff2"><div class="dropzone-label"><strong>DIN</strong></div></div></div>
+      <div class="field"><label>Cond</label><div class="dropzone" id="dz-font-cond" style="padding:7px"><input type="file" id="inp-font-cond" accept=".ttf,.otf,.woff,.woff2"><div class="dropzone-label"><strong>DIN Cond</strong></div></div></div>
+    </div>
+    <div class="note">Sin fuentes de marca uso Century Gothic / Helvetica de respaldo.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">4 · Footer (estándar)</div>
+    <div class="field"><label>Sitio web</label><input type="text" id="cat-web" value="LEUKILUMINACION.COM"></div>
+    <div class="field"><label>Bajada (opcional)</label><input type="text" id="cat-subweb" value="@leukiluminacion"></div>
+    <div class="field"><label>Tamaño del footer <span class="range-val" id="foot-size-val">16 px</span></label><input type="range" id="foot-size" min="10" max="24" value="16"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">5 · Cargar reingresos desde Excel / CSV</div>
+    <div class="dropzone" id="dz-excel"><input type="file" id="inp-excel" accept=".xlsx,.xls,.csv"><div class="dropzone-label"><strong>Subir Excel / CSV de reingresos</strong>Detecta SKU, Nombre y Color solo</div></div>
+    <div class="field" style="margin-top:8px"><label>Incluir solo filas donde la columna</label>
+      <select id="xls-filter-col" class="prod-color" style="width:100%"><option value="">— subí el archivo —</option></select></div>
+    <div class="field"><label>…tenga este valor <span style="color:#3a3a3a">(vacío = cualquier celda con dato)</span></label>
+      <input type="text" id="xls-filter-val" placeholder="ej: dejar vacío para fechas, o 'Reingreso'"></div>
+    <button class="btn-outline" onclick="applyExcel()" style="margin-top:2px">Cargar productos del Excel</button>
+    <div id="excel-status" class="status-row"></div>
+    <div class="note">Reemplaza la lista de productos con los del Excel. El color se toma de la columna “Color producto” (AM). El recuadro de abajo te deja seguir ajustando a mano.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">6 · Fotos del reingreso (ZIP o imágenes)</div>
+    <div class="dropzone" id="dz-imgs"><input type="file" id="inp-imgs" accept=".zip,image/*" multiple><div class="dropzone-label"><strong>Subir ZIP o imágenes</strong>Matchea por SKU o por nombre<br><span style="font-size:9px;color:#333">ej: “WEST BLNT 7104.png”, “6832.jpg”</span></div></div>
+    <div id="imgs-status" class="status-row"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">7 · Productos y color (ajuste manual)</div>
+    <div class="field"><label>Tamaño del nombre <span class="range-val" id="name-size-val">13 px</span></label><input type="range" id="name-size" min="9" max="20" value="13"></div>
+    <div class="field"><label>Tamaño del SKU <span class="range-val" id="sku-size-val">11 px</span></label><input type="range" id="sku-size" min="8" max="16" value="11"></div>
+    <div class="brand-tag">Productos que reingresan</div><div id="list-leuk"></div>
+    <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
+      <input type="text" id="add-sku" placeholder="SKU" style="width:66px;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
+      <input type="text" id="add-name" placeholder="Nombre del producto" style="flex:1;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
+      <button class="btn-outline" style="width:auto;margin:0;padding:8px 13px;font-size:14px" onclick="addProduct()" title="Agregar">+</button>
+    </div>
+    <div class="note">Escribí el SKU y el nombre, y tocá “+”. La foto la matchea desde el ZIP por ese SKU o nombre.</div>
+  </div>
+
+  <div class="section">
+    <button class="btn-primary" id="btn-gen" onclick="render()">Actualizar vista previa</button>
+    <button class="btn-outline" onclick="exportPDF()">↓ Exportar PDF (alta calidad)</button>
+    <button class="btn-outline" onclick="exportJPG()">↓ Exportar JPG (650px, 3×)</button>
+  </div>
+</aside>
+
+<main class="preview-area">
+  <div class="preview-toolbar">
+    <span class="preview-label">Vista previa · 650 px</span>
+    <div class="zoom-controls"><button class="zoom-btn" onclick="adjustZoom(-0.1)">−</button><span class="zoom-val" id="zoom-val">100%</span><button class="zoom-btn" onclick="adjustZoom(+0.1)">+</button></div>
+  </div>
+  <div id="stage"><div id="catalog"></div></div>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ DATOS (solo Leuk) ═══
+const LEUK=[
+  {sku:'7118',name:'FAMA BL',color:'blanco'},
+  {sku:'7119',name:'FAMA NG',color:'negro'},
+  {sku:'7120',name:'MUST BLNG',color:'blanconegro'},
+  {sku:'7121',name:'MUST NG',color:'negro'},
+  {sku:'4205',name:'KATHARO SW NG',color:'negro'},
+  {sku:'6823',name:'CONECTOR 3 POLOS',color:''},
+  {sku:'6824',name:'CONECTOR T 3 POLOS',color:''},
+  {sku:'7049',name:'VALK BL',color:'blanco'},
+  {sku:'7052',name:'FREYA NG',color:'negro'},
+  {sku:'7053',name:'LEIF BL',color:'blanco'},
+  {sku:'7059',name:'KRONE BL',color:'blanco'},
+  {sku:'7060',name:'KRONE NG',color:'negro'},
+  {sku:'7067',name:'ULÁN NG',color:'negro'},
+  {sku:'7070',name:'DARJAN NG',color:'negro'},
+  {sku:'7071',name:'BULGAN NG',color:'negro'},
+  {sku:'7072',name:'BOG NG',color:'negro'},
+  {sku:'7076',name:'MARDAI II NG',color:'negro'},
+  {sku:'6868',name:'MIJA R NG 6W',color:'negro'},
+  {sku:'6869',name:'MIJA R BL 6W',color:'blanco'},
+  {sku:'6844',name:'MIJA R NG 12W',color:'negro'},
+  {sku:'6843',name:'MIJA R BL 12W',color:'blanco'},
+  {sku:'6870',name:'MIJA C NG 6W',color:'negro'},
+  {sku:'6846',name:'MIJA C NG 12W',color:'negro'},
+  {sku:'6845',name:'MIJA C BL 12W',color:'blanco'},
+  {sku:'6851',name:'MEX BL 18W 3000K',color:'blanco'},
+  {sku:'7041',name:'MEX NG 25W 3CCT',color:'negro'},
+  {sku:'6765',name:'MIRACLE S NG',color:'negro'},
+  {sku:'7042',name:'MIRACLE II S NG',color:'negro'},
+  {sku:'6766',name:'MIRACLE S BL',color:'blanco'},
+  {sku:'7043',name:'MIRACLE II S BL',color:'blanco'},
+  {sku:'7045',name:'MIRACLE II 180 S NG',color:'negro'},
+  {sku:'6614',name:'YORK NG',color:'negro'},
+  {sku:'6615',name:'YORK BL',color:'blanco'},
+  {sku:'6711',name:'YORK MD',color:'natural'},
+  {sku:'6619',name:'SINTRA BL',color:'blanco'},
+  {sku:'6714',name:'YORK BL 2700K',color:'blanco'},
+  {sku:'6769',name:'CHESTER BLMD',color:''},
+  {sku:'6770',name:'CHESTER NGMD',color:''},
+  {sku:'6785',name:'SWEET NG',color:'negro'},
+  {sku:'6788',name:'MARLEY BL',color:'blanco'},
+  {sku:'6440',name:'ANTON I NG',color:'negro'},
+  {sku:'6443',name:'KAROL I BL',color:'blanco'},
+  {sku:'6444',name:'BERDY I NG',color:'negro'},
+  {sku:'6453',name:'BERDY II BL',color:'blanco'},
+  {sku:'6460',name:'BERDY III NG',color:'negro'},
+  {sku:'6468',name:'BERDY IV NG',color:'negro'},
+  {sku:'6635',name:'KIT SUSPENSION DYNA',color:''},
+  {sku:'6658',name:'DYNA 120 BL',color:'blanco'},
+  {sku:'6659',name:'DYNA 120 NG',color:'negro'},
+  {sku:'6661',name:'DYNA 180 NG',color:'negro'},
+  {sku:'6663',name:'DYNA 240 NG',color:'negro'},
+  {sku:'6853',name:'DYNA UNION 30 BL',color:'blanco'},
+  {sku:'6854',name:'DYNA UNION 30 NG',color:'negro'},
+  {sku:'6678',name:'OPTIC NG 2700K',color:'negro'},
+  {sku:'7128',name:'OPTIC NG 3000K',color:'negro'},
+  {sku:'6697',name:'FLORON LINEAL NG',color:'negro'},
+  {sku:'6830',name:'KIT SUSPENSION 3 TENSORES + ALIMENTACIÓN NG',color:'negro'},
+  {sku:'6848',name:'PRISMA NG 20W',color:'negro'},
+  {sku:'6847',name:'PRISMA BL 20W',color:'blanco'},
+  {sku:'7216',name:'PRISMA BL 12W IP44',color:'blanco'},
+  {sku:'7217',name:'PRISMA NG 12W IP44',color:'negro'},
+  {sku:'7218',name:'PRISMA BL 20W IP44',color:'blanco'},
+  {sku:'7219',name:'PRISMA NG 20W IP44',color:'negro'},
+  {sku:'6563',name:'KIT SUSPENSION RIEL',color:''},
+];
+LEUK.forEach(p=>p.img=null);
+const S={heroUrl:null,logoGroup:null,logoLeuk:null,imageMap:{},zoom:1,heroZoom:1,heroPos:38,
+  groupSize:120,groupX:88,groupY:22,leukH:44,leukX:4,titleSize:62,availSize:13,nameSize:13,skuSize:11,footWeb:16,
+  fontDispData:null,fontBodyData:null,fontCondData:null};
+const COLOR_OPTS=[['','—'],['negro','Negro'],['blanco','Blanco'],['dorado','Dorado'],['blanconegro','Blanco y Negro'],['natural','Natural']];
+const STD_KEY='leuk_reingreso_std_v1';
+
+document.documentElement.style.setProperty('--fdisplay',"'Century Gothic','Questrial',sans-serif");
+document.documentElement.style.setProperty('--fbody',"'Helvetica Neue',Arial,sans-serif");
+document.documentElement.style.setProperty('--fcond',"'Helvetica Neue','Arial Narrow',Arial,sans-serif");
+
+function norm(s){return String(s).toLowerCase().replace(/[^a-z0-9]/g,'');}
+function toast(m,d=2800){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+function setStatus(id,items){document.getElementById(id).innerHTML=items.map(([l,t])=>`<span class="pill pill-${t}">${l}</span>`).join('');}
+function val(id){return document.getElementById(id).value;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function colorTokens(c){return c==='blanconegro'?['blanco','negro']:(c?[c]:[]);}
+
+// ═══ LISTA EDITABLE ═══
+function renderLists(){
+  document.getElementById('list-leuk').innerHTML=LEUK.map((p,i)=>`
+    <div class="prod-row">
+      ${p.img?`<img class="prod-thumb" src="${p.img}">`:`<span class="prod-thumb missing"></span>`}
+      <span class="prod-sku">${esc(p.sku)}</span>
+      <span class="prod-name" title="${esc(p.name)}">${esc(p.name)}</span>
+      <select class="prod-color" onchange="setColor(${i},this.value)">
+        ${COLOR_OPTS.map(([v,l])=>`<option value="${v}" ${p.color===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <span onclick="removeProduct(${i})" title="Quitar" style="cursor:pointer;color:#5a3a3a;font-size:15px;padding:0 2px;flex-shrink:0">×</span>
+    </div>`).join('');
+}
+function setColor(i,v){LEUK[i].color=v;render();}
+function addProduct(){
+  const skuEl=document.getElementById('add-sku'), nameEl=document.getElementById('add-name');
+  const sku=skuEl.value.trim(), name=nameEl.value.trim();
+  if(!name){toast('Escribí al menos el nombre del producto');nameEl.focus();return;}
+  LEUK.push({sku:sku,name:name.toUpperCase(),color:'',img:null});
+  skuEl.value=''; nameEl.value=''; skuEl.focus();
+  matchImages(); renderLists(); render();
+  toast('✓ Producto agregado');
+}
+function removeProduct(i){LEUK.splice(i,1);renderLists();render();}
+document.getElementById('add-name').addEventListener('keydown',e=>{if(e.key==='Enter')addProduct();});
+document.getElementById('add-sku').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('add-name').focus();});
+
+// ═══ FOTOS ═══
+document.getElementById('inp-imgs').addEventListener('change',async e=>{
+  const files=Array.from(e.target.files); if(!files.length)return;
+  let added=0;
+  for(const f of files){
+    if(/\.zip$/i.test(f.name)){
+      try{const zip=await JSZip.loadAsync(f);
+        for(const z of Object.values(zip.files)){ if(z.dir||!/\.(png|jpe?g|webp|gif)$/i.test(z.name))continue;
+          const url=await blobToURL(await z.async('blob')); registerImg(z.name.split('/').pop(),url); added++; }
+      }catch(err){console.error(err);toast('Error leyendo el ZIP');}
+    }else if(/\.(png|jpe?g|webp|gif)$/i.test(f.name)||/^image\//.test(f.type)){
+      const url=await new Promise(r=>{const rd=new FileReader();rd.onload=ev=>r(ev.target.result);rd.readAsDataURL(f);});
+      registerImg(f.name,url); added++;
+    }
+  }
+  matchImages(); renderLists(); render();
+  const m=LEUK.filter(p=>p.img).length;
+  setStatus('imgs-status',[[`${added} fotos`,'ok'],[`${m}/${LEUK.length} coinciden`,m===LEUK.length?'ok':'warn']]);
+  toast(`✓ ${added} fotos — ${m} coincidencias`);
+});
+function blobToURL(b){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(b);});}
+function registerImg(filename,url){const base=filename.replace(/\.[^.]+$/,'');S.imageMap['n:'+norm(base)]=url;(base.match(/\d{3,}/g)||[]).forEach(n=>S.imageMap['s:'+n]=url);}
+function matchImages(){
+  LEUK.forEach(p=>{p.img=null;
+    if(S.imageMap['s:'+p.sku]){p.img=S.imageMap['s:'+p.sku];return;}
+    const nk=norm(p.name);
+    if(S.imageMap['n:'+nk]){p.img=S.imageMap['n:'+nk];return;}
+    const hit=Object.keys(S.imageMap).find(k=>k.startsWith('n:')&&(k.slice(2).includes(nk)||(nk.length>3&&nk.includes(k.slice(2)))));
+    if(hit)p.img=S.imageMap[hit];});
+}
+
+// ═══ EXCEL / CSV DE REINGRESOS ═══
+let XLSROWS=null, XLSHDR=null, XLSIDX=null;
+function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else if(c==='\r'){}else cur+=c;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
+function parseColorText(raw){const s=' '+norm(raw)+' ';const has=w=>s.includes(w);const b=has('blanco')||has('white'),n=has('negro')||has('black');if(b&&n)return'blanconegro';if(n)return'negro';if(b)return'blanco';if(has('dorado')||has('gold')||has('oro'))return'dorado';if(has('natural')||has('madera'))return'natural';return'';}
+document.getElementById('inp-excel').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{let rows;if(/\.csv$/i.test(f.name)){rows=parseCSV(new TextDecoder().decode(ev.target.result));}else{const wb=XLSX.read(ev.target.result,{type:'array'});rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});}ingestExcel(rows,f.name);}catch(err){console.error(err);setStatus('excel-status',[['Error al leer','warn']]);toast('Error leyendo el Excel');}};r.readAsArrayBuffer(f);});
+function ingestExcel(rows,fname){
+  rows=rows.filter(r=>r.some(c=>String(c).trim()!==''));
+  if(!rows.length){toast('El archivo está vacío');return;}
+  XLSHDR=rows[0].map(c=>String(c).trim()); XLSROWS=rows.slice(1);
+  const H=XLSHDR.map(h=>norm(h));
+  const find=(...k)=>H.findIndex(h=>k.some(x=>h.includes(x)));
+  XLSIDX={sku:(H.indexOf('sku')>=0?H.indexOf('sku'):find('sku')),name:find('nombre','producto','luminaria','item'),
+    color:(find('colorproducto')>=0?find('colorproducto'):find('color')),
+    date:(find('osme')>=0?find('osme'):find('fechaingreso','ingreso','fecha')),sit:find('situac')};
+  const sel=document.getElementById('xls-filter-col');
+  sel.innerHTML='<option value="">— Sin filtro (cargar todas las filas) —</option>'+XLSHDR.map((h,i)=>`<option value="${i}">${esc(h||('Col '+(i+1)))}</option>`).join('');
+  if(XLSIDX.date>=0)sel.value=XLSIDX.date;
+  setStatus('excel-status',[[fname,'ok'],[XLSROWS.length+' filas','ok']]);
+  toast('✓ Excel leído. Elegí el filtro y tocá “Cargar productos del Excel”.');
+}
+function applyExcel(){
+  if(!XLSROWS){toast('Primero subí el Excel/CSV');return;}
+  const fc=document.getElementById('xls-filter-col').value;
+  const fv=norm(document.getElementById('xls-filter-val').value);
+  const {sku,name,color}=XLSIDX;
+  if(name<0){toast('No encontré la columna de Nombre en el archivo');return;}
+  const out=[];
+  XLSROWS.forEach(row=>{
+    if(fc!==''){const cell=String(row[+fc]||'').trim();const pass=fv===''?cell!=='':norm(cell).includes(fv);if(!pass)return;}
+    const nm=String(row[name]||'').trim(); if(!nm)return;
+    out.push({sku:String(row[sku]||'').trim(),name:nm.toUpperCase(),color:color>=0?parseColorText(row[color]):'',img:null});
+  });
+  if(!out.length){toast('Ninguna fila cumple el filtro');return;}
+  LEUK.length=0; out.forEach(p=>LEUK.push(p));
+  matchImages(); renderLists(); render();
+  setStatus('excel-status',[[out.length+' productos cargados','ok']]);
+  toast(`✓ ${out.length} productos cargados del Excel`);
+}
+
+// ═══ LOGOS / HERO / FUENTES ═══
+function hookImg(inp,key,statusId,label){document.getElementById(inp).addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S[key]=ev.target.result;setStatus(statusId,[[f.name,'ok']]);render();toast('✓ '+label);};r.readAsDataURL(f);});}
+hookImg('inp-hero','heroUrl','hero-status','Portada');
+hookImg('inp-logo-group','logoGroup','logo-group-status','Logo Leuk Iluminación');
+hookImg('inp-logo-leuk','logoLeuk','logo-leuk-status','Logo sección');
+function hookFont(inp,family,cssVar,stack,storeKey){document.getElementById(inp).addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S[storeKey]=ev.target.result;applyFont(ev.target.result,family,cssVar,stack);toast('✓ Fuente cargada');};r.readAsDataURL(f);});}
+function applyFont(dataUrl,family,cssVar,stack){const face=new FontFace(family,`url(${dataUrl})`);face.load().then(ff=>{document.fonts.add(ff);document.documentElement.style.setProperty(cssVar,`'${family}',${stack}`);render();}).catch(()=>toast('Error con la fuente'));}
+hookFont('inp-font-disp','LeukDisplay','--fdisplay',"'Century Gothic',sans-serif",'fontDispData');
+hookFont('inp-font-body','LeukBody','--fbody',"'Helvetica Neue',Arial,sans-serif",'fontBodyData');
+hookFont('inp-font-cond','LeukCond','--fcond',"'Helvetica Neue',Arial,sans-serif",'fontCondData');
+
+// ═══ SLIDERS ═══
+function slider(id,key,valId,suffix,fn){document.getElementById(id).addEventListener('input',e=>{S[key]=fn?fn(+e.target.value):+e.target.value;document.getElementById(valId).textContent=e.target.value+suffix;render();});}
+slider('hero-zoom','heroZoom','hero-zoom-val','%',v=>v/100);
+slider('hero-pos','heroPos','hero-pos-val','%');
+slider('title-size','titleSize','title-size-val',' px');
+slider('avail-size','availSize','avail-size-val',' px');
+slider('group-size','groupSize','group-size-val',' px');
+slider('group-x','groupX','group-x-val','%');
+slider('group-y','groupY','group-y-val','%');
+slider('leuk-size','leukH','leuk-size-val',' px');
+slider('leuk-x','leukX','leuk-x-val','%');
+slider('name-size','nameSize','name-size-val',' px');
+slider('sku-size','skuSize','sku-size-val',' px');
+slider('foot-size','footWeb','foot-size-val',' px');
+['cat-title','cat-avail','cat-web','cat-subweb'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+
+function setSlider(id,value,label){const el=document.getElementById(id);if(el){el.value=value;const v=document.getElementById(id+'-val');if(v)v.textContent=label;}}
+function syncSliders(){
+  setSlider('hero-zoom',Math.round(S.heroZoom*100),Math.round(S.heroZoom*100)+'%');
+  setSlider('hero-pos',S.heroPos,S.heroPos+'%');
+  setSlider('title-size',S.titleSize,S.titleSize+' px');
+  setSlider('avail-size',S.availSize,S.availSize+' px');
+  setSlider('group-size',S.groupSize,S.groupSize+' px');
+  setSlider('group-x',S.groupX,S.groupX+'%');
+  setSlider('group-y',S.groupY,S.groupY+'%');
+  setSlider('leuk-size',S.leukH,S.leukH+' px');
+  setSlider('leuk-x',S.leukX,S.leukX+'%');
+  setSlider('name-size',S.nameSize,S.nameSize+' px');
+  setSlider('sku-size',S.skuSize,S.skuSize+' px');
+  setSlider('foot-size',S.footWeb,S.footWeb+' px');
+}
+
+// ═══ ZOOM PREVIEW ═══
+function adjustZoom(d){S.zoom=Math.max(0.4,Math.min(1.6,S.zoom+d));document.getElementById('zoom-val').textContent=Math.round(S.zoom*100)+'%';document.getElementById('stage').style.transform=`scale(${S.zoom})`;}
+
+// ═══ SVG redes ═══
+const SVG_IG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>';
+const SVG_FB='<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>';
+const SVG_WA='<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.882 11.882 0 005.723 1.459h.005c6.585 0 11.946-5.36 11.949-11.945a11.821 11.821 0 00-3.495-8.413"/></svg>';
+
+// ═══ RENDER ═══
+function cardHTML(p){
+  const dots=colorTokens(p.color).map(c=>`<span class="dot ${c}"></span>`).join('');
+  return `<div class="card">
+    ${p.img?`<img class="pimg" src="${p.img}">`:`<div class="pimg-ph">${esc(p.name)}</div>`}
+    <div class="pname" style="font-size:${S.nameSize}px">${esc(p.name)}</div>
+    ${dots?`<div class="dots-row">${dots}</div>`:''}
+    <div class="meta"><div class="mrow" style="font-size:${S.skuSize}px"><span>SKU</span><span class="v">${esc(p.sku||'—')}</span></div></div>
+  </div>`;
+}
+function gridHTML(arr){
+  let cells=arr.map(cardHTML).join('');
+  const rem=arr.length%4; if(rem) for(let i=rem;i<4;i++) cells+='<div class="gridcell-empty"></div>';
+  return `<div class="grid">${cells}</div>`;
+}
+function brandHead(logoUrl,name,h,x){
+  const inner=logoUrl?`<img src="${logoUrl}" style="height:${h}px;left:${x}%">`:`<span class="ph" style="left:${x}%">${name}</span>`;
+  return `<div class="brand-head"><div class="line" style="min-height:${Math.max(54,h+10)}px">${inner}</div></div>`;
+}
+function render(){
+  const titleLines=val('cat-title').split('/').map(esc).join('<br>');
+  const heroImg=S.heroUrl?`<img class="hero-img" src="${S.heroUrl}" style="object-position:center ${S.heroPos}%;transform:scale(${S.heroZoom})">`:'';
+  const groupLogo=S.logoGroup?`<img class="group-logo" src="${S.logoGroup}" style="height:${S.groupSize}px;left:${S.groupX}%;top:${S.groupY}%;transform:translate(-50%,-50%)">`:'';
+  const avail=val('cat-avail').trim();
+  const badge=avail?`<div class="leuk-badge"><span class="d"></span><span class="t" style="font-size:${S.availSize}px">${esc(avail)}</span></div>`:'';
+  const web=esc(val('cat-web').trim()); const sub=val('cat-subweb').trim();
+  const fw=S.footWeb, pad=Math.round(fw*0.95), icon=Math.round(fw*1.9), subS=Math.max(8,Math.round(fw*0.56)), gap=Math.max(10,Math.round(icon*0.5));
+  const html=`
+    <div class="leuk-hero">
+      ${heroImg}<div class="scrim"></div>${groupLogo}
+      <div class="hero-txt"><h1 style="font-size:${S.titleSize}px">${titleLines}</h1>${badge}</div>
+    </div>
+    ${brandHead(S.logoLeuk,'LEUK',S.leukH,S.leukX)}
+    ${gridHTML(LEUK)}
+    <div class="leuk-foot" style="padding:${pad}px 30px">
+      <div><div class="web" style="font-size:${fw}px">${web}</div>${sub?`<div class="subweb" style="font-size:${subS}px">${esc(sub)}</div>`:''}</div>
+      <div class="socials" style="gap:${gap}px">
+        <a href="#" style="width:${icon}px;height:${icon}px">${SVG_IG}</a>
+        <a href="#" style="width:${icon}px;height:${icon}px">${SVG_FB}</a>
+        <a href="#" style="width:${icon}px;height:${icon}px">${SVG_WA}</a>
+      </div>
+    </div>`;
+  document.getElementById('catalog').innerHTML=html;
+}
+
+// ═══ ESTÁNDAR / PLANTILLA ═══
+function collectStandard(){
+  return {v:1,heroUrl:S.heroUrl,logoIlum:S.logoGroup,logoLeuk:S.logoLeuk,
+    fonts:{disp:S.fontDispData,body:S.fontBodyData,cond:S.fontCondData},
+    web:val('cat-web'),subweb:val('cat-subweb'),
+    sizes:{heroZoom:S.heroZoom,heroPos:S.heroPos,groupSize:S.groupSize,groupX:S.groupX,groupY:S.groupY,
+      leukH:S.leukH,leukX:S.leukX,titleSize:S.titleSize,availSize:S.availSize,nameSize:S.nameSize,skuSize:S.skuSize,footWeb:S.footWeb}};
+}
+function applyStandard(cfg){
+  if(!cfg)return;
+  if(cfg.heroUrl){S.heroUrl=cfg.heroUrl;setStatus('hero-status',[['de plantilla','ok']]);}
+  if(cfg.logoIlum){S.logoGroup=cfg.logoIlum;setStatus('logo-group-status',[['de plantilla','ok']]);}
+  if(cfg.logoLeuk){S.logoLeuk=cfg.logoLeuk;setStatus('logo-leuk-status',[['de plantilla','ok']]);}
+  if(cfg.web!=null)document.getElementById('cat-web').value=cfg.web;
+  if(cfg.subweb!=null)document.getElementById('cat-subweb').value=cfg.subweb;
+  if(cfg.sizes)Object.entries(cfg.sizes).forEach(([k,v])=>{if(v!=null&&k in S)S[k]=v;});
+  if(cfg.fonts){
+    if(cfg.fonts.disp){S.fontDispData=cfg.fonts.disp;applyFont(cfg.fonts.disp,'LeukDisplay','--fdisplay',"'Century Gothic',sans-serif");}
+    if(cfg.fonts.body){S.fontBodyData=cfg.fonts.body;applyFont(cfg.fonts.body,'LeukBody','--fbody',"'Helvetica Neue',Arial,sans-serif");}
+    if(cfg.fonts.cond){S.fontCondData=cfg.fonts.cond;applyFont(cfg.fonts.cond,'LeukCond','--fcond',"'Helvetica Neue',Arial,sans-serif");}
+  }
+  syncSliders(); render();
+}
+function compressImg(dataUrl,maxW,q,mime){return new Promise(res=>{if(!dataUrl)return res(null);const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);res(c.toDataURL(mime,q));};im.onerror=()=>res(dataUrl);im.src=dataUrl;});}
+async function saveStandard(){
+  const cfg=collectStandard();
+  if(cfg.heroUrl) cfg.heroUrl=await compressImg(cfg.heroUrl,1500,0.85,'image/jpeg');
+  try{localStorage.setItem(STD_KEY,JSON.stringify(cfg));toast('✓ Estándar guardado. Se cargará solo la próxima vez que abras el archivo.',4500);}
+  catch(e){console.error(e);toast('No entró en el navegador (imágenes muy pesadas). Usá “Exportar plantilla (.json)”.',6000);}
+}
+function clearStandard(){try{localStorage.removeItem(STD_KEY);toast('Estándar borrado');}catch(e){}}
+function exportPlantilla(){
+  const cfg=collectStandard();
+  const blob=new Blob([JSON.stringify(cfg)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Leuk_plantilla_estandar.json';a.click();
+  toast('✓ Plantilla exportada. Compartila junto con este archivo HTML.',4500);
+}
+document.getElementById('inp-plantilla').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{applyStandard(JSON.parse(ev.target.result));toast('✓ Plantilla cargada');}catch(err){console.error(err);toast('Archivo de plantilla inválido');}};r.readAsText(f);});
+
+// ═══ EXPORT (render nativo, 3×) ═══
+async function capture(){
+  await document.fonts.ready;
+  const node=document.getElementById('catalog');
+  return await htmlToImage.toCanvas(node,{pixelRatio:3,backgroundColor:'#FAFAF8',width:node.offsetWidth,height:node.offsetHeight,style:{transform:'none',margin:'0'},cacheBust:true});
+}
+async function exportPDF(){
+  toast('Generando PDF en alta calidad…',5000);
+  try{const canvas=await capture();const{jsPDF}=window.jspdf;const wmm=650*25.4/96,hmm=wmm*canvas.height/canvas.width;
+    const pdf=new jsPDF({orientation:'p',unit:'mm',format:[wmm,hmm]});pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,wmm,hmm,'','FAST');
+    pdf.save('Leuk_Reingresos.pdf');toast('✓ PDF descargado');}catch(e){console.error(e);toast('Error generando PDF');}
+}
+async function exportJPG(){
+  toast('Generando JPG en alta calidad…',5000);
+  try{const canvas=await capture();const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',0.95);a.download='Leuk_Reingresos.jpg';a.click();toast('✓ JPG descargado (650px · 3×)');}catch(e){console.error(e);toast('Error generando JPG');}
+}
+
+// ═══ DRAG&DROP ═══
+document.querySelectorAll('.dropzone').forEach(dz=>{dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('active');});dz.addEventListener('dragleave',()=>dz.classList.remove('active'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('active');const inp=dz.querySelector('input[type="file"]');if(!inp)return;const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));inp.files=dt.files;inp.dispatchEvent(new Event('change'));});});
+
+// ═══ INIT: restaurar estándar guardado ═══
+renderLists();
+try{const raw=localStorage.getItem(STD_KEY);if(raw){applyStandard(JSON.parse(raw));toast('Estándar de marca cargado ✓');}}catch(e){}
+render();
+</script>
+</body>
+</html>

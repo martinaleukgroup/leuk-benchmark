@@ -1805,7 +1805,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "firmas", "stock", "eventos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "firmas", "stock", "reingresos", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1820,7 +1820,8 @@
       label: "Diseño",
       pages: [{ p: "fichas", t: "Fichas técnicas" },
               { p: "firmas", t: "Firmas de mail" },
-              { p: "stock", t: "Stock diario" }],
+              { p: "stock", t: "Stock diario" },
+              { p: "reingresos", t: "Reingresos" }],
     },
     eventos: {
       label: "Eventos",
@@ -1873,6 +1874,8 @@
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
     // Stock diario: app autocontenida embebida.
     if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=4"; }
+    // Reingresos: app autocontenida embebida.
+    if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=1"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=138"; }
     if (page === "usuarios") renderUsuarios();

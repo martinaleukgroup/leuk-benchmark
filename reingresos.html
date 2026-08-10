@@ -145,6 +145,10 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
 .toast{background:#fff!important;border:1px solid var(--lk-line)!important;color:var(--lk-ink)!important;box-shadow:0 6px 20px rgba(40,42,34,.12)!important}
 .note{color:var(--lk-muted)!important}
 .note.std{color:var(--lk-sage)!important}
+/* Encabezados de grupo: separan el paso a paso de la config de marca */
+.group-head{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--lk-ink)!important;padding:14px 20px 7px;background:var(--lk-pale);border-bottom:1px solid var(--lk-line)}
+.group-head span{display:block;font-size:9px;font-weight:500;letter-spacing:.02em;text-transform:none;color:var(--lk-muted);margin-top:2px}
+.group-head.std{color:var(--lk-olive)!important}
 </style>
 </head>
 <body>
@@ -157,18 +161,11 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
 <div class="workspace">
 <aside class="panel">
 
-  <!-- ESTÁNDAR / PLANTILLA -->
-  <div class="section">
-    <div class="section-title std">★ Plantilla / estándar de marca</div>
-    <button class="btn-outline btn-std" onclick="saveStandard()">★ Guardar estándar en este equipo</button>
-    <button class="btn-outline btn-std" onclick="exportPlantilla()">⇧ Exportar plantilla (.json) para compartir</button>
-    <div class="field" style="margin-top:7px"><div class="dropzone" id="dz-plantilla" style="padding:8px"><input type="file" id="inp-plantilla" accept=".json"><div class="dropzone-label"><strong>⇩ Cargar plantilla (.json)</strong>De un compañero o tuya</div></div></div>
-    <button class="btn-outline" onclick="clearStandard()" style="margin-top:2px">Borrar estándar guardado</button>
-    <div class="note std">Guardá una vez el logo, la portada, las fuentes y los tamaños: quedan cargados para los próximos reingresos. Podés actualizarlos cuando quieras (guardá de nuevo). Lo que cambia por reingreso (título, fecha, productos y fotos) NO se guarda como estándar.</div>
-  </div>
+  <!-- ===== GRUPO A · CADA REINGRESO (paso a paso) ===== -->
+  <div class="group-head">Cada reingreso<span>Lo que cambia cada vez. Seguí los pasos 1 a 5.</span></div>
 
   <div class="section">
-    <div class="section-title">1 · Encabezado</div>
+    <div class="section-title">Paso 1 · Título y aviso</div>
     <div class="field"><label>Título (usá “/” para 2 líneas)</label><input type="text" id="cat-title" value="REINGRESOS/JULIO"></div>
     <div class="field"><label>Aviso de disponibilidad</label><input type="text" id="cat-avail" value="Fecha de disponibilidad a confirmar"></div>
     <div class="field"><label>Tamaño del título <span class="range-val" id="title-size-val">62 px</span></label><input type="range" id="title-size" min="28" max="96" value="62"></div>
@@ -178,7 +175,57 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
   </div>
 
   <div class="section">
-    <div class="section-title">2 · Logos e imagen (estándar)</div>
+    <div class="section-title">Paso 2 · Cargar reingresos (Excel / CSV)</div>
+    <div class="dropzone" id="dz-excel"><input type="file" id="inp-excel" accept=".xlsx,.xls,.csv"><div class="dropzone-label"><strong>Subir Excel / CSV</strong>Detecta SKU, Nombre y Color</div></div>
+    <div class="field" style="margin-top:8px"><label>Incluir solo filas donde la columna</label>
+      <select id="xls-filter-col" class="prod-color" style="width:100%"><option value="">— subí el archivo —</option></select></div>
+    <div class="field"><label>…tenga este valor <span style="color:#3a3a3a">(vacío = cualquier celda con dato)</span></label>
+      <input type="text" id="xls-filter-val" placeholder="ej: dejar vacío para fechas, o 'Reingreso'"></div>
+    <button class="btn-outline" onclick="applyExcel()" style="margin-top:2px">Cargar productos del Excel</button>
+    <div id="excel-status" class="status-row"></div>
+    <div class="note">Reemplaza la lista con los productos del Excel. Después la ajustás a mano en el Paso 4.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Paso 3 · Fotos del reingreso</div>
+    <div class="dropzone" id="dz-imgs"><input type="file" id="inp-imgs" accept=".zip,image/*" multiple><div class="dropzone-label"><strong>Subir ZIP o imágenes</strong>Matchea por SKU o por nombre<br><span style="font-size:9px;color:#333">ej: “WEST BLNT 7104.png”, “6832.jpg”</span></div></div>
+    <div id="imgs-status" class="status-row"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Paso 4 · Productos y color</div>
+    <div class="field"><label>Tamaño del nombre <span class="range-val" id="name-size-val">13 px</span></label><input type="range" id="name-size" min="9" max="20" value="13"></div>
+    <div class="field"><label>Tamaño del SKU <span class="range-val" id="sku-size-val">11 px</span></label><input type="range" id="sku-size" min="8" max="16" value="11"></div>
+    <div class="brand-tag">Productos que reingresan</div><div id="list-leuk"></div>
+    <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
+      <input type="text" id="add-sku" placeholder="SKU" style="width:66px;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
+      <input type="text" id="add-name" placeholder="Nombre del producto" style="flex:1;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
+      <button class="btn-outline" style="width:auto;margin:0;padding:8px 13px;font-size:14px" onclick="addProduct()" title="Agregar">+</button>
+    </div>
+    <div class="note">Escribí el SKU y el nombre y tocá “+”. La foto se matchea desde el ZIP por ese SKU o nombre.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Paso 5 · Descargar</div>
+    <button class="btn-primary" id="btn-gen" onclick="render()">Actualizar vista previa</button>
+    <button class="btn-outline" onclick="exportPDF()">Descargar PDF</button>
+    <button class="btn-outline" onclick="exportJPG()">Descargar JPG</button>
+  </div>
+
+  <!-- ===== GRUPO B · CONFIGURAR UNA VEZ (estándar de marca) ===== -->
+  <div class="group-head std">Configurar una vez<span>Estándar de marca: se deja listo y queda para los próximos reingresos.</span></div>
+
+  <div class="section">
+    <div class="section-title std">Estándar de marca</div>
+    <button class="btn-outline btn-std" onclick="saveStandard()">Guardar estándar</button>
+    <button class="btn-outline btn-std" onclick="exportPlantilla()">Exportar plantilla (.json)</button>
+    <div class="field" style="margin-top:7px"><div class="dropzone" id="dz-plantilla" style="padding:8px"><input type="file" id="inp-plantilla" accept=".json"><div class="dropzone-label"><strong>Cargar plantilla (.json)</strong>De un compañero o tuya</div></div></div>
+    <button class="btn-outline" onclick="clearStandard()" style="margin-top:2px">Borrar estándar</button>
+    <div class="note std">Guarda logo, portada, fuentes y tamaños para los próximos reingresos. El título, la fecha, los productos y las fotos cambian en cada uno.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title std">Logos e imagen</div>
     <div class="field"><label>Portada / hero</label>
       <div class="dropzone" id="dz-hero"><input type="file" id="inp-hero" accept="image/*"><div class="dropzone-label"><strong>Portada del header</strong>JPG / PNG</div></div>
       <div id="hero-status" class="status-row"></div></div>
@@ -196,7 +243,7 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
   </div>
 
   <div class="section">
-    <div class="section-title">3 · Tipografía (estándar, opcional)</div>
+    <div class="section-title std">Tipografía (opcional)</div>
     <div class="row3">
       <div class="field"><label>Display</label><div class="dropzone" id="dz-font-disp" style="padding:7px"><input type="file" id="inp-font-disp" accept=".ttf,.otf,.woff,.woff2"><div class="dropzone-label"><strong>Simplifica</strong></div></div></div>
       <div class="field"><label>Body</label><div class="dropzone" id="dz-font-body" style="padding:7px"><input type="file" id="inp-font-body" accept=".ttf,.otf,.woff,.woff2"><div class="dropzone-label"><strong>DIN</strong></div></div></div>
@@ -206,47 +253,10 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
   </div>
 
   <div class="section">
-    <div class="section-title">4 · Footer (estándar)</div>
+    <div class="section-title std">Footer</div>
     <div class="field"><label>Sitio web</label><input type="text" id="cat-web" value="LEUKILUMINACION.COM"></div>
     <div class="field"><label>Bajada (opcional)</label><input type="text" id="cat-subweb" value="@leukiluminacion"></div>
     <div class="field"><label>Tamaño del footer <span class="range-val" id="foot-size-val">16 px</span></label><input type="range" id="foot-size" min="10" max="24" value="16"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">5 · Cargar reingresos desde Excel / CSV</div>
-    <div class="dropzone" id="dz-excel"><input type="file" id="inp-excel" accept=".xlsx,.xls,.csv"><div class="dropzone-label"><strong>Subir Excel / CSV de reingresos</strong>Detecta SKU, Nombre y Color solo</div></div>
-    <div class="field" style="margin-top:8px"><label>Incluir solo filas donde la columna</label>
-      <select id="xls-filter-col" class="prod-color" style="width:100%"><option value="">— subí el archivo —</option></select></div>
-    <div class="field"><label>…tenga este valor <span style="color:#3a3a3a">(vacío = cualquier celda con dato)</span></label>
-      <input type="text" id="xls-filter-val" placeholder="ej: dejar vacío para fechas, o 'Reingreso'"></div>
-    <button class="btn-outline" onclick="applyExcel()" style="margin-top:2px">Cargar productos del Excel</button>
-    <div id="excel-status" class="status-row"></div>
-    <div class="note">Reemplaza la lista de productos con los del Excel. El color se toma de la columna “Color producto” (AM). El recuadro de abajo te deja seguir ajustando a mano.</div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">6 · Fotos del reingreso (ZIP o imágenes)</div>
-    <div class="dropzone" id="dz-imgs"><input type="file" id="inp-imgs" accept=".zip,image/*" multiple><div class="dropzone-label"><strong>Subir ZIP o imágenes</strong>Matchea por SKU o por nombre<br><span style="font-size:9px;color:#333">ej: “WEST BLNT 7104.png”, “6832.jpg”</span></div></div>
-    <div id="imgs-status" class="status-row"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">7 · Productos y color (ajuste manual)</div>
-    <div class="field"><label>Tamaño del nombre <span class="range-val" id="name-size-val">13 px</span></label><input type="range" id="name-size" min="9" max="20" value="13"></div>
-    <div class="field"><label>Tamaño del SKU <span class="range-val" id="sku-size-val">11 px</span></label><input type="range" id="sku-size" min="8" max="16" value="11"></div>
-    <div class="brand-tag">Productos que reingresan</div><div id="list-leuk"></div>
-    <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
-      <input type="text" id="add-sku" placeholder="SKU" style="width:66px;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
-      <input type="text" id="add-name" placeholder="Nombre del producto" style="flex:1;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
-      <button class="btn-outline" style="width:auto;margin:0;padding:8px 13px;font-size:14px" onclick="addProduct()" title="Agregar">+</button>
-    </div>
-    <div class="note">Escribí el SKU y el nombre, y tocá “+”. La foto la matchea desde el ZIP por ese SKU o nombre.</div>
-  </div>
-
-  <div class="section">
-    <button class="btn-primary" id="btn-gen" onclick="render()">Actualizar vista previa</button>
-    <button class="btn-outline" onclick="exportPDF()">↓ Exportar PDF (alta calidad)</button>
-    <button class="btn-outline" onclick="exportJPG()">↓ Exportar JPG (650px, 3×)</button>
   </div>
 </aside>
 

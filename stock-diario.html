@@ -1,0 +1,3587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LEUK — Stock Diario v24</title>
+<!-- html2canvas y jsPDF se cargan POR SEPARADO antes del bundle html2pdf.
+     Razón: el bundle (html2pdf.bundle.min.js) incluye ambas internamente
+     pero NO las expone como globales — solo expone `html2pdf`. Como nuestro
+     generatePDF las usa directamente (porque rompe el render en bloques
+     para evitar el límite de canvas del navegador), necesitamos tenerlas
+     accesibles en window.html2canvas y window.jspdf. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+/* =========================================================
+   VARIABLES
+   ========================================================= */
+:root {
+  --negro:    #111;
+  --gris-hd:  #d8d8d8;
+  --gris-sub: #f0f0f0;
+  --blanco:   #ffffff;
+  --borde:    #e8e8e8;
+  --txt:      #1a1a1a;
+  --sku:      #444;
+
+  --grid-cols: 5;
+  --card-gap:  14px;
+  --foto-h:    140px;
+
+  /* Tipografías — se sobreescriben al cargar fuentes custom */
+  --font-titulo:   'Roboto Condensed', sans-serif;
+  --font-nombre:   'Roboto Condensed', sans-serif;
+  --font-sku:      'Roboto Condensed', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', sans-serif; background: #333; }
+
+/* =========================================================
+   PANEL DE CONTROL
+   ========================================================= */
+.panel {
+  position: sticky; top: 0; z-index: 100;
+  background: #1a1a1a;
+  padding: 12px 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  border-bottom: 2px solid #333;
+}
+.panel-logo {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 1.4rem; font-weight: 800;
+  letter-spacing: 3px; color: #fff;
+  flex-shrink: 0;
+}
+.panel-logo em { color: #c8a84c; font-style: normal; }
+.panel-stat { font-size: 0.7rem; color: #777; letter-spacing: 0.5px; flex: 1; min-width: 140px; }
+.panel-stat strong { color: #c8a84c; }
+
+.opt-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.chk-lbl {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.65rem; color: #999; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer; user-select: none;
+}
+.chk-lbl input { accent-color: #c8a84c; }
+
+.drop-xlsx {
+  border: 1px dashed #444; border-radius: 4px;
+  padding: 6px 12px; cursor: pointer;
+  font-size: 0.65rem; color: #666; letter-spacing: 0.5px;
+  transition: all .2s;
+}
+.drop-xlsx:hover, .drop-xlsx.drag { border-color: #c8a84c; color: #c8a84c; }
+.drop-xlsx input { display: none; }
+
+.date-picker {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.7rem; color: #c8a84c; letter-spacing: 0.5px;
+  background: #1a1a1a;
+  border: 1px solid #333; border-radius: 4px;
+  padding: 5px 10px;
+}
+.date-picker input[type=date] {
+  background: transparent; border: none;
+  color: #fff; font-family: inherit; font-size: 0.75rem;
+  padding: 2px 0; cursor: pointer;
+  color-scheme: dark;
+}
+.date-picker input[type=date]:focus { outline: none; }
+
+.btn-pdf {
+  background: #c8a84c; color: #111; border: none;
+  padding: 8px 20px; border-radius: 4px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; gap: 7px;
+  white-space: nowrap;
+}
+.btn-pdf:hover { background: #e8c86c; transform: translateY(-1px); }
+.btn-pdf:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* Botón JPG: idéntico en forma al PDF, distinto en color para diferenciarlos
+   de un vistazo (azul cobalto vs dorado). Misma altura, padding y tipografía. */
+.btn-jpg {
+  background: #4c7fc8; color: #fff; border: none;
+  padding: 8px 20px; border-radius: 4px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; gap: 7px;
+  white-space: nowrap;
+}
+.btn-jpg:hover { background: #6c9fe8; transform: translateY(-1px); }
+.btn-jpg:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.status-txt { font-size: 0.65rem; color: #555; }
+
+/* =========================================================
+   PREVIEW WRAPPER
+   ========================================================= */
+.preview { padding: 24px; display: flex; flex-direction: column; align-items: center; }
+.preview-hint { font-size: 0.6rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 16px; }
+
+/* =========================================================
+   ÁREA PDF
+   A4 portrait = 794px @96dpi
+   ========================================================= */
+#pdf-area {
+  width: 794px;
+  background: #fff;
+  box-shadow: 0 12px 60px rgba(0,0,0,.6);
+}
+
+/* --- PORTADA --- */
+.portada {
+  padding: 60px 48px 40px;
+  background: #fff;
+  border-bottom: 3px solid #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.leuk-logo-wrap {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.leuk-logo-img  { height: 80px; display: block; margin: 0 auto; }
+.leuk-logo-txt  {
+  font-family: var(--font-titulo);
+  font-size: 5.5rem; font-weight: 800;
+  letter-spacing: 16px; color: #111;
+  text-transform: uppercase; line-height: 1;
+}
+.leuk-logo-sub  {
+  font-size: 0.85rem; letter-spacing: 6px;
+  text-transform: uppercase; color: #888;
+  margin-top: 8px; text-align: center;
+}
+
+.titulo-stock {
+  font-family: var(--font-titulo);
+  font-size: 1.1rem; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #555; text-align: center;
+}
+
+/* --- HEADER DE SECCIÓN --- */
+.sec-header {
+  background: var(--gris-hd);
+  padding: 9px 20px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0;
+  margin-top: 0;
+}
+.sec-part-bold {
+  font-family: var(--font-titulo);
+  font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #111;
+}
+.sec-part-sep  { font-size: 0.85rem; color: #111; margin: 0 6px; font-weight: 700; }
+.sec-part-semibold {
+  font-family: var(--font-titulo);
+  font-size: 0.85rem; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #111;
+}
+.sec-part-light {
+  font-family: var(--font-titulo);
+  font-size: 0.85rem; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #111;
+}
+
+/* --- BANNER NUEVOS INGRESOS --- */
+.banner-nuevos {
+  background: #111;
+  padding: 7px 20px;
+  text-align: center;
+  font-family: var(--font-titulo);
+  font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: #fff;
+}
+
+/* --- GRILLA DE PRODUCTOS --- */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), 1fr);
+  gap: var(--card-gap);
+  padding: 20px 20px 24px;
+  background: #fff;
+}
+
+.product-card {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.photo-box {
+  width: 100%; height: var(--foto-h);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.photo-box img {
+  /* Proporciones preservadas sin object-fit (html2canvas no lo renderiza bien).
+     La imagen crece hasta llenar el recuadro pero NUNCA lo desborda. */
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  mix-blend-mode: multiply;
+}
+.photo-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  font-size: 1.6rem; color: #ccc;
+}
+
+.prod-name {
+  font-family: var(--font-nombre);
+  font-size: 0.84rem; font-weight: 500;
+  letter-spacing: 0.02em; text-transform: uppercase;
+  color: #111; text-align: center; line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  padding: 0 4px;
+  max-width: 100%;
+}
+/* Nota técnica opcional (ej. "SLIM*") que se imprime como SEGUNDA LÍNEA
+   debajo del nombre del producto. Vive DENTRO de .prod-name para heredar
+   tipografía, tamaño, color y line-height: así queda pegada al nombre como
+   una línea más del mismo bloque, sin abrir el gap de 6px de la tarjeta. */
+.prod-nota {
+  display: block;
+}
+
+.prod-sku {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.69rem; color: #444;
+  letter-spacing: 0.02em; text-align: center;
+}
+
+/* Badge "NUEVO" en esquina de foto */
+.badge-nuevo {
+  position: absolute; top: 6px; left: 6px;
+  background: #8B9174; color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 3px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Badge "STOCK FINAL" (producto discontinuado) en esquina de foto.
+   El texto se uppercasea por CSS, igual que antes.
+   Mismo diseño y ubicación que .badge-nuevo, pero fondo NEGRO. */
+.badge-descontinuado {
+  position: absolute; top: 6px; left: 6px;
+  background: #000; color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 3px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* =========================================================
+   VENTILADORES — 3 columnas (son más anchos)
+   ========================================================= */
+.grid-venti {
+  --grid-cols: 3;
+  --foto-h: 200px;
+}
+
+/* =========================================================
+   PANEL DE PERSONALIZACIÓN (colapsable)
+   ========================================================= */
+.btn-custom {
+  background: transparent; color: #aaa;
+  border: 1px solid #333; border-radius: 4px;
+  padding: 7px 12px; font-size: 0.7rem; cursor: pointer;
+  letter-spacing: 1px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Roboto Condensed', sans-serif; font-weight: 600;
+  transition: all .15s;
+}
+.btn-custom:hover { border-color: #c8a84c; color: #c8a84c; }
+.btn-custom.activo { background: rgba(200,168,76,.12); border-color: #c8a84c; color: #c8a84c; }
+
+.panel-custom {
+  display: none;
+  background: #222;
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+  gap: 20px; flex-wrap: wrap; align-items: flex-end;
+}
+.panel-custom.on { display: flex; }
+
+.custom-item {
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 180px;
+}
+.custom-item label {
+  font-size: 0.6rem; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #888;
+  font-weight: 600;
+}
+.custom-upload {
+  border: 1px dashed #444; border-radius: 4px;
+  padding: 8px 12px; cursor: pointer; transition: all .2s;
+  font-size: 0.68rem; color: #666; letter-spacing: 0.5px;
+  background: #1a1a1a;
+}
+.custom-upload:hover { border-color: #c8a84c; color: #c8a84c; }
+.custom-upload.loaded { border-color: #c8a84c; color: #c8a84c; border-style: solid; }
+.custom-upload input { display: none; }
+
+.custom-preview-font {
+  font-size: 0.95rem; color: #fff; padding-top: 4px;
+  line-height: 1; letter-spacing: 0.5px;
+}
+.custom-preview-logo {
+  max-height: 32px; max-width: 140px;
+  padding: 4px 8px; background: #fff; border-radius: 3px;
+}
+
+.custom-reset {
+  background: transparent; color: #666;
+  border: 1px solid #333; border-radius: 3px;
+  padding: 6px 10px; font-size: 0.6rem;
+  letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; margin-left: auto;
+}
+.custom-reset:hover { color: #a83020; border-color: #a83020; }
+
+/* =========================================================
+   LOGO CARGADO (en el PDF)
+   ========================================================= */
+.leuk-logo-img-custom {
+  max-height: 180px;
+  max-width: 500px;
+  display: block;
+  margin: 0 auto;
+}
+
+
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.85);
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+}
+.overlay.on { display: flex; }
+.overlay-txt {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 2rem; font-weight: 700;
+  letter-spacing: 4px; color: #fff;
+}
+.overlay-sub { font-size: 0.65rem; color: #555; letter-spacing: 2px; text-transform: uppercase; }
+.overlay-bar {
+  width: 280px; height: 4px; background: #222; border-radius: 2px;
+  overflow: hidden; margin-top: 8px;
+}
+.overlay-bar-fill { height: 100%; background: #c8a84c; width: 0%; transition: width .15s; }
+
+/* Indicador de fotos cargadas en el panel */
+.fotos-pill {
+  font-size: 0.6rem; padding: 3px 8px; border-radius: 10px;
+  letter-spacing: 0.5px; color: #888; background: #222;
+  border: 1px solid #333; white-space: nowrap;
+}
+.fotos-pill.activo { background: rgba(200,168,76,.15); border-color: #c8a84c; color: #c8a84c; }
+
+/* =========================================================
+   MODO EDICIÓN — TARJETAS / FOTOS
+   Click en la imagen → muestra toolbar con borrar/duplicar/resize.
+   ========================================================= */
+.product-card { transition: outline .15s ease; }
+.product-card.is-selected {
+  outline: 2px solid #c8a84c;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Cuando hay fotos cargadas, las imágenes invitan al click */
+#pdf-area.fotos-loaded .photo-box img,
+#pdf-area.fotos-loaded .photo-placeholder { cursor: pointer; }
+
+/* La grilla deja que cada tarjeta tome solo el alto que necesita,
+   así una foto agrandada no estira a las hermanas de la misma fila. */
+.product-grid { align-items: start; }
+
+/* RESIZE DE FOTO — sin CSS transform.
+   El recuadro (.photo-box) MANTIENE su tamaño asignado. Dentro va un
+   wrapper .photo-inner que es el que CRECE/SE ACHICA con --photo-scale
+   (mediante width/height, NO transform). La imagen interior conserva
+   object-fit: contain → siempre proporcional, sin recorte, sin deformación.
+   
+   Por qué evitamos transform: html2canvas tiene un bug conocido — cuando
+   un <img> tiene `transform: scale()` aplicado, internamente crea un
+   canvas intermedio que se rellena de blanco y, en algunos aspect ratios,
+   también deforma la imagen. Por eso las fotos redimensionadas salían con
+   fondo blanco o estiradas en el PDF. Cambiar a sizing del wrapper hace
+   que html2canvas use su path normal de rendering de <img>, que SÍ
+   preserva la transparencia y las proporciones. */
+.product-card { --photo-scale: 1; }
+.product-card .photo-box {
+  overflow: visible;  /* si agrandás más allá del recuadro, no se recorta */
+}
+.product-card .photo-inner {
+  width: 100%;
+  height: 100%;
+  /* flex-shrink: 0 — fix del botón "+" de zoom.
+     Sin esto, al pedir width > 100% (ej. zoom +1 → 115%), el flex
+     parent .photo-box encogía automáticamente este item de vuelta a
+     100% por flex-shrink: 1 default. Resultado: el botón "−" achicaba
+     bien (item < container, no shrink necesario), pero el botón "+"
+     no hacía nada visible (item > container → shrink lo comprimía).
+     Con flex-shrink: 0 el item respeta su width/height pedidos. El
+     overflow: visible del .photo-box parent permite que el zoom-in
+     se vea sin recorte en la preview. En export, #pdf-area.exporting
+     fuerza overflow: hidden, dando zoom-in con crop centrado (igual
+     que un zoom de cámara). */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width .18s ease, height .18s ease;
+}
+.product-card[data-photo-scale] .photo-inner {
+  width:  calc(100% * var(--photo-scale));
+  height: calc(100% * var(--photo-scale));
+}
+/* Al escalar, la img dentro del inner ya respeta max-width/max-height: 100%
+   del inner escalado → proporcional siempre, sin deformación */
+
+/* Highlight visual cuando una tarjeta es la "fuente" del portapapeles */
+.product-card.is-clipboard-source {
+  outline: 2px dashed #4a90c8;
+  outline-offset: 3px;
+}
+/* Cuando hay foto en el clipboard, las demás tarjetas brillan suave para
+   indicar que ahí podés pegar */
+#pdf-area.has-clipboard .product-card:not(.is-clipboard-source) .photo-box {
+  box-shadow: inset 0 0 0 1px rgba(74,144,200,.35);
+}
+
+/* Toolbar flotante encima de la imagen seleccionada */
+.foto-toolbar {
+  position: absolute;
+  top: -40px; left: 50%; transform: translateX(-50%);
+  display: none; gap: 4px; z-index: 60;
+  background: #1a1a1a;
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.45);
+  white-space: nowrap;
+}
+.foto-toolbar::after {
+  content: '';
+  position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 5px solid #1a1a1a;
+}
+.product-card.is-selected .foto-toolbar { display: flex; }
+.foto-toolbar button {
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  padding: 5px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 600;
+  transition: all .12s;
+  display: flex; align-items: center; gap: 3px;
+}
+.foto-toolbar button:hover  { background: #c8a84c; color: #111; border-color: #c8a84c; }
+.foto-toolbar button.danger:hover { background: #a83020; border-color: #a83020; color: #fff; }
+.foto-toolbar button:disabled { opacity: .35; cursor: not-allowed; }
+.foto-toolbar button:disabled:hover { background: #2a2a2a; color: #fff; border-color: #3a3a3a; }
+
+/* =========================================================
+   CORTES DE PÁGINA (manuales)
+   Inserción entre secciones / al final de una sección.
+   ========================================================= */
+.pdf-page-break {
+  height: 30px;
+  margin: 0;
+  border-top: 2px dashed #c8a84c;
+  border-bottom: 2px dashed #c8a84c;
+  background-image: repeating-linear-gradient(45deg,
+    rgba(200,168,76,.08) 0 6px,
+    transparent 6px 12px);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #b89236;
+  page-break-after: always;
+  break-after: page;
+}
+.pdf-page-break::before { content: '✂  CORTE DE PÁGINA  ✂'; }
+.pdf-page-break .remove-break {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: #fff; color: #a83020; border: 1px solid #a83020;
+  width: 22px; height: 22px; border-radius: 50%;
+  cursor: pointer; font-size: 0.85rem;
+  font-family: 'Roboto Condensed', sans-serif;
+  line-height: 1; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pdf-page-break .remove-break:hover { background: #a83020; color: #fff; }
+
+/* Zona "+ insertar corte" entre secciones */
+.insert-break-zone {
+  height: 12px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .15s, height .15s;
+  cursor: pointer;
+  background: transparent;
+}
+.insert-break-zone:hover { opacity: 1; height: 30px; }
+.insert-break-zone::before {
+  content: '+ INSERTAR CORTE DE PÁGINA';
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c8a84c;
+  background: #fff;
+  padding: 4px 12px;
+  border: 1px dashed #c8a84c;
+  border-radius: 14px;
+}
+
+/* =========================================================
+   GUÍAS DE PÁGINA A4
+   Líneas horizontales cada ~1122px (A4 a 96dpi: 794×1122).
+   ========================================================= */
+#pdf-area.show-guides {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 1120px,
+      rgba(168,32,32,.55) 1120px,
+      rgba(168,32,32,.55) 1122px,
+      transparent 1122px,
+      transparent 1140px
+    );
+  background-size: 100% 1140px;
+  background-repeat: repeat-y;
+}
+
+.guides-toggle {
+  background: transparent; color: #aaa;
+  border: 1px solid #333; border-radius: 4px;
+  padding: 7px 12px; font-size: 0.7rem; cursor: pointer;
+  letter-spacing: 1px; text-transform: uppercase;
+  font-family: 'Roboto Condensed', sans-serif; font-weight: 600;
+  transition: all .15s;
+}
+.guides-toggle:hover { border-color: #c8a84c; color: #c8a84c; }
+.guides-toggle.activo { background: rgba(200,168,76,.12); border-color: #c8a84c; color: #c8a84c; }
+
+/* =========================================================
+   ESTADO DE EXPORTACIÓN
+   - mix-blend-mode no funciona en html2canvas → blanco. Lo desactivamos.
+   - Ocultamos overlays de UI (toolbars, zonas insert-break, botones X).
+   - Forzamos proporciones de imagen explícitas para html2canvas.
+   ========================================================= */
+#pdf-area.exporting .photo-box img {
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  filter: none !important;
+  /* Reforzar proporciones: max-width/max-height dentro del contenedor flex */
+  display: block !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: unset !important;
+}
+/* Durante export, el photo-box vuelve a overflow hidden para que html2canvas
+   capture exactamente el área definida sin desborde */
+#pdf-area.exporting .photo-box {
+  overflow: hidden !important;
+}
+#pdf-area.exporting .insert-break-zone,
+#pdf-area.exporting .foto-toolbar,
+#pdf-area.exporting .remove-break,
+#pdf-area.exporting .product-card.is-selected { outline: none !important; }
+#pdf-area.exporting .insert-break-zone,
+#pdf-area.exporting .foto-toolbar,
+#pdf-area.exporting .remove-break { display: none !important; }
+#pdf-area.exporting { background-image: none !important; }
+
+/* Anti-rotura de tarjetas / headers en PDF */
+.product-card, .sec-header, .banner-nuevos, .portada {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.sec-header { page-break-after: avoid; break-after: avoid; }
+
+/* Toast/flash de feedback (foto copiada, etc) */
+.photo-flash {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #1a1a1a; color: #c8a84c;
+  padding: 10px 18px; border-radius: 5px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.85rem; letter-spacing: 1px;
+  text-transform: uppercase; font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+.photo-flash.show { opacity: 1; transform: translateY(0); }
+.photo-flash.warn { color: #e8a04c; }
+.photo-flash.error { color: #ff5050; }
+
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-txt" id="ov-title">GENERANDO PDF</div>
+  <div class="overlay-sub" id="ov-sub">Puede tardar unos segundos…</div>
+  <div class="overlay-bar" id="ov-bar-wrap" style="display:none"><div class="overlay-bar-fill" id="ov-bar"></div></div>
+</div>
+
+<!-- ====================== PANEL ====================== -->
+<div class="panel">
+  <div class="panel-logo">LEUK<em>.</em></div>
+  <div class="panel-stat">
+    <strong id="st-prods">628</strong> productos ·
+    <strong id="st-secs">35</strong> secciones ·
+    actualizado <strong id="st-fecha"></strong>
+  </div>
+  <div class="opt-group">
+    <label class="date-picker" title="Fecha que se muestra en la portada del PDF">
+      📅 <input type="date" id="opt-fecha" onchange="onFechaChange()">
+    </label>
+    <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
+    <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
+    <label class="drop-xlsx" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
+      <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
+      🖼️ Cargar fotos (zip)
+    </label>
+    <label class="drop-xlsx" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
+      <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
+      📂 Stock Excel
+    </label>
+    <label class="drop-xlsx" id="drop-familias" title="Subí el Excel con la organización de SKU → Familia/Subfamilia/Vertical/Estado">
+      <input type="file" accept=".xlsx" id="inp-familias" onchange="loadFamilias(this.files[0])">
+      📁 Familias Excel
+    </label>
+    <button class="btn-custom" id="btn-custom" onclick="toggleCustom()">
+      ⚙️ Personalizar
+    </button>
+    <button class="btn-custom" onclick="exportarDiagnostico()" title="Exporta un .txt con el detalle de qué fotos se vincularon y cuáles no">
+      📋 Diagnóstico
+    </button>
+    <button class="guides-toggle" id="btn-guides" onclick="toggleGuides()" title="Muestra las líneas rojas donde caería el corte automático de página A4. Sirve para ver dónde insertar cortes manuales.">
+      📐 Guías A4
+    </button>
+    <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+      </svg>
+      DESCARGAR PDF
+    </button>
+    <button class="btn-jpg" id="btn-jpg" onclick="generateJPGs()" title="Descargar todas las hojas como JPGs 300 DPI dentro de un .zip">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+      </svg>
+      DESCARGAR JPG (ZIP)
+    </button>
+  </div>
+</div>
+
+<!-- ============== PANEL PERSONALIZACIÓN ============== -->
+<div class="panel-custom" id="panel-custom">
+  <div class="custom-item">
+    <label>🅻 Logo LEUK</label>
+    <label class="custom-upload" id="up-logo">
+      <input type="file" accept="image/*" onchange="loadLogo(this.files[0])">
+      <span id="up-logo-txt">Elegir PNG / JPG / SVG…</span>
+    </label>
+    <img id="preview-logo" class="custom-preview-logo" style="display:none">
+  </div>
+
+  <div class="custom-item">
+    <label>Ⓣ Fuente título + secciones</label>
+    <label class="custom-upload" id="up-font-titulo">
+      <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadFont(this.files[0], 'titulo')">
+      <span id="up-font-titulo-txt">Elegir TTF / OTF / WOFF…</span>
+    </label>
+    <div class="custom-preview-font" id="preview-titulo" style="font-family: var(--font-titulo); font-weight: 700; text-transform: uppercase;">
+      STOCK ACTUALIZADO
+    </div>
+  </div>
+
+  <div class="custom-item">
+    <label>Ⓝ Fuente nombre de producto</label>
+    <label class="custom-upload" id="up-font-nombre">
+      <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadFont(this.files[0], 'nombre')">
+      <span id="up-font-nombre-txt">Elegir TTF / OTF / WOFF…</span>
+    </label>
+    <div class="custom-preview-font" id="preview-nombre" style="font-family: var(--font-nombre); font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+      ANTON I BL · POCKET III
+    </div>
+  </div>
+
+  <div class="custom-item">
+    <label>Ⓢ Fuente SKU</label>
+    <label class="custom-upload" id="up-font-sku">
+      <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadFont(this.files[0], 'sku')">
+      <span id="up-font-sku-txt">Elegir TTF / OTF / WOFF…</span>
+    </label>
+    <div class="custom-preview-font" id="preview-sku" style="font-family: var(--font-sku); font-size: 0.75rem; color: #888;">
+      SKU 6792
+    </div>
+  </div>
+
+  <button class="custom-reset" onclick="resetCustom()" title="Vuelve a las tipografías y logo por defecto">
+    ✕ Restablecer
+  </button>
+</div>
+
+<div class="preview">
+  <div class="preview-hint">▼ vista previa ▼</div>
+  <div id="pdf-area"></div>
+</div>
+
+<!-- ====================== SCRIPT ====================== -->
+<script>
+/* ----------------------------------------------------------------
+   FUNCIÓN AUXILIAR — definida arriba para evitar errores de orden
+   ---------------------------------------------------------------- */
+
+// Reemplazo de terminología comercial — aplica a títulos de secciones,
+// nombres de productos, y cualquier texto visible en el PDF.
+// El Excel original NO se modifica; el cambio es puramente de presentación.
+function reemplazoTerminologia(texto) {
+  if (!texto) return texto;
+  return String(texto)
+    .replace(/\bEMPOTRABLES\b/gi, 'EMBUTIDOS')
+    .replace(/\bEMPOTRABLE\b/gi,  'EMBUTIDO');
+}
+
+function secPathHTML(path) {
+  const parts = path;
+  if (parts.length === 1) {
+    return `<span class="sec-part-bold">${reemplazoTerminologia(parts[0])}</span>`;
+  }
+  // Pesos según posición:
+  //   índice 0 (vertical: INTERIOR / EXTERIOR) → Bold 700
+  //   índice 1 (familia)                        → SemiBold 600
+  //   índice final (subfamilia)                 → Medium 500
+  // Con 2 partes: índice 0 = bold, índice 1 = light (subfamilia).
+  // Con 3 partes: índice 0 = bold, índice 1 = semibold, índice 2 = light.
+  const clsMap = (i, total) => {
+    if (i === 0) return 'sec-part-bold';
+    if (i === total - 1) return 'sec-part-light';
+    return 'sec-part-semibold';
+  };
+  let html = '';
+  parts.forEach((p, i) => {
+    html += `<span class="${clsMap(i, parts.length)}">${reemplazoTerminologia(p)}</span>`;
+    if (i < parts.length - 1) html += `<span class="sec-part-sep"> | </span>`;
+  });
+  return html;
+}
+
+/* ----------------------------------------------------------------
+   DATOS EMBEBIDOS — generados desde el Excel 21/04
+   ---------------------------------------------------------------- */
+const SECCIONES = [{"id":"pocket","path":["INTERIOR","POCKET"],"nuevos":[7177,7178,7179,7180,7181,7182,7183,7184,7185,7186,7187,7188,7189,7190,7191,7192,7193,7194,7195,7196,7197,7198,7199,7200],"skus":[7177,7178,7179,7180,7181,7182,7183,7184,7185,7186,7187,7188,7189,7190,7191,7192,7193,7194,7195,7196,7197,7198,7199,7200]},{"id":"fieltro","path":["INTERIOR","FIELTRO"],"nuevos":[],"skus":[7068,7069,7070,7067,7072,7032,7033,7030,7031,7024,7025,7026,7027,7034,7035]},{"id":"cielo","path":["INTERIOR","CIELO"],"nuevos":[7215],"skus":[7215]},{"id":"lin_lineal","path":["INTERIOR","LINEALES","LINEAL"],"nuevos":[],"skus":[7010,7011,7012,7013,7014,7015,7016,7017,6853,6854,6656,6657,6658,6659,6660,6661,6662,6663,6765,6766,6664,6665,6812,6627]},{"id":"lin_union","path":["INTERIOR","LINEALES","UNIÓN"],"nuevos":[],"skus":[6853,6854,7018,7019,7020,7021,7022,7023,6675,6676,6671,6672,6673,6674,6699,6700,6734,6735]},{"id":"lin_acc","path":["INTERIOR","LINEALES","ACCESORIO"],"nuevos":[7238,7239],"skus":[6691,6692,6637,6636,7238,7239,6635,6670,6668,6667,6666,6669,6693,6628,6686,6687,6697,6698]},{"id":"riel_riel","path":["INTERIOR","RIELES","RIEL"],"nuevos":[7229,7230,7231,7232],"skus":[7229,7230,7231,7232,6586,6587,6610,6611,6584,6585,6608,6609,6582,6583,6606,6607]},{"id":"riel_barral","path":["INTERIOR","RIELES","BARRAL LED"],"nuevos":[],"skus":[6857,6858,6859,6860]},{"id":"riel_cabezal","path":["INTERIOR","RIELES","CABEZAL"],"nuevos":[],"skus":[6622,6621,6624,6623,6626,6625]},{"id":"riel_union","path":["INTERIOR","RIELES","UNIÓN"],"nuevos":[],"skus":[6570,6571,6594,6595,6572,6573,6596,6597,6580,6581,6604,6605,6578,6579,6602,6603,6600,6601,6574,6575,6598,6599,6576,6577,6563]},{"id":"riel_acc","path":["INTERIOR","RIELES","ACCESORIO"],"nuevos":[7171,7172,7226,7227],"skus":[7171,7172,7226,7227,6568,6569,6688,6689,6722,6723,6726,6727,6592,6593,6564,6565,6588,6589,6566,6567,6590,6591,6644,6645,6646,6647,6648,6649,6650,6651,6652,6653,6654,6655,6810,6811,6563,7228]},{"id":"perf_perfil","path":["INTERIOR","PERFILES","PERFIL"],"nuevos":[],"skus":[6664,6665,6667,6628,6627,6812]},{"id":"perf_acc","path":["INTERIOR","PERFILES","ACCESORIO"],"nuevos":[],"skus":[6669,6668,6666,6693,6686,6687,6670,6635,6821,6822,6825]},{"id":"techo_cabezal","path":["INTERIOR","DE TECHO","CABEZAL"],"nuevos":[],"skus":[6826,6827,6828,6850,6851,6852,7036,7037,7038,7039,7040,7041,6612,6626,6625]},{"id":"techo_plafon","path":["INTERIOR","DE TECHO","PLAFÓN"],"nuevos":[],"skus":[6786,6787,6776,6778,6788,6789,6790,6791,6711,6712,6713,6715,6714,6767,6768,6769,6770,6771,6772,6773,6774,6775,6777,6780,6781,6782,6783,6784,6785,6798,6799,6849]},{"id":"techo_acc_plafon","path":["INTERIOR","DE TECHO","ACCESORIO"],"nuevos":[],"skus":[6829,6830,6716,6728,6612,6613,7220,7221,7222,7223]},{"id":"techo_cardanico","path":["INTERIOR","DE TECHO","CARDÁNICO"],"nuevos":[],"skus":[6441,6440,6449,6448,6457,6456,6465,6464,6445,6444,6453,6452,6461,6460,6469,6468,6443,6442,6451,6450,6459,6458,6467,6466,6447,6446,6455,6454,6463,6462,6471,6470]},{"id":"techo_empotrable","path":["INTERIOR","DE TECHO","EMBUTIDO"],"nuevos":[7201,7202,7203,7204,7205,7206],"skus":[7201,7202,7203,7204,7205,7206,7118,7119,7120,7121,7122,7123,7124,7125,7126,7127,7128,6434,6435,6432,6433,6438,6439,6329,6330,6331,6332,6099,6100,6101,6679,6680,6681,6097,6098,6324,6325,6327,6328,6431,6096,6685,6106,6112,6113,6114,6115,6116,6117,6118,6119,6120,6122,6123,6427,6428,6131,6104,6105,6134,6135,6136,6132,6133,6125,6126,6127,6128,6129,6130,6138,6677,6678,6804,6805,6806,6807,6808,6809,6840,6841,6838,6839,6323,6102,6103,6682,6683,6684,6108,6109,6436,6437]},{"id":"techo_colgante","path":["INTERIOR","DE TECHO","COLGANTE"],"nuevos":[7211,7212,7213,7214],"skus":[7211,7212,7213,7214,7044,7043,7042,7046,7047,7045,7079,7080,7081,7082,7085,7086,7087,7088,7083,7084,7077,7078,7050,7051,7052,7066,7054,7073,7057,7058,7059,7060,7061,7062,7063,7064,6802,6803,6800,6801,6794,6795,6796,6797,6792,6793,7074,7075,7076,7055,7056]},{"id":"techo_aplique","path":["INTERIOR","DE TECHO","APLIQUE"],"nuevos":[],"skus":[6838,6839,6840,6841,6847,6848,7114,7115,7117,7116,6736,6737,6738,6739,6740,6741,4196,4197,4198,4199,4200,4201,4202,4203,4232,4233,4204,4205,6025,6046,6045,7044,7043,6614,6615,6618,6619,6620,7028,7029]},{"id":"pared_empotrable","path":["INTERIOR","DE PARED","EMBUTIDO"],"nuevos":[],"skus":[6631,6632]},{"id":"pared_aplique","path":["INTERIOR","DE PARED","APLIQUE"],"nuevos":[7176],"skus":[4204,4205,6855,6856,6842,6843,6844,6845,6846,6868,6869,6870,6871,6495,6496,6497,6498,6499,7072,7108,7109,7093,7094,7089,7090,6025,7097,7098,7110,7111,7099,7100,7101,7102,7103,7104]},{"id":"piso_pie","path":["INTERIOR","DE PISO","DE PIE"],"nuevos":[],"skus":[6490,6491,6492,6493,6494,7095,7096]},{"id":"mesa","path":["INTERIOR","DE MESA"],"nuevos":[],"skus":[6485,6486,6487,6488,6489,7091,7092,7048]},{"id":"ext_pared_aplique","path":["EXTERIOR","DE PARED","APLIQUE"],"nuevos":[7176],"skus":[7176,6869,6843,6868,6844,6870,6871,6845,6846,4182,4183,6816,6724,6725,6720,6721,6718,6719,4169,4170,4179,4180,6383,4217,4189,6037,4177,4181,4185,4184,6633,6634,7109,7108,7110,7111,7099,7100,7101,7102,7103,7104,4188,4186,4244,6641]},{"id":"ext_pared_empotrable","path":["EXTERIOR","DE PARED","EMBUTIDO"],"nuevos":[],"skus":[6696,6695,6033,6032,6642,6035,6034]},{"id":"ext_techo_colgante","path":["EXTERIOR","DE TECHO","COLGANTE"],"nuevos":[],"skus":[4195]},{"id":"ext_techo_aplique","path":["EXTERIOR","DE TECHO","APLIQUE"],"nuevos":[7216,7217,7218,7219],"skus":[7216,7217,7218,7219]},{"id":"ext_piso_bolardo","path":["EXTERIOR","DE PISO","BOLARDO"],"nuevos":[],"skus":[7105,7106,7107,7112,7113,6751,6756,4218,6639,6694,6761,6762,6638,6755,6753,6754]},{"id":"ext_piso_aplique","path":["EXTERIOR","DE PISO","APLIQUE"],"nuevos":[],"skus":[7133,7134,6757,6817]},{"id":"ext_piso_empotrable","path":["EXTERIOR","DE PISO","EMBUTIDO"],"nuevos":[],"skus":[6819,6820,6760,6036,6038,6758,6818,6039]},{"id":"ext_estaca_aplique","path":["EXTERIOR","ESTACAS","APLIQUE"],"nuevos":[],"skus":[6742,6743,6744,6745,6746,6747,6748,6749,6750,6813,6814,6815,6690,6640]},{"id":"ext_estaca_estaca","path":["EXTERIOR","ESTACAS","ESTACA"],"nuevos":[],"skus":[6031,6752]},{"id":"ext_estaca_acc","path":["EXTERIOR","ESTACAS","ACCESORIO"],"nuevos":[],"skus":[6821,6822,6825,6763,6643,6823,6824,6764,7224,7225]},{"id":"ventiladores","path":["VENTILADORES"],"nuevos":[],"skus":[6549,6558,6371,7130,6705,6706,6369,6368,6370,6553,6554,6557,6559,6548,6372,6374,6373,6382,7131,6707,6708,6710,6709,7132]}];
+const STOCK_MAP = {"6792": {"nombre": "COLGANTE PIETRO BLANCO", "disp": "ALTO"}, "6631": {"nombre": "EMPOTRABLE ACRU NEGRO", "disp": "ALTO"}, "6793": {"nombre": "COLGANTE PIETRO NEGRO", "disp": "ALTO"}, "6632": {"nombre": "EMPOTRABLE ACRU BLANCO", "disp": "ALTO"}, "6794": {"nombre": "COLGANTE CAMBOYA BLANCO 28W", "disp": "ALTO"}, "6097": {"nombre": "APLIQUE AXE1 BLANCO", "disp": "ALTO"}, "6795": {"nombre": "COLGANTE CAMBOYA NEGRO 28W", "disp": "ALTO"}, "6098": {"nombre": "APLIQUE AXE1 NEGRO", "disp": "ALTO"}, "6796": {"nombre": "COLGANTE CAMBOYA BLANCO 36W", "disp": "ALTO"}, "6323": {"nombre": "APLIQUE AXE2 BLANCO", "disp": "ALTO"}, "6797": {"nombre": "COLGANTE CAMBOYA NEGRO 36W", "disp": "ALTO"}, "6324": {"nombre": "APLIQUE AXE2 NEGRO", "disp": "ALTO"}, "6800": {"nombre": "COLGANTE COSMO BLANCO", "disp": "ALTO"}, "6046": {"nombre": "APLIQUE EPICUR LEUK BLANCO", "disp": "ALTO"}, "6801": {"nombre": "COLGANTE COSMO NEGRO", "disp": "ALTO"}, "6045": {"nombre": "APLIQUE EPICUR LEUK NEGRO", "disp": "ALTO"}, "6802": {"nombre": "COLGANTE ARKANSAS III BLANCO", "disp": "ALTO"}, "6108": {"nombre": "APLIQUE FACH1 BLANCO", "disp": "ALTO"}, "6803": {"nombre": "COLGANTE ARKANSAS III NEGRO", "disp": "ALTO"}, "6109": {"nombre": "APLIQUE FACH1 NEGRO", "disp": "BAJO"}, "7042": {"nombre": "COLGANTE MIRACLE II S NG 40W 2700/3300/4000K 1900 + 875LM CRI91 IP20", "disp": "SIN STOCK"}, "6325": {"nombre": "APLIQUE FACH2 BLANCO", "disp": "ALTO"}, "7043": {"nombre": "COLGANTE MIRACLE II S BL 40W 2700/3300/4000K 1900 + 875LM CRI91 IP20", "disp": "MEDIO"}, "6698": {"nombre": "APLIQUE FLORON LINEAL BLANCO", "disp": "ALTO"}, "7044": {"nombre": "COLGANTE MIRACLE 180 S NG 60W 2700/3300/4000K 3976LM CRI91 IP20", "disp": "ALTO"}, "6697": {"nombre": "APLIQUE FLORON LINEAL NEGRO", "disp": "SIN STOCK"}, "7065": {"nombre": "COLGANTE LAIVA NG 3000K 41W 3000K 3194LM CRI93 IP20", "disp": "SIN STOCK"}, "6701": {"nombre": "APLIQUE FOCO AR111 BLANCO", "disp": "SIN STOCK"}, "7066": {"nombre": "COLGANTE LAIVA NG 2700K 41W 2700K 3194LM CRI93 IP20", "disp": "MEDIO"}, "6702": {"nombre": "APLIQUE FOCO AR111 NEGRO", "disp": "SIN STOCK"}, "7067": {"nombre": "COLGANTE ULÁN NG 12W 3000K 278LM CRI93 IP20", "disp": "ULTIMAS UNIDADES"}, "6612": {"nombre": "APLIQUE FOCO DICRO BLANCO", "disp": "ALTO"}, "7068": {"nombre": "COLGANTE BATOR NG 12W 3000K 730LM CRI93 IP20", "disp": "MEDIO"}, "6613": {"nombre": "APLIQUE FOCO DICRO NEGRO", "disp": "SIN STOCK"}, "7069": {"nombre": "COLGANTE ALTAI NG 12W 3000K 577LM CRI93 IP20", "disp": "MEDIO"}, "4196": {"nombre": "APLIQUE KATHARO I BLANCO", "disp": "ALTO"}, "7070": {"nombre": "COLGANTE DARJAN NG 12W 3000K 712LM CRI93 IP20", "disp": "MEDIO"}, "4197": {"nombre": "APLIQUE KATHARO I NEGRO", "disp": "ALTO"}, "7071": {"nombre": "COLGANTE BULGAN NG 12W 3000K 645LM CRI93 IP20", "disp": "SIN STOCK"}, "4198": {"nombre": "APLIQUE KATHARO II BLANCO", "disp": "ALTO"}, "7073": {"nombre": "COLGANTE SAGSAI NG 12W 3000K 903LM CRI93 IP20", "disp": "BAJO"}, "4199": {"nombre": "APLIQUE KATHARO II NEGRO", "disp": "ALTO"}, "7074": {"nombre": "COLGANTE MARDAI CB 12W 3000K 313LM CRI93 IP20", "disp": "MEDIO"}, "4200": {"nombre": "APLIQUE KATHARO III BLANCO", "disp": "ALTO"}, "7075": {"nombre": "COLGANTE MARDAI NG 12W 3000K 313LM CRI93 IP20", "disp": "ULTIMAS UNIDADES"}, "4201": {"nombre": "APLIQUE KATHARO III NEGRO", "disp": "ALTO"}, "7076": {"nombre": "COLGANTE MARDAI II NG 12W 3000K 436LM CRI97 IP20", "disp": "MEDIO"}, "4202": {"nombre": "APLIQUE KATHARO IV BLANCO", "disp": "ALTO"}, "7045": {"nombre": "COLGANTE MIRACLE II 180 S NG 60W 2700/3300/4000K 2920 + 955LM CRI91 IP20", "disp": "ULTIMAS UNIDADES"}, "4203": {"nombre": "APLIQUE KATHARO IV NEGRO", "disp": "ALTO"}, "7046": {"nombre": "COLGANTE MIRACLE 180 S BL 60W 2700/3300/4000K 3976LM CRI91 IP20", "disp": "ALTO"}, "4233": {"nombre": "APLIQUE KATHARO IV SQ BLANCO", "disp": "ALTO"}, "7047": {"nombre": "COLGANTE MIRACLE II 180 S BL 60W 2700/3300/4000K 2920 + 955LM CRI91 IP20", "disp": "MEDIO"}, "4232": {"nombre": "APLIQUE KATHARO IV SQ NEGRO", "disp": "ALTO"}, "7079": {"nombre": "COLGANTE NIAO NG 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "4204": {"nombre": "APLIQUE KATHARO SW BLANCO", "disp": "ALTO"}, "7080": {"nombre": "COLGANTE NIAO BL 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "4205": {"nombre": "APLIQUE KATHARO SW NEGRO", "disp": "ALTO"}, "7081": {"nombre": "COLGANTE NIAO AZ 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6495": {"nombre": "APLIQUE LAMPY NEGRO", "disp": "SIN STOCK"}, "7082": {"nombre": "COLGANTE NIAO VR 7W 3000K 476LM CRI91 IP20", "disp": "BAJO"}, "6496": {"nombre": "APLIQUE LAMPY BLANCO", "disp": "SIN STOCK"}, "7085": {"nombre": "COLGANTE NIAO II NG 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6497": {"nombre": "APLIQUE LAMPY AZUL MARINO", "disp": "SIN STOCK"}, "7086": {"nombre": "COLGANTE NIAO II BL 7W 3000K 476LM CRI91 IP20", "disp": "BAJO"}, "6498": {"nombre": "APLIQUE LAMPY VERDE MILITAR", "disp": "SIN STOCK"}, "7087": {"nombre": "COLGANTE NIAO II AZ 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6499": {"nombre": "APLIQUE LAMPY BORDO", "disp": "SIN STOCK"}, "7088": {"nombre": "COLGANTE NIAO II VR 7W 3000K 476LM CRI91 IP20", "disp": "ULTIMAS UNIDADES"}, "6618": {"nombre": "APLIQUE SINTRA 45W SQ BLANCO", "disp": "ALTO"}, "6620": {"nombre": "SINTRA S BL", "disp": "MEDIO"}, "6863": {"nombre": "COLGANTE AINARA 36W", "disp": "SIN STOCK"}, "6619": {"nombre": "APLIQUE SINTRA 45W R BLANCO", "disp": "ALTO"}, "7077": {"nombre": "COLGANTE NIAO SU NG 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6436": {"nombre": "APLIQUE YANA1 BLANCO", "disp": "ALTO"}, "7078": {"nombre": "COLGANTE NIAO SU BL 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6437": {"nombre": "APLIQUE YANA1 NEGRO", "disp": "ALTO"}, "7083": {"nombre": "COLGANTE NIAO III NG 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6614": {"nombre": "APLIQUE YORK 45W R NEGRO", "disp": "ALTO"}, "7084": {"nombre": "COLGANTE NIAO III BL 7W 3000K 476LM CRI91 IP20", "disp": "MEDIO"}, "6615": {"nombre": "APLIQUE YORK 45W R BLANCO", "disp": "ALTO"}, "7049": {"nombre": "COLGANTE VALK BL 12W 3000K 1010LM CRI93 IP20", "disp": "SIN STOCK"}, "6736": {"nombre": "APLIQUE PRISMA NEGRO 12W 3CCT", "disp": "ALTO"}, "7050": {"nombre": "COLGANTE VALK NG 12W 3000K 1010LM CRI93 IP20", "disp": "MEDIO"}, "6737": {"nombre": "APLIQUE PRISMA BLANCO 12W 3CCT", "disp": "ALTO"}, "7051": {"nombre": "COLGANTE FREYA BL 15W 3000K 563LM CRI92 IP20", "disp": "BAJO"}, "6738": {"nombre": "APLIQUE SHIR I NEGRO", "disp": "ALTO"}, "7052": {"nombre": "COLGANTE FREYA NG 15W 3000K 563LM CRI92 IP20", "disp": "ULTIMAS UNIDADES"}, "6739": {"nombre": "APLIQUE SHIR I BLANCO", "disp": "ALTO"}, "7053": {"nombre": "COLGANTE LEIF BL 21W 3000K 502LM CRI93 IP20", "disp": "SIN STOCK"}, "6740": {"nombre": "APLIQUE SHIR II NEGRO", "disp": "ALTO"}, "7054": {"nombre": "COLGANTE LEIF NG 21W 3000K 502LM CRI93 IP20", "disp": "MEDIO"}, "6741": {"nombre": "APLIQUE SHIR II BLANCO", "disp": "ALTO"}, "7055": {"nombre": "COLGANTE NEULA BL 7W 3000K 460LM CRI94 IP20", "disp": "MEDIO"}, "6843": {"nombre": "APLIQUE DE PARED MIJA REDONDO BLANCO 12W", "disp": "ALTO"}, "7056": {"nombre": "COLGANTE NEULA NG 7W 3000K 460LM CRI94 IP20", "disp": "MEDIO"}, "6844": {"nombre": "APLIQUE DE PARED MIJA REDONDO NEGRO 12W", "disp": "ALTO"}, "7057": {"nombre": "COLGANTE TRAKKE BL 16W 3000K 1453LM CRI95 IP20", "disp": "ALTO"}, "6845": {"nombre": "APLIQUE DE PARED MIJA CUADRADO BLANCO 12W", "disp": "ALTO"}, "7058": {"nombre": "COLGANTE TRAKKE NG 16W 3000K 1453LM CRI95 IP20", "disp": "ALTO"}, "6846": {"nombre": "APLIQUE DE PARED MIJA CUADRADO NEGRO 12W", "disp": "ALTO"}, "7059": {"nombre": "COLGANTE KRONE BL 48W 3000K 3326LM CRI94 IP20", "disp": "ULTIMAS UNIDADES"}, "6847": {"nombre": "APLIQUE PRISMA BLANCO 20W 3CCT", "disp": "ALTO"}, "7060": {"nombre": "COLGANTE KRONE NG 48W 3000K 3326LM CRI94 IP20", "disp": "BAJO"}, "6848": {"nombre": "APLIQUE PRISMA NEGRO 20W 3CCT", "disp": "SIN STOCK"}, "7061": {"nombre": "COLGANTE DRABE BL 7,6W 3000K 172LM CRI90 IP20", "disp": "ALTO"}, "6868": {"nombre": "APLIQUE DE PARED MIJA REDONDO NEGRO 6W", "disp": "ALTO"}, "7062": {"nombre": "COLGANTE DRABE NG 7,6W 3000K 172LM CRI90 IP20", "disp": "ALTO"}, "6869": {"nombre": "APLIQUE DE PARED MIJA REDONDO BLANCO 6W", "disp": "ALTO"}, "7063": {"nombre": "COLGANTE KARTIO BL 7,6W 3000K 139LM CRI90 IP20", "disp": "ALTO"}, "6870": {"nombre": "APLIQUE DE PARED MIJA CUADRADO NEGRO 6W", "disp": "ALTO"}, "7064": {"nombre": "COLGANTE KARTIO NG 7,6W 3000K 139LM CRI90 IP20", "disp": "ALTO"}, "6871": {"nombre": "APLIQUE DE PARED MIJA CUADRADO BLANCO 6W", "disp": "ALTO"}, "7211": {"nombre": "COLGANTE KRONE BL 70W 3CCT 70W 3000/4000/5000K 3900LM CRI>90 IP20", "disp": "BAJO"}, "6842": {"nombre": "APLIQUE DE PARED CAPI DORADO", "disp": "ALTO"}, "7212": {"nombre": "COLGANTE KRONE NG 70W 3CCT 70W 3000/4000/5000K 3900LM CRI>90 IP20", "disp": "MEDIO"}, "6855": {"nombre": "APLIQUE DE PARED CAPI NEGRO", "disp": "ALTO"}, "7213": {"nombre": "COLGANTE KRONE BL 84W 3CCT 84W 3000/4000/5000K 5200LM CRI>90 IP20", "disp": "BAJO"}, "6856": {"nombre": "APLIQUE DE PARED CAPI BLANCO", "disp": "ALTO"}, "7214": {"nombre": "COLGANTE KRONE NG 84W 3CCT 84W 3000/4000/5000K 5200LM CRI>90 IP20", "disp": "MEDIO"}, "7072": {"nombre": "APLIQUE BOG NG 3W 3000K 15LM CRI97 IP20", "disp": "MEDIO"}, "7108": {"nombre": "APLIQUE OTTO 10W 3000K 775LM CRI81 IP65", "disp": "ULTIMAS UNIDADES"}, "7109": {"nombre": "APLIQUE CLASS 2 X 5WW 3000K 903LM CRI81 IP65", "disp": "MEDIO"}, "6440": {"nombre": "CARDANICO ANTON 1 NEGRO", "disp": "ALTO"}, "7114": {"nombre": "APLIQUE FORTE NG 12W 12W 2700K 709LM CRI95 IP20", "disp": "ALTO"}, "6441": {"nombre": "CARDANICO ANTON 1 BLANCO", "disp": "ALTO"}, "7115": {"nombre": "APLIQUE FORTE BL 12W 12W 2700K 709LM CRI95 IP20", "disp": "ALTO"}, "6448": {"nombre": "CARDANICO ANTON 2 NEGRO", "disp": "ALTO"}, "7116": {"nombre": "APLIQUE FORTE NG 18W 18W 2700K 1202LM CRI95 IP20", "disp": "SIN STOCK"}, "6449": {"nombre": "CARDANICO ANTON 2 BLANCO", "disp": "ALTO"}, "7117": {"nombre": "APLIQUE FORTE BL 18W 18W 2700K 1202LM CRI95 IP20", "disp": "MEDIO"}, "6456": {"nombre": "CARDANICO ANTON 3 NEGRO", "disp": "ALTO"}, "7118": {"nombre": "EMPOTRABLE FAMA BL 1XGU10 DICRO IP20", "disp": "ALTO"}, "6457": {"nombre": "CARDANICO ANTON 3 BLANCO", "disp": "ALTO"}, "7119": {"nombre": "EMPOTRABLE FAMA NG 1XGU10 DICRO IP20", "disp": "ALTO"}, "6464": {"nombre": "CARDANICO ANTON 4 NEGRO", "disp": "ALTO"}, "7120": {"nombre": "EMPOTRABLE MUST BL 1XGU10 DICRO IP20", "disp": "ALTO"}, "6465": {"nombre": "CARDANICO ANTON 4 BLANCO", "disp": "ALTO"}, "7121": {"nombre": "EMPOTRABLE MUST NG 1XGU10 DICRO IP20", "disp": "MEDIO"}, "6444": {"nombre": "CARDANICO BERDY 1 NEGRO", "disp": "ALTO"}, "7122": {"nombre": "EMPOTRABLE DONA BL 1XGU10 DICRO IP20", "disp": "ALTO"}, "6445": {"nombre": "CARDANICO BERDY 1 BLANCO", "disp": "ALTO"}, "7123": {"nombre": "EMPOTRABLE DONA NG 1XGU10 DICRO IP20", "disp": "SIN STOCK"}, "6452": {"nombre": "CARDANICO BERDY 2 NEGRO", "disp": "ALTO"}, "7124": {"nombre": "EMPOTRABLE OMNIA BL 1XGU10 DICRO IP20", "disp": "ALTO"}, "6453": {"nombre": "CARDANICO BERDY 2 BLANCO", "disp": "ALTO"}, "7125": {"nombre": "EMPOTRABLE OMNIA NG 1XGU10 DICRO IP20", "disp": "ALTO"}, "6460": {"nombre": "CARDANICO BERDY 3 NEGRO", "disp": "ALTO"}, "7126": {"nombre": "EMPOTRABLE STUPA BL 1XGU10 DICRO IP20", "disp": "ALTO"}, "6461": {"nombre": "CARDANICO BERDY 3 BLANCO", "disp": "ALTO"}, "7127": {"nombre": "EMPOTRABLE STUPA NG 1XGU10 DICRO IP20", "disp": "ALTO"}, "6468": {"nombre": "CARDANICO BERDY 4 NEGRO", "disp": "ALTO"}, "7128": {"nombre": "EMPOTRABLE OPTIC NG 3000K 3W 3000K 253LM CRI93 IP20", "disp": "SIN STOCK"}, "6469": {"nombre": "CARDANICO BERDY 4 BLANCO", "disp": "ALTO"}, "7110": {"nombre": "APLIQUE LOFI AP 12W 12W 3000K 540LM CRI86 IP65", "disp": "MEDIO"}, "6442": {"nombre": "CARDANICO KAROL 1 NEGRO", "disp": "ALTO"}, "7111": {"nombre": "APLIQUE LOFI AP 20W 20W 3000K 1102LM CRI86 IP65", "disp": "MEDIO"}, "6443": {"nombre": "CARDANICO KAROL 1 BLANCO", "disp": "ALTO"}, "7099": {"nombre": "APLIQUE WEST R NGNT 10W 3000/4000/6000K 780LM CRI94 IP65", "disp": "ALTO"}, "6450": {"nombre": "CARDANICO KAROL 2 NEGRO", "disp": "ALTO"}, "7100": {"nombre": "APLIQUE WEST R VDNG 10W 2500/3500/4500K 780LM CRI94 IP65", "disp": "ALTO"}, "6451": {"nombre": "CARDANICO KAROL 2 BLANCO", "disp": "ALTO"}, "7101": {"nombre": "APLIQUE WEST R BLNT 10W 3000/4000/6000K 780LM CRI94 IP65", "disp": "ALTO"}, "6458": {"nombre": "CARDANICO KAROL 3 NEGRO", "disp": "ALTO"}, "7102": {"nombre": "APLIQUE WEST NGNT 10W 3000/4000/6000K 780LM CRI94 IP65", "disp": "SIN STOCK"}, "6459": {"nombre": "CARDANICO KAROL 3 BLANCO", "disp": "ALTO"}, "7103": {"nombre": "APLIQUE WEST VDNG 10W 2500/3500/4500K 780LM CRI94 IP65", "disp": "ALTO"}, "6466": {"nombre": "CARDANICO KAROL 4 NEGRO", "disp": "ALTO"}, "7104": {"nombre": "APLIQUE WEST BLNT 10W 3000/4000/6000K 780LM CRI94 IP65", "disp": "ALTO"}, "6467": {"nombre": "CARDANICO KAROL 4 BLANCO", "disp": "ALTO"}, "7089": {"nombre": "APLIQUE NIAO AP NG 7W 3000K 476LM CRI91 IP20", "disp": "ULTIMAS UNIDADES"}, "6446": {"nombre": "CARDANICO MILA 1 NEGRO", "disp": "ALTO"}, "7090": {"nombre": "APLIQUE NIAO AP BL 7W 3000K 476LM CRI91 IP20", "disp": "SIN STOCK"}, "6447": {"nombre": "CARDANICO MILA 1 BLANCO", "disp": "ALTO"}, "7093": {"nombre": "APLIQUE LAZU NG 3W 3000K 147LM CRI93 IP20", "disp": "ALTO"}, "6454": {"nombre": "CARDANICO MILA 2 NEGRO", "disp": "ALTO"}, "7094": {"nombre": "APLIQUE LAZU BL 3W 3000K 147LM CRI93 IP20", "disp": "ALTO"}, "6455": {"nombre": "CARDANICO MILA 2 BLANCO", "disp": "ALTO"}, "6025": {"nombre": "APLIQUE JORIS III NEGRO", "disp": "ULTIMAS UNIDADES"}, "6462": {"nombre": "CARDANICO MILA 3 NEGRO", "disp": "ALTO"}, "7097": {"nombre": "APLIQUE CATEN 30 10W 3000K 1750LM CRI>90 IP20", "disp": "SIN STOCK"}, "6463": {"nombre": "CARDANICO MILA 3 BLANCO", "disp": "MEDIO"}, "7098": {"nombre": "APLIQUE CATEN 60 20W 3000K 870LM CRI>90 IP20", "disp": "SIN STOCK"}, "6470": {"nombre": "CARDANICO MILA 4 NEGRO", "disp": "ALTO"}, "7177": {"nombre": "EMPOTRABLE POCKET III BLNG 2700K TRIAC 5W 2700K 305LM CRI>90 IP20", "disp": "ALTO"}, "6471": {"nombre": "CARDANICO MILA 4 BLANCO", "disp": "ALTO"}, "7178": {"nombre": "EMPOTRABLE POCKET III BLNG 3000K TRIAC 5W 3000K 305LM CRI>90 IP20", "disp": "SIN STOCK"}, "7179": {"nombre": "EMPOTRABLE POCKET III BLBL 2700K 5W 2700K 305LM CRI>90 IP20", "disp": "MEDIO"}, "7180": {"nombre": "EMPOTRABLE POCKET III BLNG 2700K 5W 2700K 305LM CRI>90 IP20", "disp": "ALTO"}, "6586": {"nombre": "RIEL 1 MT 1 EF BLANCO", "disp": "ALTO"}, "7181": {"nombre": "EMPOTRABLE POCKET III BLNG 3000K 5W 3000K 305LM CRI>90 IP20", "disp": "ALTO"}, "6587": {"nombre": "RIEL 1 MT 1 EF NEGRO", "disp": "ALTO"}, "7182": {"nombre": "EMPOTRABLE POCKET IV BLBL 2700K 7W 2700K 480LM CRI>90 IP20", "disp": "ALTO"}, "6610": {"nombre": "RIEL 1 MT 3 EF BLANCO", "disp": "ALTO"}, "7183": {"nombre": "EMPOTRABLE POCKET IV BLNG 2700K 7W 2700K 480LM CRI>90 IP20", "disp": "ALTO"}, "6611": {"nombre": "RIEL 1 MT 3 EF NEGRO", "disp": "ALTO"}, "7184": {"nombre": "EMPOTRABLE POCKET IV BLNG 3000K 7W 3000K 480LM CRI>90 IP20", "disp": "MEDIO"}, "6584": {"nombre": "RIEL 2 MTS 1 EF BLANCO", "disp": "ALTO"}, "7185": {"nombre": "EMPOTRABLE POCKET VI BLNG 2700K TRIAC 10W 2700K 875LM CRI>90 IP20", "disp": "MEDIO"}, "6585": {"nombre": "RIEL 2 MTS 1 EF NEGRO", "disp": "ALTO"}, "7186": {"nombre": "EMPOTRABLE POCKET VI BLNG 3000K TRIAC 10W 3000K 875LM CRI>90 IP20", "disp": "MEDIO"}, "6608": {"nombre": "RIEL 2 MTS 3 EF BLANCO", "disp": "MEDIO"}, "7187": {"nombre": "EMPOTRABLE POCKET VI BLBL 2700K 10W 2700K 875LM CRI>90 IP20", "disp": "MEDIO"}, "6609": {"nombre": "RIEL 2 MTS 3 EF NEGRO", "disp": "MEDIO"}, "7188": {"nombre": "EMPOTRABLE POCKET VI BLNG 2700K 10W 2700K 875LM CRI>90 IP20", "disp": "ALTO"}, "6582": {"nombre": "RIEL 3 MTS 1 EF BLANCO", "disp": "ALTO"}, "7189": {"nombre": "EMPOTRABLE POCKET VI BLNG 3000K 10W 3000K 875LM CRI>90 IP20", "disp": "ALTO"}, "6583": {"nombre": "RIEL 3 MTS 1 EF NEGRO", "disp": "ALTO"}, "7195": {"nombre": "APLIQUE POCKET VI AP BLBL 2700K 7W 2700K 655LM CRI>90 IP20", "disp": "ALTO"}, "6606": {"nombre": "RIEL 3 MTS 3 EF BLANCO", "disp": "MEDIO"}, "7196": {"nombre": "APLIQUE POCKET VI AP BLNG 2700K 7W 2700K 655LM CRI>90 IP20", "disp": "ALTO"}, "6607": {"nombre": "RIEL 3 MTS 3 EF NEGRO", "disp": "ALTO"}, "7197": {"nombre": "APLIQUE POCKET VI AP BLNG 3000K 7W 3000K 655LM CRI>90 IP20", "disp": "ALTO"}, "6810": {"nombre": "RIELES COBERTOR 1MT BLANCO", "disp": "SIN STOCK"}, "7190": {"nombre": "EMPOTRABLE POCKET XII BLNG 2700K TRIAC 20W 2700K 1785LM CRI>90 IP20", "disp": "MEDIO"}, "6811": {"nombre": "RIELES COBERTOR 1MT NEGRO", "disp": "ALTO"}, "7191": {"nombre": "EMPOTRABLE POCKET XII BLNG 3000K TRIAC 20W 3000K 1785LM CRI>90 IP20", "disp": "MEDIO"}, "7229": {"nombre": "RIEL RIEL 2MTS 3EF NG V2", "disp": "ALTO"}, "7192": {"nombre": "EMPOTRABLE POCKET XII BLBL 2700K 20W 2700K 1785LM CRI>90 IP20", "disp": "MEDIO"}, "7230": {"nombre": "RIEL RIEL 2MTS 3EF BL V2", "disp": "ALTO"}, "7193": {"nombre": "EMPOTRABLE POCKET XII BLNG 2700K 20W 2700K 1785LM CRI>90 IP20", "disp": "ALTO"}, "7231": {"nombre": "RIEL RIEL 3MTS 3EF NG V2", "disp": "ALTO"}, "7194": {"nombre": "EMPOTRABLE POCKET XII BLNG 3000K 20W 3000K 1785LM CRI>90 IP20", "disp": "ALTO"}, "7232": {"nombre": "RIEL RIEL 3MTS 3EF BL V2", "disp": "ALTO"}, "7198": {"nombre": "APLIQUE POCKET XII AP BLBL 2700K 15W 2700K 1610LM CRI>90 IP20", "disp": "ALTO"}, "7199": {"nombre": "APLIQUE POCKET XII AP BLNG 2700K 15W 2700K 1610LM CRI>90 IP20", "disp": "ALTO"}, "7200": {"nombre": "APLIQUE POCKET XII AP BLNG 3000K 15W 3000K 1610LM CRI>90 IP20", "disp": "ALTO"}, "6568": {"nombre": "ADAPTADOR 1 EF BLANCO", "disp": "ALTO"}, "7201": {"nombre": "EMPOTRABLE LIV S 7W 4000K 7W 4000K 700LM CRI>90 IP20", "disp": "ALTO"}, "6569": {"nombre": "ADAPTADOR 1 EF NEGRO", "disp": "ALTO"}, "7202": {"nombre": "EMPOTRABLE LIV S 7W 3000K 7W 3000K 700LM CRI>90 IP20", "disp": "ALTO"}, "6592": {"nombre": "ADAPTADOR 3 EF BLANCO", "disp": "ALTO"}, "7203": {"nombre": "EMPOTRABLE LIV M 12W 4000K 12W 4000K 1200LM CRI>90 IP20", "disp": "ALTO"}, "6593": {"nombre": "ADAPTADOR 3 EF NEGRO", "disp": "ALTO"}, "7204": {"nombre": "EMPOTRABLE LIV M 12W 3000K 12W 3000K 1200LM CRI>90 IP20", "disp": "ALTO"}, "6688": {"nombre": "ALIMENTACION CENTRAL 1 EF BLANCO", "disp": "ALTO"}, "7205": {"nombre": "EMPOTRABLE LIV L 20W 4000K 20W 4000K 2000LM CRI>90 IP20", "disp": "ALTO"}, "6689": {"nombre": "ALIMENTACION CENTRAL 1 EF NEGRO", "disp": "SIN STOCK"}, "7206": {"nombre": "EMPOTRABLE LIV L 20W 3000K 20W 3000K 2000LM CRI>90 IP20", "disp": "ALTO"}, "6722": {"nombre": "ADAPTADOR HEMBRA 1EF NE", "disp": "SIN STOCK"}, "7216": {"nombre": "APLIQUE PRISMA BL 12W IP44 12W 3000/4000/6000K 800LM CRI>90 IP44", "disp": "ALTO"}, "6723": {"nombre": "ADAPTADOR HEMBRA 1EF BL", "disp": "SIN STOCK"}, "7217": {"nombre": "APLIQUE PRISMA NG 12W IP44 12W 3000/4000/6000K 800LM CRI>90 IP44", "disp": "ALTO"}, "6726": {"nombre": "ADAPTADOR DOBLE NEUTRO BLANCO", "disp": "ALTO"}, "7218": {"nombre": "APLIQUE PRISMA BL 20W IP44 20W 3000/4000/6000K 1300LM CRI>90 IP44", "disp": "ALTO"}, "6727": {"nombre": "ADAPTADOR DOBLE NEUTRO NEGRO", "disp": "ALTO"}, "7219": {"nombre": "APLIQUE PRISMA NG 20W IP44 20W 3000/4000/6000K 1300LM CRI>90 IP44", "disp": "ALTO"}, "7171": {"nombre": "ACCESORIO ADAPTADOR HEMBRA 1EF V2 NG", "disp": "ALTO"}, "7215": {"nombre": "EMPOTRABLE REN SLIM 45W 1800/2000K 3375LM CRI>90 IP20/IK02", "disp": "ULTIMAS UNIDADES"}, "7172": {"nombre": "ACCESORIO ADAPTADOR HEMBRA 1EF V2 BL", "disp": "ALTO"}, "6035": {"nombre": "LUMINARIA DE EXTERIOR ACACIA BLANCO", "disp": "ALTO"}, "6570": {"nombre": "UNION C/MOVIMIENTO 1 EF RIEL BLANCO", "disp": "ALTO"}, "6034": {"nombre": "LUMINARIA DE EXTERIOR ACACIA NEGRO", "disp": "ALTO"}, "6571": {"nombre": "UNION C/MOVIMIENTO 1 EF RIEL NEGRO", "disp": "ALTO"}, "4181": {"nombre": "LUMINARIA EXTERIOR ALOUMI", "disp": "MEDIO"}, "6594": {"nombre": "UNION C/MOVIMIENTO 3 EF RIEL BLANCO", "disp": "ALTO"}, "4245": {"nombre": "LUMINARIA EXTERIOR BIDIRECCIONAL PLEVRES", "disp": "SIN STOCK"}, "6595": {"nombre": "UNION C/MOVIMIENTO 3 EF RIEL NEGRO", "disp": "ALTO"}, "6634": {"nombre": "LUMINARIA DE EXTERIOR BIG SKOTE 24W BLANCO 3000K", "disp": "ALTO"}, "6572": {"nombre": "UNION CRUZ 1 EF BLANCO", "disp": "ALTO"}, "6633": {"nombre": "LUMINARIA DE EXTERIOR BIG SKOTE 24W NEGRO 3000K", "disp": "ALTO"}, "6573": {"nombre": "UNION CRUZ 1 EF NEGRO", "disp": "ALTO"}, "6033": {"nombre": "LUMINARIA EXTERIOR DE PARED KOLDO", "disp": "ALTO"}, "6596": {"nombre": "UNION CRUZ 3 EF BLANCO", "disp": "ALTO"}, "6036": {"nombre": "LUMINARIA EXTERIOR DE PISO PATOMA", "disp": "ALTO"}, "6597": {"nombre": "UNION CRUZ 3 EF NEGRO", "disp": "ALTO"}, "6032": {"nombre": "LUMINARIA EXTERIOR DE PARED UNAI", "disp": "ALTO"}, "6576": {"nombre": "UNION L 1 EF BLANCO", "disp": "ALTO"}, "6037": {"nombre": "LUMINARIA EXTERIOR DION", "disp": "ALTO"}, "6577": {"nombre": "UNION L 1 EF NEGRO", "disp": "ALTO"}, "4188": {"nombre": "LUMINARIA EXTERIOR DYO", "disp": "MEDIO"}, "6600": {"nombre": "UNION L 3 EF RIEL BLANCO", "disp": "ALTO"}, "6031": {"nombre": "LUMINARIA EXTERIOR ESTACA BEMUS", "disp": "ALTO"}, "6601": {"nombre": "UNION L 3 EF RIEL NEGRO", "disp": "ALTO"}, "6643": {"nombre": "ESTACA", "disp": "ALTO"}, "6580": {"nombre": "UNION LINEAL 1 EF BLANCO", "disp": "ALTO"}, "4195": {"nombre": "LUMINARIA EXTERIOR FAROL STEGI", "disp": "ALTO"}, "6581": {"nombre": "UNION LINEAL 1 EF NEGRO", "disp": "ALTO"}, "6690": {"nombre": "LUMINARIA DE EXTERIOR GUM", "disp": "ALTO"}, "6604": {"nombre": "UNION LINEAL 3 EF BLANCO", "disp": "ALTO"}, "4186": {"nombre": "LUMINARIA EXTERIOR IMIKY", "disp": "BAJO"}, "6605": {"nombre": "UNION LINEAL 3 EF NEGRO", "disp": "ALTO"}, "4244": {"nombre": "LUMINARIA EXTERIOR ISCH", "disp": "ULTIMAS UNIDADES"}, "6578": {"nombre": "UNION LINEAL POWER 1 EF RIEL BLANCO", "disp": "ALTO"}, "4177": {"nombre": "LUMINARIA EXTERIOR KATO", "disp": "MEDIO"}, "6579": {"nombre": "UNION LINEAL POWER 1 EF RIEL NEGRO", "disp": "ALTO"}, "4189": {"nombre": "LUMINARIA EXTERIOR KENTRO", "disp": "MEDIO"}, "6602": {"nombre": "UNION LINEAL POWER 3 EF BLANCO", "disp": "BAJO"}, "4190": {"nombre": "LUMINARIA EXTERIOR KYKLO", "disp": "SIN STOCK"}, "6603": {"nombre": "UNION LINEAL POWER 3 EF NEGRO", "disp": "ALTO"}, "6039": {"nombre": "LUMINARIA EXTERIOR DE PISO LETO", "disp": "ULTIMAS UNIDADES"}, "6700": {"nombre": "UNION LINEAL TECHO PARED BLANCO", "disp": "ALTO"}, "4169": {"nombre": "LUMINARIA EXTERIOR MOLY I", "disp": "ALTO"}, "6699": {"nombre": "UNION LINEAL TECHO PARED NEGRO", "disp": "ALTO"}, "4170": {"nombre": "LUMINARIA EXTERIOR MOLY II", "disp": "ALTO"}, "6574": {"nombre": "UNION T 1 EF BLANCO", "disp": "ALTO"}, "6641": {"nombre": "LUMINARIA DE EXTERIOR OKTA NEGRO 6W BLANCO 3000K", "disp": "ALTO"}, "6575": {"nombre": "UNION T 1 EF NEGRO", "disp": "ALTO"}, "4179": {"nombre": "LUMINARIA EXTERIOR ORTHOG I BLANCO", "disp": "ALTO"}, "6598": {"nombre": "UNION T 3 EF BLANCO", "disp": "MEDIO"}, "4180": {"nombre": "LUMINARIA EXTERIOR ORTHOG I NEGRO", "disp": "ALTO"}, "6599": {"nombre": "UNION T 3 EF NEGRO", "disp": "ALTO"}, "6383": {"nombre": "LUMINARIA EXTERIOR ORTHOG II BLANCO", "disp": "ALTO"}, "6563": {"nombre": "CABLE TENSOR PARA RIEL", "disp": "ALTO"}, "4217": {"nombre": "LUMINARIA EXTERIOR ORTHOG II NEGRO", "disp": "MEDIO"}, "6734": {"nombre": "LINEALES UNION CABEZAL DYNA BLANCO", "disp": "ALTO"}, "6038": {"nombre": "LUMINARIA EXTERIOR DE PISO POLUX", "disp": "ALTO"}, "6735": {"nombre": "LINEALES UNION CABEZAL DYNA NEGRO", "disp": "ALTO"}, "6639": {"nombre": "LUMINARIA DE EXTERIOR RUFFO 10W NEGRO 3000K", "disp": "ALTO"}, "7020": {"nombre": "UNIÓN UNION ANG120 DYNA BL 12,5W 2700/3300/4000K 1150LM CRI90 IP20", "disp": "ALTO"}, "6694": {"nombre": "LUMINARIA DE EXTERIOR RUFO GU10", "disp": "ALTO"}, "7021": {"nombre": "UNIÓN UNION ANG120 DYNA NG 12,5W 2700/3300/4000K 1150LM CRI90 IP20", "disp": "ALTO"}, "6642": {"nombre": "LUMINARIA DE EXTERIOR SCALA 6W NEGRO 3000K", "disp": "ALTO"}, "7022": {"nombre": "UNIÓN UNION Y DYNA BL 18W 2700/3300/4000K 1600LM CRI90 IP20", "disp": "ALTO"}, "4184": {"nombre": "LUMINARIA EXTERIOR SKOTE BLANCO", "disp": "ALTO"}, "7023": {"nombre": "UNIÓN UNION Y DYNA NG 18W 2700/3300/4000K 1600LM CRI90 IP20", "disp": "ALTO"}, "4185": {"nombre": "LUMINARIA EXTERIOR SKOTE NEGRO", "disp": "ALTO"}, "4182": {"nombre": "LUMINARIA EXTERIOR TETRA BLANCO", "disp": "ALTO"}, "4183": {"nombre": "LUMINARIA EXTERIOR TETRA NEGRO", "disp": "ALTO"}, "6566": {"nombre": "TAPA 1 EF BLANCO", "disp": "ALTO"}, "4191": {"nombre": "LUMINARIA EXTERIOR TOICHO", "disp": "SIN STOCK"}, "6567": {"nombre": "TAPA 1 EF NEGRO", "disp": "ALTO"}, "6638": {"nombre": "LUMINARIA DE EXTERIOR TOTEM 10W NEGRO 3000K", "disp": "ALTO"}, "6590": {"nombre": "TAPA 3 EF BLANCO", "disp": "MEDIO"}, "6695": {"nombre": "LUMINARIA DE EXTERIOR YUKON BLANCO", "disp": "ALTO"}, "6591": {"nombre": "TAPA 3 EF NEGRO", "disp": "ALTO"}, "6696": {"nombre": "LUMINARIA DE EXTERIOR YUKON NEGRO", "disp": "ALTO"}, "6564": {"nombre": "ALIMENTACION EXTREMO POWER 1 EF BLANCO", "disp": "ALTO"}, "6725": {"nombre": "LUMINARIA DE EXTERIOR MOMO I NEGRO 24W", "disp": "ALTO"}, "6565": {"nombre": "ALIMENTACION EXTREMO POWER 1 EF NEGRO", "disp": "ALTO"}, "6724": {"nombre": "LUMINARIA DE EXTERIOR MOMO I BLANCO 24W", "disp": "ALTO"}, "6588": {"nombre": "ALIMENTACION EXTREMO POWER 3 EF BLANCO", "disp": "MEDIO"}, "6721": {"nombre": "LUMINARIA DE EXTERIOR MOMO II 36W NEGRO 3000K", "disp": "ALTO"}, "6589": {"nombre": "ALIMENTACION EXTREMO POWER 3 EF NEGRO", "disp": "ULTIMAS UNIDADES"}, "6720": {"nombre": "LUMINARIA DE EXTERIOR MOMO II 36W BLANCO 3000K", "disp": "ALTO"}, "6719": {"nombre": "LUMINARIA DE EXTERIOR MOMO III 49W NEGRO 3000K", "disp": "SIN STOCK"}, "6718": {"nombre": "LUMINARIA DE EXTERIOR MOMO III 49W BLANCO 3000K", "disp": "ALTO"}, "6656": {"nombre": "PERFIL LINEAL LED DYNA 12,5W 600MM 3CCT BLANCO", "disp": "ALTO"}, "6751": {"nombre": "LUMINARIA DE EXTERIOR LEIA", "disp": "ALTO"}, "6657": {"nombre": "PERFIL LINEAL LED DYNA 12,5W 600MM 3CCT NEGRO", "disp": "ALTO"}, "6752": {"nombre": "LUMINARIA DE EXTERIOR MUSK", "disp": "ALTO"}, "6658": {"nombre": "PERFIL LINEAL LED DYNA 25W 1200MM 3CCT BLANCO", "disp": "ALTO"}, "6755": {"nombre": "LUMINARIA DE EXTERIOR PIER F", "disp": "ALTO"}, "6659": {"nombre": "PERFIL LINEAL LED DYNA 25W 1200MM 3CCT NEGRO", "disp": "ALTO"}, "6756": {"nombre": "LUMINARIA DE EXTERIOR MORGAN", "disp": "MEDIO"}, "6660": {"nombre": "PERFIL LINEAL LED DYNA 37,5W 1800MM 3CCT BLANCO", "disp": "ALTO"}, "6757": {"nombre": "LUMINARIA DE EXTERIOR LEX", "disp": "ALTO"}, "6661": {"nombre": "PERFIL LINEAL LED DYNA 37,5W 1800MM 3CCT NEGRO", "disp": "ALTO"}, "6758": {"nombre": "LUMINARIA DE EXTERIOR ELON", "disp": "ALTO"}, "6662": {"nombre": "PERFIL LINEAL LED DYNA 50W 2400MM 3CCT BLANCO", "disp": "ALTO"}, "6759": {"nombre": "LUMINARIA DE EXTERIOR KIM I", "disp": "SIN STOCK"}, "6663": {"nombre": "PERFIL LINEAL LED DYNA 50W 2400MM 3CCT NEGRO", "disp": "ALTO"}, "6760": {"nombre": "LUMINARIA DE EXTERIOR KIM II", "disp": "ALTO"}, "6627": {"nombre": "PERFIL LINEAL TULA TRIMLESS 3M", "disp": "BAJO"}, "6816": {"nombre": "LUMINARIA DE EXTERIOR PIER W", "disp": "ALTO"}, "6664": {"nombre": "SET PERFIL LINEAL 1000 MM BLANCO", "disp": "ALTO"}, "6817": {"nombre": "LUMINARIA DE EXTERIOR LEX 24V", "disp": "ALTO"}, "6665": {"nombre": "SET PERFIL LINEAL 1000 MM NEGRO", "disp": "ALTO"}, "6818": {"nombre": "LUMINARIA DE EXTERIOR ELON 24V", "disp": "ALTO"}, "6812": {"nombre": "PERFIL NEMA 2MTS", "disp": "ALTO"}, "6819": {"nombre": "LUMINARIA DE EXTERIOR KIM I 24V", "disp": "ALTO"}, "6765": {"nombre": "LINEAL MIRACLE S NEGRO 40W 3CCT", "disp": "ALTO"}, "6820": {"nombre": "LUMINARIA DE EXTERIOR KIM II 24V", "disp": "ALTO"}, "6766": {"nombre": "LINEAL MIRACLE S BLANCO 40W 3CCT", "disp": "ALTO"}, "4218": {"nombre": "LUMINARIA EXTERIOR FAROLA PODI", "disp": "ULTIMAS UNIDADES"}, "6853": {"nombre": "PERFIL LINEAL LED DYNA 6W 30CM 3CCT BLANCO", "disp": "ALTO"}, "6742": {"nombre": "LUMINARIA DE EXTERIOR CHILL 5W 220V 2700K", "disp": "ALTO"}, "6854": {"nombre": "PERFIL LINEAL LED DYNA 6W 30CM 3CCT NEGRO", "disp": "MEDIO"}, "6743": {"nombre": "LUMINARIA DE EXTERIOR CHILL 5W 220V 3000K", "disp": "ALTO"}, "6857": {"nombre": "LINEAL HOKA 60 BLANCO 3 EF", "disp": "ALTO"}, "6744": {"nombre": "LUMINARIA DE EXTERIOR CHILL 5W 24V 2700K", "disp": "ALTO"}, "6858": {"nombre": "LINEAL HOKA 60 NEGRO 3 EF", "disp": "ALTO"}, "6745": {"nombre": "LUMINARIA DE EXTERIOR CHILL 5W 24V 3000K", "disp": "ALTO"}, "6859": {"nombre": "LINEAL HOKA 120 BLANCO 3 EF", "disp": "ALTO"}, "6746": {"nombre": "LUMINARIA DE EXTERIOR CHILL 10W 220V 2700K", "disp": "ALTO"}, "6860": {"nombre": "LINEAL HOKA 120 NEGRO 3 EF", "disp": "ALTO"}, "6747": {"nombre": "LUMINARIA DE EXTERIOR CHILL 10W 220V 3000K", "disp": "ALTO"}, "7010": {"nombre": "LINEAL DYNA EM 60 BL 12,5W 2700/3300/4000K 1200LM CRI90 IP20", "disp": "ALTO"}, "6748": {"nombre": "LUMINARIA DE EXTERIOR CHILL 10W 24V 2700K", "disp": "ALTO"}, "7011": {"nombre": "LINEAL DYNA EM 60 NG 12,5W 2700/3300/4000K 1200LM CRI90 IP20", "disp": "MEDIO"}, "6749": {"nombre": "LUMINARIA DE EXTERIOR CHILL 10W 24V 3000K", "disp": "ALTO"}, "7012": {"nombre": "LINEAL DYNA EM 120 BL 25W 2700/3300/4000K 2400LM CRI90 IP20", "disp": "ALTO"}, "6750": {"nombre": "LUMINARIA DE EXTERIOR CHILL 20W 220V 2700K", "disp": "ALTO"}, "7013": {"nombre": "LINEAL DYNA EM 120 NG 25W 2700/3300/4000K 2400LM CRI90 IP20", "disp": "ALTO"}, "6813": {"nombre": "LUMINARIA DE EXTERIOR CHILL 20W 220V 3000K", "disp": "ALTO"}, "7014": {"nombre": "LINEAL DYNA EM 180 BL 37,5W 2700/3300/4000K 3600LM CRI90 IP20", "disp": "ALTO"}, "6814": {"nombre": "LUMINARIA DE EXTERIOR CHILL 20W 24V 2700K", "disp": "ALTO"}, "7015": {"nombre": "LINEAL DYNA EM 180 NG 37,5W 2700/3300/4000K 3600LM CRI90 IP20", "disp": "ALTO"}, "6815": {"nombre": "LUMINARIA DE EXTERIOR CHILL 20W 24V 3000K", "disp": "ALTO"}, "7016": {"nombre": "LINEAL DYNA EM 240 BL 50W 2700/3300/4000K 4800LM CRI90 IP20", "disp": "ALTO"}, "6761": {"nombre": "LUMINARIA DE EXTERIOR LOUTA 35", "disp": "ALTO"}, "7017": {"nombre": "LINEAL DYNA EM 240 NG 50W 2700/3300/4000K 4800LM CRI90 IP20", "disp": "ALTO"}, "6762": {"nombre": "LUMINARIA DE EXTERIOR LOUTA 60", "disp": "ALTO"}, "7024": {"nombre": "LUMINARIA CAMBOYA BL 32W", "disp": "MEDIO"}, "7026": {"nombre": "LUMINARIA CAMBOYA BL 45W", "disp": "ALTO"}, "6675": {"nombre": "UNION L PERFIL LINEAL LED 13W 3CCT BLANCO", "disp": "ALTO"}, "7027": {"nombre": "LUMINARIA CAMBOYA NG 45W", "disp": "ALTO"}, "6676": {"nombre": "UNION L PERFIL LINEAL LED 13W 3CCT NEGRO", "disp": "ALTO"}, "7025": {"nombre": "LUMINARIA CAMBOYA NG 32W", "disp": "MEDIO"}, "6671": {"nombre": "UNION T PERFIL LINEAL 18W 3CCT BLANCO", "disp": "ALTO"}, "7028": {"nombre": "LUMINARIA SINTRA BL 10W", "disp": "ALTO"}, "6672": {"nombre": "UNION T PERFIL LINEAL LED 18W 3CCT NEGRO", "disp": "ALTO"}, "7029": {"nombre": "LUMINARIA SINTRA BL 18W", "disp": "ALTO"}, "6673": {"nombre": "UNION X PERFIL LINEAL LED 24W 3CCT BLANCO", "disp": "ALTO"}, "7030": {"nombre": "LUMINARIA DUNA GR 15W", "disp": "ALTO"}, "6674": {"nombre": "UNION X PERFIL LINEAL LED 24W 3CCT NEGRO", "disp": "ALTO"}, "7031": {"nombre": "LUMINARIA DUNA GR 18W", "disp": "ALTO"}, "7018": {"nombre": "UNIÓN UNION L DYNA EM BL 12,5W 2700/3300/4000K 1150LM CRI90 IP20", "disp": "ALTO"}, "7032": {"nombre": "LUMINARIA BARON GR 15W", "disp": "ALTO"}, "7019": {"nombre": "UNIÓN UNION L DYNA EM NG 12,5W 2700/3300/4000K 1150LM CRI90 IP20", "disp": "ALTO"}, "7033": {"nombre": "LUMINARIA BARON GR 28W", "disp": "ALTO"}, "7034": {"nombre": "LUMINARIA XAPO BL", "disp": "MEDIO"}, "7035": {"nombre": "LUMINARIA XAPO NG", "disp": "MEDIO"}, "6669": {"nombre": "ACCESORIO APLIQUE PERFIL", "disp": "ALTO"}, "7105": {"nombre": "BOLARDO RIU 2W 3000K 66LM CRI78 IP65", "disp": "ALTO"}, "6667": {"nombre": "ACCESORIO DIFUSOR LINEAL 1000MM", "disp": "ALTO"}, "7106": {"nombre": "BOLARDO RIU II 2 X 2WW 3000K 119LM CRI81 IP65", "disp": "ALTO"}, "6666": {"nombre": "ACCESORIO DISIPADOR ALUMINIO LINEAL 1 MT", "disp": "BAJO"}, "7107": {"nombre": "BOLARDO RONY 2 X 3WW 3000K 425LM CRI81 IP65", "disp": "ALTO"}, "6668": {"nombre": "ACCESORIO EMBUTIR PERFIL", "disp": "ALTO"}, "7112": {"nombre": "BOLARDO LOFI 12W 12W 3000K 627LM CRI87 IP65", "disp": "ALTO"}, "6693": {"nombre": "ACCESORIO PARED LINEAL", "disp": "ALTO"}, "7113": {"nombre": "BOLARDO LOFI 24W 24W 3000K 1577LM CRI87 IP65", "disp": "MEDIO"}, "6686": {"nombre": "ACCESORIO TAPA EXTREMA PERFIL BLANCO", "disp": "ALTO"}, "6640": {"nombre": "LUMINARIA DE EXTERIOR YETI 3W 24° NEGRO 3000K", "disp": "ULTIMAS UNIDADES"}, "6687": {"nombre": "ACCESORIO TAPA EXTREMA PERFIL NEGRO", "disp": "ALTO"}, "7133": {"nombre": "APLIQUE LEX II 3 O 6?W 3000K ???LM CRI90 IP65", "disp": "ALTO"}, "6628": {"nombre": "DIFUSOR PERFIL LINEAL TULA 10 MTS", "disp": "MEDIO"}, "7134": {"nombre": "APLIQUE LEX II 24V 3 O 6?W 3000K ???LM CRI90 IP65", "disp": "ALTO"}, "6635": {"nombre": "KIT DE SUSPENSION PERFIL 2MTS", "disp": "ALTO"}, "6753": {"nombre": "LUMINARIA DE EXTERIOR FRANKY 60", "disp": "ULTIMAS UNIDADES"}, "6670": {"nombre": "KIT UNION LINEAL PERFIL", "disp": "ALTO"}, "6754": {"nombre": "LUMINARIA DE EXTERIOR FRANKY 90", "disp": "ULTIMAS UNIDADES"}, "6823": {"nombre": "ACCESORIO CONECTOR 3 POLOS", "disp": "ALTO"}, "7176": {"nombre": "APLIQUE TOICHO 15W 3000K 1210LM CRI85 IP55", "disp": "ALTO"}, "6824": {"nombre": "ACCESORIO CONECTOR T 3 POLOS", "disp": "ALTO"}, "6716": {"nombre": "KIT SUSPENSION SINTRA/YORK 45W R BLANCO", "disp": "ALTO"}, "6728": {"nombre": "KIT SUSPENSION SINTRA/YORK 45W R MADERA", "disp": "MEDIO"}, "6096": {"nombre": "SPOT DE EMBUTIR AKE1 BLANCO", "disp": "ALTO"}, "6829": {"nombre": "KIT SUSPENSION BLANCO 4 TENSORES PARA PLAFON", "disp": "ALTO"}, "6685": {"nombre": "SPOT DE EMBUTIR AKE1 NEGRO", "disp": "MEDIO"}, "6830": {"nombre": "KIT SUSPENSION NEGRO 4 TENSORES PARA PLAFON", "disp": "ALTO"}, "6682": {"nombre": "SPOT DE EMBUTIR ASA1 BLANCO", "disp": "ALTO"}, "6763": {"nombre": "ACCESORIO KIT CHILL 40", "disp": "MEDIO"}, "6683": {"nombre": "SPOT DE EMBUTIR ASA1 BLANCO Y NEGRO", "disp": "ALTO"}, "6764": {"nombre": "ACCESORIO KIT CHILL 80", "disp": "SIN STOCK"}, "6684": {"nombre": "SPOT DE EMBUTIR ASA1 NEGRO", "disp": "ALTO"}, "6821": {"nombre": "ACCESORIO CORREA CHILL 3MTS", "disp": "ALTO"}, "6099": {"nombre": "SPOT DE EMBUTIR BERSH1 BLANCO", "disp": "ALTO"}, "6822": {"nombre": "ACCESORIO BASE CORREA", "disp": "ALTO"}, "6100": {"nombre": "SPOT DE EMBUTIR BERSH1 BLANCO Y NEGRO", "disp": "ALTO"}, "6825": {"nombre": "ACCESORIO SOPORTE CHILL", "disp": "ALTO"}, "6101": {"nombre": "SPOT DE EMBUTIR BERSH1 NEGRO", "disp": "ALTO"}, "7238": {"nombre": "ACCESORIO TAPA DYNA EM AL BL", "disp": "ALTO"}, "6102": {"nombre": "SPOT DE EMBUTIR CUFA1 BLANCO", "disp": "MEDIO"}, "7239": {"nombre": "ACCESORIO TAPA DYNA EM AL NG", "disp": "ALTO"}, "6103": {"nombre": "SPOT DE EMBUTIR CUFA1 NEGRO", "disp": "ALTO"}, "7226": {"nombre": "ACCESORIO ADAPTADOR 3EF II NG", "disp": "ALTO"}, "6104": {"nombre": "SPOT DE EMBUTIR DEB1 BLANCO", "disp": "ALTO"}, "7227": {"nombre": "ACCESORIO ADAPTADOR 3EF II BL", "disp": "ALTO"}, "6105": {"nombre": "SPOT DE EMBUTIR DEB1 NEGRO", "disp": "ALTO"}, "7220": {"nombre": "ACCESORIO EMBUTIDO CABEZAL NG", "disp": "ALTO"}, "6106": {"nombre": "SPOT DE EMBUTIR EMI1 BLANCO", "disp": "ALTO"}, "7221": {"nombre": "ACCESORIO EMBUTIDO CABEZAL BL", "disp": "ALTO"}, "6112": {"nombre": "SPOT DE EMBUTIR IOJU1 BLANCO", "disp": "ALTO"}, "7222": {"nombre": "ACCESORIO APLIQUE CABEZAL NG", "disp": "ALTO"}, "6113": {"nombre": "SPOT DE EMBUTIR IOJU1 NEGRO", "disp": "ALTO"}, "7223": {"nombre": "ACCESORIO APLIQUE CABEZAL BL", "disp": "ALTO"}, "6327": {"nombre": "SPOT DE EMBUTIR JEN BLANCO", "disp": "ALTO"}, "7224": {"nombre": "ACCESORIO KIT CHILL 1,2 MTS", "disp": "SIN STOCK"}, "6328": {"nombre": "SPOT DE EMBUTIR JEN NEGRO", "disp": "MEDIO"}, "7225": {"nombre": "ACCESORIO KIT CHILL 1,8 MTS", "disp": "SIN STOCK"}, "6431": {"nombre": "SPOT DE EMBUTIR JEN BLANCO Y NEGRO", "disp": "SIN STOCK"}, "7228": {"nombre": "ACCESORIO CABLE TENSOR CORRIENTE 7MTS", "disp": "MEDIO"}, "6434": {"nombre": "SPOT DE EMBUTIR LARU1 BLANCO", "disp": "ALTO"}, "6435": {"nombre": "SPOT DE EMBUTIR LARU1 NEGRO", "disp": "ALTO"}, "6114": {"nombre": "SPOT DE EMBUTIR LEN1 BLANCO", "disp": "ALTO"}, "6372": {"nombre": "VENTILADOR DE TECHO LAFTDREN 421 A", "disp": "ALTO"}, "6116": {"nombre": "SPOT DE EMBUTIR LOA1 BLANCO", "disp": "ALTO"}, "6373": {"nombre": "VENTILADOR DE TECHO LAFTDREN 421 B", "disp": "ALTO"}, "6329": {"nombre": "SPOT SEMIEMBUTIDO MAG1 BLANCO", "disp": "ALTO"}, "6374": {"nombre": "VENTILADOR DE TECHO LAFTDREN 421 C", "disp": "ALTO"}, "6330": {"nombre": "SPOT SEMIEMBUTIDO MAG1 NEGRO", "disp": "ALTO"}, "6382": {"nombre": "VENTILADOR DE TECHO LAFTDREN 422 C", "disp": "ALTO"}, "6118": {"nombre": "SPOT DE EMBUTIR MATT1 BLANCO", "disp": "SIN STOCK"}, "6368": {"nombre": "VENTILADOR DE TECHO LAFTDREN 441 A", "disp": "ALTO"}, "6119": {"nombre": "SPOT DE EMBUTIR MATT1 BLANCO Y NEGRO", "disp": "ALTO"}, "6369": {"nombre": "VENTILADOR DE TECHO LAFTDREN 441 B", "disp": "ALTO"}, "6120": {"nombre": "SPOT DE EMBUTIR MATT1 NEGRO", "disp": "SIN STOCK"}, "6370": {"nombre": "VENTILADOR DE TECHO LAFTDREN 441 C", "disp": "ALTO"}, "6122": {"nombre": "SPOT DE EMBUTIR MATT2 BLANCO Y NEGRO", "disp": "ALTO"}, "6371": {"nombre": "VENTILADOR DE TECHO LAFTDREN 484 A", "disp": "MEDIO"}, "6123": {"nombre": "SPOT DE EMBUTIR MATT2 NEGRO", "disp": "ALTO"}, "6552": {"nombre": "VENTILADOR DE TECHO LAFTDREN 530 A", "disp": "SIN STOCK"}, "6427": {"nombre": "SPOT DE EMBUTIR MATT3 BLANCO", "disp": "ALTO"}, "6553": {"nombre": "VENTILADOR DE TECHO LAFTDREN 382 A", "disp": "ALTO"}, "6428": {"nombre": "SPOT DE EMBUTIR MATT3 NEGRO", "disp": "ALTO"}, "6554": {"nombre": "VENTILADOR DE TECHO LAFTDREN 382 B", "disp": "ALTO"}, "6331": {"nombre": "SPOT SEMIEMBUTIDO NAT1 BLANCO", "disp": "ALTO"}, "6557": {"nombre": "VENTILADOR DE TECHO LAFTDREN 530 B", "disp": "MEDIO"}, "6332": {"nombre": "SPOT SEMIEMBUTIDO NAT1 NEGRO", "disp": "ALTO"}, "6558": {"nombre": "VENTILADOR DE TECHO LAFTDREN 361 B", "disp": "MEDIO"}, "6439": {"nombre": "SPOT DE EMBUTIR NIK1 BLANCO", "disp": "ALTO"}, "6559": {"nombre": "VENTILADOR DE TECHO LAFTDREN 530 C", "disp": "ALTO"}, "6125": {"nombre": "SPOT DE EMBUTIR ONA1 BLANCO", "disp": "ALTO"}, "6548": {"nombre": "VENTILADOR DE TECHO LAFTDREN 429 C", "disp": "ALTO"}, "6126": {"nombre": "SPOT DE EMBUTIR ONA1 BLANCO Y NEGRO", "disp": "ALTO"}, "6549": {"nombre": "VENTILADOR DE TECHO LAFTDREN 432 A", "disp": "MEDIO"}, "6127": {"nombre": "SPOT DE EMBUTIR ONA1 NEGRO", "disp": "ALTO"}, "6705": {"nombre": "VENTILADOR DE TECHO LAFTDREN 411 B", "disp": "ALTO"}, "6128": {"nombre": "SPOT DE EMBUTIR ONA2 BLANCO", "disp": "ALTO"}, "6706": {"nombre": "VENTILADOR DE TECHO LAFTDREN 411 A", "disp": "ALTO"}, "6129": {"nombre": "SPOT DE EMBUTIR ONA2 BLANCO Y NEGRO", "disp": "ALTO"}, "6707": {"nombre": "VENTILADOR DE TECHO LAFTDREN 301 B", "disp": "ALTO"}, "6130": {"nombre": "SPOT DE EMBUTIR ONA2 NEGRO", "disp": "ALTO"}, "6708": {"nombre": "VENTILADOR DE TECHO LAFTDREN 301 A", "disp": "ALTO"}, "6438": {"nombre": "SPOT DE EMBUTIR PRA1 BLANCO", "disp": "ALTO"}, "6709": {"nombre": "VENTILADOR DE TECHO LAFTDREN 401 B", "disp": "ALTO"}, "6131": {"nombre": "SPOT DE EMBUTIR RAMI1 BLANCO", "disp": "ALTO"}, "6710": {"nombre": "VENTILADOR DE TECHO LAFTDREN 401 A", "disp": "ALTO"}, "6132": {"nombre": "SPOT DE EMBUTIR RITA1 BLANCO", "disp": "ALTO"}, "7130": {"nombre": "VENTILADOR DE TECHO LAFTDREN 484 B", "disp": "ALTO"}, "6133": {"nombre": "SPOT DE EMBUTIR RITA1 NEGRO", "disp": "ALTO"}, "7131": {"nombre": "VENTILADOR DE TECHO LAFTDREN 452 C", "disp": "ALTO"}, "6432": {"nombre": "SPOT DE EMBUTIR ROY 1 BLANCO", "disp": "ALTO"}, "7132": {"nombre": "VENTILADOR DE TECHO LAFTDREN 452 D", "disp": "ALTO"}, "6433": {"nombre": "SPOT DE EMBUTIR ROY 1 NEGRO", "disp": "ALTO"}, "6134": {"nombre": "SPOT DE EMBUTIR SEB1 BLANCO", "disp": "ALTO"}, "6135": {"nombre": "SPOT DE EMBUTIR SEB1 BLANCO Y NEGRO", "disp": "ALTO"}, "6645": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 1 MT BLANCO", "disp": "ALTO"}, "6136": {"nombre": "SPOT DE EMBUTIR SEB1 NEGRO", "disp": "ALTO"}, "6644": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 1 MT NEGRO", "disp": "ALTO"}, "6679": {"nombre": "SPOT DE EMBUTIR UKI1 BLANCO", "disp": "ALTO"}, "6647": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 2 MTS BLANCO", "disp": "ALTO"}, "6680": {"nombre": "SPOT DE EMBUTIR UKI1 NEGRO", "disp": "ALTO"}, "6646": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 2 MTS NEGRO", "disp": "ALTO"}, "6681": {"nombre": "SPOT DE EMBUTIR UKI1 BLANCO Y NEGRO", "disp": "ALTO"}, "6649": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 3 MTS BLANCO", "disp": "ALTO"}, "6138": {"nombre": "SPOT DE EMBUTIR ZALO1 BLANCO", "disp": "ALTO"}, "6648": {"nombre": "HOUSING EMBUTIR RIEL 1 EF 3 MTS NEGRO", "disp": "ALTO"}, "6677": {"nombre": "MINI SPOT OPTIC 3W BLANCO 2700K", "disp": "ALTO"}, "6651": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 1 MT BLANCO", "disp": "ALTO"}, "6678": {"nombre": "MINI SPOT OPTIC 3W NEGRO 2700K", "disp": "ALTO"}, "6650": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 1 MT NEGRO", "disp": "ALTO"}, "6804": {"nombre": "SPOT DE EMBUTIR ORI I BLANCO", "disp": "SIN STOCK"}, "6653": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 2 MTS BLANCO", "disp": "ALTO"}, "6805": {"nombre": "SPOT DE EMBUTIR ORI I NEGRO", "disp": "BAJO"}, "6652": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 2 MTS NEGRO", "disp": "ALTO"}, "6806": {"nombre": "SPOT DE EMBUTIR OLU I BLANCO", "disp": "MEDIO"}, "6655": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 3 MTS BLANCO", "disp": "MEDIO"}, "6807": {"nombre": "SPOT DE EMBUTIR OLU I NEGRO", "disp": "ALTO"}, "6654": {"nombre": "HOUSING EMBUTIR RIEL 3 EF 3 MTS NEGRO", "disp": "ALTO"}, "6808": {"nombre": "SPOT DE EMBUTIR GAL I BLANCO", "disp": "ALTO"}, "6809": {"nombre": "SPOT DE EMBUTIR GAL I NEGRO", "disp": "ALTO"}, "6840": {"nombre": "SPOT WILLY BLANCO 10W 2700K", "disp": "ALTO"}, "6622": {"nombre": "CABEZAL BIZ DICRO GU10 1 EF BLANCO", "disp": "ALTO"}, "6841": {"nombre": "SPOT WILLY NEGRO 10W 2700K", "disp": "ALTO"}, "6621": {"nombre": "CABEZAL BIZ DICRO GU10 1 EF NEGRO", "disp": "ALTO"}, "6838": {"nombre": "SPOT SIRENA BLANCO 10W 2700K", "disp": "ALTO"}, "6624": {"nombre": "CABEZAL BIZ DICRO GU10 3 EF BLANCO", "disp": "ALTO"}, "6839": {"nombre": "SPOT SIRENA NEGRO 10W 2700K", "disp": "ALTO"}, "6623": {"nombre": "CABEZAL BIZ DICRO GU10 3 EF NEGRO", "disp": "ALTO"}, "6117": {"nombre": "SPOT DE EMBUTIR LOA1 NEGRO", "disp": "ULTIMAS UNIDADES"}, "6626": {"nombre": "CABEZAL BIZ UNIVERSAL DICRO GU10 BLANCO", "disp": "ALTO"}, "6115": {"nombre": "SPOT DE EMBUTIR LEN1 NEGRO", "disp": "ULTIMAS UNIDADES"}, "6625": {"nombre": "CABEZAL BIZ UNIVERSAL DICRO GU10 NEGRO", "disp": "ALTO"}, "6826": {"nombre": "CABEZAL MEX 10W 3000K", "disp": "ALTO"}, "6827": {"nombre": "CABEZAL MEX 18W 3000K", "disp": "ALTO"}, "6711": {"nombre": "PLAFON YORK MADERA 45W 3CCT", "disp": "ALTO"}, "6828": {"nombre": "CABEZAL MEX 26W 3000K", "disp": "ALTO"}, "6712": {"nombre": "PLAFON SINTRA BLANCO R 45W 2700K", "disp": "ALTO"}, "6850": {"nombre": "CABEZAL MEX BLANCO 10W 3000K", "disp": "ALTO"}, "6713": {"nombre": "PLAFON SINTRA BLANCO SQ 45W 2700K", "disp": "ALTO"}, "6851": {"nombre": "CABEZAL MEX BLANCO 18W 3000K", "disp": "ALTO"}, "6714": {"nombre": "PLAFON YORK BLANCO 45W 2700K", "disp": "SIN STOCK"}, "6852": {"nombre": "CABEZAL MEX BLANCO 25W 3000K", "disp": "MEDIO"}, "6715": {"nombre": "PLAFON YORK NEGRO 45W 2700K", "disp": "ALTO"}, "7036": {"nombre": "CABEZAL MEX BL 10W 3CCT 10W 2700/4000/6000K 662LM CRI93 IP20", "disp": "ALTO"}, "6767": {"nombre": "PLAFON BONY BLANCO 45W 3CCT", "disp": "ALTO"}, "7037": {"nombre": "CABEZAL MEX BL 18W 3CCT 18W 2700/4000/6000K 1335LM CRI93 IP20", "disp": "ALTO"}, "6768": {"nombre": "PLAFON CARAMEL BLANCO MADERA 45W 3CCT", "disp": "ALTO"}, "7038": {"nombre": "CABEZAL MEX BL 25W 3CCT 25W 2700/4000/6000K 1770LM CRI93 IP20", "disp": "ALTO"}, "6769": {"nombre": "PLAFON CHESTER BLANCO MADERA 45W 3CCT", "disp": "ULTIMAS UNIDADES"}, "7039": {"nombre": "CABEZAL MEX NG 10W 3CCT 10W 2700/4000/6000K 662LM CRI93 IP20", "disp": "ALTO"}, "6770": {"nombre": "PLAFON CHESTER NEGRO MADERA 45W 3CCT", "disp": "MEDIO"}, "7040": {"nombre": "CABEZAL MEX NG 18W 3CCT 18W 2700/4000/6000K 1335LM CRI93 IP20", "disp": "ALTO"}, "6771": {"nombre": "PLAFON SMOKY GRIS 45W 3CCT", "disp": "ALTO"}, "7041": {"nombre": "CABEZAL MEX NG 25W 3CCT 25W 2700/4000/6000K 1770LM CRI93 IP20", "disp": "ALTO"}, "6772": {"nombre": "PLAFON LUKA BLANCO 45W 3CCT", "disp": "ALTO"}, "6773": {"nombre": "PLAFON CITY BLANCO 15W 3CCT", "disp": "ALTO"}, "6774": {"nombre": "PLAFON CITY NEGRO 15W 3CCT", "disp": "ALTO"}, "6492": {"nombre": "LAMPARA DE PIE LAMPY AZUL MARINO", "disp": "BAJO"}, "6775": {"nombre": "PLAFON CITY BLANCO 45W 3CCT", "disp": "ALTO"}, "6491": {"nombre": "LAMPARA DE PIE LAMPY BLANCO", "disp": "SIN STOCK"}, "6776": {"nombre": "PLAFON CITY NEGRO 45W 3CCT", "disp": "ALTO"}, "6494": {"nombre": "LAMPARA DE PIE LAMPY BORDO", "disp": "ULTIMAS UNIDADES"}, "6777": {"nombre": "PLAFON CITY BLANCO 55W 3CCT", "disp": "ALTO"}, "6490": {"nombre": "LAMPARA DE PIE LAMPY NEGRO", "disp": "SIN STOCK"}, "6778": {"nombre": "PLAFON CITY NEGRO 55W 3CCT", "disp": "MEDIO"}, "6493": {"nombre": "LAMPARA DE PIE LAMPY VERDE MILITAR", "disp": "SIN STOCK"}, "6780": {"nombre": "PLAFON GALACTIC BLANCO 45W 3CCT", "disp": "ALTO"}, "7095": {"nombre": "LUMINARIA DE PIE SUTSKE NG 7W 3000K 525LM CRI97 IP20", "disp": "MEDIO"}, "6781": {"nombre": "PLAFON GALACTIC NEGRO 45W 3CCT", "disp": "ALTO"}, "7096": {"nombre": "LUMINARIA DE PIE SUTSKE BL 7W 3000K 525LM CRI97 IP20", "disp": "BAJO"}, "6782": {"nombre": "PLAFON GALACTIC BLANCO MADERA 45W 3CCT", "disp": "ALTO"}, "6783": {"nombre": "PLAFON GALACTIC NEGRO MADERA 45W 3CCT", "disp": "ALTO"}, "6784": {"nombre": "PLAFON SWEET BLANCO 3CCT", "disp": "ALTO"}, "6691": {"nombre": "DRIVER TRIAC 30W", "disp": "MEDIO"}, "6785": {"nombre": "PLAFON SWEET NEGRO 3CCT", "disp": "MEDIO"}, "6692": {"nombre": "DRIVER DALI 30W", "disp": "MEDIO"}, "6786": {"nombre": "PLAFON BELA BLANCO DORADO 3CCT", "disp": "ALTO"}, "6636": {"nombre": "DRIVER DALI 60W", "disp": "BAJO"}, "6787": {"nombre": "PLAFON BELA NEGRO DORADO 3CCT", "disp": "ALTO"}, "6637": {"nombre": "DRIVER TRIAC 40W", "disp": "ALTO"}, "6788": {"nombre": "PLAFON MARLEY BLANCO 3CCT", "disp": "ALTO"}, "6789": {"nombre": "PLAFON MARLEY NEGRO 3CCT", "disp": "ALTO"}, "6790": {"nombre": "PLAFON NICHI BLANCO", "disp": "ALTO"}, "6791": {"nombre": "PLAFON NICHI NEGRO", "disp": "ALTO"}, "6798": {"nombre": "PLAFON DAKOTA BLANCO MADERA", "disp": "ALTO"}, "6799": {"nombre": "PLAFON DAKOTA NEGRO MADERA", "disp": "ALTO"}, "6849": {"nombre": "PLAFON CITY BLANCO MADERA 45W 3CCT", "disp": "ALTO"}, "6486": {"nombre": "VELADOR LAMPY BLANCO", "disp": "MEDIO"}, "6485": {"nombre": "VELADOR LAMPY NEGRO", "disp": "MEDIO"}, "6487": {"nombre": "VELADOR LAMPY AZUL MARINO", "disp": "MEDIO"}, "6488": {"nombre": "VELADOR LAMPY VERDE MILITAR", "disp": "MEDIO"}, "6489": {"nombre": "VELADOR LAMPY BORDO", "disp": "MEDIO"}, "7048": {"nombre": "LUMINARIA DE MESA WALLE NG 7W 2700K 464LM CRI95 IP20", "disp": "ALTO"}, "7091": {"nombre": "LUMINARIA DE MESA NIAO MS NG 3W 3000K 224LM CRI98 IP20", "disp": "MEDIO"}, "7092": {"nombre": "LUMINARIA DE MESA NIAO MS BL 3W 3000K 224LM CRI98 IP20", "disp": "MEDIO"}};
+
+/* ----------------------------------------------------------------
+   CONFIGURACIÓN
+   ---------------------------------------------------------------- */
+const CONFIG = {
+  empresa: "LEUK",
+  fotoBase: "fotos/",   // fallback: si no cargaste zip, busca en /fotos/SKU.jpg
+};
+
+// Mapa de fotos cargadas desde el zip: { sku: objectURL }
+const PHOTO_MAP = {};
+
+// Log de diagnóstico — se llena al cargar el zip
+let DIAG_LOG = [];
+
+// Mapa de organización: { sku: { nombre, subfam, fam, vert, estado, coleccion } }
+// Se carga desde el Excel "Organización de Familias y Colecciones"
+// Si está vacío, se usa el mapeo manual de SECCIONES como fallback
+let FAMILIAS_MAP = {};
+const LS_KEY_FAMILIAS = 'leuk_familias_map';
+
+/* ----------------------------------------------------------------
+   HELPERS DE FECHA
+   La fecha mostrada en la portada sale del <input type="date">.
+   Se persiste en localStorage para que no se pierda entre sesiones.
+   ---------------------------------------------------------------- */
+const LS_KEY_FECHA = 'leuk_fecha_portada';
+
+const MESES_ES = [
+  'enero','febrero','marzo','abril','mayo','junio',
+  'julio','agosto','septiembre','octubre','noviembre','diciembre'
+];
+
+// Devuelve la fecha actual del input, o la de hoy si está vacío
+function getFechaElegida() {
+  const el = document.getElementById('opt-fecha');
+  if (el && el.value) {
+    // input value = "YYYY-MM-DD" — lo parseamos como fecha local (sin TZ shift)
+    const [y, m, d] = el.value.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date();
+}
+
+// "27/04"  (formato que usa el subtítulo tipo "STOCK ACTUALIZADO LEUK 27/04")
+function fechaCortaElegida() {
+  const d = getFechaElegida();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+// "20 de abril de 2026"  (texto descriptivo bajo el subtítulo)
+function fechaLargaElegida() {
+  const d = getFechaElegida();
+  return `${d.getDate()} de ${MESES_ES[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+// "2026-04-20"  (para el nombre del archivo PDF)
+function fechaISOElegida() {
+  const d = getFechaElegida();
+  const y  = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mm}-${dd}`;
+}
+
+// Se dispara cuando cambia el input de fecha
+function onFechaChange() {
+  const el = document.getElementById('opt-fecha');
+  if (el && el.value) {
+    localStorage.setItem(LS_KEY_FECHA, el.value);
+  }
+  render();
+}
+
+// Inicializa el input: restaura desde localStorage, o usa hoy como default
+function initFecha() {
+  const el = document.getElementById('opt-fecha');
+  const saved = localStorage.getItem(LS_KEY_FECHA);
+  if (saved) {
+    el.value = saved;
+  } else {
+    const d = new Date();
+    const y  = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    el.value = `${y}-${mm}-${dd}`;
+  }
+}
+
+// Alias retrocompatibles — el nombre del PDF usa la fecha elegida
+const fechaISO = fechaISOElegida;
+
+/* ----------------------------------------------------------------
+   HELPERS
+   ---------------------------------------------------------------- */
+
+// Devuelve el nombre tal cual viene del Excel, con un único reemplazo:
+// Reemplaza terminología comercial en el nombre de un producto.
+function abreviar(nombre) {
+  return reemplazoTerminologia(String(nombre || '').trim());
+}
+
+/* ----------------------------------------------------------------
+   NOTAS TÉCNICAS POR SKU
+   Aclaración corta que se imprime como SEGUNDA LÍNEA debajo del nombre
+   del producto, sólo para los SKUs listados acá. Si el SKU no aparece
+   en este mapa, la tarjeta se arma igual que siempre (sin línea extra).
+
+   Es una lista blanca deliberada: no se infiere nada del nombre ni del
+   Excel. Para sumar una nota nueva, agregar la línea correspondiente.
+   La nota se muestra únicamente si el SKU llegó a renderizarse, es decir
+   si vino con stock en el Excel del día.
+   ---------------------------------------------------------------- */
+const NOTAS_SKU = {
+  '7226': 'SLIM*',   // ACCESORIO ADAPTADOR 3EF II NG
+  '7227': 'SLIM*',   // ACCESORIO ADAPTADOR 3EF II BL
+};
+
+/* ----------------------------------------------------------------
+   RENDER
+   ---------------------------------------------------------------- */
+/* ----------------------------------------------------------------
+   CONSTRUIR SECCIONES DINÁMICAS desde FAMILIAS_MAP
+   Si tenemos el archivo de organización cargado, generamos las secciones
+   automáticamente agrupando por Vertical > Familia > Subfamilia.
+   Si no, devolvemos el array SECCIONES estático como fallback.
+   ---------------------------------------------------------------- */
+
+// ====================================================================
+// ORDEN ABSOLUTO DE SECCIONES — definido por el cliente
+// Cada entrada es una lista [vertical, familia, subfamilia] o [vertical, 'COLECCIÓN', nombre]
+// "VENTILADORES" es un caso especial al final (productos sin organización en el Excel)
+// ====================================================================
+const ORDEN_SECCIONES = [
+  // INTERIOR
+  ['INTERIOR', 'COLECCIÓN', 'POCKET'],          //  1
+  ['INTERIOR', 'COLECCIÓN', 'FIELTRO'],         //  2
+  ['INTERIOR', 'COLECCIÓN', 'CIELO'],           //  3
+  ['INTERIOR', 'COLECCIÓN', 'DYNA'],            //  4  (ex Lineales|Lineal)
+  ['INTERIOR', 'LINEALES', 'UNIÓN'],            //  5
+  ['INTERIOR', 'LINEALES', 'ACCESORIO'],        //  6
+  ['INTERIOR', 'RIELES', 'RIEL'],               //  7
+  ['INTERIOR', 'RIELES', 'BARRAL LED'],         //  8
+  ['INTERIOR', 'RIELES', 'CABEZAL'],            //  9
+  ['INTERIOR', 'RIELES', 'UNIÓN'],              // 10
+  ['INTERIOR', 'RIELES', 'ACCESORIO'],          // 11
+  ['INTERIOR', 'PERFILES', 'PERFIL'],           // 12
+  ['INTERIOR', 'PERFILES', 'ACCESORIO'],        // 13
+  ['INTERIOR', 'DE TECHO', 'CABEZAL'],          // 14
+  ['INTERIOR', 'DE TECHO', 'APLIQUE'],          // 15
+  ['INTERIOR', 'DE TECHO', 'ACCESORIO'],        // 16
+  ['INTERIOR', 'COLECCIÓN', 'CARDÁNICO'],       // 17
+  ['INTERIOR', 'DE TECHO', 'EMPOTRABLE'],       // 18
+  ['INTERIOR', 'COLECCIÓN', 'CONFORT VISUAL'],  // 19
+  ['INTERIOR', 'DE TECHO', 'COLGANTE'],         // 20
+  ['INTERIOR', 'COLECCIÓN', 'NIAO'],            // 21
+  ['INTERIOR', 'DE PARED', 'EMPOTRABLE'],       // 22
+  ['INTERIOR', 'DE PARED', 'APLIQUE'],          // 23
+  ['INTERIOR', 'DE APOYO', 'MESA'],             // 24
+  ['INTERIOR', 'DE APOYO', 'PIE'],              // 25
+
+  // EXTERIOR
+  ['EXTERIOR', 'DE PARED', 'APLIQUE'],          // 26
+  ['EXTERIOR', 'DE PARED', 'EMPOTRABLE'],       // 27
+  ['EXTERIOR', 'DE PISO', 'BOLARDO'],           // 28
+  ['EXTERIOR', 'DE PISO', 'APLIQUE'],           // 29
+  ['EXTERIOR', 'DE PISO', 'EMPOTRABLE'],        // 30
+  ['EXTERIOR', 'DE TECHO', 'COLGANTE'],         // 31
+  ['EXTERIOR', 'DE TECHO', 'APLIQUE'],          // 32
+  ['EXTERIOR', 'COLECCIÓN', 'CHILL'],           // 33
+  ['EXTERIOR', 'ESTACAS', 'APLIQUE'],           // 34
+  ['EXTERIOR', 'ESTACAS', 'PROYECTOR'],         // 35
+  ['EXTERIOR', 'ESTACAS', 'ESTACA'],            // 36
+  ['EXTERIOR', 'ESTACAS', 'ACCESORIO'],         // 37
+
+  // VENTILADORES (especial: productos sin organización en Excel)
+  ['VENTILADORES LAFTDREN'],                     // 38
+];
+
+// Devuelve el índice exacto de una sección en ORDEN_SECCIONES, o 999 si no está
+function indiceOrdenSeccion(path) {
+  for (let i = 0; i < ORDEN_SECCIONES.length; i++) {
+    const ref = ORDEN_SECCIONES[i];
+    if (ref.length !== path.length) continue;
+    let match = true;
+    for (let j = 0; j < ref.length; j++) {
+      if (ref[j] !== path[j]) { match = false; break; }
+    }
+    if (match) return i;
+  }
+  return 999;
+}
+
+function construirSeccionesDinamicas() {
+  // Si no hay familias cargadas, fallback al mapeo estático
+  if (Object.keys(FAMILIAS_MAP).length === 0) {
+    console.log('[SECCIONES] Usando mapeo estático (no hay archivo de familias)');
+    return SECCIONES;
+  }
+
+  // Detectar si un valor de "colección" es válido (no vacío, no "-")
+  const tieneColeccion = c => {
+    if (!c) return false;
+    const s = String(c).trim();
+    return s.length > 0 && s !== '-';
+  };
+
+  // Cada SKU se asigna a una key normalizada que coincide con ORDEN_SECCIONES
+  // ej: ["INTERIOR","COLECCIÓN","FIELTRO"] o ["INTERIOR","DE TECHO","CABEZAL"]
+  const grupos = {};   // keyStr → { path: [...], skus: [], nuevos: [] }
+  const ventiladores = [];
+  const sinClasificar = [];
+  const seccionesNoListadas = {};  // combinaciones que aparecen pero no están en ORDEN_SECCIONES
+
+  const claveDePath = path => path.join(' | ');
+
+  for (const skuStr of Object.keys(STOCK_MAP)) {
+    const sku = parseInt(skuStr);
+    const org = FAMILIAS_MAP[sku];
+    const stockProd = STOCK_MAP[skuStr];
+
+    // Sin entrada en familias → ventilador o sin clasificar
+    if (!org) {
+      if (stockProd.nombre && stockProd.nombre.toUpperCase().includes('VENTILADOR')) {
+        ventiladores.push(sku);
+      } else {
+        sinClasificar.push(sku);
+      }
+      continue;
+    }
+
+    // Estado Discontinuo: ANTES se ocultaba. Ahora se muestra con el
+    // cartel "ÚLTIMAS UNIDADES" y se ordena al final de su sección.
+
+    const vert = (org.vert || '').toUpperCase();
+    const fam    = (org.fam    || '?').toUpperCase();
+    const subfam = (org.subfam || '?').toUpperCase();
+
+    // Construir el path según si tiene colección o no
+    let path;
+    if (tieneColeccion(org.coleccion)) {
+      const colName = String(org.coleccion).trim().toUpperCase();
+
+      // REGLA ESPECIAL: La colección DYNA agrupa SOLO los productos lineales.
+      // Las uniones / accesorios / perfiles DYNA salen a sus secciones normales:
+      //   • Subfam Unión + Familia Lineales → INTERIOR | LINEALES | UNIÓN
+      //   • Subfam Accesorio + Familia Lineales → INTERIOR | LINEALES | ACCESORIO
+      //   • Subfam Perfil + Familia Perfiles → INTERIOR | PERFILES | PERFIL
+      //   • Subfam Accesorio + Familia Perfiles → INTERIOR | PERFILES | ACCESORIO
+      if (colName === 'DYNA' && subfam !== 'LINEAL') {
+        path = [vert, fam, subfam];
+      } else {
+        path = [vert, 'COLECCIÓN', colName];
+      }
+    } else {
+      path = [vert, fam, subfam];
+    }
+
+    const key = claveDePath(path);
+
+    // Si la combinación no figura en ORDEN_SECCIONES, la guardamos aparte para alertar
+    if (indiceOrdenSeccion(path) === 999) {
+      if (!seccionesNoListadas[key]) {
+        seccionesNoListadas[key] = { path, skus: [], nuevos: [], descontinuados: [] };
+      }
+      seccionesNoListadas[key].skus.push(sku);
+      if (org.estado === 'Nuevo') seccionesNoListadas[key].nuevos.push(sku);
+      if (org.estado === 'Discontinuo') seccionesNoListadas[key].descontinuados.push(sku);
+      continue;
+    }
+
+    if (!grupos[key]) {
+      grupos[key] = { path, skus: [], nuevos: [], descontinuados: [] };
+    }
+    grupos[key].skus.push(sku);
+    if (org.estado === 'Nuevo') grupos[key].nuevos.push(sku);
+    if (org.estado === 'Discontinuo') grupos[key].descontinuados.push(sku);
+  }
+
+  // Agregar VENTILADORES al grupo si hay
+  if (ventiladores.length > 0) {
+    grupos[claveDePath(['VENTILADORES LAFTDREN'])] = {
+      path: ['VENTILADORES LAFTDREN'],
+      skus: ventiladores,
+      nuevos: [],
+      descontinuados: [],
+    };
+  }
+
+  // Construir el array final SIGUIENDO EXACTAMENTE el orden de ORDEN_SECCIONES
+  // Solo se incluyen las secciones que tengan al menos un producto
+  const secciones = [];
+  for (const refPath of ORDEN_SECCIONES) {
+    const key = claveDePath(refPath);
+    if (grupos[key] && grupos[key].skus.length > 0) {
+      secciones.push({
+        id: 'sec_' + secciones.length,
+        path: grupos[key].path,
+        nuevos: grupos[key].nuevos,
+        descontinuados: grupos[key].descontinuados,
+        skus:   grupos[key].skus,
+      });
+    }
+  }
+
+  // Secciones que aparecen en datos pero no están en ORDEN_SECCIONES (warn)
+  const noListadas = Object.values(seccionesNoListadas);
+  if (noListadas.length > 0) {
+    console.warn('[SECCIONES] Combinaciones encontradas en el Excel pero NO listadas en ORDEN_SECCIONES:');
+    noListadas.forEach(g => {
+      console.warn(`  • ${g.path.join(' | ')}  (${g.skus.length} productos)`);
+      // Las agregamos al final para no perder productos
+      secciones.push({
+        id: 'sec_' + secciones.length,
+        path: g.path,
+        nuevos: g.nuevos,
+        descontinuados: g.descontinuados,
+        skus:   g.skus,
+      });
+    });
+  }
+
+  // SKUs sin clasificar al final (no aparecen en familias)
+  if (sinClasificar.length > 0) {
+    secciones.push({
+      id: 'sin_clasificar',
+      path: ['OTROS', 'SIN CLASIFICAR'],
+      nuevos: [],
+      descontinuados: [],
+      skus: sinClasificar,
+    });
+  }
+
+  // ============================================================
+  // ORDEN INTERNO PERSONALIZADO POR SECCIÓN
+  // Reglas específicas pedidas por el cliente:
+  //   • POCKET           : Empotrable → Aplique
+  //   • FIELTRO          : Colgante → Plafón → Aplique
+  //   • CHILL            : Proyector → Accesorio
+  //   • CONFORT VISUAL   : KRONE primero (juntos), después el resto
+  //   • RIELES|ACCESORIO : HOUSING y COBERTOR al final
+  // ============================================================
+  aplicarOrdenInterno(secciones);
+
+  console.log(`[SECCIONES] ${secciones.length} secciones · ${ventiladores.length} ventiladores · ${sinClasificar.length} sin clasificar · ${noListadas.length} no listadas`);
+  return secciones;
+}
+
+// Devuelve un peso para ordenar SKUs dentro de una sección por subfamilia
+function pesoSubfamilia(sku, ordenSubfamilias) {
+  const org = FAMILIAS_MAP[sku];
+  if (!org) return 999;
+  const subfam = (org.subfam || '').toLowerCase();
+  for (let i = 0; i < ordenSubfamilias.length; i++) {
+    if (subfam === ordenSubfamilias[i].toLowerCase()) return i;
+  }
+  return 999;
+}
+
+function aplicarOrdenInterno(secciones) {
+  for (const sec of secciones) {
+    const path = sec.path.join(' | ');
+
+    // POCKET: Empotrable primero, después Aplique
+    if (path === 'INTERIOR | COLECCIÓN | POCKET') {
+      const orden = ['Empotrable', 'Aplique'];
+      sec.skus.sort((a, b) => {
+        const pa = pesoSubfamilia(a, orden);
+        const pb = pesoSubfamilia(b, orden);
+        if (pa !== pb) return pa - pb;
+        return a - b;  // dentro del mismo grupo, por SKU
+      });
+    }
+
+    // FIELTRO: Colgante → Plafón → Aplique
+    else if (path === 'INTERIOR | COLECCIÓN | FIELTRO') {
+      const orden = ['Colgante', 'Plafón', 'Aplique'];
+      sec.skus.sort((a, b) => {
+        const pa = pesoSubfamilia(a, orden);
+        const pb = pesoSubfamilia(b, orden);
+        if (pa !== pb) return pa - pb;
+        return a - b;
+      });
+    }
+
+    // CHILL: Proyector primero, después Accesorio
+    else if (path === 'EXTERIOR | COLECCIÓN | CHILL') {
+      const orden = ['Proyector', 'Accesorio'];
+      sec.skus.sort((a, b) => {
+        const pa = pesoSubfamilia(a, orden);
+        const pb = pesoSubfamilia(b, orden);
+        if (pa !== pb) return pa - pb;
+        return a - b;
+      });
+    }
+
+    // CONFORT VISUAL: KRONE primero (juntos), después el resto
+    else if (path === 'INTERIOR | COLECCIÓN | CONFORT VISUAL') {
+      sec.skus.sort((a, b) => {
+        const nA = ((FAMILIAS_MAP[a] && FAMILIAS_MAP[a].nombre) || (STOCK_MAP[a] && STOCK_MAP[a].nombre) || '').toUpperCase();
+        const nB = ((FAMILIAS_MAP[b] && FAMILIAS_MAP[b].nombre) || (STOCK_MAP[b] && STOCK_MAP[b].nombre) || '').toUpperCase();
+        const aKR = nA.includes('KRONE');
+        const bKR = nB.includes('KRONE');
+        if (aKR && !bKR) return -1;
+        if (!aKR && bKR) return  1;
+        return a - b;  // dentro del mismo grupo, por SKU
+      });
+    }
+
+    // INTERIOR | RIELES | ACCESORIO: HOUSING y COBERTOR al final
+    else if (path === 'INTERIOR | RIELES | ACCESORIO') {
+      sec.skus.sort((a, b) => {
+        const nA = ((FAMILIAS_MAP[a] && FAMILIAS_MAP[a].nombre) || (STOCK_MAP[a] && STOCK_MAP[a].nombre) || '').toUpperCase();
+        const nB = ((FAMILIAS_MAP[b] && FAMILIAS_MAP[b].nombre) || (STOCK_MAP[b] && STOCK_MAP[b].nombre) || '').toUpperCase();
+        const aFinal = nA.includes('HOUSING') || nA.includes('COBERTOR');
+        const bFinal = nB.includes('HOUSING') || nB.includes('COBERTOR');
+        if (aFinal && !bFinal) return  1;
+        if (!aFinal && bFinal) return -1;
+        return 0;
+      });
+    }
+  }
+}
+
+function render() {
+  try {
+    const hayFotos = Object.keys(PHOTO_MAP).length > 0;
+    const area = document.getElementById('pdf-area');
+    area.innerHTML = '';
+
+    console.log(`[RENDER] STOCK_MAP: ${Object.keys(STOCK_MAP).length} productos · PHOTO_MAP: ${Object.keys(PHOTO_MAP).length} fotos`);
+
+    // PORTADA (con logo custom si existe, o texto LEUK/GROUP de fallback)
+    const logoHTML = CUSTOM.logoUrl
+      ? `<img src="${CUSTOM.logoUrl}" class="leuk-logo-img-custom" alt="LEUK Group">`
+      : `<div class="leuk-logo-txt">LEUK</div>
+         <div class="leuk-logo-sub">GROUP</div>`;
+
+    const portada = document.createElement('div');
+    portada.className = 'portada';
+    portada.innerHTML = `
+      <div class="leuk-logo-wrap">${logoHTML}</div>
+      <div class="titulo-stock">STOCK ACTUALIZADO LEUK ${fechaCortaElegida()}</div>
+    `;
+    area.appendChild(portada);
+
+    // Si no hay productos, avisar visualmente
+    if (Object.keys(STOCK_MAP).length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 80px 40px; text-align: center; color: #888; font-size: 1rem;';
+      empty.innerHTML = '<p style="margin-bottom: 12px; font-size: 1.2rem; color: #555;">⚠️ No hay productos cargados</p>' +
+                        '<p>Subí un archivo Excel con la lista de stock para ver el catálogo.</p>';
+      area.appendChild(empty);
+      document.getElementById('st-prods').textContent = 0;
+      document.getElementById('st-secs').textContent  = 0;
+      document.getElementById('st-fecha').textContent = fechaLargaElegida();
+      return;
+    }
+
+    // Contar productos visibles
+    let totalMostrados = 0;
+
+    // Set para evitar duplicados: cada SKU aparece solo en su PRIMERA sección
+    const skusYaMostrados = new Set();
+
+    // SECCIONES dinámicas si hay archivo de familias, fallback al estático si no
+    const seccionesActivas = construirSeccionesDinamicas();
+
+    // Iterar secciones
+    seccionesActivas.forEach(sec => {
+      // Filtrar: existe en stock + tiene stock + no fue mostrado en sección previa
+      let skusVisibles = sec.skus.filter(sku => {
+        if (skusYaMostrados.has(sku)) return false;     // dedupe
+        const p = STOCK_MAP[sku];
+        if (!p) return false;
+        if (p.disp === 'SIN STOCK') return false;
+        return true;
+      });
+      if (skusVisibles.length === 0) return;
+
+      // Marcar como mostrados
+      skusVisibles.forEach(sku => skusYaMostrados.add(sku));
+
+      const nuevosSet = new Set(sec.nuevos);
+      const descontinuadosSet = new Set(sec.descontinuados || []);
+      // Un SKU discontinuado nunca se trata como "nuevo" ni como "resto":
+      // va siempre al bloque final con el cartel "ÚLTIMAS UNIDADES".
+      const nuevosVisibles        = skusVisibles.filter(s => nuevosSet.has(s) && !descontinuadosSet.has(s));
+      const descontinuadosVisibles = skusVisibles.filter(s => descontinuadosSet.has(s));
+      const restoVisibles          = skusVisibles.filter(s => !nuevosSet.has(s) && !descontinuadosSet.has(s));
+
+      totalMostrados += skusVisibles.length;
+
+      // Contenedor de sección
+      const secEl = document.createElement('section');
+      secEl.className = 'seccion';
+
+      // Header de la sección
+      const header = document.createElement('div');
+      header.className = 'sec-header';
+      header.innerHTML = secPathHTML(sec.path);
+      secEl.appendChild(header);
+
+      // Una sola grilla, con los nuevos primero (mantienen el badge "Nuevo" en cada tarjeta)
+      const grid = document.createElement('div');
+      grid.className = 'product-grid' + (sec.id === 'ventiladores' ? ' grid-venti' : '');
+
+      // Orden dentro de la grilla:
+      //   1) NUEVOS (badge verde "Nuevo")  → al comienzo
+      //   2) Resto de productos activos
+      //   3) DISCONTINUADOS (badge negro "Últimas unidades") → al final
+      nuevosVisibles.forEach(sku => {
+        grid.appendChild(renderCard(sku, true, hayFotos));            // es nuevo → badge verde
+      });
+      restoVisibles.forEach(sku => {
+        grid.appendChild(renderCard(sku, false, hayFotos));           // producto normal
+      });
+      descontinuadosVisibles.forEach(sku => {
+        grid.appendChild(renderCard(sku, false, hayFotos, true));     // discontinuado → badge negro
+      });
+
+      secEl.appendChild(grid);
+      area.appendChild(secEl);
+    });
+
+    console.log(`[RENDER] ${totalMostrados} productos mostrados en el PDF`);
+
+    // Actualizar stats
+    document.getElementById('st-prods').textContent = totalMostrados;
+    document.getElementById('st-secs').textContent  = seccionesActivas.length;
+    document.getElementById('st-fecha').textContent = fechaLargaElegida();
+
+    // Edición: enganchar click handlers + zonas de "+ insertar corte"
+    attachCardClickHandler();
+    attachInsertBreakZones();
+    markFotosLoadedClass();
+    // Si ya había una foto en el portapapeles antes del render (p.ej. cargaste
+    // un Excel mientras tenías una foto copiada), sincronizar los botones nuevos.
+    updatePasteButtons();
+  } catch(err) {
+    console.error('[RENDER] Error:', err);
+    const area = document.getElementById('pdf-area');
+    area.innerHTML = `<div style="padding: 80px 40px; text-align: center; color: #c00;">
+      <p style="font-size: 1.2rem; margin-bottom: 12px;">⚠️ Error al renderizar</p>
+      <p style="font-size: 0.85rem;">${err.message}</p>
+      <p style="margin-top: 16px; font-size: 0.7rem; color: #888;">Mirá la consola del navegador (F12) para más detalles.</p>
+    </div>`;
+  }
+}
+
+function renderCard(sku, esNuevo, hayFotos, esDescontinuado) {
+  const p = STOCK_MAP[sku];
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.dataset.sku = sku;
+  card.dataset.cardId = `card-${sku}-${Math.random().toString(36).slice(2,7)}`;
+
+  // El nombre se toma del Excel de Familias si está cargado (es más limpio,
+  // sin specs técnicas). Si no está, usamos el del Excel de Stock como fallback.
+  const orgInfo  = FAMILIAS_MAP[sku];
+  let nombre    = (orgInfo && orgInfo.nombre) ? String(orgInfo.nombre).trim() : p.nombre;
+
+  // Caso especial: ventiladores LAFTDREN — el prefijo "VENTILADOR DE TECHO LAFTDREN"
+  // ya está implícito en el título de la sección, así que lo quitamos del nombre.
+  // Ej: "VENTILADOR DE TECHO LAFTDREN 441 A" → "441 A"
+  nombre = nombre.replace(/^VENTILADOR\s+DE\s+TECHO\s+LAFTDREN\s+/i, '').trim();
+
+  const nombreCorto = abreviar(nombre);
+
+  // Nota técnica opcional (ver NOTAS_SKU). Se inyecta DENTRO de .prod-name
+  // como bloque, así cae siempre en su propia línea justo debajo del nombre,
+  // sin importar si el nombre ocupó una o dos líneas.
+  const notaSku  = NOTAS_SKU[String(sku)] || '';
+  const notaHTML = notaSku ? `<span class="prod-nota">${notaSku}</span>` : '';
+
+  let photoHTML = '';
+  if (hayFotos && PHOTO_MAP[sku]) {
+    // Foto extraída del zip
+    photoHTML = `<img src="${PHOTO_MAP[sku]}" alt="${nombreCorto}" crossorigin="anonymous">`;
+  } else if (hayFotos) {
+    // No hay foto para este SKU → placeholder con "sin foto"
+    photoHTML = `<div class="photo-placeholder" title="Falta foto del SKU ${sku}">◌</div>`;
+  } else {
+    // Sin fotos cargadas
+    photoHTML = `<div class="photo-placeholder">◌</div>`;
+  }
+
+  // Badge de estado en la esquina de la foto.
+  //   • "Nuevo"            → fondo verde (producto nuevo)
+  //   • "Stock Final"      → fondo negro (producto discontinuado)
+  // Son mutuamente excluyentes: si por algún motivo un SKU tuviera ambos
+  // estados, prioriza el cartel de discontinuado.
+  // NOTA v24: cambia SÓLO el texto del cartel ("Últimas unidades" → "Stock Final").
+  // El criterio de detección (valor "ULTIMAS UNIDADES" en el Excel), la clase CSS,
+  // el formato y la ubicación quedan exactamente iguales.
+  let estadoBadge = '';
+  if (esDescontinuado) {
+    estadoBadge = '<span class="badge-descontinuado">Stock Final</span>';
+  } else if (esNuevo) {
+    estadoBadge = '<span class="badge-nuevo">Nuevo</span>';
+  }
+
+  // Toolbar flotante (oculto hasta que se selecciona la tarjeta).
+  // Acciones SOLO sobre la foto: la tarjeta (nombre + SKU) viene del Excel
+  // y no se toca.
+  const toolbarHTML = `
+    <div class="foto-toolbar" onclick="event.stopPropagation()">
+      <button type="button" title="Achicar foto (mantiene proporciones)" onclick="resizePhoto(this, -1)">➖</button>
+      <button type="button" title="Agrandar foto (mantiene proporciones)" onclick="resizePhoto(this, +1)">➕</button>
+      <button type="button" title="Copiar esta foto al portapapeles" onclick="copyPhoto(this)">📋 Copiar</button>
+      <button type="button" class="btn-paste" title="Pegar la foto copiada en este recuadro" onclick="pastePhoto(this)" disabled>📥 Pegar</button>
+      <button type="button" class="danger" title="Quitar la foto (queda placeholder)" onclick="deletePhoto(this)">🗑️ Borrar</button>
+    </div>`;
+
+  card.innerHTML = `
+    ${toolbarHTML}
+    ${estadoBadge}
+    <div class="photo-box"><div class="photo-inner">${photoHTML}</div></div>
+    <div class="prod-name" title="${nombre}${notaSku ? ' ' + notaSku : ''}">${nombreCorto}${notaHTML}</div>
+    <div class="prod-sku">SKU ${sku}</div>
+  `;
+  return card;
+}
+
+/* ----------------------------------------------------------------
+   PERSONALIZACIÓN: LOGO + TIPOGRAFÍAS
+   Guardamos logo como base64 y fuentes como base64 en localStorage
+   para que no haya que re-subirlos cada vez.
+   ---------------------------------------------------------------- */
+const CUSTOM = {
+  logoUrl: null,      // objectURL del logo cargado
+  fonts: {            // nombres de familia custom activas
+    titulo: null,
+    nombre: null,
+    sku:    null,
+  }
+};
+
+const LS_KEY_LOGO  = 'leuk_custom_logo';
+const LS_KEY_FONTS = 'leuk_custom_fonts';
+
+// Convierte un File a base64 string (sin prefijo data:)
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(r.result);   // r.result ya viene como data URL
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+function toggleCustom() {
+  const panel = document.getElementById('panel-custom');
+  const btn   = document.getElementById('btn-custom');
+  panel.classList.toggle('on');
+  btn.classList.toggle('activo');
+}
+
+/* ----- LOGO ----- */
+async function loadLogo(file) {
+  if (!file) return;
+  try {
+    const dataUrl = await fileToBase64(file);
+    applyLogo(dataUrl, file.name);
+    localStorage.setItem(LS_KEY_LOGO, JSON.stringify({ dataUrl, name: file.name }));
+  } catch(err) {
+    alert('Error cargando el logo: ' + err.message);
+  }
+}
+
+function applyLogo(dataUrl, filename) {
+  CUSTOM.logoUrl = dataUrl;
+  const preview = document.getElementById('preview-logo');
+  preview.src = dataUrl;
+  preview.style.display = 'block';
+  document.getElementById('up-logo').classList.add('loaded');
+  document.getElementById('up-logo-txt').textContent = '✓ ' + (filename || 'logo cargado');
+  render();
+}
+
+/* ----- FUENTES ----- */
+async function loadFont(file, tipo) {
+  if (!file) return;
+  if (!['titulo','nombre','sku'].includes(tipo)) return;
+
+  try {
+    const dataUrl  = await fileToBase64(file);
+    await applyFont(dataUrl, file.name, tipo);
+
+    // Persistir
+    const saved = JSON.parse(localStorage.getItem(LS_KEY_FONTS) || '{}');
+    saved[tipo] = { dataUrl, name: file.name };
+    localStorage.setItem(LS_KEY_FONTS, JSON.stringify(saved));
+  } catch(err) {
+    alert(`Error cargando la fuente (${tipo}): ${err.message}`);
+  }
+}
+
+async function applyFont(dataUrl, filename, tipo) {
+  // Convertir data URL → ArrayBuffer para FontFace
+  const resp = await fetch(dataUrl);
+  const buf  = await resp.arrayBuffer();
+
+  const familyName = `leuk-custom-${tipo}`;
+  const face = new FontFace(familyName, buf);
+  await face.load();
+  document.fonts.add(face);
+
+  CUSTOM.fonts[tipo] = familyName;
+
+  // Aplicar al CSS var
+  document.documentElement.style.setProperty(
+    `--font-${tipo}`,
+    `"${familyName}", sans-serif`
+  );
+
+  // Update UI
+  document.getElementById(`up-font-${tipo}`).classList.add('loaded');
+  document.getElementById(`up-font-${tipo}-txt`).textContent = '✓ ' + (filename || 'fuente cargada');
+
+  // El preview del panel de control se refresca solo por CSS var,
+  // pero forzamos render para que actualicen las tarjetas del PDF
+  render();
+}
+
+/* ----- RESET ----- */
+function resetCustom() {
+  if (!confirm('¿Quitar logo y tipografías personalizadas y volver a los valores por defecto?')) return;
+
+  localStorage.removeItem(LS_KEY_LOGO);
+  localStorage.removeItem(LS_KEY_FONTS);
+
+  CUSTOM.logoUrl = null;
+  CUSTOM.fonts = { titulo:null, nombre:null, sku:null };
+
+  // Limpiar CSS vars (vuelven a los defaults Barlow)
+  document.documentElement.style.removeProperty('--font-titulo');
+  document.documentElement.style.removeProperty('--font-nombre');
+  document.documentElement.style.removeProperty('--font-sku');
+
+  // Limpiar UI
+  const preview = document.getElementById('preview-logo');
+  preview.style.display = 'none';
+  preview.src = '';
+
+  ['logo','font-titulo','font-nombre','font-sku'].forEach(id => {
+    const el  = document.getElementById('up-' + id);
+    const txt = document.getElementById('up-' + id + '-txt');
+    if (el)  el.classList.remove('loaded');
+    if (txt) txt.textContent = id === 'logo'
+      ? 'Elegir PNG / JPG / SVG…'
+      : 'Elegir TTF / OTF / WOFF…';
+  });
+
+  render();
+}
+
+/* ----- RESTAURAR DESDE LOCALSTORAGE AL INICIAR ----- */
+async function restoreCustom() {
+  // Logo
+  try {
+    const raw = localStorage.getItem(LS_KEY_LOGO);
+    if (raw) {
+      const { dataUrl, name } = JSON.parse(raw);
+      applyLogo(dataUrl, name);
+    }
+  } catch {}
+
+  // Fuentes
+  try {
+    const raw = localStorage.getItem(LS_KEY_FONTS);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      for (const tipo of ['titulo','nombre','sku']) {
+        if (saved[tipo]) {
+          try {
+            await applyFont(saved[tipo].dataUrl, saved[tipo].name, tipo);
+          } catch(err) {
+            console.warn(`No se pudo restaurar la fuente ${tipo}:`, err);
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
+/* ----------------------------------------------------------------
+   OVERLAY HELPERS
+   ---------------------------------------------------------------- */
+function showOverlay(title, sub, withBar) {
+  document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-sub').textContent = sub;
+  document.getElementById('ov-bar-wrap').style.display = withBar ? 'block' : 'none';
+  document.getElementById('ov-bar').style.width = '0%';
+  document.getElementById('overlay').classList.add('on');
+}
+function updateOverlayProgress(pct, sub) {
+  document.getElementById('ov-bar').style.width = pct + '%';
+  if (sub) document.getElementById('ov-sub').textContent = sub;
+}
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('on');
+}
+function updateFotosPill() {
+  const count = Object.keys(PHOTO_MAP).length;
+  const pill = document.getElementById('fotos-pill');
+  if (count > 0) {
+    pill.classList.add('activo');
+    pill.textContent = count + ' fotos cargadas';
+  } else {
+    pill.classList.remove('activo');
+    pill.textContent = 'Sin fotos cargadas';
+  }
+}
+
+/* ----------------------------------------------------------------
+   CARGAR EXCEL DE ORGANIZACIÓN DE FAMILIAS
+   Estructura esperada: SKU | Nombre | Subfamilia | Familia | Vertical | Colección | Estado
+   El "Estado" determina si el producto es Nuevo / Activo / Discontinuo
+   La sección del PDF se construye como: Vertical > Familia > Subfamilia
+   ---------------------------------------------------------------- */
+function updateFamiliasPill() {
+  const count = Object.keys(FAMILIAS_MAP).length;
+  const pill = document.getElementById('familias-pill');
+  if (count > 0) {
+    pill.classList.add('activo');
+    pill.textContent = count + ' SKUs en organización';
+  } else {
+    pill.classList.remove('activo');
+    pill.textContent = 'Sin familias cargadas';
+  }
+}
+
+function loadFamilias(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      console.log('[FAMILIAS] Iniciando lectura:', file.name);
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      console.log('[FAMILIAS] Hojas:', wb.SheetNames);
+
+      const ws = wb.Sheets['Luminaría'] || wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+      // Detectar fila de header
+      let headerRow = -1;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        const row = rows[i] || [];
+        const txt = row.map(c => String(c||'').toLowerCase()).join(' ');
+        if (txt.includes('sku') && txt.includes('nombre') && txt.includes('subfamilia')) {
+          headerRow = i; break;
+        }
+      }
+      if (headerRow < 0) {
+        alert('⚠️ No se reconoce la estructura del archivo de familias.\nEl archivo debe tener columnas: SKU, Nombre, Subfamilia, Familia, Vertical, Colección, Estado');
+        return;
+      }
+
+      const headers = rows[headerRow].map(h => String(h||'').toLowerCase().trim());
+      const idxSKU       = headers.findIndex(h => h === 'sku');
+      const idxNombre    = headers.findIndex(h => h === 'nombre');
+      const idxSubfam    = headers.findIndex(h => h.includes('subfamilia'));
+      const idxFamilia   = headers.findIndex(h => h === 'familia');
+      const idxVertical  = headers.findIndex(h => h === 'vertical');
+      const idxColeccion = headers.findIndex(h => h.includes('colecc'));
+      const idxEstado    = headers.findIndex(h => h === 'estado');
+
+      console.log('[FAMILIAS] Columnas:', { idxSKU, idxNombre, idxSubfam, idxFamilia, idxVertical, idxColeccion, idxEstado });
+
+      const nuevoMap = {};
+      let conteoEstados = {};
+
+      for (let i = headerRow + 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row) continue;
+        const skuRaw = row[idxSKU];
+        const skuVal = typeof skuRaw === 'number' ? skuRaw : parseFloat(String(skuRaw || '').trim());
+        if (!skuVal || isNaN(skuVal)) continue;
+
+        const estado = String(row[idxEstado] || '').trim();
+        nuevoMap[Math.round(skuVal)] = {
+          nombre:    row[idxNombre] || '',
+          subfam:    row[idxSubfam] || '',
+          fam:       row[idxFamilia] || '',
+          vert:      row[idxVertical] || '',
+          coleccion: row[idxColeccion] || '',
+          estado:    estado,
+        };
+        conteoEstados[estado] = (conteoEstados[estado] || 0) + 1;
+      }
+
+      console.log(`[FAMILIAS] Total parseados: ${Object.keys(nuevoMap).length}`);
+      console.log('[FAMILIAS] Estados:', conteoEstados);
+
+      if (Object.keys(nuevoMap).length === 0) {
+        alert('⚠️ No se encontraron SKUs en el archivo. Verificá que tenga la estructura correcta.');
+        return;
+      }
+
+      // Reemplazar
+      Object.keys(FAMILIAS_MAP).forEach(k => delete FAMILIAS_MAP[k]);
+      Object.assign(FAMILIAS_MAP, nuevoMap);
+
+      // Persistir en localStorage (puede pesar bastante, usamos try/catch)
+      try {
+        localStorage.setItem(LS_KEY_FAMILIAS, JSON.stringify(nuevoMap));
+      } catch(err) {
+        console.warn('[FAMILIAS] No se pudo persistir en localStorage:', err);
+      }
+
+      updateFamiliasPill();
+
+      // Cuántos SKUs del stock están mapeados
+      const skusStock = new Set(Object.keys(STOCK_MAP).map(Number));
+      const skusOrg   = new Set(Object.keys(nuevoMap).map(Number));
+      const enAmbos   = [...skusStock].filter(s => skusOrg.has(s));
+      const sinMapeo  = [...skusStock].filter(s => !skusOrg.has(s));
+
+      let msg = `✓ Familias cargadas correctamente.\n\n`;
+      msg += `Total SKUs en archivo: ${skusOrg.size}\n`;
+      msg += `SKUs del stock con mapeo: ${enAmbos.length}\n`;
+      msg += `SKUs del stock SIN mapeo: ${sinMapeo.length}\n\n`;
+      msg += `Estados:\n`;
+      for (const [e, n] of Object.entries(conteoEstados)) msg += `  • ${e}: ${n}\n`;
+      if (sinMapeo.length > 0 && sinMapeo.length <= 30) {
+        msg += `\nSKUs sin mapeo:\n`;
+        sinMapeo.slice(0, 10).forEach(s => msg += `  • ${s}\n`);
+        if (sinMapeo.length > 10) msg += `  ... y ${sinMapeo.length - 10} más (estos van a "Sin clasificar")\n`;
+      }
+      alert(msg);
+
+      render();
+    } catch(err) {
+      console.error('[FAMILIAS] Error:', err);
+      alert('Error leyendo el Excel de familias: ' + err.message);
+    }
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function restoreFamilias() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_FAMILIAS);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.keys(FAMILIAS_MAP).forEach(k => delete FAMILIAS_MAP[k]);
+    Object.assign(FAMILIAS_MAP, data);
+    updateFamiliasPill();
+    console.log(`[FAMILIAS] Restaurado desde localStorage: ${Object.keys(FAMILIAS_MAP).length} SKUs`);
+  } catch(err) {
+    console.warn('[FAMILIAS] Error restaurando:', err);
+  }
+}
+
+
+/* ----------------------------------------------------------------
+   LEER EXCEL DE STOCK — versión ULTRA permisiva
+   Detecta columnas SKU / Nombre / Disponibilidad de 3 formas:
+     1. Por header: busca "SKU" y "DISPONIBILIDAD" en las primeras 10 filas
+     2. Por contenido: busca columnas con valores ALTO/MEDIO/BAJO/SIN STOCK
+     3. Si todo falla, vuelca un dump de las primeras 10 filas para diagnóstico
+   ---------------------------------------------------------------- */
+function loadXLSX(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      console.log('[XLSX] Iniciando lectura del archivo:', file.name, file.size, 'bytes');
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      console.log('[XLSX] Hojas encontradas:', wb.SheetNames);
+
+      const nuevoMap = {};
+      let totalFilasEscaneadas = 0;
+      const dumpHojas = [];   // para diagnóstico si falla todo
+
+      const VALORES_DISP = ['ALTO','MEDIO','BAJO','ULTIMAS UNIDADES','SIN STOCK','ÚLTIMAS UNIDADES','ULTIMAS','ÚLTIMAS','SIN','S/STOCK'];
+
+      const esValorDisp = v => {
+        if (!v) return false;
+        const s = String(v).trim().toUpperCase();
+        return VALORES_DISP.some(d => s === d || s.startsWith(d));
+      };
+
+      // Recorrer todas las hojas
+      wb.SheetNames.forEach(nombreHoja => {
+        const ws = wb.Sheets[nombreHoja];
+        if (!ws) return;
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, blankrows: false });
+        totalFilasEscaneadas += rows.length;
+
+        console.log(`\n[XLSX] === Hoja "${nombreHoja}" - ${rows.length} filas ===`);
+        if (rows.length > 0) {
+          console.log('[XLSX] Primera fila:', JSON.stringify(rows[0]));
+          console.log('[XLSX] Segunda fila:', JSON.stringify(rows[1]));
+        }
+
+        // Guardar dump por si falla todo
+        dumpHojas.push({
+          nombre: nombreHoja,
+          totalFilas: rows.length,
+          primerasFilas: rows.slice(0, 5)
+        });
+
+        const tripletas = [];
+
+        // ESTRATEGIA 1: Buscar headers "SKU" y "DISPONIBILIDAD"
+        for (let rowIdx = 0; rowIdx < Math.min(rows.length, 10); rowIdx++) {
+          const row = rows[rowIdx] || [];
+          for (let c = 0; c < row.length; c++) {
+            const cell = row[c];
+            if (!cell) continue;
+            const norm = String(cell).trim().toUpperCase();
+            if (norm === 'SKU' || norm === 'CÓDIGO' || norm === 'CODIGO') {
+              // Buscar "DISPONIBILIDAD" a la derecha
+              for (let d = c + 1; d < Math.min(c + 6, row.length); d++) {
+                const cc = row[d];
+                if (cc && String(cc).trim().toUpperCase().includes('DISPONIB')) {
+                  if (!tripletas.some(t => t.skuCol === c)) {
+                    tripletas.push({ skuCol: c, nomCol: c + 1, dispCol: d, metodo: 'header' });
+                  }
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // ESTRATEGIA 2: Si no encontró por header, buscar por contenido
+        // Una columna es "Disponibilidad" si tiene >5 valores ALTO/MEDIO/BAJO/SIN STOCK
+        if (tripletas.length === 0 && rows.length > 5) {
+          const numCols = Math.max(...rows.map(r => (r || []).length));
+          const conteoDisp = new Array(numCols).fill(0);
+
+          rows.forEach(row => {
+            if (!row) return;
+            for (let c = 0; c < numCols; c++) {
+              if (esValorDisp(row[c])) conteoDisp[c]++;
+            }
+          });
+
+          console.log('[XLSX] Conteo de valores tipo disponibilidad por columna:', conteoDisp);
+
+          // Para cada columna que parece disponibilidad, asumir que SKU está 2 a la izquierda y Nombre 1 a la izquierda
+          conteoDisp.forEach((conteo, dispCol) => {
+            if (conteo >= 5 && dispCol >= 2) {
+              const skuCol = dispCol - 2;
+              const nomCol = dispCol - 1;
+              if (!tripletas.some(t => t.skuCol === skuCol)) {
+                tripletas.push({ skuCol, nomCol, dispCol, metodo: 'contenido' });
+              }
+            }
+          });
+        }
+
+        console.log(`[XLSX] Tripletas detectadas en "${nombreHoja}":`, tripletas);
+
+        // Extraer productos
+        let productosHoja = 0;
+        rows.forEach((row, rowIdx) => {
+          if (!row) return;
+          tripletas.forEach(({ skuCol, nomCol, dispCol }) => {
+            const sku = row[skuCol];
+            const nom = row[nomCol];
+            const dis = row[dispCol];
+            if (!nom || !dis) return;
+
+            let skuNum = null;
+            if (typeof sku === 'number') skuNum = Math.round(sku);
+            else if (typeof sku === 'string' && /^\d+$/.test(sku.trim())) skuNum = parseInt(sku.trim());
+
+            // Rechazar valores fuera del rango realista de SKUs (evita fechas Excel ~46000)
+            if (!skuNum || skuNum < 1000 || skuNum > 19999) return;
+
+            // Validar que la disponibilidad parezca un valor válido
+            const dispStr = String(dis).trim().toUpperCase();
+            if (!esValorDisp(dispStr)) return;
+
+            const clean = String(nom).replace(/\s*LEUK\s*$/i, '').trim().toUpperCase();
+
+            // Si el "nombre" es exactamente un valor de disponibilidad, la columna está
+            // mal detectada. Usamos comparación EXACTA (no startsWith) para no filtrar
+            // productos cuyo nombre empiece con "SIN" (ej: SINTRA) o "ULTRA" etc.
+            const DISP_EXACTOS = new Set(['ALTO','MEDIO','BAJO','SIN STOCK','ULTIMAS UNIDADES',
+              'ÚLTIMAS UNIDADES','ULTIMAS','ÚLTIMAS','S/STOCK','SIN']);
+            if (DISP_EXACTOS.has(clean)) return;
+
+            nuevoMap[skuNum] = { nombre: clean, disp: dispStr };
+            productosHoja++;
+          });
+        });
+        console.log(`[XLSX] Productos extraídos de "${nombreHoja}": ${productosHoja}`);
+      });
+
+      console.log(`[XLSX] === TOTAL: ${Object.keys(nuevoMap).length} productos ===`);
+
+      if (Object.keys(nuevoMap).length === 0) {
+        // Imprimir dump completo en consola para diagnosticar
+        console.error('[XLSX] No se pudo extraer ningún producto. Dump de hojas:');
+        dumpHojas.forEach(h => {
+          console.error(`\n--- Hoja "${h.nombre}" (${h.totalFilas} filas) ---`);
+          h.primerasFilas.forEach((row, i) => {
+            console.error(`  Fila ${i}:`, JSON.stringify(row));
+          });
+        });
+
+        alert(
+          '⚠️ No se encontraron productos en el Excel.\n\n' +
+          'Se mantienen los datos actuales.\n\n' +
+          'Hojas encontradas: ' + wb.SheetNames.join(', ') + '\n' +
+          'Filas escaneadas: ' + totalFilasEscaneadas + '\n\n' +
+          '🔍 Abrí la consola del navegador (F12 → Console)\n' +
+          '   para ver el contenido de las primeras filas\n' +
+          '   y diagnosticar el problema.'
+        );
+        return;
+      }
+
+      // Reemplazar STOCK_MAP solo si el nuevo tiene datos
+      Object.keys(STOCK_MAP).forEach(k => delete STOCK_MAP[k]);
+      Object.keys(nuevoMap).forEach(k => STOCK_MAP[k] = nuevoMap[k]);
+
+      // Contar por estado
+      const stats = { ALTO:0, MEDIO:0, BAJO:0, 'ULTIMAS UNIDADES':0, 'SIN STOCK':0, OTROS:0 };
+      Object.values(STOCK_MAP).forEach(p => {
+        if (stats.hasOwnProperty(p.disp)) stats[p.disp]++;
+        else stats.OTROS++;
+      });
+
+      const stockOK = stats.ALTO + stats.MEDIO + stats.BAJO + stats['ULTIMAS UNIDADES'];
+      alert(
+        `✓ Excel cargado correctamente.\n\n` +
+        `Total productos: ${Object.keys(nuevoMap).length}\n` +
+        `Con stock: ${stockOK}\n` +
+        `Sin stock: ${stats['SIN STOCK']}\n` +
+        (stats.OTROS > 0 ? `Con disponibilidad desconocida: ${stats.OTROS}\n` : '') +
+        `\nDetalle: ALTO=${stats.ALTO}, MEDIO=${stats.MEDIO}, BAJO=${stats.BAJO}, ÚLTIMAS=${stats['ULTIMAS UNIDADES']}`
+      );
+
+      render();
+    } catch(err) {
+      console.error('[XLSX] Error:', err);
+      alert('Error leyendo Excel: ' + err.message + '\n\nMirá la consola (F12) para más detalles.\n\nLos datos actuales se mantienen sin cambios.');
+    }
+  };
+  r.onerror = err => {
+    console.error('[XLSX] FileReader error:', err);
+    alert('Error leyendo el archivo. Asegurate de que sea un .xlsx válido.');
+  };
+  r.readAsArrayBuffer(file);
+}
+
+/* ----------------------------------------------------------------
+   LEER ZIP DE FOTOS
+   Espera archivos con el SKU en el nombre:
+     6792.jpg, 6793.png, foto_6792.jpg, COLGANTE-PIETRO-6792.jpg, etc.
+   Busca un número de 4 o 5 dígitos en el nombre y lo matchea con STOCK_MAP.
+   ---------------------------------------------------------------- */
+/* ----------------------------------------------------------------
+   COMPRIMIR IMAGEN — redimensiona y convierte a JPEG
+   Esto evita que el navegador colapse con cientos de PNG pesados.
+   Una imagen de 5MB se reduce a ~50KB sin perder calidad visible
+   en tarjetas pequeñas del PDF.
+   ---------------------------------------------------------------- */
+async function comprimirImagen(blob, anchoMax = 600, calidad = 0.85) {
+  try {
+    // Crear bitmap desde el blob (más rápido que Image en memoria)
+    const bitmap = await createImageBitmap(blob);
+
+    // Calcular nuevas dimensiones manteniendo proporción
+    let { width, height } = bitmap;
+    if (width > anchoMax) {
+      height = Math.round(height * (anchoMax / width));
+      width  = anchoMax;
+    }
+
+    // Renderizar en canvas off-screen
+    const canvas = document.createElement('canvas');
+    canvas.width  = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Fondo blanco para evitar transparencias raras al convertir a JPEG
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();   // liberar memoria
+
+    // Convertir a JPEG comprimido
+    return await new Promise(resolve => {
+      canvas.toBlob(b => resolve(b || blob), 'image/jpeg', calidad);
+    });
+  } catch (err) {
+    // Si algo falla (formato raro, etc.), devolvemos el blob original
+    console.warn('[ZIP] No se pudo comprimir imagen, se usa original:', err);
+    return blob;
+  }
+}
+
+async function loadZipPhotos(file) {
+  if (!file) return;
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip no cargó. Revisá la conexión a internet y recargá la página.');
+    return;
+  }
+
+  showOverlay('LEYENDO ZIP', 'Descomprimiendo archivo…', true);
+  DIAG_LOG = [];   // reset diagnóstico
+
+  try {
+    const zip = await JSZip.loadAsync(file);
+
+    // Filtrar solo imágenes
+    const imagenes = [];
+    zip.forEach((path, entry) => {
+      if (entry.dir) return;
+      const ext = path.split('.').pop().toLowerCase();
+      if (['jpg','jpeg','png','webp','gif'].includes(ext)) {
+        imagenes.push({ path, entry });
+      }
+    });
+
+    if (imagenes.length === 0) {
+      hideOverlay();
+      alert('El zip no contiene imágenes (jpg/png/webp).');
+      return;
+    }
+
+    // Liberar objectURLs previos
+    Object.values(PHOTO_MAP).forEach(url => URL.revokeObjectURL(url));
+    Object.keys(PHOTO_MAP).forEach(k => delete PHOTO_MAP[k]);
+
+    // Construir lista de SKUs válidos
+    const skusValidos = new Set(Object.keys(STOCK_MAP).map(Number));
+    console.log(`[ZIP] SKUs válidos en el catálogo: ${skusValidos.size}`);
+    console.log(`[ZIP] Archivos de imagen en el zip: ${imagenes.length}`);
+
+    // ============================================================
+    // DICCIONARIO DE ABREVIATURAS Y SINÓNIMOS
+    // Mapea forma corta → forma canónica (la palabra que debería tener el match)
+    // Las claves se buscan como palabras completas en filenames
+    // ============================================================
+    const ABREVIATURAS = {
+      // Colores básicos
+      'bl':    'blanco',
+      'ng':    'negro',
+      'blng':  'blanconegro',     // combinación blanco+negro
+      'ngbl':  'blanconegro',
+      'vr':    'verde',
+      'az':    'azul',
+      'cb':    'terracota',
+      'tc':    'terracota',
+      'md':    'madera',
+      'mad':   'madera',
+      'gr':    'gris',
+      'bd':    'bordo',
+      'dr':    'dorado',
+      'crm':   'cromo',
+      'pl':    'plateado',
+      'mr':    'marron',
+
+      // Variantes
+      'i':     '1',
+      'ii':    '2',
+      'iii':   '3',
+      'iv':    '4',
+      'v':     '5',
+
+      // Números/cantidad
+      '1ef':   '1ef',
+      '3ef':   '3ef',
+    };
+
+    // Palabras del nombre del producto que se asocian con cada forma canónica
+    const SINONIMOS_PRODUCTO = {
+      'blanco':       ['blanco','bl'],
+      'negro':        ['negro','ng'],
+      'blanconegro':  ['blanco','negro','y'],   // si el producto dice "BLANCO Y NEGRO"
+      'verde':        ['verde','militar','vr'],
+      'azul':         ['azul','marino','az'],
+      'terracota':    ['terracota','cb','tc'],
+      'madera':       ['madera','mad','md'],
+      'gris':         ['gris','gr'],
+      'bordo':        ['bordo','bd'],
+      'dorado':       ['dorado','dr'],
+      'cromo':        ['cromo','crm'],
+      'plateado':     ['plateado','pl'],
+      'marron':       ['marron','mr'],
+      '1':            ['1','i'],
+      '2':            ['2','ii'],
+      '3':            ['3','iii'],
+      '4':            ['4','iv'],
+      '5':            ['5','v'],
+    };
+
+    // Detectar el "color/variante" presente en una lista de palabras
+    // Devuelve forma canónica o null
+    const detectarColor = (palabras) => {
+      const set = new Set(palabras);
+      // Caso especial: BLANCO Y NEGRO o BLNG → blanconegro
+      if ((set.has('blanco') && set.has('negro')) || set.has('blng') || set.has('ngbl')) {
+        return 'blanconegro';
+      }
+      const ordenColores = ['blanco','negro','verde','azul','terracota','madera','gris','bordo','dorado','cromo','plateado','marron'];
+      for (const color of ordenColores) {
+        const sinos = SINONIMOS_PRODUCTO[color] || [];
+        for (const s of sinos) if (set.has(s)) return color;
+      }
+      return null;
+    };
+
+    const detectarRomano = (palabras) => {
+      const set = new Set(palabras);
+      const orden = ['5','4','3','2','1'];   // primero más altos para no confundir "iii" con "i"
+      for (const num of orden) {
+        const sinos = SINONIMOS_PRODUCTO[num] || [];
+        for (const s of sinos) if (set.has(s)) return num;
+      }
+      return null;
+    };
+
+    // Normaliza y expande abreviaturas conocidas a su forma canónica
+    const normalizar = s => String(s)
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Tokeniza y devuelve también una versión "canonizada" (con colores expandidos)
+    const tokenizarCanon = s => {
+      const tokens = normalizar(s).split(' ').filter(Boolean);
+      const canon  = tokens.map(t => {
+        // Si el token es una abreviatura conocida, la convierto a canónica
+        if (ABREVIATURAS[t]) return ABREVIATURAS[t];
+        return t;
+      });
+      return { tokens, canon };
+    };
+
+    // Construir índice del catálogo: cada producto tiene tokens canonicos + color + romano
+    // así podemos comparar archivo vs producto con scoring.
+    const indiceProductos = [];   // [{ sku, tokens, color, romano, nombreOrig }]
+    for (const [sku, prod] of Object.entries(STOCK_MAP)) {
+      const { canon } = tokenizarCanon(prod.nombre);
+      indiceProductos.push({
+        sku: parseInt(sku),
+        tokens: canon,
+        color:  detectarColor(canon),
+        romano: detectarRomano(canon),
+        nombreOrig: prod.nombre
+      });
+    }
+    console.log(`[ZIP] Índice del catálogo: ${indiceProductos.length} productos`);
+
+    // STOPWORDS — palabras irrelevantes para matching
+    const STOPWORDS = new Set([
+      'de','la','el','con','para','por','del','los','las','en','y','o','a','sin',
+      // genéricas que aparecen en muchos productos
+      'leuk','luminaria','exterior','techo','pared','piso','mesa',
+      // unidades técnicas que muchas veces no están en el filename
+      'cri','ip','ip20','ip65','ip44','ip55','lm','w','k','3cct',
+    ]);
+
+    let matched = 0;
+    let noMatch = 0;
+    let duplicados = 0;
+    const archivosSinMatch = [];
+    const skusSinFoto      = new Set(skusValidos);
+    const stats = { exacto:0, sku:0, scoring:0 };
+
+    for (let i = 0; i < imagenes.length; i++) {
+      const { path, entry } = imagenes[i];
+      const filename = path.split('/').pop();
+      const sinExt   = filename.replace(/\.[^.]+$/, '');
+
+      // ============================================================
+      // INFO DE LA RUTA COMPLETA
+      // El producto puede estar identificado por:
+      //   - El filename:   "ACRU-BL.png"
+      //   - La subcarpeta: ".../EMPOTRABLES/ACRU BL/foto.png"  ← caso típico LEUK
+      //   - Combinación de ambos
+      // ============================================================
+      const partesPath = path.split('/').filter(p => p && !p.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+      // partesPath ahora son las carpetas (sin el archivo)
+      // ej: ["DE PARED", "EMPOTRABLES", "ACRU BL"]
+
+      // Tomamos las últimas 2 carpetas para tener más contexto
+      // (a veces la carpeta más cercana es "v2/" o similar y el producto está en la padre)
+      const carpetaProducto = partesPath[partesPath.length - 1] || '';
+      const carpetaPadre    = partesPath[partesPath.length - 2] || '';
+
+      // Construimos un texto compuesto con las 2 últimas carpetas + filename
+      // para capturar tanto el nombre del producto como variantes
+      const textoBusqueda = (carpetaPadre + ' ' + carpetaProducto + ' ' + sinExt).trim();
+
+      // Tokens del filename solo (para SKU/numbers)
+      const { canon: tokensFilename } = tokenizarCanon(sinExt);
+
+      // Tokens combinados (carpeta + filename) para scoring por nombre
+      const { canon: tokensArchivo } = tokenizarCanon(textoBusqueda);
+      const colorArchivo  = detectarColor(tokensArchivo);
+      const romanoArchivo = detectarRomano(tokensArchivo);
+
+      let skuEncontrado = null;
+      let metodoMatch = '';
+
+      // ESTRATEGIA 1: SKU directo en el filename o en la ruta
+      // Los SKU de LEUK son SIEMPRE de 4 dígitos exactos (no 3, no 5).
+      // El \b (word boundary) y la lookahead/lookbehind aseguran que matcheamos
+      // un grupo de exactamente 4 dígitos, ignorando 1234567 o 567.
+      const nums = path.match(/(?<!\d)\d{4}(?!\d)/g) || [];
+      for (const n of nums) {
+        const parsed = parseInt(n);
+        if (skusValidos.has(parsed)) {
+          skuEncontrado = parsed;
+          metodoMatch = 'sku';
+          stats.sku++;
+          break;
+        }
+      }
+
+      // ESTRATEGIA 2: Scoring por palabras + COLOR + ROMANO
+      // Calculamos el score contra cada producto del catálogo y ganamos el de mejor score.
+      if (skuEncontrado === null) {
+        // Palabras "significativas" del archivo (no stopwords, ni números cortos sueltos
+        // a menos que sean número romano o de modelo)
+        const palabrasArchivo = tokensArchivo.filter(p =>
+          (p.length >= 3 && !STOPWORDS.has(p)) || /^\d+$/.test(p)
+        );
+        const setArchivo = new Set(palabrasArchivo);
+
+        if (palabrasArchivo.length >= 1) {
+          let mejorScore = 0;
+          let mejorSku   = null;
+
+          for (const prod of indiceProductos) {
+            const palabrasProd = prod.tokens.filter(p =>
+              (p.length >= 3 && !STOPWORDS.has(p)) || /^\d+$/.test(p)
+            );
+            const setProd = new Set(palabrasProd);
+
+            // Contar palabras compartidas
+            let coincidencias = 0;
+            for (const w of palabrasArchivo) if (setProd.has(w)) coincidencias++;
+            if (coincidencias === 0) continue;
+
+            // BONUS / PENALIZACIONES por color
+            let bonus = 0;
+            if (colorArchivo && prod.color) {
+              if (colorArchivo === prod.color) bonus += 5;       // mismo color = +5
+              else                              bonus -= 10;      // distinto color = -10 (descalifica)
+            } else if (colorArchivo && !prod.color) {
+              // archivo dice color, producto no tiene → no penalizar tanto
+              bonus -= 1;
+            } else if (!colorArchivo && prod.color) {
+              // archivo no dice color, producto sí → leve penalización
+              bonus -= 1;
+            }
+
+            // BONUS por número romano coincidente
+            if (romanoArchivo && prod.romano) {
+              if (romanoArchivo === prod.romano) bonus += 3;
+              else                                bonus -= 5;
+            }
+
+            // BONUS por wattage coincidente (ej. 6W, 12W, 28W, 36W, 45W)
+            // Buscamos patrones tipo "6w", "12w", "20w" en ambos
+            const reW = /(\d+)w\b/g;
+            const wattsArchivo = [...textoBusqueda.toLowerCase().matchAll(reW)].map(m => m[1]);
+            const wattsProd    = [...prod.nombreOrig.toLowerCase().matchAll(reW)].map(m => m[1]);
+            if (wattsArchivo.length > 0 && wattsProd.length > 0) {
+              const setWP = new Set(wattsProd);
+              const algunoCoincide = wattsArchivo.some(w => setWP.has(w));
+              if (algunoCoincide) bonus += 3;
+              else                bonus -= 5;
+            }
+
+            // Score = coincidencias + bonus
+            // Ratio sobre el archivo: cuántas palabras del archivo están en el producto
+            const ratio = coincidencias / Math.max(palabrasArchivo.length, 1);
+            const score = coincidencias * 2 + bonus + ratio * 3;
+
+            // Solo competir si tenemos al menos 1 coincidencia significativa
+            // y el ratio sobre el archivo es decente
+            if (score > mejorScore && coincidencias >= 1 && ratio >= 0.4) {
+              mejorScore = score;
+              mejorSku   = prod.sku;
+            }
+          }
+
+          if (mejorSku && mejorScore >= 4) {
+            skuEncontrado = mejorSku;
+            metodoMatch = `scoring (${mejorScore.toFixed(1)})`;
+            stats.scoring++;
+          }
+        }
+      }
+
+      // Aplicar match
+      if (skuEncontrado === null) {
+        noMatch++;
+        if (archivosSinMatch.length < 50) archivosSinMatch.push(filename);
+        // Diagnóstico: guardar info completa
+        DIAG_LOG.push({ path, filename, carpetaProducto, carpetaPadre, textoBusqueda, resultado: 'NO MATCH', sku: null, metodo: null });
+      } else if (PHOTO_MAP[skuEncontrado]) {
+        duplicados++;
+        DIAG_LOG.push({ path, filename, carpetaProducto, carpetaPadre, textoBusqueda, resultado: 'DUPLICADO', sku: skuEncontrado, metodo: metodoMatch });
+      } else {
+        const blobOriginal = await entry.async('blob');
+        // Comprimir/redimensionar para que el navegador no se trabe con muchas fotos
+        const blobChico = await comprimirImagen(blobOriginal, 600, 0.85);
+        PHOTO_MAP[skuEncontrado] = URL.createObjectURL(blobChico);
+        skusSinFoto.delete(skuEncontrado);
+        matched++;
+        DIAG_LOG.push({ path, filename, carpetaProducto, carpetaPadre, textoBusqueda, resultado: 'OK', sku: skuEncontrado, metodo: metodoMatch });
+      }
+
+      // Actualizar progreso cada 15 archivos para no trabar la UI
+      if (i % 15 === 0 || i === imagenes.length - 1) {
+        const pct = Math.round(((i+1) / imagenes.length) * 100);
+        updateOverlayProgress(pct, `${i+1}/${imagenes.length} archivos · ${matched} vinculadas`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    hideOverlay();
+    updateFotosPill();
+
+    // Logs detallados en consola
+    console.log(`[ZIP] Resumen: ${matched} vinculadas, ${noMatch} sin SKU, ${duplicados} duplicados`);
+    if (archivosSinMatch.length > 0) {
+      console.warn('[ZIP] Archivos cuyos nombres NO contienen un SKU reconocible:');
+      archivosSinMatch.forEach(n => console.warn('  → ' + n));
+    }
+    if (skusSinFoto.size > 0 && skusSinFoto.size <= 50) {
+      console.warn('[ZIP] SKUs sin foto:', [...skusSinFoto].sort((a,b)=>a-b).join(', '));
+    } else if (skusSinFoto.size > 50) {
+      console.warn(`[ZIP] ${skusSinFoto.size} SKUs quedaron sin foto`);
+    }
+
+    let msg = `✓ ${matched} fotos vinculadas a productos.\n\n`;
+    msg += `📦 Archivos en el zip: ${imagenes.length}\n`;
+    msg += `📋 SKUs en el catálogo: ${skusValidos.size}\n`;
+    if (noMatch > 0) {
+      msg += `\n⚠️ ${noMatch} archivos NO se vincularon.\n`;
+      msg += `Ejemplos de los nombres:\n`;
+      archivosSinMatch.slice(0, 8).forEach(n => msg += `   • ${n}\n`);
+      if (archivosSinMatch.length > 8) msg += `   ... y ${archivosSinMatch.length - 8} más (ver consola)\n`;
+    }
+    if (duplicados > 0) msg += `\n↻ ${duplicados} archivos con SKU repetido (se usó el primero)`;
+    if (skusSinFoto.size > 0) {
+      msg += `\n\n${skusSinFoto.size} productos del catálogo quedaron SIN foto.`;
+    }
+    alert(msg);
+
+    render();
+
+  } catch(err) {
+    hideOverlay();
+    alert('Error leyendo el zip: ' + err.message);
+  }
+}
+
+/* ----------------------------------------------------------------
+   DRAG & DROP — ambos drop-zones aceptan cualquier tipo
+   ---------------------------------------------------------------- */
+function wireDrop(el) {
+  ['dragover','dragenter'].forEach(ev => el.addEventListener(ev, e => {
+    e.preventDefault(); el.classList.add('drag');
+  }));
+  ['dragleave','dragend'].forEach(ev => el.addEventListener(ev, () => el.classList.remove('drag')));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    if (f.name.match(/\.zip$/i)) {
+      loadZipPhotos(f);
+    } else if (f.name.match(/\.xlsx$/i)) {
+      // Detectar si es familias o stock por nombre del archivo
+      const nombre = f.name.toLowerCase();
+      if (nombre.includes('famil') || nombre.includes('organi') || nombre.includes('colecc')) {
+        loadFamilias(f);
+      } else {
+        loadXLSX(f);
+      }
+    } else {
+      alert('Formato no soportado. Subí un .xlsx o un .zip de fotos.');
+    }
+  });
+}
+wireDrop(document.getElementById('drop-zip'));
+wireDrop(document.getElementById('drop-xlsx'));
+wireDrop(document.getElementById('drop-familias'));
+
+/* ----------------------------------------------------------------
+   EXPORTAR DIAGNÓSTICO DEL ZIP
+   Genera un .txt con info completa para debuggear el matching de fotos
+   ---------------------------------------------------------------- */
+function exportarDiagnostico() {
+  if (DIAG_LOG.length === 0) {
+    alert('Primero cargá un zip de fotos. Después podés exportar el diagnóstico.');
+    return;
+  }
+
+  const skusValidos = new Set(Object.keys(STOCK_MAP).map(Number));
+  const skusConFoto = new Set(Object.keys(PHOTO_MAP).map(Number));
+  const skusSinFoto = [...skusValidos].filter(s => !skusConFoto.has(s));
+
+  let txt = '';
+  txt += '═══════════════════════════════════════════════════════════════\n';
+  txt += '  DIAGNÓSTICO DEL MATCHING DE FOTOS — LEUK STOCK\n';
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+
+  txt += 'RESUMEN\n';
+  txt += '─────────────────────────────────────────────────────────────\n';
+  txt += `Archivos en el zip: ${DIAG_LOG.length}\n`;
+  txt += `SKUs en el catálogo: ${skusValidos.size}\n`;
+  txt += `SKUs con foto: ${skusConFoto.size}\n`;
+  txt += `SKUs SIN foto: ${skusSinFoto.length}\n\n`;
+
+  const ok        = DIAG_LOG.filter(x => x.resultado === 'OK');
+  const noMatch   = DIAG_LOG.filter(x => x.resultado === 'NO MATCH');
+  const duplicados = DIAG_LOG.filter(x => x.resultado === 'DUPLICADO');
+
+  txt += `Vinculadas correctamente: ${ok.length}\n`;
+  txt += `Sin match (no encontró producto): ${noMatch.length}\n`;
+  txt += `Duplicadas (mismo SKU varias veces): ${duplicados.length}\n\n\n`;
+
+  // === ARCHIVOS QUE NO MATCHEARON ===
+  txt += '═══════════════════════════════════════════════════════════════\n';
+  txt += `  ARCHIVOS SIN MATCH (${noMatch.length})\n`;
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+  noMatch.forEach((x, i) => {
+    txt += `${i+1}. RUTA: ${x.path}\n`;
+    txt += `   Carpeta padre:    "${x.carpetaPadre}"\n`;
+    txt += `   Carpeta producto: "${x.carpetaProducto}"\n`;
+    txt += `   Texto búsqueda:   "${x.textoBusqueda}"\n\n`;
+  });
+
+  // === ARCHIVOS QUE SÍ MATCHEARON ===
+  txt += '\n═══════════════════════════════════════════════════════════════\n';
+  txt += `  ARCHIVOS VINCULADOS (${ok.length})\n`;
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+  ok.forEach((x, i) => {
+    const prod = STOCK_MAP[x.sku];
+    const nombreProd = prod ? prod.nombre : '???';
+    txt += `${i+1}. ${x.path}  →  SKU ${x.sku} (${x.metodo})\n`;
+    txt += `   Producto: ${nombreProd}\n\n`;
+  });
+
+  // === DUPLICADOS ===
+  if (duplicados.length > 0) {
+    txt += '\n═══════════════════════════════════════════════════════════════\n';
+    txt += `  ARCHIVOS DUPLICADOS — mismo SKU vinculado a otra foto antes (${duplicados.length})\n`;
+    txt += '═══════════════════════════════════════════════════════════════\n\n';
+    duplicados.forEach((x, i) => {
+      txt += `${i+1}. ${x.path}  →  SKU ${x.sku} (ya estaba vinculado)\n`;
+    });
+  }
+
+  // === SKUs SIN FOTO ===
+  txt += '\n\n═══════════════════════════════════════════════════════════════\n';
+  txt += `  PRODUCTOS DEL CATÁLOGO QUE QUEDARON SIN FOTO (${skusSinFoto.length})\n`;
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+  skusSinFoto.sort((a,b) => a-b).forEach(sku => {
+    const prod = STOCK_MAP[sku];
+    txt += `SKU ${sku}: ${prod.nombre}  [${prod.disp}]\n`;
+  });
+
+  // Descargar como archivo
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `LEUK_diagnostico_fotos_${fechaISOElegida()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ----------------------------------------------------------------
+   MODO EDICIÓN — INTERACCIONES SOBRE EL PDF EN LA PREVIEW
+   - Click en una imagen / placeholder → selecciona la tarjeta y muestra
+     el toolbar flotante (borrar / duplicar / achicar / agrandar).
+   - Cortes de página: zonas "+ insertar corte" entre secciones.
+   - Guías A4: líneas rojas que muestran dónde caería el corte automático.
+   ---------------------------------------------------------------- */
+
+let SELECTED_CARD = null;
+
+function deselectCard() {
+  if (SELECTED_CARD) {
+    SELECTED_CARD.classList.remove('is-selected');
+    SELECTED_CARD = null;
+  }
+}
+
+function selectCard(card) {
+  if (SELECTED_CARD === card) return;
+  deselectCard();
+  card.classList.add('is-selected');
+  SELECTED_CARD = card;
+  // Sincronizar el estado enabled/disabled del botón "📥 Pegar" del toolbar
+  // recién mostrado con el portapapeles actual.
+  updatePasteButtons();
+  // Reposiciona el toolbar si está cerca del borde superior (queda fuera de la grilla)
+  const tb = card.querySelector('.foto-toolbar');
+  if (tb) {
+    const rect = card.getBoundingClientRect();
+    if (rect.top < 60) {
+      tb.style.top = 'auto';
+      tb.style.bottom = '-40px';
+    } else {
+      tb.style.top = '';
+      tb.style.bottom = '';
+    }
+  }
+}
+
+// Las acciones del toolbar se invocan desde el HTML con `this` apuntando al botón.
+// Subimos al .product-card más cercano para operar sobre él.
+function _cardFromBtn(btn) {
+  return btn.closest('.product-card');
+}
+
+/* === PORTAPAPELES DE FOTOS ===
+   Solo se copia / pega la imagen. El nombre del producto y el SKU son del
+   Excel y NO se modifican: si pegás una foto en el recuadro de "EMPOTRABLE
+   ACRU", el nombre y el SKU se mantienen — únicamente cambia la imagen. */
+let CLIPBOARD_PHOTO = null;   // { src: 'blob:...' , fromSku: '6792' }
+
+function showFlash(msg, kind) {
+  let flash = document.getElementById('photo-flash');
+  if (!flash) {
+    flash = document.createElement('div');
+    flash.id = 'photo-flash';
+    flash.className = 'photo-flash';
+    document.body.appendChild(flash);
+  }
+  flash.className = 'photo-flash' + (kind ? ' ' + kind : '');
+  flash.textContent = msg;
+  // Forzar reflow para reiniciar la animación si se llama dos veces seguidas
+  void flash.offsetWidth;
+  flash.classList.add('show');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => flash.classList.remove('show'), 2400);
+}
+
+// Habilita/deshabilita los botones "📥 Pegar" según haya algo copiado.
+// También activa la clase global `has-clipboard` en el #pdf-area, que
+// prende el highlight azul en las demás tarjetas para invitar a pegar.
+function updatePasteButtons() {
+  const pdfArea = document.getElementById('pdf-area');
+  const has = !!CLIPBOARD_PHOTO;
+  if (pdfArea) pdfArea.classList.toggle('has-clipboard', has);
+  document.querySelectorAll('.foto-toolbar .btn-paste').forEach(btn => {
+    btn.disabled = !has;
+  });
+  // Marcar la tarjeta fuente con outline azul punteado
+  document.querySelectorAll('.is-clipboard-source').forEach(c => c.classList.remove('is-clipboard-source'));
+  if (has) {
+    const src = document.querySelector(`.product-card[data-card-id="${CLIPBOARD_PHOTO.fromCardId}"]`);
+    if (src) src.classList.add('is-clipboard-source');
+  }
+}
+
+function copyPhoto(btn) {
+  const card = _cardFromBtn(btn);
+  if (!card) return;
+  const img = card.querySelector('.photo-box img');
+  if (!img || !img.src) {
+    showFlash('Esta tarjeta no tiene foto para copiar', 'warn');
+    return;
+  }
+  CLIPBOARD_PHOTO = {
+    src: img.src,
+    fromSku: card.dataset.sku || '?',
+    fromCardId: card.dataset.cardId
+  };
+  showFlash(`📋 Foto copiada (SKU ${CLIPBOARD_PHOTO.fromSku}) · click en otra para pegar`);
+  updatePasteButtons();
+}
+
+function pastePhoto(btn) {
+  const card = _cardFromBtn(btn);
+  if (!card || !CLIPBOARD_PHOTO) return;
+  const inner = card.querySelector('.photo-box .photo-inner');
+  if (!inner) return;
+  // Si esta es la misma tarjeta de la que se copió, no tiene sentido pegar
+  if (card.dataset.cardId === CLIPBOARD_PHOTO.fromCardId) {
+    showFlash('Es la misma tarjeta de origen', 'warn');
+    return;
+  }
+  // Reemplazar el contenido del photo-inner (puede tener un <img> o el placeholder ◌)
+  inner.innerHTML = `<img src="${CLIPBOARD_PHOTO.src}" alt="" crossorigin="anonymous">`;
+  showFlash(`✓ Foto pegada en SKU ${card.dataset.sku || '?'}`);
+}
+
+function deletePhoto(btn) {
+  const card = _cardFromBtn(btn);
+  if (!card) return;
+  const inner = card.querySelector('.photo-box .photo-inner');
+  if (!inner) return;
+  inner.innerHTML = '<div class="photo-placeholder">◌</div>';
+  showFlash('Foto borrada (queda el placeholder)');
+}
+
+/* === RESIZE DE LA FOTO ===
+   Aplica un transform: scale() a la <img> mediante la variable CSS
+   --photo-scale. El recuadro NO cambia: solo la imagen crece o se achica,
+   centrada, manteniendo proporciones (object-fit contain garantiza que
+   nunca se deforme; overflow visible garantiza que nunca se recorte aunque
+   la agrandes más allá del recuadro). */
+const PHOTO_SCALE_STEPS = [0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.5];
+
+function resizePhoto(btn, delta) {
+  const card = _cardFromBtn(btn);
+  if (!card) return;
+  const current = parseFloat(card.dataset.photoScale || '1');
+  let idx = PHOTO_SCALE_STEPS.indexOf(current);
+  if (idx === -1) {
+    // No es exactamente uno de los steps → buscar el más cercano
+    idx = PHOTO_SCALE_STEPS.reduce((best, s, i) => (
+      Math.abs(s - current) < Math.abs(PHOTO_SCALE_STEPS[best] - current) ? i : best
+    ), 3);
+  }
+  idx = Math.max(0, Math.min(PHOTO_SCALE_STEPS.length - 1, idx + delta));
+  const next = PHOTO_SCALE_STEPS[idx];
+  card.dataset.photoScale = next;
+  card.style.setProperty('--photo-scale', next);
+  // Si ya está en el extremo, parpadeo del botón para indicar tope
+  if (next === current) {
+    btn.style.transform = 'scale(0.85)';
+    setTimeout(() => btn.style.transform = '', 120);
+  }
+}
+
+// Click delegado sobre #pdf-area: selecciona tarjeta al tocar la foto/placeholder.
+function attachCardClickHandler() {
+  const area = document.getElementById('pdf-area');
+  if (!area || area._editingWired) return;
+  area._editingWired = true;
+
+  area.addEventListener('click', (e) => {
+    // Si clickearon adentro del toolbar, no hacer nada (los botones tienen su propio onclick)
+    if (e.target.closest('.foto-toolbar')) return;
+    // Si clickearon una "X" de un corte de página, manejarlo aparte
+    if (e.target.classList && e.target.classList.contains('remove-break')) {
+      const brk = e.target.closest('.pdf-page-break');
+      if (brk) brk.remove();
+      e.stopPropagation();
+      return;
+    }
+    // Si clickearon una zona "+ insertar corte"
+    if (e.target.classList && e.target.classList.contains('insert-break-zone')) {
+      insertPageBreakAt(e.target);
+      e.stopPropagation();
+      return;
+    }
+    // Si clickearon dentro de una imagen / placeholder → seleccionar tarjeta
+    const photoTarget = e.target.closest('.photo-box, .photo-placeholder');
+    if (photoTarget) {
+      const card = photoTarget.closest('.product-card');
+      if (card) {
+        selectCard(card);
+        e.stopPropagation();
+        return;
+      }
+    }
+    // Click en cualquier otro lado → deseleccionar
+    deselectCard();
+  });
+
+  // También deseleccionar si se clickea fuera del #pdf-area
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#pdf-area')) deselectCard();
+  });
+
+  // ESC también deselecciona
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') deselectCard();
+  });
+}
+
+// Inserta un corte de página ANTES del elemento siguiente al "insert-zone" clickeado.
+function insertPageBreakAt(zone) {
+  const brk = document.createElement('div');
+  brk.className = 'pdf-page-break';
+  brk.innerHTML = '<button type="button" class="remove-break" title="Quitar corte de página">×</button>';
+  zone.parentNode.insertBefore(brk, zone.nextSibling);
+}
+
+// Después de cada render(), insertar zonas "+ insertar corte" entre cada
+// par de secciones consecutivas.
+function attachInsertBreakZones() {
+  const area = document.getElementById('pdf-area');
+  if (!area) return;
+  // Limpiar zonas previas (si llamamos render() dos veces)
+  area.querySelectorAll('.insert-break-zone').forEach(z => z.remove());
+
+  // Insertar una zona después de la portada y entre cada sección
+  const breakables = area.querySelectorAll('.portada, section.seccion');
+  breakables.forEach(el => {
+    const zone = document.createElement('div');
+    zone.className = 'insert-break-zone';
+    if (el.nextSibling) {
+      el.parentNode.insertBefore(zone, el.nextSibling);
+    } else {
+      el.parentNode.appendChild(zone);
+    }
+  });
+}
+
+// Toggle de las guías A4
+function toggleGuides() {
+  const area = document.getElementById('pdf-area');
+  const btn  = document.getElementById('btn-guides');
+  area.classList.toggle('show-guides');
+  btn.classList.toggle('activo', area.classList.contains('show-guides'));
+}
+
+// Marca cuando hay fotos cargadas (cambia el cursor sobre las imágenes)
+function markFotosLoadedClass() {
+  const area = document.getElementById('pdf-area');
+  if (!area) return;
+  area.classList.toggle('fotos-loaded', Object.keys(PHOTO_MAP).length > 0);
+}
+
+// Espera a que TODAS las imágenes del #pdf-area estén decodificadas.
+// Esto soluciona las "fotos blancas" al inicio del PDF: html2canvas
+// snapshotea el DOM antes de que blob:URLs grandes terminen de decodificar.
+function waitForAllImages(root) {
+  const imgs = Array.from(root.querySelectorAll('img'));
+  return Promise.all(imgs.map(img => {
+    if (img.complete && img.naturalWidth > 0) {
+      // Si ya está cargada, decode() devuelve una promesa que resuelve enseguida
+      return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+    }
+    return new Promise(resolve => {
+      const done = () => resolve();
+      img.addEventListener('load',  done, { once: true });
+      img.addEventListener('error', done, { once: true });
+      // timeout defensivo: si una imagen nunca carga, no bloqueamos el PDF para siempre
+      setTimeout(done, 8000);
+    }).then(() => img.decode ? img.decode().catch(() => {}) : null);
+  }));
+}
+
+/* ----------------------------------------------------------------
+   ESPERAR FUENTES — fix de "tipografía bold/espaciada en el export"
+   ----------------------------------------------------------------
+   Síntoma: en la preview las tipografías se ven correctas (Barlow
+   Condensed liviana, espaciado normal) pero al exportar el PDF/JPG
+   aparecen con tracking aumentado y aspecto bold/negrita falsa.
+
+   Causa: las Google Fonts se cargan con &display=swap, que le
+   indica al browser que mientras la fuente no esté lista MUESTRE
+   el texto con la fuente de fallback de sistema (Arial/Helvetica).
+   html2canvas no espera fuentes — solo espera imágenes — así que
+   captura el DOM antes de que Barlow Condensed esté disponible
+   y rasteriza Arial. Como Arial es más ancha que Barlow Condensed
+   y los font-weight 700/800 no existen en Arial regular, el
+   browser hace "fake bold sintético" (engrosado por software) →
+   las letras aparecen más gruesas y el letter-spacing del CSS
+   se aplica sobre glifos más anchos → tracking visible.
+
+   Solución (estándar CSS Font Loading API):
+     1) document.fonts.load(spec) → fuerza el download de cada
+        peso usado en el catálogo (no es opcional: el browser
+        sólo descarga los pesos que cree necesitar, y en cards
+        invisibles puede no haberlos pedido todavía).
+     2) document.fonts.ready → resuelve cuando TODAS las fuentes
+        usadas están listas para renderizar.
+
+   Robustez: si una fuente nunca carga (sin internet, CDN bloqueado),
+   el .catch silencioso permite que el export siga con fallback en
+   vez de bloquearse para siempre. timeout defensivo igual que
+   waitForAllImages.
+   ---------------------------------------------------------------- */
+const FONTS_CRITICAS = [
+  // Cada entrada es un CSS font shorthand: "<weight> <size> <family>"
+  // El size no afecta la elección de fuente, sólo es requerido por la API.
+  '300 16px "Roboto"',
+  '400 16px "Roboto"',
+  '500 16px "Roboto"',
+  '600 16px "Roboto"',
+  '700 16px "Roboto"',
+  '300 16px "Roboto Condensed"',
+  '400 16px "Roboto Condensed"',
+  '600 16px "Roboto Condensed"',
+  '700 16px "Roboto Condensed"',
+];
+
+function waitForAllFonts(timeoutMs = 8000) {
+  // Si la API no existe (browsers muy viejos), salir limpio.
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+
+  // Forzar carga de cada peso crítico. Cada .load() rechaza si la
+  // fuente no resuelve — lo silenciamos para que un peso suelto roto
+  // no bloquee el resto.
+  const loads = FONTS_CRITICAS.map(spec =>
+    document.fonts.load(spec).catch(() => {})
+  );
+
+  // Promesa que rechaza después del timeout (no bloquear el export
+  // si el CDN está caído).
+  const timeout = new Promise(resolve => setTimeout(resolve, timeoutMs));
+
+  // Race: lo que ocurra primero — todas las fuentes listas, o timeout.
+  return Promise.race([
+    Promise.all(loads).then(() => document.fonts.ready),
+    timeout
+  ]);
+}
+
+/* ----------------------------------------------------------------
+   GENERAR PDF
+   ---------------------------------------------------------------- */
+/* ----------------------------------------------------------------
+   GENERAR PDF — HOJAS DE ALTO VARIABLE, CORTE DONDE EL USUARIO DICE.
+   Modelo nuevo:
+     • El catálogo se parte en SEGMENTOS por los cortes manuales que
+       insertó el usuario (.pdf-page-break). Si no hay cortes, todo es
+       UN segmento.
+     • Cada segmento se exporta como UNA hoja del PDF. El alto de esa
+       hoja es exactamente la suma de los altos de los bloques que la
+       componen — NO se rellena a A4. Si el segmento mide menos que A4,
+       la hoja queda más corta. Si mide más, queda más larga.
+     • Las hojas tienen ancho fijo (210mm = A4 width) y alto variable.
+     • No hay cortes automáticos por límite de página: solo los manuales.
+   Por qué cambió respecto a la versión anterior:
+     El usuario reportó que el PDF metía espacios en blanco al final de
+     páginas A4 y cortaba imágenes a la mitad cuando el contenido excedía
+     A4 sin un corte manual. Ahora el usuario controla EXACTAMENTE dónde
+     cortan las hojas; las imágenes nunca se rompen porque dentro de un
+     segmento todo va seguido en una sola "página larga".
+   ---------------------------------------------------------------- */
+async function generatePDF() {
+  showOverlay('GENERANDO PDF', 'Preparando exportación…', false);
+  document.getElementById('btn-pdf').disabled = true;
+
+  const filename = `LEUK_Stock_${fechaISO()}.pdf`;
+  const el = document.getElementById('pdf-area');
+
+  // Detección robusta de las librerías (ver scripts en <head>)
+  const _html2canvas = window.html2canvas
+                    || (window.html2pdf && window.html2pdf.html2canvas);
+  const _jsPDF = (window.jspdf && window.jspdf.jsPDF)
+              || window.jsPDF
+              || (window.html2pdf && window.html2pdf.jsPDF);
+  if (!_html2canvas || !_jsPDF) {
+    const missing = [];
+    if (!_html2canvas) missing.push('html2canvas');
+    if (!_jsPDF) missing.push('jsPDF');
+    alert(
+      'No se pudieron cargar las librerías de PDF (' + missing.join(', ') + ').\n\n' +
+      'Posibles causas:\n' +
+      '• Estás abriendo el archivo sin conexión a internet (las librerías se descargan de un CDN la primera vez).\n' +
+      '• Un bloqueador de scripts / red corporativa está bloqueando cdnjs.cloudflare.com.\n\n' +
+      'Solución: refrescá la página estando conectado a internet. Una vez cargadas, el navegador las cachea.'
+    );
+    document.getElementById('btn-pdf').disabled = false;
+    hideOverlay();
+    return;
+  }
+
+  deselectCard();
+  const teniaGuides = el.classList.contains('show-guides');
+  if (teniaGuides) el.classList.remove('show-guides');
+
+  try {
+    // 1) Esperar a que TODAS las imágenes terminen de decodificarse.
+    showOverlay('GENERANDO PDF', 'Esperando que carguen todas las fotos…', false);
+    await waitForAllImages(el);
+
+    // 1.bis) Esperar a que las tipografías web (Roboto / Roboto Condensed)
+    //        estén disponibles. Sin esto, html2canvas captura con el
+    //        fallback de sistema y el texto sale con tracking y bold falso.
+    //        Ver comentario completo en la definición de waitForAllFonts().
+    showOverlay('GENERANDO PDF', 'Esperando que carguen las tipografías…', false);
+    await waitForAllFonts();
+
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 80)));
+
+    // 2) Agrupar los hijos del #pdf-area en SEGMENTOS. Un segmento es la
+    //    lista de bloques (portada, secciones) entre dos cortes manuales
+    //    (o entre el principio y un corte, o entre un corte y el final).
+    const segments = [];
+    let current = [];
+    for (const child of Array.from(el.children)) {
+      if (child.classList && child.classList.contains('pdf-page-break')) {
+        if (current.length) segments.push(current);
+        current = [];
+        continue;
+      }
+      if (child.classList && child.classList.contains('insert-break-zone')) continue;
+      if (child.id === 'photo-flash') continue;
+      current.push(child);
+    }
+    if (current.length) segments.push(current);
+    if (segments.length === 0) throw new Error('No hay contenido para exportar.');
+
+    // 3) Activar modo export (CSS .exporting: oculta toolbars, desactiva
+    //    mix-blend-mode que html2canvas no soporta, etc).
+    el.classList.add('exporting');
+
+    const SCALE = 4;           // resolución del canvas (4× → ~300 DPI en A4, trazos tipográficos nítidos)
+    const PAGE_W_MM = 210;     // ancho de hoja en mm (A4 width)
+
+    let pdf = null;
+    let robotoAvailable = false;
+    const totalBlocks = segments.reduce((s, seg) => s + seg.length, 0);
+    let renderedBlocks = 0;
+
+    showOverlay('GENERANDO PDF', `Hoja 0 / ${segments.length}…`, true);
+
+    // 4) Procesar cada segmento → una hoja del PDF
+    for (let si = 0; si < segments.length; si++) {
+      const seg = segments[si];
+
+      // 4.1) Renderizar TODOS los bloques del segmento a sus canvases
+      //      individuales. Hacemos uno por uno (no todos juntos) para
+      //      respetar el límite de canvas del navegador.
+      const blockCanvases = [];
+      for (let bi = 0; bi < seg.length; bi++) {
+        const block = seg[bi];
+
+        const canvas = await _html2canvas(block, {
+          scale: SCALE,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          imageTimeout: 15000
+        });
+        blockCanvases.push(canvas);
+        renderedBlocks++;
+
+        const pct = Math.round((renderedBlocks / totalBlocks) * 100);
+        updateOverlayProgress(pct,
+          `Hoja ${si + 1} / ${segments.length} — bloque ${bi + 1} / ${seg.length}…`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      // 4.2) Calcular alto total del segmento en mm.
+      //      Usamos el ancho del #pdf-area como referencia fija (todos los
+      //      bloques deben tener ese mismo ancho en px * SCALE).
+      //      Si algún canvas difiere por 1-2px de antialiasing, normalizamos.
+      const refWidthPx = el.offsetWidth * SCALE;   // ancho canónico esperado
+      const totalPx = blockCanvases.reduce((s, c) => s + c.height, 0);
+      // Para el ratio usamos el ancho real del primer canvas (el más fiable)
+      const widthPx = blockCanvases[0] ? blockCanvases[0].width : refWidthPx;
+      const pageHmm = (totalPx / widthPx) * PAGE_W_MM;
+
+      // 4.3) Crear o agregar la hoja con DIMENSIONES CUSTOM.
+      //      jsPDF permite ancho×alto arbitrarios por página.
+      //
+      //      ★ FIX: jsPDF v2.5.1, cuando recibe `format: [W, H]` con
+      //      `orientation: 'portrait'` y W > H, detecta que es
+      //      matemáticamente landscape y SWAP las dimensiones para
+      //      forzar portrait (queda H × W en vez de W × H). Resultado:
+      //      `addImage(image, 0, 0, W, H)` dibuja con ancho W en una
+      //      hoja que en realidad mide H de ancho, y la imagen se
+      //      desborda por la derecha → COLUMNAS CORTADAS.
+      //      Pasa cuando un segmento es corto (pageHmm < PAGE_W_MM,
+      //      o sea cuando la hoja resulta de menos de 210mm de alto).
+      //      Solución: pasar la orientation correcta así jsPDF no
+      //      necesita swap.
+      const orientation = pageHmm < PAGE_W_MM ? 'landscape' : 'portrait';
+      if (pdf === null) {
+        pdf = new _jsPDF({
+          unit: 'mm',
+          format: [PAGE_W_MM, pageHmm],
+          orientation,
+          compress: true
+        });
+        // Registrar Roboto en jsPDF para la capa de texto invisible.
+        // Se hace una sola vez después de crear la primera instancia,
+        // ya que addFileToVFS queda en el prototipo global.
+        showOverlay('GENERANDO PDF', 'Registrando tipografía Roboto…', false);
+        robotoAvailable = await ensureRobotoInJsPDF(pdf);
+      } else {
+        pdf.addPage([PAGE_W_MM, pageHmm], orientation);
+      }
+
+      // 4.4) Colocar cada bloque a su Y correspondiente, uno debajo del otro.
+      //      Usamos siempre widthPx como referencia para que la proporción
+      //      mm/px sea consistente aunque algún canvas difiera 1-2px.
+      //
+      //      NUEVO (PDF buscable): después de pegar la imagen rasterizada
+      //      de cada bloque, superponemos una capa de TEXTO INVISIBLE
+      //      con el contenido real (nombres, SKUs, títulos). Esta capa
+      //      no se ve pero es seleccionable con el mouse y encontrable
+      //      con Ctrl+F. Es la misma técnica que usan los PDFs creados
+      //      con OCR (Adobe Acrobat, ABBYY): el aspecto visual viene
+      //      100% del raster, y el texto buscable se monta encima
+      //      en modo "invisible rendering" (PDF text rendering mode 3).
+      let cursorPx = 0;
+      for (let bi = 0; bi < blockCanvases.length; bi++) {
+        const c = blockCanvases[bi];
+        const cHmm = (c.height / widthPx) * PAGE_W_MM;
+        const cYmm = (cursorPx  / widthPx) * PAGE_W_MM;
+        // Ancho siempre PAGE_W_MM para llenar la hoja de borde a borde
+        pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG',
+                     0, cYmm, PAGE_W_MM, cHmm);
+
+        // Capa de texto invisible para este bloque. Posicionada en la
+        // misma Y que la imagen, usando el bloque DOM original para
+        // leer textos y bounding boxes.
+        addInvisibleTextLayer(pdf, seg[bi], cYmm, PAGE_W_MM, robotoAvailable);
+
+        cursorPx += c.height;
+      }
+    }
+
+    pdf.save(filename);
+
+  } catch(err) {
+    console.error('[PDF]', err);
+    alert('Error generando PDF: ' + ((err && err.message) || err));
+  } finally {
+    el.classList.remove('exporting');
+    if (teniaGuides) el.classList.add('show-guides');
+    hideOverlay();
+    document.getElementById('btn-pdf').disabled = false;
+  }
+}
+
+/* ----------------------------------------------------------------
+   CAPA DE TEXTO INVISIBLE (PDF buscable)
+   ----------------------------------------------------------------
+   Recorre todos los elementos de texto visibles dentro de `block`
+   (un nodo DOM del #pdf-area) y los dibuja en el PDF con
+   renderingMode='invisible'. Cada texto queda posicionado en su
+   bounding box real (relativo al bloque), de modo que coincide
+   con lo que el ojo ve en la imagen rasterizada.
+
+   Por qué invisible y no blanco/transparente:
+     - El render-mode 3 de PDF marca el texto como "no se dibuja
+       pero se selecciona/busca". Es el estándar para PDFs OCR.
+     - Si usáramos color blanco, el texto sería seleccionable pero
+       el cursor de selección "tacharía" el texto cuando el fondo
+       no sea blanco (banners negros, headers grises) y se notaría
+       en algunos visores.
+
+   Por qué Helvetica (default jsPDF) y no la tipo custom del usuario:
+     - El aspecto visual viene 100% de la imagen JPEG ya pegada
+       (que SÍ usa la tipo custom porque html2canvas la respetó).
+     - La capa invisible solo necesita TEXTO + POSICIÓN para
+       Ctrl+F y selección. No hace falta cargar la fuente custom
+       en jsPDF (que sería un dolor de cabeza con TTF/OTF).
+   ---------------------------------------------------------------- */
+/* ----------------------------------------------------------------
+   ROBOTO EN jsPDF — capa de texto invisible
+   ----------------------------------------------------------------
+   Para que la capa invisible use Roboto (igual que la capa visual),
+   necesitamos embeber la fuente en jsPDF como base64. jsPDF solo
+   incluye Helvetica/Courier/Times de fábrica; cualquier otra fuente
+   requiere registro explícito vía addFileToVFS + addFont.
+
+   Cargamos dos pesos desde Google Fonts CSS API v2:
+     - Regular (400) → para prod-sku, sec-part-light, leuk-logo-sub
+     - Bold (700)    → para prod-name, sec-part-bold, leuk-logo-txt
+
+   El flujo es:
+     1) Fetch del CSS de Google Fonts → extraer URL del .woff2
+     2) Fetch del .woff2 → convertir a base64
+     3) addFileToVFS + addFont en jsPDF
+   Se ejecuta UNA sola vez (lazy, al primer export). Si falla (sin
+   internet, CDN bloqueado), silenciamos y usamos Helvetica como
+   fallback — el PDF se genera igual, solo pierde la coincidencia
+   de fuente en la capa invisible.
+
+   IMPORTANTE — formato TTF, no woff2:
+   jsPDF espera TTF/OTF. Si se le pasa woff2 (que es lo que Google
+   Fonts CSS entrega por defecto), el campo /BBox de la fuente queda
+   mal formado y Acrobat muestra un warning de "cuadro /BBox erróneo"
+   aunque el PDF se visualice correctamente. Cargamos los TTF
+   directamente desde el repositorio oficial de Google Fonts en GitHub
+   (raw.githubusercontent.com) para evitar ese problema.
+   ---------------------------------------------------------------- */
+let _robotoJsPdfReady = null;   // null = no iniciado, Promise = en curso/resuelto
+
+async function ensureRobotoInJsPDF(pdf) {
+  // Memoizar: si ya lo intentamos (éxito o fallo), no repetir.
+  if (_robotoJsPdfReady === null) {
+    _robotoJsPdfReady = (async () => {
+      try {
+        // Helper: descarga un TTF desde URL y lo devuelve como base64
+        async function fetchTtfBase64(url) {
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status} al cargar ${url}`);
+          const buf = await resp.arrayBuffer();
+          let binary = '';
+          const bytes = new Uint8Array(buf);
+          // Convertir en bloques para no colapsar el stack con strings largas
+          const CHUNK = 8192;
+          for (let i = 0; i < bytes.byteLength; i += CHUNK) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+          }
+          return btoa(binary);
+        }
+
+        // TTFs de Roboto desde el repo oficial de Google Fonts en GitHub.
+        // Son los mismos binarios que sirve fonts.gstatic.com pero en TTF,
+        // formato que jsPDF puede embeber sin generar warnings en Acrobat.
+        const BASE = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/static/';
+        const [b64Regular, b64Bold] = await Promise.all([
+          fetchTtfBase64(BASE + 'Roboto-Regular.ttf'),
+          fetchTtfBase64(BASE + 'Roboto-Bold.ttf')
+        ]);
+
+        // Registrar ambas variantes en la instancia global de jsPDF.
+        // addFileToVFS registra el binario; addFont lo asocia a un nombre.
+        // Cada instancia de jsPDF (new _jsPDF(...)) hereda el VFS global
+        // del prototipo, así que esto vale para todo el export.
+        pdf.addFileToVFS('Roboto-Regular.ttf', b64Regular);
+        pdf.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+        pdf.addFileToVFS('Roboto-Bold.ttf', b64Bold);
+        pdf.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+
+        console.log('[PDF] Roboto TTF registrada en jsPDF OK — sin warnings de /BBox');
+        return true;
+      } catch(err) {
+        console.warn('[PDF] No se pudo cargar Roboto en jsPDF, usando Helvetica como fallback:', err);
+        return false;
+      }
+    })();
+  }
+  return _robotoJsPdfReady;
+}
+
+const INVISIBLE_TEXT_SELECTORS = [
+  '.titulo-stock',
+  '.leuk-logo-txt',
+  '.leuk-logo-sub',
+  '.sec-part-bold',
+  '.sec-part-semibold',
+  '.sec-part-light',
+  '.sec-part-sep',
+  '.banner-nuevos',
+  '.badge-nuevo',
+  '.badge-descontinuado',
+  '.prod-name',
+  '.prod-sku'
+].join(',');
+
+function addInvisibleTextLayer(pdf, block, blockOffsetYmm, pageWmm, robotoAvailable) {
+  if (!block || !block.getBoundingClientRect) return;
+  const blockRect = block.getBoundingClientRect();
+  if (blockRect.width <= 0) return;
+
+  const mmPerPx = pageWmm / blockRect.width;
+
+  // Recolectar elementos de texto. Si el bloque mismo coincide
+  // con uno de los selectores (ej. un header de sección), también
+  // lo incluimos.
+  const els = Array.from(block.querySelectorAll(INVISIBLE_TEXT_SELECTORS));
+  if (block.matches && block.matches(INVISIBLE_TEXT_SELECTORS)) {
+    els.unshift(block);
+  }
+
+  for (const el of els) {
+    // Filtrar elementos no visibles o sin texto
+    const text = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!text) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) continue;
+
+    const xPx = r.left - blockRect.left;
+    const yPx = r.top  - blockRect.top;
+    const wPx = r.width;
+    const hPx = r.height;
+
+    const xMm = xPx * mmPerPx;
+    const yMm = yPx * mmPerPx + blockOffsetYmm;
+    const wMm = wPx * mmPerPx;
+    const hMm = hPx * mmPerPx;
+
+    // Tomar font-size del estilo computado y convertir a pt
+    // (jsPDF usa pt para setFontSize: 1pt = 1/72 inch = 25.4/72 mm)
+    const styles = window.getComputedStyle(el);
+    const fontSizePx = parseFloat(styles.fontSize) || 10;
+    const fontSizeMm = fontSizePx * mmPerPx;
+    const fontSizePt = fontSizeMm * 72 / 25.4;
+
+    pdf.setFontSize(fontSizePt);
+
+    // Seleccionar fuente: Roboto si está disponible, Helvetica como fallback.
+    // Detectar bold según font-weight computado (≥ 600 → bold).
+    if (robotoAvailable) {
+      const fw = parseInt(styles.fontWeight) || 400;
+      const style = fw >= 600 ? 'bold' : 'normal';
+      pdf.setFont('Roboto', style);
+    } else {
+      pdf.setFont('helvetica', 'normal');
+    }
+
+    // text-align del DOM → align de jsPDF
+    const ta = styles.textAlign || 'left';
+    let alignX, align;
+    if (ta === 'center' || ta === '-webkit-center') {
+      alignX = xMm + wMm / 2; align = 'center';
+    } else if (ta === 'right' || ta === 'end') {
+      alignX = xMm + wMm; align = 'right';
+    } else {
+      alignX = xMm; align = 'left';
+    }
+
+    // Soporte de multilínea: usamos splitTextToSize de jsPDF que
+    // hace word-wrap según ancho disponible. Si el texto cabe en
+    // una sola línea, devuelve un array de 1.
+    let lines;
+    try {
+      lines = pdf.splitTextToSize(text, Math.max(wMm, fontSizeMm));
+    } catch(e) {
+      lines = [text];
+    }
+    if (!Array.isArray(lines)) lines = [lines];
+
+    // Altura de línea: usamos line-height computado del CSS si está
+    // disponible, sino 1.2 × font-size (default tipográfico estándar).
+    let lineHeightMm;
+    const lh = styles.lineHeight;
+    if (lh && lh !== 'normal' && !isNaN(parseFloat(lh))) {
+      lineHeightMm = parseFloat(lh) * mmPerPx;
+    } else {
+      lineHeightMm = fontSizeMm * 1.2;
+    }
+
+    // Si CSS sólo tiene una línea pero splitTextToSize devolvió
+    // varias, distribuirlas verticalmente dentro de hMm.
+    // Baseline de la primera línea ≈ top + ascent ≈ top + 0.8 × fontSize
+    // (aproximación que funciona bien para sans-serif).
+    const ascentMm = fontSizeMm * 0.8;
+
+    // Si solo hay 1 línea y el bloque DOM tiene altura mayor que la fuente,
+    // centramos verticalmente para que la selección caiga sobre el texto
+    // visible (importante para tarjetas donde el texto tiene padding).
+    let firstBaselineY;
+    if (lines.length === 1 && hMm > fontSizeMm * 1.4) {
+      firstBaselineY = yMm + hMm / 2 + ascentMm / 2;
+    } else {
+      firstBaselineY = yMm + ascentMm;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = String(lines[i] || '');
+      if (!line) continue;
+      try {
+        // CLAVE: renderingMode='invisible' debe pasarse en CADA llamada a
+        // pdf.text(). El método global pdf.setTextRenderingMode(3) NO
+        // funciona porque jsPDF genera un nuevo bloque BT/ET en cada
+        // text() y solo respeta options.renderingMode adentro de ese
+        // bloque. Verificado en el código fuente de jspdf 2.5.1:
+        // text() lee `i.renderingMode` y emite `3 Tr` solo si está
+        // presente, ignorando cualquier seteo global previo.
+        pdf.text(line, alignX, firstBaselineY + i * lineHeightMm, {
+          align,
+          renderingMode: 'invisible'
+        });
+      } catch(e) { /* defensive: nunca abortar PDF por un texto raro */ }
+    }
+  }
+}
+
+/* ----------------------------------------------------------------
+   GENERAR JPG (ZIP) — UN JPG POR HOJA, 300 DPI
+   ----------------------------------------------------------------
+   Mismo motor de segmentación que generatePDF:
+     - Cada segmento manual (separado por .pdf-page-break) es UNA hoja.
+     - Cada hoja sale como un .jpg dentro de un .zip.
+     - Ancho de hoja = 210mm (A4 width), alto = variable según contenido.
+     - Resolución: 300 DPI reales. Para A4 (210mm) eso son 2480 px de ancho.
+       Calculamos el scale exacto de html2canvas para llegar a ese ancho
+       desde el tamaño en pixels del #pdf-area.
+     - Después de renderizar el JPG con canvas.toBlob, parcheamos el
+       header JFIF para que el archivo declare 300 DPI (los navegadores
+       guardan los JPGs como 72 DPI por defecto, lo que confunde a
+       Photoshop/InDesign aunque los píxeles sean los correctos).
+   ---------------------------------------------------------------- */
+async function generateJPGs() {
+  showOverlay('GENERANDO JPGs', 'Preparando exportación…', false);
+  const btn = document.getElementById('btn-jpg');
+  if (btn) btn.disabled = true;
+  // También deshabilitamos el de PDF mientras se procesa (mismo motor)
+  const btnPdf = document.getElementById('btn-pdf');
+  if (btnPdf) btnPdf.disabled = true;
+
+  const el = document.getElementById('pdf-area');
+
+  const _html2canvas = window.html2canvas
+                    || (window.html2pdf && window.html2pdf.html2canvas);
+  const _JSZip = window.JSZip;
+  if (!_html2canvas || !_JSZip) {
+    const missing = [];
+    if (!_html2canvas) missing.push('html2canvas');
+    if (!_JSZip) missing.push('JSZip');
+    alert(
+      'No se pudieron cargar las librerías de JPG/ZIP (' + missing.join(', ') + ').\n\n' +
+      'Posibles causas:\n' +
+      '• Estás abriendo el archivo sin conexión a internet (las librerías se descargan de un CDN la primera vez).\n' +
+      '• Un bloqueador de scripts está bloqueando cdnjs.cloudflare.com.\n\n' +
+      'Solución: refrescá la página estando conectado a internet.'
+    );
+    if (btn) btn.disabled = false;
+    if (btnPdf) btnPdf.disabled = false;
+    hideOverlay();
+    return;
+  }
+
+  deselectCard();
+  const teniaGuides = el.classList.contains('show-guides');
+  if (teniaGuides) el.classList.remove('show-guides');
+
+  try {
+    // 1) Esperar imágenes (mismo waitForAllImages que el PDF)
+    showOverlay('GENERANDO JPGs', 'Esperando que carguen todas las fotos…', false);
+    await waitForAllImages(el);
+
+    // 1.bis) Esperar tipografías (mismo motivo y misma función que el PDF).
+    //        Ver comentario completo en la definición de waitForAllFonts().
+    showOverlay('GENERANDO JPGs', 'Esperando que carguen las tipografías…', false);
+    await waitForAllFonts();
+
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 80)));
+
+    // 2) Segmentar igual que el PDF (cortes manuales = una hoja c/u)
+    const segments = [];
+    let current = [];
+    for (const child of Array.from(el.children)) {
+      if (child.classList && child.classList.contains('pdf-page-break')) {
+        if (current.length) segments.push(current);
+        current = [];
+        continue;
+      }
+      if (child.classList && child.classList.contains('insert-break-zone')) continue;
+      if (child.id === 'photo-flash') continue;
+      current.push(child);
+    }
+    if (current.length) segments.push(current);
+    if (segments.length === 0) throw new Error('No hay contenido para exportar.');
+
+    // 3) Activar modo export (oculta toolbars, etc — igual que el PDF)
+    el.classList.add('exporting');
+
+    // 4) Calcular SCALE para llegar a 300 DPI a 210mm de ancho.
+    //    El #pdf-area mide N px en pantalla. Esos N px se mapean a 210mm
+    //    en la hoja final. Para que la hoja tenga 300 DPI:
+    //      ancho_target_px = 210mm / 25.4 * 300 = 2480 px
+    //      scale = 2480 / N
+    const TARGET_DPI = 300;
+    const PAGE_W_MM = 210;
+    const TARGET_W_PX = Math.round(PAGE_W_MM / 25.4 * TARGET_DPI); // 2480
+    const baseWpx = el.offsetWidth;
+    const SCALE = TARGET_W_PX / baseWpx;
+
+    const zip = new _JSZip();
+    const totalBlocks = segments.reduce((s, seg) => s + seg.length, 0);
+    let renderedBlocks = 0;
+
+    showOverlay('GENERANDO JPGs', `Hoja 0 / ${segments.length}…`, true);
+
+    // 5) Procesar segmento por segmento
+    for (let si = 0; si < segments.length; si++) {
+      const seg = segments[si];
+
+      // 5.1) Renderizar bloques del segmento (mismo patrón que PDF
+      //      pero con scale apuntando a 300 DPI exactos)
+      const blockCanvases = [];
+      for (let bi = 0; bi < seg.length; bi++) {
+        const block = seg[bi];
+        const canvas = await _html2canvas(block, {
+          scale: SCALE,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          imageTimeout: 15000
+        });
+        blockCanvases.push(canvas);
+        renderedBlocks++;
+        const pct = Math.round((renderedBlocks / totalBlocks) * 90); // dejamos 10% para zip
+        updateOverlayProgress(pct,
+          `Hoja ${si + 1} / ${segments.length} — bloque ${bi + 1} / ${seg.length}…`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      // 5.2) Componer todos los canvases del segmento en uno solo
+      //      (concatenación vertical). Esto es la "hoja" final.
+      const W = blockCanvases[0].width;
+      const totalH = blockCanvases.reduce((s, c) => s + c.height, 0);
+
+      // Defensivo: si el resultado excede el límite de canvas del browser
+      // (típicamente 16384px de lado en Chrome/Firefox), abortamos con
+      // un mensaje claro para que el usuario meta más cortes manuales.
+      const MAX_CANVAS_SIDE = 16384;
+      if (totalH > MAX_CANVAS_SIDE) {
+        throw new Error(
+          `La hoja ${si + 1} es demasiado larga (${totalH}px) para exportar a 300 DPI.\n` +
+          `Insertá un corte manual ("+ insertar corte") en algún punto intermedio ` +
+          `para dividirla en hojas más cortas.`
+        );
+      }
+
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = W;
+      finalCanvas.height = totalH;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, totalH);
+      let y = 0;
+      for (const c of blockCanvases) {
+        ctx.drawImage(c, 0, y);
+        y += c.height;
+      }
+
+      // 5.3) Convertir a JPG (calidad 0.92 igual que el PDF) e inyectar
+      //      la metadata de 300 DPI en el header JFIF.
+      const blob = await new Promise(res =>
+        finalCanvas.toBlob(res, 'image/jpeg', 0.92)
+      );
+      const arrayBuf = await blob.arrayBuffer();
+      const u8 = new Uint8Array(arrayBuf);
+      const u8WithDpi = setJPEGDensity(u8, TARGET_DPI);
+
+      // 5.4) Agregar al zip. Nombre con padding cero (hoja_01, hoja_02…)
+      //      para que el orden alfabético = orden de hojas.
+      const pad = String(si + 1).padStart(2, '0');
+      const filename = `LEUK_Stock_${fechaISO()}_hoja_${pad}.jpg`;
+      zip.file(filename, u8WithDpi);
+
+      // Liberar memoria del canvas (importante con 300 DPI: cada hoja
+      // puede pesar 50-100MB en RAM si es larga)
+      finalCanvas.width = 0; finalCanvas.height = 0;
+      for (const c of blockCanvases) { c.width = 0; c.height = 0; }
+    }
+
+    // 6) Generar el zip y descargarlo
+    updateOverlayProgress(92, 'Comprimiendo ZIP…');
+    const zipBlob = await zip.generateAsync(
+      { type: 'blob', compression: 'STORE' }, // JPGs ya están comprimidos,
+      // STORE evita CPU innecesaria sin reducir tamaño significativo
+      (meta) => {
+        // meta.percent: 0–100 del proceso de zipear
+        const pct = 92 + Math.round(meta.percent * 0.08);
+        updateOverlayProgress(pct, `Comprimiendo ZIP… ${Math.round(meta.percent)}%`);
+      }
+    );
+
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `LEUK_Stock_${fechaISO()}_JPGs.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Pequeña espera antes de revocar la URL (algunos browsers necesitan
+    // que el download tag haya disparado el blob)
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+  } catch(err) {
+    console.error('[JPG]', err);
+    alert('Error generando JPGs: ' + ((err && err.message) || err));
+  } finally {
+    el.classList.remove('exporting');
+    if (teniaGuides) el.classList.add('show-guides');
+    hideOverlay();
+    if (btn) btn.disabled = false;
+    if (btnPdf) btnPdf.disabled = false;
+  }
+}
+
+/* ----------------------------------------------------------------
+   PARCHE JFIF: SET 300 DPI EN UN JPEG
+   ----------------------------------------------------------------
+   Un JPEG generado por canvas.toBlob suele venir con un APP0/JFIF
+   declarando 72 DPI (o units=0 = "aspect ratio sin DPI"). Esto
+   confunde a Photoshop/InDesign/Illustrator: el archivo aparece
+   con las dimensiones físicas erradas aunque los píxeles sean los
+   correctos. La solución estándar es modificar 5 bytes del header:
+     - byte de "units" → 0x01 (DPI)
+     - 2 bytes Xdensity → dpi (big-endian)
+     - 2 bytes Ydensity → dpi (big-endian)
+   Si el JPEG no tiene segmento JFIF, lo insertamos justo después
+   del marcador SOI (FFD8).
+   Referencia: https://www.w3.org/Graphics/JPEG/jfif3.pdf §A.1
+   ---------------------------------------------------------------- */
+function setJPEGDensity(u8, dpi) {
+  // Validar SOI
+  if (u8.length < 4 || u8[0] !== 0xFF || u8[1] !== 0xD8) return u8;
+  const dpiHi = (dpi >> 8) & 0xFF;
+  const dpiLo = dpi & 0xFF;
+
+  // Caso A: ya hay un APP0/JFIF justo después del SOI (lo más común).
+  // Estructura: FF E0 [len:2] "JFIF\0" [v1:1] [v2:1] [units:1] [Xden:2] [Yden:2] ...
+  if (u8[2] === 0xFF && u8[3] === 0xE0 && u8.length >= 20 &&
+      u8[6] === 0x4A && u8[7] === 0x46 && u8[8] === 0x49 && u8[9] === 0x46 && u8[10] === 0x00) {
+    const out = new Uint8Array(u8);
+    out[13] = 0x01;      // units = DPI
+    out[14] = dpiHi;     // Xdensity high
+    out[15] = dpiLo;     // Xdensity low
+    out[16] = dpiHi;     // Ydensity high
+    out[17] = dpiLo;     // Ydensity low
+    return out;
+  }
+
+  // Caso B: no hay JFIF. Insertarlo entre SOI y el resto del archivo.
+  const jfif = new Uint8Array([
+    0xFF, 0xE0,                  // APP0
+    0x00, 0x10,                  // length = 16
+    0x4A, 0x46, 0x49, 0x46, 0x00,// "JFIF\0"
+    0x01, 0x01,                  // version 1.01
+    0x01,                        // units = DPI
+    dpiHi, dpiLo,                // Xdensity
+    dpiHi, dpiLo,                // Ydensity
+    0x00, 0x00                   // Xthumbnail, Ythumbnail
+  ]);
+  const out = new Uint8Array(2 + jfif.length + (u8.length - 2));
+  out[0] = 0xFF; out[1] = 0xD8;
+  out.set(jfif, 2);
+  out.set(u8.subarray(2), 2 + jfif.length);
+  return out;
+}
+
+/* ----------------------------------------------------------------
+   INIT
+   ---------------------------------------------------------------- */
+initFecha();        // Carga la fecha guardada o pone hoy como default
+updateFotosPill();
+restoreFamilias();  // Restaura el archivo de organización si está guardado
+render();
+// Restaurar logo + fuentes guardadas (async, no bloquea el render inicial)
+restoreCustom();
+
+// WARMUP de tipografías: disparar el download en background apenas
+// se abre la página, para que estén en caché cuando el usuario
+// aprete "GENERAR PDF/JPG". No bloquea nada — los export ya tienen
+// su propio waitForAllFonts() de salvataje. Esto es pura optimización
+// de UX: elimina el delay perceptible del primer export.
+if (document.fonts && document.fonts.load) {
+  FONTS_CRITICAS.forEach(spec => {
+    document.fonts.load(spec).catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

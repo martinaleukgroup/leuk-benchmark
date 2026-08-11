@@ -775,7 +775,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      maxWidth: 1280,
+      maxWidth: "100%",
       margin: "0 auto"
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -783,47 +783,52 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      height: 58,
-      gap: 12
+      minHeight: 44,
+      gap: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      alignItems: "center",
-      gap: 10,
+      gap: 0,
+      overflowX: "auto",
+      flexShrink: 1,
+      minWidth: 0
+    }
+  }, [{
+    k: "checkin",
+    l: "Inscriptos"
+  }, {
+    k: "eligibles",
+    l: `Habilitados · ${elegibles.length}`
+  }, {
+    k: "raffle",
+    l: `Sorteo · ${restantes.length}`
+  }, {
+    k: "config",
+    l: "⚙ Configuración"
+  }].map(t => /*#__PURE__*/React.createElement("button", {
+    key: t.k,
+    onClick: () => setTab(t.k),
+    style: {
+      background: "none",
+      border: "none",
+      borderBottom: tab === t.k ? "2px solid #676b55" : "2px solid transparent",
+      cursor: "pointer",
+      padding: "14px 16px",
+      fontSize: 13,
+      fontWeight: 500,
+      fontFamily: "'Barlow',sans-serif",
+      color: tab === t.k ? "#676b55" : "#8a8c82",
+      whiteSpace: "nowrap",
+      transition: "all .2s",
       flexShrink: 0
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 30,
-      height: 30,
-      borderRadius: 7,
-      background: "linear-gradient(135deg,#676b55,#565a45)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 13
-    }
-  }, "✦"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#2b2c26",
-      lineHeight: 1
-    }
-  }, "Check-in & Sorteo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "#a2a498",
-      fontFamily: "'Barlow',monospace",
-      marginTop: 1
-    }
-  }, "Leuk · Eventos"))), /*#__PURE__*/React.createElement("div", {
+  }, t.l))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 8
+      gap: 8,
+      flexShrink: 0
     }
   }, syncMsg && /*#__PURE__*/React.createElement("span", {
     style: {
@@ -867,44 +872,9 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       color: "#a2a498",
       fontFamily: "'Barlow',monospace"
     }
-  }, s.l))))), /*#__PURE__*/React.createElement("div", {
+  }, s.l))))))), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      gap: 0,
-      overflowX: "auto"
-    }
-  }, [{
-    k: "checkin",
-    l: "Inscriptos"
-  }, {
-    k: "eligibles",
-    l: `Habilitados · ${elegibles.length}`
-  }, {
-    k: "raffle",
-    l: `Sorteo · ${restantes.length}`
-  }, {
-    k: "config",
-    l: "⚙ Configuración"
-  }].map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.k,
-    onClick: () => setTab(t.k),
-    style: {
-      background: "none",
-      border: "none",
-      borderBottom: tab === t.k ? "2px solid #676b55" : "2px solid transparent",
-      cursor: "pointer",
-      padding: "11px 16px",
-      fontSize: 12,
-      fontWeight: 500,
-      fontFamily: "'Barlow',sans-serif",
-      color: tab === t.k ? "#676b55" : "#8a8c82",
-      whiteSpace: "nowrap",
-      transition: "all .2s",
-      flexShrink: 0
-    }
-  }, t.l))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: 1280,
+      maxWidth: "100%",
       margin: "0 auto",
       padding: wide ? "24px 20px" : "14px 12px"
     }

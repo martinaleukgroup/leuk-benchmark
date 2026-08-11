@@ -1211,7 +1211,11 @@
   }
   // descarga los datos del benchmark desde el bucket privado de Supabase (requiere sesión)
   async function fetchData(retried) {
-    const r = await fetch(`${SB.url}/storage/v1/object/datos/benchmark_data.json`, { headers: AUTHSES.head() });
+    // cache-buster + cache:"reload": el JSON del bucket se sube sin cache-control, así que el
+    // navegador lo cacheaba por heurística y no se veían los datos nuevos hasta pasado un rato.
+    // Con el timestamp la URL es siempre única → siempre baja la última versión.
+    const r = await fetch(`${SB.url}/storage/v1/object/datos/benchmark_data.json?_cb=${Date.now()}`,
+                          { headers: AUTHSES.head(), cache: "reload" });
     if ((r.status === 400 || r.status === 401 || r.status === 403) && !retried && await AUTHSES.refresh()) return fetchData(true);
     if (!r.ok) throw new Error("No pude cargar los datos (sesión inválida — reingresá)");
     return await r.json();

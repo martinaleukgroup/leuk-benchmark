@@ -52,7 +52,7 @@
   function fichaHTML(f) {
     if (f.tipo === "accesorios") return accHTML(f);
     // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta
-    const rows = f.filas.map(r => `<tr><td class="k">${r.k}</td><td>${esc(r.v)}</td></tr>`).join("");
+    const rows = f.filas.map(r => `<div class="f-row"><div class="k">${r.k}</div><div class="v">${esc(r.v)}</div></div>`).join("");
 
     const a = f.assets || {};
     const ph = (label, fname) => `<div class="f-ic">🖼️</div><div>${label}</div>${fname ? `<code>${esc(fname)}</code>` : ""}`;
@@ -116,7 +116,7 @@
       <div class="f-cols">
         <div>
           <div class="f-h">Especificaciones Técnicas <span class="f-dots">${dots}</span></div>
-          <table class="f-spec">${rows}</table>
+          <div class="f-spec">${rows}</div>
           ${caladoBlock}
         </div>
         <div>

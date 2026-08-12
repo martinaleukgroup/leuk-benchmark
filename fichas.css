@@ -65,15 +65,18 @@
   display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:none}
 .f-host .f-dot-in{width:11px;height:11px;border-radius:50%;display:block;box-sizing:border-box}
 .f-host .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
-.f-host .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
-.f-host .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
-.f-host .f-spec td{padding:5px 10px;line-height:1.15;border:none;vertical-align:middle}
+/* filas en flex (no <table>): así el centrado vertical lo respeta también html2canvas
+   —el motor del PDF/JPG—, que ignora vertical-align:middle en celdas de tabla. */
+.f-host .f-spec{width:100%;font-size:9.2px;margin-top:4px}
+.f-host .f-spec .f-row{display:flex;align-items:center}
+.f-host .f-spec .k,.f-host .f-spec .v{padding:5px 10px;line-height:1.15;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+.f-host .f-spec .v{flex:1;min-width:0}
 /* Fichas con muchas filas que no entran en la A4 → filas más compactas para que quepan.
    Lo aplica autofit() en fichas-ui.js, sólo a las hojas que se pasan del borde. */
-.f-host .f-page.f-fit .f-spec td{padding-top:3px;padding-bottom:3px;line-height:1.1}
-.f-host .f-spec td.k{color:var(--ink);width:40%}
-.f-host .f-spec td.k small{font-size:7.6px}
-.f-host .f-spec tr:nth-child(even){background:var(--zebra)}
+.f-host .f-page.f-fit .f-spec .k,.f-host .f-page.f-fit .f-spec .v{padding-top:3px;padding-bottom:3px;line-height:1.1}
+.f-host .f-spec .k{color:var(--ink);width:40%;flex:none}
+.f-host .f-spec .k small{font-size:7.6px}
+.f-host .f-spec .f-row:nth-child(even){background:var(--zebra)}
 /* Calado: ícono + medida debajo de la tabla, con nota al pie opcional */
 .f-host .f-calado{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:9.6px}
 .f-host .f-cal-ic{width:20px;height:auto;flex:none;display:block}

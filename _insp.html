@@ -1,0 +1,9 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="fichas.css"></head>
+<body><div id="ficha-stage" class="f-host"></div>
+<script src="fichas-data.js"></script><script src="fichas-ui.js"></script>
+<script>
+var f=null; window._fichasDocs.forEach(function(d){d.fichas.forEach(function(x){if(x.titulo==='ACACIA'&&!f)f=x;});});
+document.getElementById('ficha-stage').innerHTML=window._fichaHTML(f);
+document.title='fpage-classes: '+document.querySelector('.f-page').className;
+</script></body></html>

@@ -116,6 +116,13 @@
       ? `<div class="f-calado-nota">* ${esc(f.lente)}</div>`
       : "";
 
+    // Sello de Clase de aislación: I = círculo (tierra), II = cuadrado, III = rombo.
+    // Sin clase cargada → no se muestra sello.
+    const SELLO = { I: "clase1.png", II: "clase2.png", III: "clase3.png" };
+    const sello = SELLO[f.clase_aisl]
+      ? `<img class="f-seal" src="${ICON}${SELLO[f.clase_aisl]}" alt="Clase ${f.clase_aisl}">`
+      : "";
+
     return `<div class="f-page">
       <div class="f-head">
         <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
@@ -138,9 +145,7 @@
       </div>
       <div class="f-foot">
         <div class="f-web">www.leukiluminacion.com</div>
-        <div class="f-seals">
-          <img class="f-seal" src="${ICON}tierra.png" alt="Puesto a tierra">
-        </div>
+        <div class="f-seals">${sello}</div>
       </div>
     </div>`;
   }

@@ -106,6 +106,11 @@
       (f.calado.nota ? `<div class="f-calado-nota">* Profundidad de calado total aproximada. Considera dicroica y zócalo estándar.</div>` : "")
       : "";
 
+    // Switch de temperatura de color: nota al pie de la tabla (dispara el asterisco del valor)
+    const switchBlock = f.switch_cct
+      ? `<div class="f-calado-nota">* Incluye switch para cambio de temperatura de color.</div>`
+      : "";
+
     return `<div class="f-page">
       <div class="f-head">
         <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
@@ -118,6 +123,7 @@
           <div class="f-h">Especificaciones Técnicas <span class="f-dots">${dots}</span></div>
           <div class="f-spec">${rows}</div>
           ${caladoBlock}
+          ${switchBlock}
         </div>
         <div>
           ${fotoBlock}

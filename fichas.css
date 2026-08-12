@@ -67,7 +67,7 @@
 .f-host .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
 .f-host .f-spec{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.2px;margin-top:4px}
 .f-host .f-spec td{white-space:normal!important;border:0;word-wrap:break-word;overflow-wrap:break-word}
-.f-host .f-spec td{padding:5px 10px;line-height:1.15;border:none}
+.f-host .f-spec td{padding:5px 10px;line-height:1.15;border:none;vertical-align:middle}
 /* Fichas con muchas filas que no entran en la A4 → filas más compactas para que quepan.
    Lo aplica autofit() en fichas-ui.js, sólo a las hojas que se pasan del borde. */
 .f-host .f-page.f-fit .f-spec td{padding-top:3px;padding-bottom:3px;line-height:1.1}
@@ -91,7 +91,7 @@
 .f-host .f-buttons{display:flex;gap:6px;margin-top:9px}
 .f-host .f-btn{width:84px;text-align:center;text-decoration:none;color:var(--ink)}
 .f-host .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
-.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:.5px;line-height:1.2;margin-top:8px;text-transform:uppercase}
+.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:.5px;line-height:1.2;margin-top:8px;text-transform:uppercase}
 .f-host .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
 /* --- Hoja de accesorios (grilla) --- */
 .f-host .f-acc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 26px;

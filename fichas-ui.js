@@ -111,6 +111,11 @@
       ? `<div class="f-calado-nota">* Incluye switch para cambio de temperatura de color.</div>`
       : "";
 
+    // Lentes intercambiables (CHILL / MEX): nota al pie, tomada de Comentarios del maestro
+    const lenteBlock = f.lente
+      ? `<div class="f-calado-nota">* ${esc(f.lente)}</div>`
+      : "";
+
     return `<div class="f-page">
       <div class="f-head">
         <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
@@ -124,6 +129,7 @@
           <div class="f-spec">${rows}</div>
           ${caladoBlock}
           ${switchBlock}
+          ${lenteBlock}
         </div>
         <div>
           ${fotoBlock}

@@ -1760,6 +1760,7 @@
           <div class="intg-info"><b>${(p.nombre || "—").replace(/[<>]/g, "")}</b> <span class="leuk-fam">${(p.familia || "").replace(/[<>]/g, "")}</span>
             <div class="leuk-fam intg-specs">${fmtUsd(p.precio_usd)}${specs ? " · " + specs : ""}</div></div>
           <div class="intg-acts">
+            <button class="intg-b intg-ficha-b" data-act="ficha" data-id="${p.id}">📋 Ficha</button>
             <button class="intg-b intg-ok ${p.aprobado === true ? "on" : ""}" data-act="ok" data-id="${p.id}">✓ Aprobar</button>
             <button class="intg-b intg-no ${p.aprobado === false ? "on" : ""}" data-act="no" data-id="${p.id}">✕ Descartar</button>
           </div></div>`;
@@ -1783,9 +1784,49 @@
     ov.addEventListener("click", () => ov.remove());
     document.body.appendChild(ov);
   }
+  // Ficha técnica completa del producto importado (todos los specs que el worker sacó del PDF)
+  const FICHA_LABELS = {
+    fuente_luz: "Fuente de luz", potencia_w: "Potencia (W)", lumenes: "Lúmenes",
+    eficiencia_lmw: "Eficiencia (lm/W)", tension_v: "Tensión (V)", angulo_haz: "Ángulo de haz",
+    cri: "CRI", temp_color_k: "Temp. de color (K)", ugr: "UGR", ip: "IP",
+    fijacion_montaje: "Fijación / montaje", medidas: "Medidas", movimiento: "Movimiento",
+    color_artefacto: "Color del artefacto", control: "Control", garantia: "Garantía",
+  };
+  const _escF = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  function abrirFicha(p) {
+    const ficha = p.ficha || {};
+    // Orden preferido de campos conocidos + cualquier extra que traiga el JSON
+    const claves = Object.keys(FICHA_LABELS).filter(k => ficha[k] != null && String(ficha[k]).trim() !== "")
+      .concat(Object.keys(ficha).filter(k => !(k in FICHA_LABELS) && String(ficha[k]).trim() !== ""));
+    const rows = claves.length
+      ? claves.map(k => `<div class="intg-fk-row"><div class="k">${_escF(FICHA_LABELS[k] || k)}</div><div class="v">${_escF(ficha[k])}</div></div>`).join("")
+      : `<div class="empty-mini">Este producto no trae specs en la ficha.</div>`;
+    const img = p.imagen
+      ? `<img class="intg-fk-img" src="${_escF(p.imagen)}" alt="">`
+      : `<div class="intg-fk-img intg-thumb-none">sin foto</div>`;
+    const ov = el("div", "intg-fk");
+    ov.innerHTML = `<div class="intg-fk-card" role="dialog" aria-label="Ficha técnica">
+        <button class="intg-fk-x" title="Cerrar">✕</button>
+        <div class="intg-fk-head">
+          ${img}
+          <div class="intg-fk-title">
+            <div class="intg-fk-marca">${_escF(p.marca)}</div>
+            <h3>${_escF(p.nombre || "—")}</h3>
+            ${p.familia ? `<div class="intg-fk-fam">${_escF(p.familia)}</div>` : ""}
+            ${p.precio_usd != null ? `<div class="intg-fk-precio">${_escF(fmtUsd(p.precio_usd))}</div>` : ""}
+          </div>
+        </div>
+        <div class="intg-fk-body">${rows}</div>
+      </div>`;
+    // click fuera de la tarjeta o en la X = cerrar
+    ov.addEventListener("click", ev => { if (ev.target === ov || ev.target.closest(".intg-fk-x")) ov.remove(); });
+    document.body.appendChild(ov);
+  }
   document.addEventListener("click", async ev => {
     const th = ev.target.closest(".intg-thumb[data-full]");
     if (th) { abrirLightbox(th.dataset.full); return; }
+    const fk = ev.target.closest('.intg-b[data-act="ficha"]');
+    if (fk) { const p = INTEG.find(x => x.id === fk.dataset.id); if (p) abrirFicha(p); return; }
     const one = ev.target.closest(".intg-b[data-act]");
     if (one) {
       const id = one.dataset.id, val = one.dataset.act === "ok";

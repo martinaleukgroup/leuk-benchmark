@@ -567,6 +567,23 @@ button.rm:hover{background:#f4e2df}
 .intg-lb{position:fixed;inset:0;background:rgba(20,20,16,.86);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:zoom-out;padding:24px}
 .intg-lb img{max-width:92vw;max-height:92vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);background:#fff}
 .intg-lb-x{position:fixed;top:18px;right:22px;width:40px;height:40px;border:none;border-radius:999px;background:#fff;font-size:18px;cursor:pointer}
+/* Ficha técnica del producto importado (modal) */
+.intg-ficha-b{color:var(--olive)}
+.intg-fk{position:fixed;inset:0;background:rgba(20,20,16,.72);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px}
+.intg-fk-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);width:min(560px,100%);max-height:88vh;overflow:auto;box-shadow:0 12px 48px rgba(0,0,0,.35)}
+.intg-fk-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:15px;cursor:pointer;z-index:1}
+.intg-fk-head{display:flex;gap:16px;align-items:flex-start;padding:20px 20px 16px;border-bottom:1px solid var(--line)}
+.intg-fk-img{width:104px;height:104px;flex-shrink:0;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px}
+.intg-fk-title{min-width:0;flex:1}
+.intg-fk-marca{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-soft)}
+.intg-fk-title h3{margin:2px 0 4px;color:var(--olive);font-size:19px;line-height:1.2}
+.intg-fk-fam{font-size:13px;color:var(--gray-soft)}
+.intg-fk-precio{margin-top:6px;font-weight:600;font-size:15px}
+.intg-fk-body{padding:8px 20px 20px}
+.intg-fk-row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.intg-fk-row:last-child{border-bottom:none}
+.intg-fk-row .k{flex:0 0 42%;color:var(--gray-soft);font-size:13px}
+.intg-fk-row .v{flex:1;font-size:13px;font-weight:500;word-break:break-word}
 @media(max-width:640px){
   .intg-row{flex-direction:column;align-items:flex-start}
   .intg-marca-head{flex-direction:column;align-items:flex-start}

@@ -51,13 +51,19 @@
 const API_HOJA_LOG = 'Log fichas';
 
 // Estados que la plataforma puede escribir. Cualquier otra cosa → 400.
+//
+// "Listo para publicar" YA NO SE ESCRIBE. Era un sinónimo de "Finalizada"
+// —02_Fichas.gs siempre los trató igual, vía ESTADOS_FINALIZADOS— y tener dos
+// nombres para el mismo estado sólo confundía. Queda "Finalizada", que es el
+// nombre canónico del bot. Las filas viejas que todavía digan "Listo para
+// publicar" las normaliza el bot solo en su próxima corrida.
+//
 // "Discontinuada" queda deliberadamente afuera: ese estado lo decide el bot
 // leyendo la Situación del Maestro, no una persona desde una pantalla.
 const API_ESTADOS_PERMITIDOS = [
   ESTADO_FICHA.SOLICITADA,      // 'Solicitada'
   ESTADO_FICHA.A_ACTUALIZAR,    // 'A actualizar'
-  ESTADO_FICHA.FINALIZADA,      // 'Finalizada'
-  'Listo para publicar'         // 02_Fichas.gs lo interpreta como Finalizada
+  ESTADO_FICHA.FINALIZADA       // 'Finalizada'
 ];
 
 const API_ROLES_ESCRITURA_DEFAULT = 'admin,lider,coordinacion,diseno';
@@ -66,14 +72,14 @@ const API_ROLES_ESCRITURA_DEFAULT = 'admin,lider,coordinacion,diseno';
 const API_ROL_ALIAS = { editor: 'lider', lector: 'comercial', fichas: 'diseno' };
 
 // Color de fondo de la celda Estado, igual criterio que _escribirTablaFichas().
-// "Listo para publicar" va en azul: se distingue de lo que escribió el bot.
+// Mismos colores que la planilla, para que una celda escrita desde la
+// plataforma se vea igual que una escrita por el bot.
 const API_COLOR_ESTADO = (function () {
   const c = {};
   c[normCab(ESTADO_FICHA.SOLICITADA)]    = '#f4cccc';
   c[normCab(ESTADO_FICHA.A_ACTUALIZAR)]  = '#fff2cc';
   c[normCab(ESTADO_FICHA.FINALIZADA)]    = '#d9ead3';
   c[normCab(ESTADO_FICHA.DISCONTINUADA)] = '#e0e0e0';
-  c[normCab('Listo para publicar')]      = '#cfe2f3';
   return c;
 })();
 

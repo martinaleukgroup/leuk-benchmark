@@ -15,7 +15,9 @@
    Discontinuada gris. */
 .fe-solicitada     { --fe-c: var(--no);         --fe-bg: #f4e2df; }
 .fe-actualizar     { --fe-c: var(--warn);       --fe-bg: #f6ecd8; }
-.fe-listo          { --fe-c: var(--olive);      --fe-bg: var(--olive-pale); }
+/* Legado: "Listo para publicar" era otro nombre de Finalizada. Mismo color,
+   porque es el mismo estado. Desaparece cuando el bot normalice las filas. */
+.fe-listo          { --fe-c: var(--ok);         --fe-bg: #e7f0e1; }
 .fe-finalizada     { --fe-c: var(--ok);         --fe-bg: #e7f0e1; }
 .fe-discontinuada  { --fe-c: var(--gray-soft);  --fe-bg: #f1f2ee; }  /* BANDA_PAR del bot (00_Comun.gs) */
 .fe-sinestado      { --fe-c: var(--olive-soft); --fe-bg: var(--olive-pale); }

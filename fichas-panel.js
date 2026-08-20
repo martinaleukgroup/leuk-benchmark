@@ -55,8 +55,11 @@
      atrás desde la pantalla, un clic equivocado se corrige editando la hoja
      (o esperando al miércoles, si el Maestro cambió de verdad).
 
-     Estados cerrados: no se ofrece nada porque no hay nada que declarar. */
-  const SIN_ACCIONES = ["Finalizada"];
+     Estados cerrados: no se ofrece nada porque no hay nada que declarar.
+     "Listo para publicar" era un sinónimo de "Finalizada" que ya no se
+     escribe; sigue acá para las filas viejas, hasta que el bot las normalice
+     en su próxima corrida. */
+  const SIN_ACCIONES = ["Finalizada", "Listo para publicar"];
 
   /* ---- estado en memoria ---- */
   let ITEMS = [];       // { ag, doc, ficha }  — la unión de las dos fuentes
@@ -214,9 +217,10 @@
     const chip = (e, n, cls) =>
       `<button class="fe-chip ${cls} ${FILTRO === e ? "on" : ""}" data-estado="${esc(e)}">
          <b>${n}</b> <span>${esc(e)}</span></button>`;
-    // Discontinuada y "sin estado" solo si hay: no son trabajo pendiente.
+    // Discontinuada y el legado "Listo para publicar" sólo si hay: no son
+    // trabajo pendiente, y el segundo desaparece cuando el bot normalice.
     const html = ESTADOS
-      .filter(e => e !== "Discontinuada" || c[e] > 0)
+      .filter(e => (e !== "Discontinuada" && e !== "Listo para publicar") || c[e] > 0)
       .map(e => chip(e, c[e], CLASE[e])).join("")
       + (sinEstado ? chip("__sin__", sinEstado, "fe-sinestado").replace(">__sin__<", ">sin estado<") : "");
     $("#fpChips").innerHTML = html;
@@ -292,9 +296,9 @@
         f.actualizadaPor ? ` · actualizada por <b>${esc(f.actualizadaPor)}</b>${f.cuando ? ` el ${esc(f.cuando)}` : ""}` : ""
       }</div>` : ""}
       <div class="fp-acc">
-        ${editable && f.estado !== "Listo para publicar"
-          ? `<button class="btn-primary" data-act="Listo para publicar"
-               title="Marcá que ya la hiciste: la ficha pasa a «Listo para publicar»">Actualizar</button>` : ""}
+        ${editable
+          ? `<button class="btn-primary" data-act="Finalizada"
+               title="Marcá que ya la hiciste: la ficha pasa a «Finalizada»">Actualizar</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>` : ""}
       </div>

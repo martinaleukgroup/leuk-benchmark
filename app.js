@@ -348,10 +348,26 @@
     return {
       logged: () => !!(S && S.access_token),
       email: () => (S && S.email) || "",
+      token: () => (S && S.access_token) || "",   // lo manda fichas-estado.js a 06_API.gs
       head: () => ({ apikey: SB.key, Authorization: `Bearer ${S && S.access_token}`, "Content-Type": "application/json" }),
       login, refresh, logout,
     };
   })();
+
+  /* ---- Puente de sesión para las vistas en archivos aparte ----------------
+     app.js es una IIFE: nada de acá adentro es visible desde fichas-estado.js.
+     Este es el único punto de contacto, a propósito — así se ve de un vistazo
+     qué expone la app y qué no.
+     `puedeEditarFichas` acá sólo decide si se DIBUJAN los botones. El permiso
+     de verdad lo valida 06_API.gs contra Supabase en cada escritura: si esto
+     mintiera, la API igual rechaza. */
+  const ROLES_FICHAS_ESCRITURA = ["admin", "lider", "coordinacion", "diseno"];
+  window.LEUK_SESION = {
+    email: () => AUTHSES.email(),
+    token: () => AUTHSES.token(),
+    rol: () => rolReal(),
+    puedeEditarFichas: () => AUTHSES.logged() && ROLES_FICHAS_ESCRITURA.includes(rolReal()),
+  };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
   const MONO = {};                                    // sku -> {sku, nombre, vertical, familia, precio_usd, autor, ts}
@@ -1850,7 +1866,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "firmas", "stock", "reingresos", "eventos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "fichas-estado", "firmas", "stock", "reingresos", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1864,6 +1880,7 @@
     diseno: {
       label: "Diseño",
       pages: [{ p: "fichas", t: "Fichas técnicas" },
+              { p: "fichas-estado", t: "Estado de fichas" },
               { p: "firmas", t: "Firmas de mail" },
               { p: "stock", t: "Stock diario" },
               { p: "reingresos", t: "Reingresos" }],
@@ -1915,6 +1932,9 @@
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
     if (page === "integraciones") renderIntegraciones();
     if (page === "fichas" && window.renderFichas) window.renderFichas();
+    // Estado de fichas: gestiona la hoja "Fichas técnicas" del archivo de carga
+    // vía la Web App de Apps Script (06_API.gs). Ver fichas-estado.js.
+    if (page === "fichas-estado" && window.renderFichasEstado) window.renderFichasEstado();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
     // Stock diario: app autocontenida embebida.

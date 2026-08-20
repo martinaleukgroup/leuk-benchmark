@@ -51,6 +51,7 @@
   let BUSCA = "";
   let CARGANDO = false;
   let AVISO_API = "";   // la API no contestó: se avisa pero la vista sigue
+  let AMPLIADO = false; // la ficha sola, sin lista ni buscador
   let montado = false;
 
   const ses = () => window.LEUK_SESION || {};
@@ -167,6 +168,10 @@
 
     // Al cambiar el ancho de la ventana hay que recalcular el zoom de la hoja.
     let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(escalar, 150); });
+    // Escape sale del modo ampliado (si no hay un modal abierto, que tiene lo suyo).
+    document.addEventListener("keydown", ev => {
+      if (ev.key === "Escape" && AMPLIADO && !$("#fpModal")) ampliar(false);
+    });
 
     construir([]);                 // primero lo local: la vista ya sirve
     pintarTodo();
@@ -270,6 +275,7 @@
         ${editable && f.estado !== "A actualizar" ? `<button class="btn-ghost" data-act="A actualizar">Actualizar</button>` : ""}
         ${editable && f.estado !== "Listo para publicar" ? `<button class="btn-primary fp-listo" data-act="Listo para publicar">Listo para publicar</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
+        ${x.doc ? `<button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>` : ""}
       </div>
     </div>`;
 
@@ -289,12 +295,21 @@
 
   // La hoja mide 210mm de ancho fijo. Se la achica para que entre en el panel,
   // y se compensa el hueco que deja el scale (que no afecta al layout).
+  //   · normal:   entra a lo ancho, nunca más del 100%
+  //   · ampliado: usa todo el ancho que dejó la lista al esconderse, y SÍ puede
+  //               pasar del 100% — ese es el punto: leer la letra chica.
+  //
+  // Ojo: la primera versión ajustaba "la hoja entera a la ventana" y en
+  // pantallas bajas daba MENOS que el modo normal, o sea que el botón
+  // "Ampliar" achicaba. Se ajusta solo a lo ancho, y se scrollea si no entra.
   function escalar() {
     const stage = $("#ficha-stage"); if (!stage) return;
-    const z = Math.min(1, (stage.clientWidth - 36) / ANCHO_A4);
+    const porAncho = (stage.clientWidth - 36) / ANCHO_A4;
+    const z = Math.min(AMPLIADO ? 2 : 1, porAncho);
     stage.querySelectorAll(".f-page").forEach(p => {
+      const alto = p.offsetHeight || 1123;                 // 297mm a 96dpi
       p.style.transform = `scale(${z})`;
-      p.style.marginBottom = Math.round(14 - (1 - z) * p.offsetHeight) + "px";
+      p.style.marginBottom = Math.round(14 - (1 - z) * alto) + "px";
     });
   }
 
@@ -303,6 +318,7 @@
   function onClickAcciones(ev) {
     const x = sel ? item(sel) : null; if (!x) return;
     if (ev.target.closest("[data-pdf]")) { window.FichasDoc.imprimir(x.ag); return; }
+    if (ev.target.closest("[data-ampliar]")) { ampliar(!AMPLIADO); return; }
     const b = ev.target.closest("[data-act]");
     if (b && x.ficha) confirmar(x.ficha, b.dataset.act);
   }
@@ -393,6 +409,18 @@
       msg.textContent = r.mensaje || r.error || "No se pudo guardar.";
       if (r.error === "FICHA_DISCONTINUADA" || r.error === "NO_ENCONTRADA") cargar().then(pintarTodo);
     };
+  }
+
+  // Ampliar / volver. No se re-dibuja la ficha (es caro): solo se reacomoda
+  // el layout y se recalcula el zoom de la hoja.
+  function ampliar(si) {
+    AMPLIADO = si;
+    const page = $("#page-fichas"); if (!page) return;
+    page.classList.toggle("fp-ancho", AMPLIADO);
+    const b = page.querySelector("[data-ampliar]");
+    if (b) b.textContent = AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar";
+    escalar();
+    if (AMPLIADO) window.scrollTo({ top: 0 });
   }
 
   function avisar(texto, ok) {

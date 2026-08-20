@@ -44,11 +44,18 @@
   };
   const ANCHO_A4 = 794;          // 210mm a 96dpi, el ancho fijo de .f-page
 
-  // Estados cerrados: no se ofrecen acciones porque no hay nada que decidir.
-  // El circuito va en una sola dirección — Solicitada / A actualizar →
-  // "Listo para publicar" — y una vez que el bot confirma, la ficha está hecha.
-  // Reabrir una Finalizada (una foto mal, un texto: cosas que el bot no puede
-  // detectar) se hace editando la hoja a mano. Es raro y conviene que cueste.
+  /* UN SOLO BOTÓN, a propósito.
+     El reparto de trabajo es: el BOT decide qué hay que hacer (Solicitada,
+     A actualizar, Discontinuada, leyendo el Maestro) y la PERSONA sólo declara
+     "ya la hice". Por eso hay una única acción — "Actualizar" — que lleva la
+     ficha a "Listo para publicar", desde cualquier estado abierto.
+
+     No hay botón para marcar algo como "A actualizar": eso es una conclusión
+     del bot, no una decisión de quien mira la pantalla. Y como no hay vuelta
+     atrás desde la pantalla, un clic equivocado se corrige editando la hoja
+     (o esperando al miércoles, si el Maestro cambió de verdad).
+
+     Estados cerrados: no se ofrece nada porque no hay nada que declarar. */
   const SIN_ACCIONES = ["Finalizada"];
 
   /* ---- estado en memoria ---- */
@@ -283,8 +290,9 @@
       ${f && f.motivo ? `<div class="fp-motivo">${esc(f.motivo)}</div>` : ""}
       ${f && f.detectado ? `<div class="fp-fecha">En este estado desde ${esc(f.detectado)}</div>` : ""}
       <div class="fp-acc">
-        ${editable && f.estado !== "A actualizar" ? `<button class="btn-ghost" data-act="A actualizar">Actualizar</button>` : ""}
-        ${editable && f.estado !== "Listo para publicar" ? `<button class="btn-primary fp-listo" data-act="Listo para publicar">Listo para publicar</button>` : ""}
+        ${editable && f.estado !== "Listo para publicar"
+          ? `<button class="btn-primary" data-act="Listo para publicar"
+               title="Marcá que ya la hiciste: la ficha pasa a «Listo para publicar»">Actualizar</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>` : ""}
       </div>

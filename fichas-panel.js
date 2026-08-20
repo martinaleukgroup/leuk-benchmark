@@ -262,7 +262,10 @@
     const f = x.ficha;
     const cls = f ? (CLASE[f.estado] || "") : "fe-sinestado";
     const cerrada = !!f && SIN_ACCIONES.indexOf(f.estado) !== -1;
-    const editable = f && f.editable && !cerrada && puedeEditar();
+    // Sin ficha dibujada no se ofrece ningún botón de estado: marcar como
+    // "Listo para publicar" algo que no existe sería declarar un trabajo que
+    // nadie hizo. Primero tiene que existir la ficha.
+    const editable = f && f.editable && !cerrada && !!x.doc && puedeEditar();
 
     const badge = f
       ? `<span class="fe-badge ${cls}">${esc(f.estado)}</span>`
@@ -288,10 +291,20 @@
     </div>`;
 
     if (!x.doc) {
+      // Se explica el porqué y qué hacer, en vez de dejar un hueco. El arreglo
+      // es siempre en la planilla, no acá.
+      const raro = /^[^A-Za-zÀ-ÿ0-9]+$/.test(x.ag) || /^(#N\/A|N\/A)$/i.test(x.ag);
       stage.innerHTML = `<div class="fp-vacio">
-        <b>Esta agrupación todavía no tiene ficha generada.</b>
-        <div>Está en la hoja «Fichas técnicas» pero el generador no la encontró.
-        Suele ser que el nombre de la agrupación en BASE ÚNICA está mal escrito.</div></div>`;
+        <b>Todavía no existe la ficha, así que no hay nada que publicar.</b>
+        <div>Figura en la hoja «Fichas técnicas»${f ? ` con ${f.cantidad} SKU (${esc(f.skus.join(", "))})` : ""},
+        pero el generador no encontró ninguna ficha con ese nombre.</div>
+        <div style="margin-top:10px">${raro
+          ? `La agrupación se llama <b>«${esc(x.ag)}»</b>, que no es un nombre válido.
+             Poné el nombre real en la columna <b>Agrupación de fichas técnicas</b> de
+             BASE ÚNICA, para esos SKU.`
+          : `Revisá cómo está escrita la agrupación <b>«${esc(x.ag)}»</b> en la columna
+             <b>Agrupación de fichas técnicas</b> de BASE ÚNICA.`}
+        La ficha aparece sola en la próxima actualización.</div></div>`;
       return;
     }
 

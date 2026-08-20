@@ -90,8 +90,13 @@
 .fp-ancho .fp-skus,.fp-ancho .fp-fecha{display:none}
 
 /* ---- Vacíos ---- */
-.fp-vacio{text-align:center;color:var(--gray-soft);font-size:13.5px;padding:46px 22px;line-height:1.6}
-.fp-vacio b{display:block;margin-bottom:6px;font-size:15px;color:var(--gray)}
+.fp-vacio{color:var(--gray-soft);font-size:13.5px;padding:46px 22px;line-height:1.65;
+          max-width:52ch;margin:0 auto;text-align:center}
+/* Sólo el primer <b> es el título; los de adentro del texto quedan en línea.
+   (Antes la regla los hacía bloque a todos y partía las frases al medio.) */
+.fp-vacio b{color:var(--gray);font-weight:600}
+.fp-vacio > b:first-child{display:block;margin-bottom:10px;font-size:15px}
+.fp-vacio > div + div{margin-top:10px;text-align:left}
 
 /* ---- Modal de confirmación ---- */
 .fp-modal{max-width:520px}

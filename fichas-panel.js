@@ -288,7 +288,9 @@
       </div>
       ${skus ? `<div class="fp-skus">${esc(skus)}</div>` : ""}
       ${f && f.motivo ? `<div class="fp-motivo">${esc(f.motivo)}</div>` : ""}
-      ${f && f.detectado ? `<div class="fp-fecha">En este estado desde ${esc(f.detectado)}</div>` : ""}
+      ${f && f.detectado ? `<div class="fp-fecha">En este estado desde ${esc(f.detectado)}${
+        f.actualizadaPor ? ` · actualizada por <b>${esc(f.actualizadaPor)}</b>${f.cuando ? ` el ${esc(f.cuando)}` : ""}` : ""
+      }</div>` : ""}
       <div class="fp-acc">
         ${editable && f.estado !== "Listo para publicar"
           ? `<button class="btn-primary" data-act="Listo para publicar"
@@ -410,6 +412,7 @@
         f.estado = r.estadoNuevo;
         f.detectado = r.detectado;
         if (r.motivo != null) f.motivo = r.motivo;
+        if (r.actualizadaPor) { f.actualizadaPor = r.actualizadaPor; f.cuando = r.cuando; }
         f.editable = r.estadoNuevo !== "Discontinuada";
         cerrar(); pintarChips(); pintarLista(); pintarDetalle();
         avisar(`${f.agrupacion} → ${r.estadoNuevo}${r.sinCambios ? " (ya estaba así)" : ""}`, true);

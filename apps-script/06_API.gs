@@ -293,30 +293,33 @@ function _apiLeerHojaFichas() {
   const ultFila = hoja.getLastRow();
   if (ultFila < 2) return { hoja: hoja, filas: [] };
 
-  const datos = hoja
-    .getRange(2, 1, ultFila - 1, FICHAS_TABLA.DETECTADO)
-    .getDisplayValues();
+  // Se lee hasta CUANDO (col 8): las dos últimas las escribe esta misma API.
+  const cols = Math.min(FICHAS_TABLA.CUANDO, hoja.getMaxColumns());
+  const datos = hoja.getRange(2, 1, ultFila - 1, cols).getDisplayValues();
+  const dato = (f, col) => (col <= cols ? normTexto(f[col - 1]) : '');
 
   const filas = [];
   datos.forEach((f, i) => {
-    const agrupacion = normTexto(f[FICHAS_TABLA.AGRUPACION - 1]);
+    const agrupacion = dato(f, FICHAS_TABLA.AGRUPACION);
     if (agrupacion === '') return;
     // "Sin grupos para mostrar." es el placeholder de _escribirTablaFichas()
     if (agrupacion === 'Sin grupos para mostrar.') return;
 
-    const estado = normTexto(f[FICHAS_TABLA.ESTADO - 1]);
-    const detectado = normTexto(f[FICHAS_TABLA.DETECTADO - 1]);
+    const estado = dato(f, FICHAS_TABLA.ESTADO);
+    const detectado = dato(f, FICHAS_TABLA.DETECTADO);
 
     filas.push({
       _fila: i + 2,                                  // fila real en la hoja (1-based)
       agrupacion: agrupacion,
-      skus: normTexto(f[FICHAS_TABLA.SKUS - 1])
+      skus: dato(f, FICHAS_TABLA.SKUS)
               .split(',').map(s => s.trim()).filter(s => s !== ''),
       cantidad: Number(f[FICHAS_TABLA.CANTIDAD - 1]) || 0,
       estado: estado,
-      motivo: normTexto(f[FICHAS_TABLA.CAMBIO - 1]),
+      motivo: dato(f, FICHAS_TABLA.CAMBIO),
       detectado: detectado,
       detectadoISO: _apiFechaISO(detectado),
+      actualizadaPor: dato(f, FICHAS_TABLA.ACTUALIZADA_POR),
+      cuando: dato(f, FICHAS_TABLA.CUANDO),
       // La regla vive acá, no en la pantalla: una ficha discontinuada no se toca.
       editable: normCab(estado) !== normCab(ESTADO_FICHA.DISCONTINUADA)
     });
@@ -515,8 +518,24 @@ function _apiEscribirEstado(agrupacion, nuevoEstado, body, sesion) {
   const ahoraTxt = ahora();
   const hoja = t.hoja;
 
+  // La hoja puede venir de la versión de 6 columnas.
+  if (hoja.getMaxColumns() < FICHAS_TABLA.CUANDO) {
+    hoja.insertColumnsAfter(hoja.getMaxColumns(), FICHAS_TABLA.CUANDO - hoja.getMaxColumns());
+  }
+  if (normTexto(hoja.getRange(1, FICHAS_TABLA.ACTUALIZADA_POR).getDisplayValue()) === '') {
+    hoja.getRange(1, FICHAS_TABLA.ACTUALIZADA_POR, 1, 2).setValues([['Actualizada por', 'Cuándo']]);
+    formatearCabecera(hoja, FICHAS_TABLA.CUANDO);
+    hoja.setColumnWidth(FICHAS_TABLA.ACTUALIZADA_POR, 170);
+    hoja.setColumnWidth(FICHAS_TABLA.CUANDO, 130);
+  }
+
   hoja.getRange(f._fila, FICHAS_TABLA.ESTADO).setValue(nuevoEstado);
   hoja.getRange(f._fila, FICHAS_TABLA.DETECTADO).setValue(ahoraTxt);
+  // Quién y cuándo, en la misma hoja: para el día a día no hace falta abrir el
+  // log. 02_Fichas.gs las conserva al reescribir la tabla los miércoles.
+  hoja.getRange(f._fila, FICHAS_TABLA.ACTUALIZADA_POR)
+      .setValue(sesion.nombre || sesion.email);
+  hoja.getRange(f._fila, FICHAS_TABLA.CUANDO).setValue(ahoraTxt);
 
   const color = API_COLOR_ESTADO[normCab(nuevoEstado)];
   if (color) hoja.getRange(f._fila, FICHAS_TABLA.ESTADO).setBackground(color);
@@ -554,6 +573,8 @@ function _apiEscribirEstado(agrupacion, nuevoEstado, body, sesion) {
                  estadoNuevo: nuevoEstado,
                  motivo: motivoFinal,
                  detectado: ahoraTxt,
+                 actualizadaPor: sesion.nombre || sesion.email,
+                 cuando: ahoraTxt,
                  usuario: sesion.email } };
 }
 
@@ -578,6 +599,9 @@ function _apiRegistrarLog(d) {
       hoja.setColumnWidth(2, 180);
       hoja.setColumnWidth(5, 320);
       hoja.setColumnWidth(6, 240);
+      // Oculta: el día a día se lee en "Actualizada por"/"Cuándo" de la hoja
+      // de fichas. Esto queda para cuando alguien pregunta por el historial.
+      hoja.hideSheet();
     }
     hoja.getRange(hoja.getLastRow() + 1, 1, 1, API_LOG_CABECERA.length).setValues([[
       ahora(),
@@ -663,4 +687,13 @@ function probarConexionSupabase() {
   Logger.log(`✅ Pude hablar con Supabase. Respondió ${r.getResponseCode()} (401 es lo esperado).`);
   Logger.log('Ahora creá una implementación NUEVA del Web App.');
   return r.getResponseCode();
+}
+
+// Oculta la hoja de log si ya existía visible. Correr una vez, a mano.
+function ocultarLogFichas() {
+  const ss = SpreadsheetApp.openById(CONFIG.ID_ARCHIVO_WEB);
+  const hoja = ss.getSheetByName(API_HOJA_LOG);
+  if (!hoja) { Logger.log(`No existe la hoja "${API_HOJA_LOG}" todavía.`); return; }
+  hoja.hideSheet();
+  Logger.log(`✅ "${API_HOJA_LOG}" quedó oculta. Para verla: Ver → Hojas ocultas.`);
 }

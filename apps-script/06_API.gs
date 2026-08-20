@@ -645,3 +645,22 @@ function probarLecturaAPI() {
   if (r.fichas.length) Logger.log('Primera: ' + JSON.stringify(r.fichas[0], null, 2));
   return r;
 }
+
+// Fuerza el pedido del permiso "conectarse a un servicio externo"
+// (script.external_request), que es el que necesita _apiIdentificar() para
+// preguntarle a Supabase quién es el usuario. Correr a mano UNA vez desde el
+// editor: si Google no lo pidió antes, al ejecutar esto aparece el cartel de
+// autorización. Después hay que crear una implementación nueva del Web App.
+function probarConexionSupabase() {
+  const url = _supaUrl(), key = _prop('SUPABASE_ANON_KEY');
+  if (!url || !key) { Logger.log('⛔ Faltan SUPABASE_URL o SUPABASE_ANON_KEY.'); return; }
+  const r = UrlFetchApp.fetch(url + '/auth/v1/user', {
+    method: 'get', headers: { apikey: key, Authorization: 'Bearer sin-sesion' },
+    muteHttpExceptions: true
+  });
+  // 401 es la respuesta CORRECTA: le mandamos una sesión inválida a propósito.
+  // Lo que importa es que la llamada haya salido, no que Supabase diga que sí.
+  Logger.log(`✅ Pude hablar con Supabase. Respondió ${r.getResponseCode()} (401 es lo esperado).`);
+  Logger.log('Ahora creá una implementación NUEVA del Web App.');
+  return r.getResponseCode();
+}

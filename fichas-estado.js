@@ -21,8 +21,8 @@
      Supabase en cada escritura. Ver el comentario de arriba en 06_API.gs.
      --------------------------------------------------------------- */
   const API = {
-    url: "PEGAR_ACA_LA_URL_DEL_WEB_APP",   // https://script.google.com/macros/s/AKfy…/exec
-    token: "PEGAR_ACA_EL_API_TOKEN"        // el que devolvió generarTokenAPI()
+    url: "https://script.google.com/macros/s/AKfycbx7Kfld3oy_bsZ0qMtfiwmUv8hBCrdSGpDmkpBjtAUo5q21QOKkz3hIxlbEQMc4-F0/exec",   // https://script.google.com/macros/s/AKfy…/exec
+    token: "6e4b18716eba4d25abb90a8a4c2404be133e004a826241cd86d812aa8df6795c"        // el que devolvió generarTokenAPI()
   };
 
   const configurada = () => /^https:\/\/script\.google\.com\//.test(API.url) && API.token.length > 20;

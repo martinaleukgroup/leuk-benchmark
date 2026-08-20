@@ -667,10 +667,18 @@ function _apiEscribirLote(pedidas, nuevoEstado, sesion) {
   // Se lee TODO el bloque, se muta en memoria y se escribe de una. Estamos
   // adentro del candado, así que nadie puede haber tocado nada en el medio.
   const rango = hoja.getRange(2, 1, ultFila - 1, FICHAS_TABLA.CUANDO);
+  // DOS lecturas del mismo rango, a propósito:
+  //   · `datos`   → getValues(), es lo que se escribe de vuelta (conserva tipos)
+  //   · `display` → getDisplayValues(), es lo que se COMPARA
+  // Sheets convierte "20/08/2026 16:47" en una fecha de verdad, así que
+  // getValues() devuelve un objeto Date y no el texto. Comparar contra el
+  // `detectadoVisto` que manda la pantalla (que sale de getDisplayValues, ver
+  // _apiLeerHojaFichas) nunca daba igual, y el lote salteaba TODO.
   const datos = rango.getValues();
+  const display = rango.getDisplayValues();
 
   const porAgrupacion = {};
-  datos.forEach((f, i) => {
+  display.forEach((f, i) => {
     const ag = normCab(f[FICHAS_TABLA.AGRUPACION - 1]);
     if (ag !== '') porAgrupacion[ag] = i;
   });
@@ -688,10 +696,11 @@ function _apiEscribirLote(pedidas, nuevoEstado, sesion) {
       return;
     }
 
-    const fila = datos[i];
-    const estadoAnterior = normTexto(fila[FICHAS_TABLA.ESTADO - 1]);
-    const detectado = normTexto(fila[FICHAS_TABLA.DETECTADO - 1]);
-    const motivo = normTexto(fila[FICHAS_TABLA.CAMBIO - 1]);
+    const fila = datos[i];              // se muta y se escribe
+    const vista = display[i];           // se lee y se compara
+    const estadoAnterior = normTexto(vista[FICHAS_TABLA.ESTADO - 1]);
+    const detectado = normTexto(vista[FICHAS_TABLA.DETECTADO - 1]);
+    const motivo = normTexto(vista[FICHAS_TABLA.CAMBIO - 1]);
 
     if (normCab(estadoAnterior) === normCab(ESTADO_FICHA.DISCONTINUADA)) {
       salteadas.push({ agrupacion: ag, motivo: 'Está discontinuada.', estadoActual: estadoAnterior });

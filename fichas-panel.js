@@ -1,0 +1,407 @@
+/* ===================== FICHAS TÉCNICAS · PANTALLA =====================
+   Una sola vista para las dos mitades del trabajo:
+     · qué fichas hay que hacer  → estado, desde la hoja "Fichas técnicas"
+       del Archivo de carga | Web, vía la Web App de Apps Script (06_API.gs)
+     · cómo quedó cada ficha     → el dibujo, vía window.FichasDoc (fichas-ui.js)
+
+   Estaban separadas y eso permitía cerrar una ficha sin haberla mirado.
+   Acá se aprueba viendo.
+
+   La lista es la UNIÓN de las dos fuentes: casi todas las agrupaciones están
+   en ambas (183 de 184), pero se contemplan las dos orillas — una ficha
+   dibujada que todavía no figura en la planilla, y una fila de la planilla
+   que todavía no tiene ficha generada.
+
+   Si la API se cae, la vista NO se rompe: se sigue viendo y descargando
+   fichas, sin la capa de estado. Eso es a propósito — el generador de PDF ya
+   se usa a diario y no puede depender de que el bot conteste.
+   ==================================================================== */
+(function () {
+
+  /* ---------------------------------------------------------------
+     CONEXIÓN — ver app/apps-script/DESPLIEGUE.md
+     Ni la URL ni el token son secretos: este archivo se sirve desde una
+     página pública. La seguridad real la da el JWT de Supabase, que la API
+     le pregunta a Supabase en cada escritura.
+     --------------------------------------------------------------- */
+  const API = {
+    url: "https://script.google.com/macros/s/AKfycbx7Kfld3oy_bsZ0qMtfiwmUv8hBCrdSGpDmkpBjtAUo5q21QOKkz3hIxlbEQMc4-F0/exec",
+    token: "6e4b18716eba4d25abb90a8a4c2404be133e004a826241cd86d812aa8df6795c"
+  };
+  const configurada = () => /^https:\/\/script\.google\.com\//.test(API.url) && API.token.length > 20;
+
+  const $ = s => document.querySelector(s);
+  const esc = s => (s == null ? "" : String(s))
+    .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const ESTADOS = ["Solicitada", "A actualizar", "Listo para publicar", "Finalizada", "Discontinuada"];
+  const CLASE = {
+    "Solicitada": "fe-solicitada",
+    "A actualizar": "fe-actualizar",
+    "Listo para publicar": "fe-listo",
+    "Finalizada": "fe-finalizada",
+    "Discontinuada": "fe-discontinuada"
+  };
+  const ANCHO_A4 = 794;          // 210mm a 96dpi, el ancho fijo de .f-page
+
+  /* ---- estado en memoria ---- */
+  let ITEMS = [];       // { ag, doc, ficha }  — la unión de las dos fuentes
+  let sel = null;       // agrupación seleccionada
+  let FILTRO = "";      // "" = todos
+  let BUSCA = "";
+  let CARGANDO = false;
+  let AVISO_API = "";   // la API no contestó: se avisa pero la vista sigue
+  let montado = false;
+
+  const ses = () => window.LEUK_SESION || {};
+  const puedeEditar = () => !!(ses().puedeEditarFichas && ses().puedeEditarFichas());
+  const item = ag => ITEMS.filter(x => x.ag === ag)[0] || null;
+
+  /* ================= DATOS ================= */
+
+  // Une los documentos del generador con los estados de la planilla.
+  // Se conserva el orden alfabético que ya trae DOCS.
+  function construir(estados) {
+    const docs = (window.FichasDoc && window.FichasDoc.docs()) || [];
+    const porAg = {};
+    (estados || []).forEach(f => { porAg[f.agrupacion] = f; });
+
+    ITEMS = docs.map(d => ({ ag: d.ag, doc: d, ficha: porAg[d.ag] || null }));
+
+    // Filas de la planilla que no tienen ficha dibujada (dato sucio, o ficha
+    // que todavía no se generó). Entran igual: son trabajo pendiente.
+    const vistos = {};
+    ITEMS.forEach(x => { vistos[x.ag] = true; });
+    (estados || []).forEach(f => {
+      if (!vistos[f.agrupacion]) ITEMS.push({ ag: f.agrupacion, doc: null, ficha: f });
+    });
+
+    ITEMS.sort((a, b) => a.ag.localeCompare(b.ag, "es"));
+  }
+
+  async function cargar() {
+    if (!configurada()) { AVISO_API = "Falta conectar la API de estados (ver DESPLIEGUE.md)."; construir([]); return; }
+    CARGANDO = true; AVISO_API = "";
+    try {
+      const r = await fetch(`${API.url}?accion=fichas&token=${encodeURIComponent(API.token)}`, { redirect: "follow" });
+      const txt = await r.text();
+      let d;
+      try { d = JSON.parse(txt); }
+      catch (e) {
+        // Suele ser que el Web App no está publicado como "Cualquier persona":
+        // Google devuelve el HTML de su login en vez de JSON.
+        throw new Error("La API no devolvió JSON. Revisá que el Web App esté publicado con acceso «Cualquier persona».");
+      }
+      if (!d.ok) throw new Error(d.mensaje || d.error);
+      construir(d.fichas || []);
+    } catch (e) {
+      AVISO_API = e.message || String(e);
+      construir([]);                                  // sin estados, pero con fichas
+    } finally {
+      CARGANDO = false;
+    }
+  }
+
+  // La API siempre responde HTTP 200 (limitación de ContentService): el
+  // resultado real viene en `ok`. Nunca mirar r.status.
+  // Content-Type text/plain a propósito: con application/json el navegador
+  // manda un preflight OPTIONS que Apps Script no sabe responder.
+  async function apiPost(payload) {
+    try {
+      const r = await fetch(API.url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(Object.assign({
+          token: API.token,
+          jwt: ses().token ? ses().token() : ""
+        }, payload)),
+        redirect: "follow"
+      });
+      return JSON.parse(await r.text());
+    } catch (e) {
+      return { ok: false, error: "SIN_RED", mensaje: "No pude comunicarme con la planilla. ¿Tenés internet?" };
+    }
+  }
+
+  /* ================= ARMADO DE LA PANTALLA ================= */
+
+  function mount() {
+    const page = $("#page-fichas");
+    if (!page) return;
+    montado = true;
+
+    page.innerHTML = `
+      <div class="fp-chips" id="fpChips"></div>
+      <div class="fp-bar">
+        <input id="fpSearch" class="intg-search" type="search" autocomplete="off"
+               placeholder="Buscá por nombre de ficha o por SKU…">
+        <button id="fpReload" class="btn-desc" title="Volver a leer los estados de la planilla">↻ Estados</button>
+        <button id="fpZip" class="btn-desc" title="Genera un ZIP con todas las fichas en PDF">⬇ Todas (ZIP)</button>
+        <span class="intg-stat" id="fpMeta"></span>
+      </div>
+      <div class="us-msg" id="fpMsg"></div>
+      <div class="fp-split">
+        <div class="fp-side" id="fpSide"></div>
+        <div class="fp-main">
+          <div id="fpHead"></div>
+          <div id="ficha-stage" class="fp-visor f-host"></div>
+        </div>
+      </div>`;
+
+    $("#fpSearch").oninput = ev => {
+      BUSCA = ev.target.value;
+      if (pintarLista()) pintarDetalle();
+    };
+    $("#fpReload").onclick = async () => { await cargar(); pintarTodo(); };
+    $("#fpZip").onclick = ev => window.FichasDoc.descargarTodas(ev.currentTarget, $("#fpMeta"));
+    $("#fpChips").onclick = ev => {
+      const c = ev.target.closest("[data-estado]"); if (!c) return;
+      FILTRO = (FILTRO === c.dataset.estado) ? "" : c.dataset.estado;
+      pintarTodo();
+    };
+    $("#fpSide").onclick = ev => {
+      const it = ev.target.closest("[data-ag]"); if (!it) return;
+      sel = it.dataset.ag; pintarLista(); pintarDetalle();
+    };
+    $("#fpHead").onclick = onClickAcciones;
+
+    // Al cambiar el ancho de la ventana hay que recalcular el zoom de la hoja.
+    let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(escalar, 150); });
+
+    construir([]);                 // primero lo local: la vista ya sirve
+    pintarTodo();
+    cargar().then(pintarTodo);     // después se le suma el estado
+  }
+
+  function pintarTodo() { pintarChips(); pintarLista(); pintarDetalle(); pintarMeta(); }
+
+  function pintarMeta() {
+    const m = $("#fpMeta"); if (!m) return;
+    m.textContent = CARGANDO ? "Leyendo la planilla…" : `${ITEMS.length} fichas`;
+    const a = $("#fpMsg");
+    if (a) {
+      a.className = AVISO_API ? "us-msg px-err" : "us-msg";
+      a.textContent = AVISO_API ? `Sin estados: ${AVISO_API} Podés ver y descargar fichas igual.` : "";
+    }
+  }
+
+  function pintarChips() {
+    const c = {}; ESTADOS.forEach(e => { c[e] = 0; });
+    let sinEstado = 0;
+    ITEMS.forEach(x => {
+      if (!x.ficha) { sinEstado++; return; }
+      if (c[x.ficha.estado] !== undefined) c[x.ficha.estado]++;
+    });
+    const chip = (e, n, cls) =>
+      `<button class="fe-chip ${cls} ${FILTRO === e ? "on" : ""}" data-estado="${esc(e)}">
+         <b>${n}</b> <span>${esc(e)}</span></button>`;
+    // Discontinuada y "sin estado" solo si hay: no son trabajo pendiente.
+    const html = ESTADOS
+      .filter(e => e !== "Discontinuada" || c[e] > 0)
+      .map(e => chip(e, c[e], CLASE[e])).join("")
+      + (sinEstado ? chip("__sin__", sinEstado, "fe-sinestado").replace(">__sin__<", ">sin estado<") : "");
+    $("#fpChips").innerHTML = html;
+  }
+
+  function visibles() {
+    const q = BUSCA.trim().toLowerCase();
+    return ITEMS.filter(x => {
+      if (FILTRO === "__sin__") { if (x.ficha) return false; }
+      else if (FILTRO && (!x.ficha || x.ficha.estado !== FILTRO)) return false;
+      if (!q) return true;
+      const texto = x.doc ? x.doc._s : (x.ag + " " + (x.ficha.skus || []).join(" ")).toLowerCase();
+      return texto.indexOf(q) !== -1;
+    });
+  }
+
+  // Devuelve true si la selección cambió, para que quien llame repinte el
+  // detalle. Sin esto, al filtrar la lista marca una ficha y el panel de la
+  // derecha sigue mostrando otra.
+  function pintarLista() {
+    const lista = visibles();
+    const antes = sel;
+    // Si lo seleccionado se fue por el filtro, se pasa a lo primero visible.
+    if (lista.length && !lista.some(x => x.ag === sel)) sel = lista[0].ag;
+    if (!lista.length) sel = null;
+
+    $("#fpSide").innerHTML = lista.length
+      ? lista.map(x => {
+          const cls = x.ficha ? (CLASE[x.ficha.estado] || "") : "fe-sinestado";
+          const n = x.ficha ? x.ficha.cantidad : (x.doc ? x.doc.fichas.length : "");
+          return `<div class="fp-it ${cls} ${x.ag === sel ? "on" : ""}" data-ag="${esc(x.ag)}">
+            <i class="fp-dot"></i><b>${esc(x.ag)}</b><span>${n}</span></div>`;
+        }).join("")
+      : `<div class="fp-vacio">Nada coincide con el filtro.</div>`;
+
+    return sel !== antes;
+  }
+
+  function pintarDetalle() {
+    const head = $("#fpHead"), stage = $("#ficha-stage");
+    if (!head || !stage) return;
+
+    const x = sel ? item(sel) : null;
+    if (!x) {
+      head.innerHTML = "";
+      stage.innerHTML = `<div class="fp-vacio">Elegí una ficha de la lista.</div>`;
+      return;
+    }
+
+    const f = x.ficha;
+    const cls = f ? (CLASE[f.estado] || "") : "fe-sinestado";
+    const editable = f && f.editable && puedeEditar();
+
+    const badge = f
+      ? `<span class="fe-badge ${cls}">${esc(f.estado)}</span>`
+      : `<span class="fe-badge fe-sinestado" title="Esta ficha no figura en la hoja «Fichas técnicas»">sin estado</span>`;
+    const skus = f ? f.skus.join(", ") : "";
+    const hojas = x.doc && x.doc.fichas.length > 1 ? `${x.doc.fichas.length} hojas` : "";
+
+    head.innerHTML = `<div class="fp-head ${cls}">
+      <div class="fp-title">
+        <span class="fp-h1">${esc(x.ag)}</span>${badge}
+        ${f ? `<span class="fp-meta">${f.cantidad} SKU</span>` : ""}
+        ${hojas ? `<span class="fp-meta">· ${hojas}</span>` : ""}
+      </div>
+      ${skus ? `<div class="fp-skus">${esc(skus)}</div>` : ""}
+      ${f && f.motivo ? `<div class="fp-motivo">${esc(f.motivo)}</div>` : ""}
+      ${f && f.detectado ? `<div class="fp-fecha">En este estado desde ${esc(f.detectado)}</div>` : ""}
+      <div class="fp-acc">
+        ${editable && f.estado !== "A actualizar" ? `<button class="btn-ghost" data-act="A actualizar">Actualizar</button>` : ""}
+        ${editable && f.estado !== "Listo para publicar" ? `<button class="btn-primary fp-listo" data-act="Listo para publicar">Listo para publicar</button>` : ""}
+        ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
+      </div>
+    </div>`;
+
+    if (!x.doc) {
+      stage.innerHTML = `<div class="fp-vacio">
+        <b>Esta agrupación todavía no tiene ficha generada.</b>
+        <div>Está en la hoja «Fichas técnicas» pero el generador no la encontró.
+        Suele ser que el nombre de la agrupación en BASE ÚNICA está mal escrito.</div></div>`;
+      return;
+    }
+
+    stage.innerHTML = window.FichasDoc.html(x.doc);
+    escalar();
+    window.FichasDoc.autofit(stage);
+    setTimeout(escalar, 500);      // el autofit puede cambiar el alto de la hoja
+  }
+
+  // La hoja mide 210mm de ancho fijo. Se la achica para que entre en el panel,
+  // y se compensa el hueco que deja el scale (que no afecta al layout).
+  function escalar() {
+    const stage = $("#ficha-stage"); if (!stage) return;
+    const z = Math.min(1, (stage.clientWidth - 36) / ANCHO_A4);
+    stage.querySelectorAll(".f-page").forEach(p => {
+      p.style.transform = `scale(${z})`;
+      p.style.marginBottom = Math.round(14 - (1 - z) * p.offsetHeight) + "px";
+    });
+  }
+
+  /* ================= ACCIONES ================= */
+
+  function onClickAcciones(ev) {
+    const x = sel ? item(sel) : null; if (!x) return;
+    if (ev.target.closest("[data-pdf]")) { window.FichasDoc.imprimir(x.ag); return; }
+    const b = ev.target.closest("[data-act]");
+    if (b && x.ficha) confirmar(x.ficha, b.dataset.act);
+  }
+
+  // Confirmación obligatoria. Muestra el estado que va a quedar y, si el bot
+  // detectó un cambio, el motivo textual — para que nadie cierre una ficha sin
+  // ver que cambió la potencia.
+  function confirmar(f, nuevoEstado, opciones) {
+    opciones = opciones || {};
+    const ov = document.createElement("div");
+    ov.className = "detail"; ov.id = "fpModal";
+
+    const aviso = opciones.conflicto ? `
+      <div class="fp-conflicto">
+        <b>Ojo: esta ficha cambió mientras la mirabas.</b>
+        <div>Ahora está en <b>${esc(opciones.estadoActual)}</b>${opciones.motivoActual ? ` — ${esc(opciones.motivoActual)}` : ""}.</div>
+        <div>Si seguís, tu cambio pisa ese estado.</div>
+      </div>` : "";
+    const motivo = (!opciones.conflicto && f.motivo)
+      ? `<div class="fp-modal-caja"><span>Qué cambió</span><div>${esc(f.motivo)}</div></div>` : "";
+
+    ov.innerHTML = `<div class="detail-inner fp-modal">
+      <button class="detail-close" id="fpClose">✕</button>
+      <h2>${esc(f.agrupacion)}</h2>
+      ${aviso}
+      <div class="fp-modal-cambio">
+        <span class="fe-badge ${CLASE[opciones.estadoActual || f.estado] || ""}">${esc(opciones.estadoActual || f.estado)}</span>
+        <span class="fp-flecha">→</span>
+        <span class="fe-badge ${CLASE[nuevoEstado] || ""}">${esc(nuevoEstado)}</span>
+      </div>
+      ${motivo}
+      <div class="fp-modal-caja"><span>${f.cantidad} SKU en el grupo</span><div>${esc(f.skus.join(", "))}</div></div>
+      <div class="us-msg" id="fpModalMsg"></div>
+      <div class="desc-actions">
+        <button class="btn-ghost" id="fpCancel">Cancelar</button>
+        <button class="btn-primary" id="fpOk">${opciones.conflicto ? "Aplicar igual" : "Confirmar"}</button>
+      </div>
+    </div>`;
+
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelector("#fpClose").onclick = cerrar;
+    ov.querySelector("#fpCancel").onclick = cerrar;
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+
+    ov.querySelector("#fpOk").onclick = async () => {
+      const btn = ov.querySelector("#fpOk"), msg = ov.querySelector("#fpModalMsg");
+      btn.disabled = true; btn.textContent = "Guardando…";
+      msg.className = "us-msg"; msg.textContent = "";
+
+      const r = await apiPost({
+        accion: "cambiarEstado",
+        agrupacion: f.agrupacion,
+        estado: nuevoEstado,
+        detectadoVisto: f.detectado,
+        forzar: !!opciones.conflicto
+      });
+
+      if (r.ok) {
+        f.estado = r.estadoNuevo;
+        f.detectado = r.detectado;
+        if (r.motivo != null) f.motivo = r.motivo;
+        f.editable = r.estadoNuevo !== "Discontinuada";
+        cerrar(); pintarChips(); pintarLista(); pintarDetalle();
+        avisar(`${f.agrupacion} → ${r.estadoNuevo}${r.sinCambios ? " (ya estaba así)" : ""}`, true);
+        return;
+      }
+
+      if (r.error === "CONFLICTO") {
+        f.estado = r.estadoActual;
+        f.detectado = r.detectadoActual;
+        f.motivo = r.motivoActual || "";
+        cerrar(); pintarChips(); pintarLista(); pintarDetalle();
+        // Si en el medio quedó justo donde la persona la quería, no hay nada
+        // que pisar: se avisa y listo.
+        if (r.estadoActual === nuevoEstado) {
+          avisar(`${f.agrupacion} ya quedó en "${nuevoEstado}" — alguien lo hizo mientras mirabas.`, true);
+          return;
+        }
+        confirmar(f, nuevoEstado, { conflicto: true, estadoActual: r.estadoActual, motivoActual: r.motivoActual });
+        return;
+      }
+
+      // El resto de los errores se muestran tal cual: los mensajes de la API
+      // ya están escritos para que los lea una persona.
+      btn.disabled = false; btn.textContent = opciones.conflicto ? "Aplicar igual" : "Confirmar";
+      msg.className = "us-msg px-err";
+      msg.textContent = r.mensaje || r.error || "No se pudo guardar.";
+      if (r.error === "FICHA_DISCONTINUADA" || r.error === "NO_ENCONTRADA") cargar().then(pintarTodo);
+    };
+  }
+
+  function avisar(texto, ok) {
+    const m = $("#fpMsg"); if (!m) return;
+    m.className = "us-msg " + (ok ? "px-ok" : "px-err");
+    m.textContent = texto;
+    setTimeout(() => { if (m.textContent === texto) { m.textContent = ""; m.className = "us-msg"; } }, 6000);
+  }
+
+  // app.js la llama al entrar a la página (goToPage 'fichas').
+  window.renderFichas = function () { if (!montado) mount(); };
+})();

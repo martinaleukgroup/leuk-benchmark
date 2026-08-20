@@ -253,77 +253,37 @@
     }
   }
 
-  let mounted = false;
-  function mount() {
-    const page = document.getElementById("page-fichas");
-    if (!page) return;
-    page.innerHTML = `
-      <div class="fichas-bar">
-        <div class="fb-field fb-combo">
-          <label>Ficha / Línea</label>
-          <input id="fichaInput" type="text" placeholder="Buscá por nombre, línea o SKU…" autocomplete="off">
-          <div id="fichaList" class="fb-list" hidden></div>
-        </div>
-        <button class="fb-btn" id="fichaPdf">Descargar esta ficha</button>
-        <button class="fb-btn fb-btn-alt" id="fichaZip">Descargar todas (ZIP)</button>
-        <div class="fichas-note" id="fichaNote"></div>
-      </div>
-      <div id="ficha-stage" class="f-host"></div>`;
+  /* ============================================================
+     Este archivo es el MOTOR de las fichas: los documentos, el dibujo y las
+     descargas. La PANTALLA la arma fichas-panel.js, que une esto con el
+     estado de cada ficha (06_API.gs) en una sola vista.
+     Antes acá vivía también la pantalla (un buscador + el visor); se movió
+     para que la ficha y su estado se vean juntos.
+     ============================================================ */
 
-    const input = document.getElementById("fichaInput");
-    const list = document.getElementById("fichaList");
-    const stage = document.getElementById("ficha-stage");
-    const note = document.getElementById("fichaNote");
-    let actual = null;   // documento en pantalla (da el nombre del PDF al descargar)
-
-    const draw = i => {
-      const d = DOCS[i]; if (!d) return;
-      actual = d;
-      stage.innerHTML = d.fichas.map(fichaHTML).join("");
-      autofitCuandoListo(stage);                     // compactar las hojas que no entren (tras fuentes)
-      note.innerHTML = d.fichas.length > 1
-        ? `Documento <b>${esc(d.ag)}</b> — ${d.fichas.length} hojas. "Descargar PDF" las baja todas en un archivo.`
-        : `1 ficha.`;
-    };
-    const renderList = q => {
-      q = (q || "").toLowerCase().trim();
-      const hits = DOCS.map((d, i) => ({ d, i })).filter(o => !q || o.d._s.includes(q)).slice(0, 80);
-      list.innerHTML = hits.length
-        ? hits.map(o => `<div class="fb-item" data-i="${o.i}">${esc(o.d.ag)}${o.d.fichas.length > 1 ? `<span class="fb-badge">${o.d.fichas.length} hojas</span>` : ""}</div>`).join("")
-        : `<div class="fb-empty">Sin resultados</div>`;
-      list.hidden = false;
-    };
-    const pick = i => { input.value = DOCS[i].ag; list.hidden = true; draw(i); };
-
-    input.addEventListener("focus", () => renderList(input.value));
-    input.addEventListener("input", () => renderList(input.value));
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter") { const f = list.querySelector(".fb-item"); if (f) pick(+f.dataset.i); }
-      else if (e.key === "Escape") { list.hidden = true; input.blur(); }
-    });
-    list.addEventListener("mousedown", e => { const it = e.target.closest(".fb-item"); if (it) pick(+it.dataset.i); });
-    input.addEventListener("blur", () => setTimeout(() => { list.hidden = true; }, 150));
-
-    document.getElementById("fichaPdf").addEventListener("click", () => {
-      // el navegador propone el <title> como nombre del archivo al "Guardar como PDF"
-      const tituloPrevio = document.title;
-      if (actual) document.title = `Ficha Técnica - ${actual.ag}`;
-      document.body.classList.add("fichas-printing");
-      window.print();
-      setTimeout(() => {
-        document.body.classList.remove("fichas-printing");
-        document.title = tituloPrevio;
-      }, 500);
-    });
-    const btnZip = document.getElementById("fichaZip");
-    btnZip.addEventListener("click", () => descargarTodas(btnZip, note));
-
-    pick(0);
-    mounted = true;
+  // Imprime lo que haya en #ficha-stage. El CSS de impresión (fichas.css)
+  // se engancha a ese id, por eso el panel tiene que conservarlo.
+  function imprimir(nombreDoc) {
+    const tituloPrevio = document.title;   // el navegador lo propone como nombre del PDF
+    if (nombreDoc) document.title = `Ficha Técnica - ${nombreDoc}`;
+    document.body.classList.add("fichas-printing");
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove("fichas-printing");
+      document.title = tituloPrevio;
+    }, 500);
   }
 
-  // Expuesto para goToPage('fichas')
-  window.renderFichas = function () { if (!mounted) mount(); };
+  /* Lo que consume fichas-panel.js. DOCS ya viene ordenado por agrupación
+     y con el texto de búsqueda (_s) armado. */
+  window.FichasDoc = {
+    docs: () => DOCS,
+    porAgrupacion: ag => DOCS.filter(d => d.ag === ag)[0] || null,
+    html: d => (d ? d.fichas.map(fichaHTML).join("") : ""),
+    autofit: autofitCuandoListo,
+    imprimir: imprimir,
+    descargarTodas: descargarTodas,
+  };
   // Helpers para el exportador de PDFs (pipeline/fichas_export_pdf.py)
   window._fichasDocs = DOCS;
   window._fichaHTML = fichaHTML;

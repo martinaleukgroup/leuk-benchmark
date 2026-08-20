@@ -114,6 +114,17 @@
 .fp-conflicto{background:rgba(183,137,59,.12);border-left:3px solid var(--warn);
               border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.55}
 .fp-conflicto b{color:var(--warn);display:block;margin-bottom:5px}
+.fp-conflicto div b{display:inline;color:inherit}
+
+/* ---- Lote ---- */
+.fp-modal-lote{max-width:560px}
+.fp-lote-lista div{max-height:180px;overflow:auto;font-size:12px;line-height:1.7;
+                   color:var(--gray);font-variant-numeric:tabular-nums}
+.fp-salteadas{max-height:320px;overflow:auto;font-size:13px;line-height:1.55}
+.fp-salteadas > div{padding:9px 0;border-bottom:1px solid var(--line)}
+.fp-salteadas > div:last-child{border-bottom:none}
+.fp-salteadas b{color:var(--ink)}
+.fp-salteada-motivo{color:var(--warn);font-size:12.5px;margin-top:3px}
 
 /* ---- Pantallas angostas: la lista pasa arriba, a lo ancho ---- */
 @media (max-width:900px){

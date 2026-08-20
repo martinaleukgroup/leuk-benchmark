@@ -135,6 +135,7 @@ function doPost(e) {
 
     const accion = normTexto(body.accion);
     if (accion === 'cambiarEstado') return _apiCambiarEstado(body);
+    if (accion === 'cambiarEstadoLote') return _apiCambiarEstadoLote(body);
     if (accion === 'fichas')        {   // lectura por POST, para cuando EXIGIR_JWT_LECTURA=true
       const auth = _apiAutorizarLectura(body);
       if (auth.error) return _apiError(auth.error, auth.mensaje, auth.status || 401);
@@ -142,7 +143,7 @@ function doPost(e) {
     }
 
     return _apiError('ACCION_DESCONOCIDA',
-      'Acciones válidas en POST: cambiarEstado · fichas.', 400);
+      'Acciones válidas en POST: cambiarEstado · cambiarEstadoLote · fichas.', 400);
   } catch (err) {
     return _apiFallaInesperada('POST', err);
   }
@@ -586,6 +587,163 @@ function _apiEscribirEstado(agrupacion, nuevoEstado, body, sesion) {
 
 
 // ============================================================
+// 6b. CAMBIO DE ESTADO EN LOTE
+// ============================================================
+// Mismo criterio que el individual, pero en UNA sola pasada: un candado, una
+// lectura y una escritura. Hacerlo con N pedidos sueltos serían N candados y N
+// lecturas de la hoja entera — para 130 fichas, minutos.
+//
+// NO es "marcar todo": el cliente manda la lista exacta de agrupaciones que
+// tenía a la vista, cada una con su `detectadoVisto`. Lo que cambió en el medio
+// se SALTEA y se informa, en vez de pisarse. Así un bulk no puede tapar en
+// silencio un cambio que detectó el bot.
+const API_LOTE_MAX = 500;
+
+function _apiCambiarEstadoLote(body) {
+  if (!_prop('API_TOKEN')) {
+    return _apiError('SIN_CONFIGURAR', 'La API no tiene API_TOKEN cargado.', 503);
+  }
+  if (!_apiTokenValido(body.token)) {
+    return _apiError('TOKEN_INVALIDO', 'Token ausente o incorrecto.', 401);
+  }
+
+  const sesion = _apiIdentificar(body.jwt);
+  if (sesion.error) return _apiError(sesion.error, sesion.mensaje, 401);
+  if (!_apiPuedeEscribir(sesion.rol)) {
+    return _apiError('SIN_PERMISO',
+      sesion.rol ? `Tu rol (${sesion.rol}) no puede cambiar el estado de las fichas.`
+                 : 'Tu cuenta todavía no tiene un rol asignado.', 403);
+  }
+
+  const pedido = normCab(body.estado);
+  const canonico = API_ESTADOS_PERMITIDOS.filter(e => normCab(e) === pedido)[0];
+  if (!canonico) {
+    return _apiError('ESTADO_INVALIDO',
+      `"${normTexto(body.estado)}" no es un estado que la plataforma pueda escribir. ` +
+      `Válidos: ${API_ESTADOS_PERMITIDOS.join(' · ')}.`, 400);
+  }
+
+  const pedidas = body.fichas;
+  if (!pedidas || !pedidas.length) {
+    return _apiError('LOTE_VACIO', 'No llegó ninguna ficha para cambiar.', 400);
+  }
+  if (pedidas.length > API_LOTE_MAX) {
+    return _apiError('LOTE_ENORME',
+      `Son ${pedidas.length} fichas y el máximo por pedido es ${API_LOTE_MAX}.`, 400);
+  }
+
+  if (CONFIG.SIMULACION) {
+    return _apiError('SIMULACION', 'El bot está en modo simulación. No se escribe nada.', 503);
+  }
+
+  const r = conCandado('API fichas (lote)', function () {
+    return _apiEscribirLote(pedidas, canonico, sesion);
+  });
+
+  if (r === null) {
+    return _apiError('OCUPADO',
+      'El bot está actualizando la planilla en este momento. Probá de nuevo en un minuto.', 503);
+  }
+  if (r.error) return _apiError(r.error, r.mensaje, r.httpStatus || 400);
+
+  CacheService.getScriptCache().remove('fichas_lista');
+  return _apiJson(r.ok);
+}
+
+function _apiEscribirLote(pedidas, nuevoEstado, sesion) {
+  const hoja = obtenerOCrearHoja(CONFIG.ID_ARCHIVO_WEB, CONFIG.HOJA_FICHAS);
+  const ultFila = hoja.getLastRow();
+  if (ultFila < 2) {
+    return { error: 'NO_ENCONTRADA', mensaje: 'La hoja de fichas está vacía.', httpStatus: 404 };
+  }
+  if (hoja.getMaxColumns() < FICHAS_TABLA.CUANDO) {
+    hoja.insertColumnsAfter(hoja.getMaxColumns(), FICHAS_TABLA.CUANDO - hoja.getMaxColumns());
+  }
+  if (normTexto(hoja.getRange(1, FICHAS_TABLA.ACTUALIZADA_POR).getDisplayValue()) === '') {
+    hoja.getRange(1, FICHAS_TABLA.ACTUALIZADA_POR, 1, 2).setValues([['Actualizada por', 'Cuándo']]);
+    formatearCabecera(hoja, FICHAS_TABLA.CUANDO);
+  }
+
+  // Se lee TODO el bloque, se muta en memoria y se escribe de una. Estamos
+  // adentro del candado, así que nadie puede haber tocado nada en el medio.
+  const rango = hoja.getRange(2, 1, ultFila - 1, FICHAS_TABLA.CUANDO);
+  const datos = rango.getValues();
+
+  const porAgrupacion = {};
+  datos.forEach((f, i) => {
+    const ag = normCab(f[FICHAS_TABLA.AGRUPACION - 1]);
+    if (ag !== '') porAgrupacion[ag] = i;
+  });
+
+  const ahoraTxt = ahora();
+  const quien = sesion.nombre || sesion.email;
+  const aplicadas = [], salteadas = [], log = [];
+
+  pedidas.forEach(p => {
+    const ag = normTexto(p && p.agrupacion);
+    if (ag === '') return;
+    const i = porAgrupacion[normCab(ag)];
+    if (i === undefined) {
+      salteadas.push({ agrupacion: ag, motivo: 'No existe en la hoja.' });
+      return;
+    }
+
+    const fila = datos[i];
+    const estadoAnterior = normTexto(fila[FICHAS_TABLA.ESTADO - 1]);
+    const detectado = normTexto(fila[FICHAS_TABLA.DETECTADO - 1]);
+    const motivo = normTexto(fila[FICHAS_TABLA.CAMBIO - 1]);
+
+    if (normCab(estadoAnterior) === normCab(ESTADO_FICHA.DISCONTINUADA)) {
+      salteadas.push({ agrupacion: ag, motivo: 'Está discontinuada.', estadoActual: estadoAnterior });
+      return;
+    }
+    if (normCab(estadoAnterior) === normCab(nuevoEstado)) {
+      salteadas.push({ agrupacion: ag, motivo: 'Ya estaba en ese estado.', estadoActual: estadoAnterior });
+      return;
+    }
+    // Lo que cambió desde que se cargó la pantalla NO se pisa: se saltea y se
+    // avisa. En un lote nadie está mirando ficha por ficha.
+    const visto = normTexto(p.detectadoVisto);
+    if (visto !== '' && visto !== detectado) {
+      salteadas.push({ agrupacion: ag, motivo: 'Cambió mientras mirabas.',
+                       estadoActual: estadoAnterior, motivoActual: motivo });
+      return;
+    }
+
+    fila[FICHAS_TABLA.ESTADO - 1] = nuevoEstado;
+    fila[FICHAS_TABLA.DETECTADO - 1] = ahoraTxt;
+    fila[FICHAS_TABLA.ACTUALIZADA_POR - 1] = quien;
+    fila[FICHAS_TABLA.CUANDO - 1] = ahoraTxt;
+
+    aplicadas.push({ agrupacion: ag, estadoAnterior: estadoAnterior });
+    log.push([ahoraTxt, ag, estadoAnterior, nuevoEstado, motivo,
+              sesion.email, sesion.nombre || '', sesion.rol || '', 'plataforma (lote)', '']);
+  });
+
+  if (aplicadas.length === 0) {
+    return { ok: { ok: true, estado: nuevoEstado, aplicadas: [], salteadas: salteadas,
+                   usuario: sesion.email,
+                   mensaje: 'No se cambió ninguna ficha.' } };
+  }
+
+  rango.setValues(datos);
+
+  const color = API_COLOR_ESTADO[normCab(nuevoEstado)];
+  if (color) {
+    const celdas = aplicadas.map(a =>
+      colLetra(FICHAS_TABLA.ESTADO) + (porAgrupacion[normCab(a.agrupacion)] + 2));
+    hoja.getRangeList(celdas).setBackground(color);
+  }
+
+  _apiRegistrarLoteEnLog(log);
+
+  return { ok: { ok: true, estado: nuevoEstado, usuario: sesion.email,
+                 detectado: ahoraTxt, actualizadaPor: quien,
+                 aplicadas: aplicadas, salteadas: salteadas } };
+}
+
+
+// ============================================================
 // 7. LOG
 // ============================================================
 // Hoja aparte, acumulativa, nunca se borra. Vive en el mismo archivo pero en
@@ -595,6 +753,27 @@ const API_LOG_CABECERA = [
   'Fecha', 'Agrupación', 'Estado anterior', 'Estado nuevo',
   'Motivo al momento', 'Usuario', 'Nombre', 'Rol', 'Origen', 'Forzado'
 ];
+
+// Todas las filas del lote de una sola vez: 130 appends sueltos son 130
+// escrituras y la hoja se pone lenta.
+function _apiRegistrarLoteEnLog(filas) {
+  if (!filas.length) return;
+  try {
+    const hoja = obtenerOCrearHoja(CONFIG.ID_ARCHIVO_WEB, API_HOJA_LOG);
+    if (hoja.getLastRow() === 0) {
+      hoja.getRange(1, 1, 1, API_LOG_CABECERA.length).setValues([API_LOG_CABECERA]);
+      formatearCabecera(hoja, API_LOG_CABECERA.length);
+      hoja.setColumnWidth(2, 180);
+      hoja.setColumnWidth(5, 320);
+      hoja.setColumnWidth(6, 240);
+      hoja.hideSheet();
+    }
+    hoja.getRange(hoja.getLastRow() + 1, 1, filas.length, API_LOG_CABECERA.length)
+        .setValues(filas);
+  } catch (e) {
+    Logger.log(`⚠️ No pude escribir el lote en "${API_HOJA_LOG}": ${e.message}`);
+  }
+}
 
 function _apiRegistrarLog(d) {
   try {

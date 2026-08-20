@@ -154,9 +154,11 @@
         <input id="fpSearch" class="intg-search" type="search" autocomplete="off"
                placeholder="Buscá por nombre de ficha o por SKU…">
         <button id="fpReload" class="btn-desc" title="Volver a leer los estados de la planilla">↻ Estados</button>
+        <button id="fpLote" class="btn-desc" title="Marca como Finalizada todo lo que estás viendo"></button>
         <button id="fpZip" class="btn-desc" title="Genera un ZIP con todas las fichas en PDF">⬇ Todas (ZIP)</button>
         <span class="intg-stat" id="fpMeta"></span>
       </div>
+      <div class="us-msg" id="fpAviso"></div>
       <div class="us-msg" id="fpMsg"></div>
       <div class="fp-split">
         <div class="fp-side" id="fpSide"></div>
@@ -172,6 +174,7 @@
     };
     $("#fpReload").onclick = async () => { await cargar(); pintarTodo(); };
     $("#fpZip").onclick = ev => window.FichasDoc.descargarTodas(ev.currentTarget, $("#fpMeta"));
+    $("#fpLote").onclick = confirmarLote;
     $("#fpChips").onclick = ev => {
       const c = ev.target.closest("[data-estado]"); if (!c) return;
       FILTRO = (FILTRO === c.dataset.estado) ? "" : c.dataset.estado;
@@ -197,10 +200,31 @@
 
   function pintarTodo() { pintarChips(); pintarLista(); pintarDetalle(); pintarMeta(); }
 
+  // Las que el botón de lote va a tocar: sólo lo que está a la vista y admite
+  // el cambio. Nunca "todas" a secas — si hay un filtro puesto, manda el filtro.
+  function candidatasLote() {
+    return visibles().filter(x => x.ficha && x.doc && x.ficha.editable &&
+      SIN_ACCIONES.indexOf(x.ficha.estado) === -1);
+  }
+
+  function pintarBotonLote() {
+    const b = $("#fpLote"); if (!b) return;
+    const n = candidatasLote().length;
+    const filtrando = !!FILTRO || BUSCA.trim() !== "";
+    b.disabled = n === 0 || !puedeEditar();
+    b.style.display = puedeEditar() ? "" : "none";
+    b.textContent = n === 0 ? "✓ Nada pendiente acá"
+      : filtrando ? (n === 1 ? "✓ Actualizar la visible" : `✓ Actualizar las ${n} visibles`)
+      : (n === 1 ? "✓ Actualizar la única pendiente" : `✓ Actualizar todas (${n})`);
+  }
+
   function pintarMeta() {
     const m = $("#fpMeta"); if (!m) return;
     m.textContent = CARGANDO ? "Leyendo la planilla…" : `${ITEMS.length} fichas`;
-    const a = $("#fpMsg");
+    // OJO: #fpAviso es sólo para "la API no contesta". Los mensajes pasajeros
+    // van a #fpMsg. Si comparten elemento, cada repintado borra el resultado
+    // de lo último que hiciste antes de que llegues a leerlo.
+    const a = $("#fpAviso");
     if (a) {
       a.className = AVISO_API ? "us-msg px-err" : "us-msg";
       a.textContent = AVISO_API ? `Sin estados: ${AVISO_API} Podés ver y descargar fichas igual.` : "";
@@ -256,6 +280,7 @@
         }).join("")
       : `<div class="fp-vacio">Nada coincide con el filtro.</div>`;
 
+    pintarBotonLote();
     return sel !== antes;
   }
 
@@ -457,6 +482,112 @@
     if (b) b.textContent = AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar";
     escalar();
     if (AMPLIADO) window.scrollTo({ top: 0 });
+  }
+
+  /* ---- Cambio en lote ----
+     La confirmación muestra la lista completa, no sólo el número: cerrar 130
+     fichas de un clic es la operación más difícil de deshacer de la pantalla,
+     y conviene ver qué se está cerrando. */
+  function confirmarLote() {
+    const items = candidatasLote();
+    if (!items.length) return;
+
+    const filtrando = !!FILTRO || BUSCA.trim() !== "";
+    const porEstado = {};
+    items.forEach(x => { porEstado[x.ficha.estado] = (porEstado[x.ficha.estado] || 0) + 1; });
+
+    const ov = document.createElement("div");
+    ov.className = "detail"; ov.id = "fpModal";
+    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
+      <button class="detail-close" id="fpClose">✕</button>
+      <h2>Actualizar ${items.length} ficha${items.length > 1 ? "s" : ""}</h2>
+      <div class="fp-conflicto">
+        <b>Esto marca las ${items.length} como Finalizada de una vez.</b>
+        <div>${filtrando
+          ? "Son las que estás viendo ahora, con el filtro puesto."
+          : "Son <b>todas</b> las que tienen trabajo pendiente."}
+        Desde la pantalla no se puede deshacer.</div>
+      </div>
+      <div class="fp-modal-caja"><span>De qué estado vienen</span><div>${
+        Object.keys(porEstado).map(e => `${porEstado[e]} ${e}`).join(" · ")}</div></div>
+      <div class="fp-modal-caja fp-lote-lista"><span>Cuáles</span><div>${
+        items.map(x => esc(x.ag)).join(" · ")}</div></div>
+      <div class="us-msg" id="fpModalMsg"></div>
+      <div class="desc-actions">
+        <button class="btn-ghost" id="fpCancel">Cancelar</button>
+        <button class="btn-primary" id="fpOk">Sí, actualizar ${items.length}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelector("#fpClose").onclick = cerrar;
+    ov.querySelector("#fpCancel").onclick = cerrar;
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+
+    ov.querySelector("#fpOk").onclick = async () => {
+      const btn = ov.querySelector("#fpOk"), msg = ov.querySelector("#fpModalMsg");
+      btn.disabled = true; btn.textContent = `Actualizando ${items.length}…`;
+      msg.className = "us-msg"; msg.textContent = "";
+
+      const r = await apiPost({
+        accion: "cambiarEstadoLote",
+        estado: "Finalizada",
+        // Cada una con lo que la pantalla tenía a la vista: la API saltea lo
+        // que haya cambiado en el medio en vez de pisarlo.
+        fichas: items.map(x => ({ agrupacion: x.ag, detectadoVisto: x.ficha.detectado }))
+      });
+
+      if (!r.ok) {
+        btn.disabled = false; btn.textContent = `Sí, actualizar ${items.length}`;
+        msg.className = "us-msg px-err";
+        msg.textContent = r.mensaje || r.error || "No se pudo guardar.";
+        return;
+      }
+
+      // Se aplica lo que la API confirmó, una por una: si salteó alguna, esa
+      // queda como estaba y se dice por qué.
+      (r.aplicadas || []).forEach(a => {
+        const x = item(a.agrupacion); if (!x || !x.ficha) return;
+        x.ficha.estado = r.estado;
+        x.ficha.detectado = r.detectado;
+        x.ficha.actualizadaPor = r.actualizadaPor;
+        x.ficha.cuando = r.detectado;
+      });
+
+      cerrar(); pintarTodo();
+
+      const n = (r.aplicadas || []).length, s = (r.salteadas || []).length;
+      if (s === 0) {
+        avisar(`${n} ficha${n > 1 ? "s" : ""} actualizada${n > 1 ? "s" : ""}.`, true);
+      } else {
+        avisar(`${n} actualizada${n > 1 ? "s" : ""} · ${s} salteada${s > 1 ? "s" : ""}.`, n > 0);
+        detalleSalteadas(r.salteadas);
+      }
+      // Lo salteado pudo cambiar en la planilla: se relee para no quedar viejo.
+      if (s > 0) cargar().then(pintarTodo);
+    };
+  }
+
+  // Por qué no se tocó cada una. Importa: si el bot marcó algo como
+  // "A actualizar" mientras mirabas, el lote NO lo pisa, y hay que saberlo.
+  function detalleSalteadas(salteadas) {
+    const ov = document.createElement("div");
+    ov.className = "detail"; ov.id = "fpModal";
+    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
+      <button class="detail-close" id="fpClose">✕</button>
+      <h2>${salteadas.length} quedaron sin tocar</h2>
+      <div class="fp-salteadas">${salteadas.map(x => `<div>
+        <b>${esc(x.agrupacion)}</b> — ${esc(x.motivo)}${
+          x.estadoActual ? ` Ahora está en <b>${esc(x.estadoActual)}</b>.` : ""}${
+          x.motivoActual ? `<div class="fp-salteada-motivo">${esc(x.motivoActual)}</div>` : ""}
+      </div>`).join("")}</div>
+      <div class="desc-actions"><button class="btn-primary" id="fpCancel">Entendido</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelector("#fpClose").onclick = cerrar;
+    ov.querySelector("#fpCancel").onclick = cerrar;
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
   }
 
   function avisar(texto, ok) {

@@ -44,6 +44,13 @@
   };
   const ANCHO_A4 = 794;          // 210mm a 96dpi, el ancho fijo de .f-page
 
+  // Estados cerrados: no se ofrecen acciones porque no hay nada que decidir.
+  // El circuito va en una sola dirección — Solicitada / A actualizar →
+  // "Listo para publicar" — y una vez que el bot confirma, la ficha está hecha.
+  // Reabrir una Finalizada (una foto mal, un texto: cosas que el bot no puede
+  // detectar) se hace editando la hoja a mano. Es raro y conviene que cueste.
+  const SIN_ACCIONES = ["Finalizada"];
+
   /* ---- estado en memoria ---- */
   let ITEMS = [];       // { ag, doc, ficha }  — la unión de las dos fuentes
   let sel = null;       // agrupación seleccionada
@@ -254,7 +261,8 @@
 
     const f = x.ficha;
     const cls = f ? (CLASE[f.estado] || "") : "fe-sinestado";
-    const editable = f && f.editable && puedeEditar();
+    const cerrada = !!f && SIN_ACCIONES.indexOf(f.estado) !== -1;
+    const editable = f && f.editable && !cerrada && puedeEditar();
 
     const badge = f
       ? `<span class="fe-badge ${cls}">${esc(f.estado)}</span>`

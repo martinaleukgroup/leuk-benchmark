@@ -61,6 +61,26 @@
      en su próxima corrida. */
   const SIN_ACCIONES = ["Finalizada", "Listo para publicar"];
 
+  /* Agrupaciones que NO llevan ficha por decisión de producto, con el porqué.
+     Sin esto la pantalla dice "revisá cómo está escrita la agrupación", que
+     suena a error de tipeo y manda a alguien a arreglar algo que está bien.
+
+     OJO: tiene que coincidir con AGRUPACIONES_SIN_FICHA de
+     pipeline/fichas_build.py. Si allá se agrega una, sumala acá con su motivo. */
+  const SIN_FICHA_A_PROPOSITO = {
+    "DYNA DRIVERS":
+      "Los drivers no llevan ficha propia. Lo que corresponde es la leyenda " +
+      "«Dimerizable por DALI / TRIAC» en las fichas de los productos que los usan.",
+    "RIELES 2EF 2NEUTROS":
+      "Se hizo una ficha en su momento y después se anuló. Son dos accesorios " +
+      "sueltos (ADAPTADOR 2EF 2N, 6726/6727), que hoy no llevan ficha.",
+  };
+  const motivoSinFicha = ag => {
+    const k = String(ag || "").trim().toUpperCase();
+    return Object.keys(SIN_FICHA_A_PROPOSITO)
+      .filter(x => x.toUpperCase() === k).map(x => SIN_FICHA_A_PROPOSITO[x])[0] || "";
+  };
+
   /* ---- estado en memoria ---- */
   let ITEMS = [];       // { ag, doc, ficha }  — la unión de las dos fuentes
   let sel = null;       // agrupación seleccionada
@@ -330,8 +350,17 @@
     </div>`;
 
     if (!x.doc) {
-      // Se explica el porqué y qué hacer, en vez de dejar un hueco. El arreglo
-      // es siempre en la planilla, no acá.
+      // Primero: ¿es una decisión de producto? Entonces no hay nada que revisar.
+      const aProposito = motivoSinFicha(x.ag);
+      if (aProposito) {
+        stage.innerHTML = `<div class="fp-vacio">
+          <b>Esta agrupación no lleva ficha.</b>
+          <div>${esc(aProposito)}</div>
+          <div style="margin-top:10px">Es una decisión de producto, no un error:
+          no hay nada que corregir acá.</div></div>`;
+        return;
+      }
+      // Si no, se explica el porqué y qué hacer. El arreglo es en la planilla.
       const raro = /^[^A-Za-zÀ-ÿ0-9]+$/.test(x.ag) || /^(#N\/A|N\/A)$/i.test(x.ag);
       stage.innerHTML = `<div class="fp-vacio">
         <b>Todavía no existe la ficha, así que no hay nada que publicar.</b>

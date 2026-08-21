@@ -44,7 +44,8 @@ body{background:#0a0a0a;color:#fff;font-family:'Helvetica Neue',Helvetica,Arial,
 .prod-thumb.missing{border:1px dashed #333}
 .prod-name{flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prod-sku{font-size:10px;color:#555;width:38px;flex-shrink:0}
-.prod-color{background:var(--sfc2);border:1px solid var(--bd2);color:#ccc;font-size:10px;border-radius:3px;padding:3px 4px;font-family:inherit;width:92px;flex-shrink:0}
+.prod-color{background:var(--sfc2);border:1px solid var(--bd2);color:#ccc;font-size:10px;border-radius:3px;padding:3px 4px;font-family:inherit;width:112px;flex-shrink:0}
+.prod-swatch{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .prod-color option{background:#1a1a1a}
 .btn-primary{width:100%;padding:13px;background:var(--sage);color:#fff;border:none;cursor:pointer;font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;font-family:inherit;border-radius:2px}
 .btn-primary:hover{background:#7a815f}
@@ -88,8 +89,7 @@ body{background:#0a0a0a;color:#fff;font-family:'Helvetica Neue',Helvetica,Arial,
 .card .meta{width:100%;margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:5px}
 .card .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--fcond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3)}
 .card .mrow .v{color:var(--fg1);font-weight:500}
-.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
-.dot.negro{background:#111}.dot.blanco{background:#fff;border:1.5px solid #999}.dot.dorado{background:#c9a43c}.dot.natural{background:#b98d5f}
+.cicon{display:block;overflow:visible}
 .gridcell-empty{background:#fff}
 .leuk-foot{background:var(--olive);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:28px;border-top:3px solid var(--sage)}
 .leuk-foot .web{font-family:var(--fdisplay);letter-spacing:.18em;text-transform:uppercase;font-weight:600}
@@ -196,6 +196,7 @@ body{background:var(--lk-bg)!important;color:var(--lk-ink)!important;font-family
     <div class="section-title">Paso 4 · Productos y color</div>
     <div class="field"><label>Tamaño del nombre <span class="range-val" id="name-size-val">13 px</span></label><input type="range" id="name-size" min="9" max="20" value="13"></div>
     <div class="field"><label>Tamaño del SKU <span class="range-val" id="sku-size-val">11 px</span></label><input type="range" id="sku-size" min="8" max="16" value="11"></div>
+    <div class="field"><label>Tamaño del ícono de color <span class="range-val" id="color-size-val">16 px</span></label><input type="range" id="color-size" min="9" max="30" value="16"></div>
     <div class="brand-tag">Productos que reingresan</div><div id="list-leuk"></div>
     <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
       <input type="text" id="add-sku" placeholder="SKU" style="width:66px;background:var(--sfc2);border:1px solid var(--bd2);color:#fff;padding:7px;font-size:11px;border-radius:3px;outline:none;font-family:inherit">
@@ -341,9 +342,54 @@ const LEUK=[
 ];
 LEUK.forEach(p=>p.img=null);
 const S={heroUrl:null,logoGroup:null,logoLeuk:null,imageMap:{},zoom:1,heroZoom:1,heroPos:38,
-  groupSize:120,groupX:88,groupY:22,leukH:44,leukX:4,titleSize:62,availSize:13,nameSize:13,skuSize:11,footWeb:16,
+  groupSize:120,groupX:88,groupY:22,leukH:44,leukX:4,titleSize:62,availSize:13,nameSize:13,skuSize:11,colorSize:16,footWeb:16,
   fontDispData:null,fontBodyData:null,fontCondData:null};
-const COLOR_OPTS=[['','—'],['negro','Negro'],['blanco','Blanco'],['dorado','Dorado'],['blanconegro','Blanco y Negro'],['natural','Natural']];
+/* ═══════════════════════════════════════════════════════════════
+   PALETA DE COLORES · íconos oficiales (ZIP /COLOR, Illustrator)
+   [clave, etiqueta, mitad izquierda, mitad derecha]
+     · mitad derecha null → círculo de un solo color
+     · izquierda === derecha → se agrega la línea divisoria vertical
+   Para sumar un color nuevo: agregá una fila acá y listo
+   (se propaga solo al desplegable, al parser de Excel y a la ficha).
+   ═══════════════════════════════════════════════════════════════ */
+const COLOR_DEFS=[
+  ['',             '—',               null,      null],
+  ['blanco',       'Blanco',          '#ffffff', null],
+  ['negro',        'Negro',           '#1d1d1b', null],
+  ['gris',         'Gris',            '#575756', null],
+  ['natural',      'Natural',         '#9a9999', null],
+  ['dorado',       'Dorado',          '#c18f14', null],
+  ['madera',       'Madera',          '#af7f4a', null],
+  ['terracota',    'Terracota',       '#bc624c', null],
+  ['bordo',        'Bordo',           '#7f0f0f', null],
+  ['rojo',         'Rojo',            '#ed1c25', null],
+  ['verde',        'Verde',           '#799967', null],
+  ['azul',         'Azul',            '#56a4bf', null],
+  ['blancoblanco', 'Blanco y Blanco', '#ffffff', '#ffffff'],
+  ['blanconegro',  'Blanco y Negro',  '#ffffff', '#1d1d1b'],
+  ['doradoblanco', 'Dorado y Blanco', '#ffffff', '#c18f14'],
+  ['doradonegro',  'Dorado y Negro',  '#c18f14', '#1d1d1b'],
+  ['grisnegro',    'Gris y Negro',    '#9d9d9c', '#1d1d1b'],
+  ['maderablanco', 'Madera y Blanco', '#ffffff', '#af7f4a'],
+  ['maderanegro',  'Madera y Negro',  '#af7f4a', '#1d1d1b']
+];
+const COLOR_MAP=Object.fromEntries(COLOR_DEFS.map(([k,label,left,right])=>[k,{label,left,right}]));
+const COLOR_OPTS=COLOR_DEFS.map(([k,label])=>[k,label]);
+
+/* Geometría exacta de los SVG de Illustrator (viewBox original 55.06×52.07,
+   acá recortado a un cuadrado ajustado al aro para que el tamaño en px sea real). */
+const CI={cx:27.53,cy:26.07,rIn:14.09,rOut:19.73,stroke:'#1d1d1b',sw:1.33,vb:'6.03 4.57 43 43',
+  half:'M27.53,11.98v28.18c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09Z'};
+function colorIcon(key,size){
+  const d=COLOR_MAP[key]; if(!d||!d.left)return'';
+  const {cx,cy,rIn,rOut,stroke,sw,vb,half}=CI;
+  let g=`<circle cx="${cx}" cy="${cy}" r="${rIn}" fill="${d.left}"/>`;
+  if(d.right)g+=`<path d="${half}" fill="${d.right}"/>`;
+  if(d.right&&d.right===d.left)g+=`<line x1="${cx}" y1="${cy-rIn}" x2="${cx}" y2="${cy+rIn}" stroke="${stroke}" stroke-width="${sw}"/>`;
+  g+=`<circle cx="${cx}" cy="${cy}" r="${rIn}" fill="none" stroke="${stroke}" stroke-width="${sw}"/>`;
+  g+=`<circle cx="${cx}" cy="${cy}" r="${rOut}" fill="none" stroke="${stroke}" stroke-width="${sw}"/>`;
+  return `<svg class="cicon" xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${size}" height="${size}" role="img" aria-label="${d.label}">${g}</svg>`;
+}
 const STD_KEY='leuk_reingreso_std_v1';
 
 document.documentElement.style.setProperty('--fdisplay',"'Century Gothic','Questrial',sans-serif");
@@ -355,7 +401,6 @@ function toast(m,d=2800){const t=document.getElementById('toast');t.textContent=
 function setStatus(id,items){document.getElementById(id).innerHTML=items.map(([l,t])=>`<span class="pill pill-${t}">${l}</span>`).join('');}
 function val(id){return document.getElementById(id).value;}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function colorTokens(c){return c==='blanconegro'?['blanco','negro']:(c?[c]:[]);}
 
 // ═══ LISTA EDITABLE ═══
 function renderLists(){
@@ -364,13 +409,16 @@ function renderLists(){
       ${p.img?`<img class="prod-thumb" src="${p.img}">`:`<span class="prod-thumb missing"></span>`}
       <span class="prod-sku">${esc(p.sku)}</span>
       <span class="prod-name" title="${esc(p.name)}">${esc(p.name)}</span>
+      <span class="prod-swatch">${colorIcon(p.color,16)}</span>
       <select class="prod-color" onchange="setColor(${i},this.value)">
         ${COLOR_OPTS.map(([v,l])=>`<option value="${v}" ${p.color===v?'selected':''}>${l}</option>`).join('')}
       </select>
       <span onclick="removeProduct(${i})" title="Quitar" style="cursor:pointer;color:#5a3a3a;font-size:15px;padding:0 2px;flex-shrink:0">×</span>
     </div>`).join('');
 }
-function setColor(i,v){LEUK[i].color=v;render();}
+function setColor(i,v){LEUK[i].color=v;
+  const sw=document.querySelectorAll('#list-leuk .prod-swatch')[i];if(sw)sw.innerHTML=colorIcon(v,16);
+  render();}
 function addProduct(){
   const skuEl=document.getElementById('add-sku'), nameEl=document.getElementById('add-name');
   const sku=skuEl.value.trim(), name=nameEl.value.trim();
@@ -418,7 +466,46 @@ function matchImages(){
 // ═══ EXCEL / CSV DE REINGRESOS ═══
 let XLSROWS=null, XLSHDR=null, XLSIDX=null;
 function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else if(c==='\r'){}else cur+=c;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
-function parseColorText(raw){const s=' '+norm(raw)+' ';const has=w=>s.includes(w);const b=has('blanco')||has('white'),n=has('negro')||has('black');if(b&&n)return'blanconegro';if(n)return'negro';if(b)return'blanco';if(has('dorado')||has('gold')||has('oro'))return'dorado';if(has('natural')||has('madera'))return'natural';return'';}
+/* Sinónimos por color base. El parser detecta cuáles aparecen y en qué orden,
+   y arma la clave compuesta (ej: "NEGRO / DORADO" → doradonegro). */
+const COLOR_SYN=[
+  ['blanco',   ['blanco','blanca','white']],
+  ['negro',    ['negro','negra','black']],
+  ['gris',     ['gris','grafito','grey','gray']],
+  ['natural',  ['natural','aluminio']],
+  ['dorado',   ['dorado','dorada','gold','oro']],
+  ['madera',   ['madera','wood','roble','nogal']],
+  ['terracota',['terracota','terracotta']],
+  ['bordo',    ['bordo','borgona','burdeos','vino']],
+  ['rojo',     ['rojo','roja','red']],
+  ['verde',    ['verde','green']],
+  ['azul',     ['azul','blue']]
+];
+/* Abreviaturas del maestro (match exacto, no por inclusión) */
+const COLOR_ABBR={ng:'negro',bl:'blanco',gr:'gris',nat:'natural',do:'dorado',dor:'dorado',md:'madera',
+  tc:'terracota',bo:'bordo',rj:'rojo',vd:'verde',az:'azul',
+  blng:'blanconegro',ngbl:'blanconegro',blbl:'blancoblanco',
+  dong:'doradonegro',dobl:'doradoblanco',grng:'grisnegro',mdng:'maderanegro',mdbl:'maderablanco'};
+function parseColorText(raw){
+  const s=norm(raw); if(!s)return'';
+  if(COLOR_MAP[s])return s;                 // ya viene la clave exacta
+  if(COLOR_ABBR[s])return COLOR_ABBR[s];    // abreviatura exacta
+  const count=(w)=>{let n=0,i=0;while((i=s.indexOf(w,i))>=0){n++;i+=w.length;}return n;};
+  const hits=[];
+  COLOR_SYN.forEach(([key,words])=>{
+    let at=-1,n=0;
+    words.forEach(w=>{const i=s.indexOf(w);if(i>=0&&(at<0||i<at))at=i;n+=count(w);});
+    if(at>=0)hits.push({at,key,n});
+  });
+  if(!hits.length)return'';
+  hits.sort((a,b)=>a.at-b.at);
+  if(hits.length===1){                       // un solo color base
+    const h=hits[0];
+    return (h.n>1&&COLOR_MAP[h.key+h.key])?h.key+h.key:h.key;  // "blanco y blanco"
+  }
+  const [a,b]=hits.map(h=>h.key);
+  return COLOR_MAP[a+b]?a+b:(COLOR_MAP[b+a]?b+a:a);
+}
 document.getElementById('inp-excel').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{let rows;if(/\.csv$/i.test(f.name)){rows=parseCSV(new TextDecoder().decode(ev.target.result));}else{const wb=XLSX.read(ev.target.result,{type:'array'});rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});}ingestExcel(rows,f.name);}catch(err){console.error(err);setStatus('excel-status',[['Error al leer','warn']]);toast('Error leyendo el Excel');}};r.readAsArrayBuffer(f);});
 function ingestExcel(rows,fname){
   rows=rows.filter(r=>r.some(c=>String(c).trim()!==''));
@@ -478,6 +565,7 @@ slider('leuk-size','leukH','leuk-size-val',' px');
 slider('leuk-x','leukX','leuk-x-val','%');
 slider('name-size','nameSize','name-size-val',' px');
 slider('sku-size','skuSize','sku-size-val',' px');
+slider('color-size','colorSize','color-size-val',' px');
 slider('foot-size','footWeb','foot-size-val',' px');
 ['cat-title','cat-avail','cat-web','cat-subweb'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 
@@ -494,6 +582,7 @@ function syncSliders(){
   setSlider('leuk-x',S.leukX,S.leukX+'%');
   setSlider('name-size',S.nameSize,S.nameSize+' px');
   setSlider('sku-size',S.skuSize,S.skuSize+' px');
+  setSlider('color-size',S.colorSize,S.colorSize+' px');
   setSlider('foot-size',S.footWeb,S.footWeb+' px');
 }
 
@@ -507,7 +596,7 @@ const SVG_WA='<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path 
 
 // ═══ RENDER ═══
 function cardHTML(p){
-  const dots=colorTokens(p.color).map(c=>`<span class="dot ${c}"></span>`).join('');
+  const dots=colorIcon(p.color,S.colorSize);
   return `<div class="card">
     ${p.img?`<img class="pimg" src="${p.img}">`:`<div class="pimg-ph">${esc(p.name)}</div>`}
     <div class="pname" style="font-size:${S.nameSize}px">${esc(p.name)}</div>
@@ -556,7 +645,7 @@ function collectStandard(){
     fonts:{disp:S.fontDispData,body:S.fontBodyData,cond:S.fontCondData},
     web:val('cat-web'),subweb:val('cat-subweb'),
     sizes:{heroZoom:S.heroZoom,heroPos:S.heroPos,groupSize:S.groupSize,groupX:S.groupX,groupY:S.groupY,
-      leukH:S.leukH,leukX:S.leukX,titleSize:S.titleSize,availSize:S.availSize,nameSize:S.nameSize,skuSize:S.skuSize,footWeb:S.footWeb}};
+      leukH:S.leukH,leukX:S.leukX,titleSize:S.titleSize,availSize:S.availSize,nameSize:S.nameSize,skuSize:S.skuSize,colorSize:S.colorSize,footWeb:S.footWeb}};
 }
 function applyStandard(cfg){
   if(!cfg)return;
@@ -571,7 +660,7 @@ function applyStandard(cfg){
     if(cfg.fonts.body){S.fontBodyData=cfg.fonts.body;applyFont(cfg.fonts.body,'LeukBody','--fbody',"'Helvetica Neue',Arial,sans-serif");}
     if(cfg.fonts.cond){S.fontCondData=cfg.fonts.cond;applyFont(cfg.fonts.cond,'LeukCond','--fcond',"'Helvetica Neue',Arial,sans-serif");}
   }
-  syncSliders(); render();
+  syncSliders(); renderLists(); render();
 }
 function compressImg(dataUrl,maxW,q,mime){return new Promise(res=>{if(!dataUrl)return res(null);const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);res(c.toDataURL(mime,q));};im.onerror=()=>res(dataUrl);im.src=dataUrl;});}
 async function saveStandard(){

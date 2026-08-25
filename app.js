@@ -1690,7 +1690,7 @@
     function pintarReceta() {
       const r = RECETAS.find(x => x.slug === marca.value); if (!r) { recBox.innerHTML = ""; return; }
       const lp = (r.receta || {}).lista_precios || {};
-      const iva = { sin_iva: "sin IVA", con_iva: "con IVA", desconocido: "IVA no confirmado" }[lp.iva] || "IVA no confirmado";
+      const iva = { sin_iva: "precios netos", con_iva: "IVA incluido", desconocido: "IVA sin confirmar" }[lp.iva] || "IVA sin confirmar";
       const parts = (r.receta || {}).particularidades || [];
       recBox.innerHTML = `<div class="ci-receta-in">
         <b>Receta de ${(r.marca || "").replace(/[<>]/g, "")}</b>
@@ -1779,7 +1779,7 @@
     body.innerHTML = recetas.map(r => {
       const R = r.receta || {}, lp = R.lista_precios || {}, web = R.web || {}, img = R.imagenes || {};
       const [ecls, etxt] = ESTADO[r.estado] || ["", esc(r.estado)];
-      const iva = { sin_iva: "sin IVA", con_iva: "con IVA", desconocido: "IVA no confirmado" }[lp.iva] || "IVA no confirmado";
+      const iva = { sin_iva: "No, son precios netos", con_iva: "Sí, IVA incluido", desconocido: "Sin confirmar con el proveedor" }[lp.iva] || "Sin confirmar con el proveedor";
       const hist = listas.filter(l => l.slug === r.slug);
       const cob = img.cobertura || {};
       const dato = (k, v) => v ? `<div class="man-dato"><span>${k}</span><b>${esc(v)}</b></div>` : "";
@@ -1794,7 +1794,7 @@
             ? `<div class="man-aviso"><b>No se actualiza desde la app.</b> ${esc((R.actualizacion || {}).motivo || "")}</div>` : ""}
           <h4>Lista de precios</h4>
           <div class="man-datos">
-            ${dato("Moneda", lp.moneda)}${dato("IVA", iva)}${dato("Tipo de lista", lp.tipo_lista)}
+            ${dato("Moneda", lp.moneda)}${dato("¿El precio incluye IVA?", iva)}${dato("Tipo de lista", lp.tipo_lista)}
             ${dato("Precio por", lp.unidad_precio)}${dato("Descuento de lista", lp.descuento_lista ? lp.descuento_lista + "%" : "")}
             ${dato("Tipo de cambio", lp.tipo_cambio ? `${lp.tipo_cambio}${lp.tipo_cambio_fuente ? " · " + lp.tipo_cambio_fuente : ""}` : "")}
             ${dato("Columna del código", (lp.codigo || {}).columna)}

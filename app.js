@@ -1790,12 +1790,16 @@
           <span class="ci-badge ${ecls}">${etxt}</span>
         </div>
         <div class="man-body">
+          ${(R.actualizacion || {}).habilitada === false
+            ? `<div class="man-aviso"><b>No se actualiza desde la app.</b> ${esc((R.actualizacion || {}).motivo || "")}</div>` : ""}
           <h4>Lista de precios</h4>
           <div class="man-datos">
             ${dato("Moneda", lp.moneda)}${dato("IVA", iva)}${dato("Tipo de lista", lp.tipo_lista)}
             ${dato("Precio por", lp.unidad_precio)}${dato("Descuento de lista", lp.descuento_lista ? lp.descuento_lista + "%" : "")}
-            ${dato("Tipo de cambio", lp.tipo_cambio)}${dato("Columna del código", (lp.codigo || {}).columna)}
+            ${dato("Tipo de cambio", lp.tipo_cambio ? `${lp.tipo_cambio}${lp.tipo_cambio_fuente ? " · " + lp.tipo_cambio_fuente : ""}` : "")}
+            ${dato("Columna del código", (lp.codigo || {}).columna)}
             ${dato("Columna del precio", (lp.precio || {}).cual)}${dato("Se cruza por", (R.actualizacion || {}).clave_de_cruce)}
+            ${dato("Archivo fuente", lp.archivo_fuente)}${dato("Lista en PDF", lp.lista_pdf)}
           </div>
           ${web.url ? `<h4>Sitio web</h4><div class="man-datos">
             ${dato("URL", web.url)}${dato("Dónde está el código", web.codigo_donde)}

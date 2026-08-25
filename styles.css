@@ -621,3 +621,9 @@ button.rm:hover{background:#f4e2df}
 .ci-receta-p{margin-top:4px;color:var(--warn)}
 .ci-alta-nota{margin-top:12px;font-size:12px;line-height:1.55;padding-top:12px;
   border-top:1px solid var(--line)}
+
+/* Aviso en Manual de carga: la marca está documentada pero no es actualizable self-service */
+.man-aviso{background:rgba(183,137,59,.10);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:16px;font-size:12.5px;line-height:1.55;
+  color:var(--gray)}
+.man-aviso b{color:var(--warn)}

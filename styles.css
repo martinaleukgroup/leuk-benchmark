@@ -588,3 +588,36 @@ button.rm:hover{background:#f4e2df}
   .intg-row{flex-direction:column;align-items:flex-start}
   .intg-marca-head{flex-direction:column;align-items:flex-start}
 }
+
+/* ===================== MANUAL DE CARGA (la receta de cada competidor) ===================== */
+/* La ficha de cómo se carga cada marca: dónde vive cada dato, qué particularidades tiene y
+   qué listas se cargaron. Reusa .intg-marca como contenedor. */
+.man-card{margin-bottom:20px}
+.man-body{padding:16px}
+.man-body h4{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--gray-soft);font-weight:600}
+.man-body h4:first-child{margin-top:0}
+.man-datos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px 20px}
+/* etiqueta arriba y valor abajo: varios valores son frases largas (dónde está el código,
+   cómo se nombran las fotos) y en dos columnas quedaban partidas letra por letra */
+.man-dato{display:flex;flex-direction:column;gap:2px;font-size:13px;
+  padding:8px 0;border-bottom:1px solid var(--line)}
+.man-dato span{color:var(--gray-soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.man-dato b{font-weight:600;word-break:break-word;line-height:1.45}
+.man-part{margin:0;padding-left:20px;font-size:13px;line-height:1.6;color:var(--gray)}
+.man-part li{margin-bottom:7px}
+.man-part li::marker{color:var(--warn)}
+.man-notas p{margin:0 0 9px;font-size:13px;line-height:1.6;color:var(--gray)}
+.man-hist{width:100%;border-collapse:collapse;font-size:12.5px}
+.man-hist th{text-align:left;color:var(--gray-soft);font-weight:600;padding:6px 8px;
+  border-bottom:1px solid var(--line)}
+.man-hist td{padding:7px 8px;border-bottom:1px solid var(--line);color:var(--gray)}
+.man-hist tr:last-child td{border-bottom:none}
+
+/* La receta que se muestra al elegir marca en "Actualizar lista" */
+.ci-receta:empty{display:none}
+.ci-receta-in{background:var(--olive-pale);border-radius:10px;padding:10px 12px;
+  font-size:13px;margin:-4px 0 4px}
+.ci-receta-p{margin-top:4px;color:var(--warn)}
+.ci-alta-nota{margin-top:12px;font-size:12px;line-height:1.55;padding-top:12px;
+  border-top:1px solid var(--line)}

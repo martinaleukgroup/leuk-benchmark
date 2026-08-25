@@ -1628,27 +1628,39 @@
     return r.ok ? await r.json() : [];
   }
 
-  function openIntegrar() {
-    if (!puedeIntegrar()) { alert("Sólo Admin, Líder y Coordinación pueden integrar competencia."); return; }
+  // ── Recetas: cómo se carga cada marca (la escribe el alta asistida, skill `alta-competidor`)
+  async function traerRecetas() {
+    const r = await fetch(`${SB.url}/rest/v1/competencia_recetas?select=*&order=marca.asc`, { headers: AUTHSES.head() });
+    return r.ok ? await r.json() : [];
+  }
+  async function traerListas() {
+    const r = await fetch(`${SB.url}/rest/v1/competencia_listas?select=*&order=cargada.desc&limit=200`, { headers: AUTHSES.head() });
+    return r.ok ? await r.json() : [];
+  }
+
+  // Actualizar la lista de precios de una marca YA cargada. El alta de una marca NUEVA no se
+  // hace acá: necesita entender el formato de esa lista (dónde está el código, si el precio
+  // lleva IVA, si los códigos de la web cruzan con los del PDF) y eso se resuelve con el
+  // asistente de alta, que además deja escrita la RECETA. Sin receta no hay actualización.
+  function openActualizar() {
+    if (!puedeIntegrar()) { alert("Sólo Admin, Líder y Coordinación pueden actualizar listas de competencia."); return; }
     const ov = el("div", "detail"); ov.id = "integrarModal";
-    const opts = MARCAS.map(m => `<option value="${m}">${m}</option>`).join("") + `<option value="__nueva__">➕ Nueva marca…</option>`;
     ov.innerHTML = `<div class="detail-inner desc-modal ci-modal">
       <button class="detail-close" id="ciClose">✕</button>
-      <h2>Integrar competencia</h2>
-      <div class="fam-hint">Subí la <b>lista de precios o catálogo en PDF</b> y el <b>link del sitio</b> del competidor. El sistema extrae los productos, saca la ficha técnica y las imágenes, las etiqueta y las suma al catálogo. Se procesa en segundo plano — abajo ves el estado de cada carga.</div>
+      <h2>Actualizar lista de precios</h2>
+      <div class="fam-hint">Subí la <b>lista de precios nueva</b> de una marca que ya está cargada. El sistema la lee con la <b>receta</b> de esa marca, actualiza los precios que cambiaron, da de alta los productos nuevos (quedan para aprobar en <b>Nuevas integraciones</b>) y marca los que ya no aparecen. Se procesa en segundo plano.</div>
       <div class="ci-form">
         <label>Marca</label>
-        <select id="ciMarca" class="lg-in">${opts}</select>
-        <input id="ciMarcaNueva" class="lg-in" placeholder="Nombre de la marca nueva" hidden>
-        <label>Sitio web del competidor (URL)</label>
-        <input id="ciUrl" class="lg-in" placeholder="https://www.competidor.com/productos" inputmode="url">
-        <label>Lista de precios / catálogo (PDF)</label>
+        <select id="ciMarca" class="lg-in"><option value="">Cargando marcas…</option></select>
+        <div id="ciReceta" class="ci-receta"></div>
+        <label>Lista de precios (PDF)</label>
         <div id="ciDrop" class="px-drop">Arrastrá el/los PDF acá o <b>tocá para elegir</b><input id="ciFile" type="file" accept="application/pdf,.pdf" multiple hidden></div>
         <div id="ciFiles" class="ci-files"></div>
         <div id="ciMsg" class="px-info"></div>
-        <button id="ciCrear" class="btn-primary">Crear integración</button>
+        <button id="ciCrear" class="btn-primary">Subir lista</button>
+        <div class="leuk-fam ci-alta-nota">¿Es una marca <b>nueva</b>? El alta no se hace desde acá: se pide a Análisis Comercial, que la carga con el asistente de alta y deja escrita su receta. Podés ver cómo se cargó cada marca en <b>Manual de carga</b>.</div>
       </div>
-      <h3 class="ci-h3">Integraciones recientes</h3>
+      <h3 class="ci-h3">Cargas recientes</h3>
       <div id="ciList" class="ci-list"><div class="empty-mini">Cargando…</div></div>
     </div>`;
     document.body.appendChild(ov);
@@ -1656,11 +1668,39 @@
     const close = () => { clearInterval(poll); ov.remove(); };
     $$("#ciClose").onclick = close;
     ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
-    const marca = $$("#ciMarca"), marcaNueva = $$("#ciMarcaNueva"), url = $$("#ciUrl"),
-      drop = $$("#ciDrop"), file = $$("#ciFile"), filesBox = $$("#ciFiles"),
-      msg = $$("#ciMsg"), crear = $$("#ciCrear"), lista = $$("#ciList");
-    let files = [];
-    marca.onchange = () => { marcaNueva.hidden = marca.value !== "__nueva__"; if (!marcaNueva.hidden) marcaNueva.focus(); };
+    const marca = $$("#ciMarca"), recBox = $$("#ciReceta"), drop = $$("#ciDrop"), file = $$("#ciFile"),
+      filesBox = $$("#ciFiles"), msg = $$("#ciMsg"), crear = $$("#ciCrear"), lista = $$("#ciList");
+    let files = [], RECETAS = [];
+
+    // sólo se ofrecen las marcas que TIENEN receta y la tienen habilitada para actualizar
+    (async () => {
+      RECETAS = (await traerRecetas()).filter(r => r.estado !== "baja"
+        && ((r.receta || {}).actualizacion || {}).habilitada !== false);
+      if (!RECETAS.length) {
+        marca.innerHTML = `<option value="">— todavía no hay marcas con receta —</option>`;
+        crear.disabled = true;
+        msg.innerHTML = `<span class="px-bad">Ninguna marca tiene receta cargada todavía, así que no hay nada que actualizar. El alta de una marca la hace Análisis Comercial con el asistente de alta.</span>`;
+        return;
+      }
+      marca.innerHTML = RECETAS.map(r => `<option value="${r.slug}">${(r.marca || r.slug).replace(/[<>]/g, "")}</option>`).join("");
+      pintarReceta();
+    })();
+
+    // se muestra lo que el sistema YA sabe de esa marca, para que quien sube sepa qué esperar
+    function pintarReceta() {
+      const r = RECETAS.find(x => x.slug === marca.value); if (!r) { recBox.innerHTML = ""; return; }
+      const lp = (r.receta || {}).lista_precios || {};
+      const iva = { sin_iva: "sin IVA", con_iva: "con IVA", desconocido: "IVA no confirmado" }[lp.iva] || "IVA no confirmado";
+      const parts = (r.receta || {}).particularidades || [];
+      recBox.innerHTML = `<div class="ci-receta-in">
+        <b>Receta de ${(r.marca || "").replace(/[<>]/g, "")}</b>
+        ${r.estado === "parcial" ? ' <span class="tag-sug">carga parcial</span>' : ""}
+        <div class="leuk-fam">${(lp.moneda || "moneda ?")} · ${iva} · lista ${lp.tipo_lista || "?"} · por ${lp.unidad_precio || "unidad"}</div>
+        ${parts.length ? `<div class="leuk-fam ci-receta-p">${parts.length} particularidad${parts.length > 1 ? "es" : ""} documentada${parts.length > 1 ? "s" : ""} — vela en Manual de carga</div>` : ""}
+      </div>`;
+    }
+    marca.onchange = pintarReceta;
+
     drop.onclick = () => file.click();
     drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
     drop.ondragleave = () => drop.classList.remove("over");
@@ -1672,43 +1712,45 @@
       filesBox.querySelectorAll(".ci-file-x").forEach(b => b.onclick = () => { files.splice(+b.dataset.i, 1); addFiles([]); });
     }
     crear.onclick = async () => {
-      const marcaFinal = marca.value === "__nueva__" ? marcaNueva.value.trim() : marca.value;
-      if (!marcaFinal) { msg.innerHTML = `<span class="px-bad">Elegí o escribí la marca.</span>`; return; }
-      if (!url.value.trim() && !files.length) { msg.innerHTML = `<span class="px-bad">Cargá al menos un PDF o la URL del sitio.</span>`; return; }
+      const r = RECETAS.find(x => x.slug === marca.value);
+      if (!r) { msg.innerHTML = `<span class="px-bad">Elegí la marca.</span>`; return; }
+      if (!files.length) { msg.innerHTML = `<span class="px-bad">Cargá la lista de precios en PDF.</span>`; return; }
       crear.disabled = true; crear.textContent = "Subiendo…";
       try {
-        const mslug = slugMarca(marcaFinal), paths = [];
-        for (const f of files) { msg.textContent = `Subiendo ${f.name}…`; paths.push(await subirPDFIntegracion(mslug, f)); }
-        msg.textContent = "Creando integración…";
+        const paths = [];
+        for (const f of files) { msg.textContent = `Subiendo ${f.name}…`; paths.push(await subirPDFIntegracion(r.slug, f)); }
+        msg.textContent = "Encolando la actualización…";
         await crearJobIntegracion({
-          marca: marcaFinal, marca_nueva: marca.value === "__nueva__",
-          url: url.value.trim() || null, pdf_paths: paths, autor: AUTHSES.email() || null,
+          marca: r.marca, marca_nueva: false, tipo: "actualizacion", slug: r.slug,
+          url: null, pdf_paths: paths, autor: AUTHSES.email() || null,
         });
-        msg.innerHTML = `<span class="px-ok">✓ Integración en cola. Se procesa en segundo plano.</span>`;
-        files = []; addFiles([]); url.value = "";
-        crear.textContent = "Crear integración"; crear.disabled = false;
+        msg.innerHTML = `<span class="px-ok">✓ Lista en cola. En unos minutos vas a ver acá abajo qué cambió.</span>`;
+        files = []; addFiles([]);
+        crear.textContent = "Subir lista"; crear.disabled = false;
         renderLista();
       } catch (ex) {
-        msg.innerHTML = `<span class="px-bad">${ex.message}. ¿Corriste el SQL de 'integracion_jobs'?</span>`;
-        crear.textContent = "Crear integración"; crear.disabled = false;
+        msg.innerHTML = `<span class="px-bad">${ex.message}. ¿Corriste el SQL de recetas y actualización?</span>`;
+        crear.textContent = "Subir lista"; crear.disabled = false;
       }
     };
     const EST = { pendiente: ["ci-b-wait", "⏳ En cola"], procesando: ["ci-b-run", "⚙ Procesando…"], listo: ["ci-b-ok", "✓ Listo"], error: ["ci-b-err", "✕ Error"] };
     async function renderLista() {
       const jobs = await traerJobsIntegracion();
-      if (!jobs.length) { lista.innerHTML = `<div class="empty-mini">Todavía no cargaste ninguna integración.</div>`; return; }
+      if (!jobs.length) { lista.innerHTML = `<div class="empty-mini">Todavía no se cargó ninguna lista.</div>`; return; }
       lista.innerHTML = jobs.map(j => {
         const [cls, txt] = EST[j.estado] || ["", j.estado || "?"];
         const r = j.resultado || {};
         const fecha = j.creado ? new Date(j.creado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
-        const resumen = j.estado === "listo"
-          ? `<div class="leuk-fam">${r.productos_nuevos || 0} productos · ${r.con_imagen || 0} con imagen · ${r.con_ficha || 0} con ficha</div>`
-          : j.estado === "error" ? `<div class="px-bad" style="font-size:11px">${(j.error || "").slice(0, 140)}</div>` : "";
+        // el resumen de una actualización cuenta otra historia que el de un alta
+        const resumen = j.estado !== "listo" ? "" : (r.tipo === "actualizacion"
+          ? `<div class="leuk-fam">${r.precio_subio || 0} subieron · ${r.precio_bajo || 0} bajaron · ${r.sin_cambio || 0} sin cambio · <b>${r.productos_nuevos || 0} nuevos</b>${r.faltantes ? ` · ${r.faltantes} ya no están` : ""}</div>`
+          : `<div class="leuk-fam">${r.productos_nuevos || 0} productos · ${r.con_ficha || 0} con ficha · ${r.con_precio || 0} con precio</div>`);
         return `<div class="ci-job">
-          <div class="ci-job-meta"><b>${(j.marca || "—").replace(/[<>]/g, "")}</b>${j.marca_nueva ? ' <span class="tag-sug">nueva</span>' : ""}
+          <div class="ci-job-meta"><b>${(j.marca || "—").replace(/[<>]/g, "")}</b>
+            <span class="tag-sug">${j.tipo === "actualizacion" ? "actualización" : "alta"}</span>
             <span class="leuk-fam"> · ${fecha}</span>
-            ${j.url ? `<div class="leuk-fam" style="font-size:11px">${j.url.replace(/[<>]/g, "").slice(0, 64)}</div>` : ""}
             ${j.pdf_paths && j.pdf_paths.length ? `<div class="leuk-fam" style="font-size:11px">${j.pdf_paths.length} PDF</div>` : ""}
+            ${j.estado === "error" ? `<div class="px-bad" style="font-size:11px">${(j.error || "").slice(0, 160)}</div>` : ""}
             ${resumen}</div>
           <span class="ci-badge ${cls}">${txt}</span>
         </div>`;
@@ -1716,6 +1758,68 @@
     }
     renderLista();
     const poll = setInterval(renderLista, 5000);
+  }
+
+  /* ===================== MANUAL DE CARGA (el know-how, consultable) ===================== */
+  // Cada marca cargada deja una RECETA: dónde vive cada dato en su lista de precios, sus
+  // particularidades y el historial de listas. Es lo que permite que la actualización sea
+  // self-service y que el proceso sobreviva a que no esté quien lo armó.
+  async function renderManual() {
+    const host = $("#page-manual"); if (!host) return;
+    host.innerHTML = `<div class="res-intro">Cómo se carga cada competidor: <b>dónde está cada dato</b> en su lista de precios, qué particularidades tiene y qué listas se cargaron. Esto es lo que hace que actualizar precios sea apretar un botón.</div>
+      <div id="manBody"><div class="empty-mini">Cargando…</div></div>`;
+    const [recetas, listas] = await Promise.all([traerRecetas(), traerListas()]);
+    const body = $("#manBody"); if (!body) return;
+    if (!recetas.length) {
+      body.innerHTML = `<div class="empty-mini">Todavía no hay ninguna marca con receta escrita. La receta la deja el <b>asistente de alta</b> cada vez que se incorpora un competidor.</div>`;
+      return;
+    }
+    const esc = t => String(t == null ? "" : t).replace(/[<>]/g, "");
+    const ESTADO = { activa: ["ci-b-ok", "✓ activa"], parcial: ["ci-b-wait", "carga parcial"], baja: ["ci-b-err", "dada de baja"] };
+    body.innerHTML = recetas.map(r => {
+      const R = r.receta || {}, lp = R.lista_precios || {}, web = R.web || {}, img = R.imagenes || {};
+      const [ecls, etxt] = ESTADO[r.estado] || ["", esc(r.estado)];
+      const iva = { sin_iva: "sin IVA", con_iva: "con IVA", desconocido: "IVA no confirmado" }[lp.iva] || "IVA no confirmado";
+      const hist = listas.filter(l => l.slug === r.slug);
+      const cob = img.cobertura || {};
+      const dato = (k, v) => v ? `<div class="man-dato"><span>${k}</span><b>${esc(v)}</b></div>` : "";
+      return `<div class="intg-marca man-card">
+        <div class="intg-marca-head">
+          <div><h3>${esc(r.marca)}</h3>
+            <span class="leuk-fam">alta ${esc((R.alta || {}).fecha || "—")}${(R.alta || {}).autor ? " · " + esc((R.alta || {}).autor) : ""}</span></div>
+          <span class="ci-badge ${ecls}">${etxt}</span>
+        </div>
+        <div class="man-body">
+          <h4>Lista de precios</h4>
+          <div class="man-datos">
+            ${dato("Moneda", lp.moneda)}${dato("IVA", iva)}${dato("Tipo de lista", lp.tipo_lista)}
+            ${dato("Precio por", lp.unidad_precio)}${dato("Descuento de lista", lp.descuento_lista ? lp.descuento_lista + "%" : "")}
+            ${dato("Tipo de cambio", lp.tipo_cambio)}${dato("Columna del código", (lp.codigo || {}).columna)}
+            ${dato("Columna del precio", (lp.precio || {}).cual)}${dato("Se cruza por", (R.actualizacion || {}).clave_de_cruce)}
+          </div>
+          ${web.url ? `<h4>Sitio web</h4><div class="man-datos">
+            ${dato("URL", web.url)}${dato("Dónde está el código", web.codigo_donde)}
+            ${dato("Fotos", web.foto_url)}${dato("¿Los códigos cruzan con el PDF?", web.codigos_cruzan_con_pdf === true ? `sí (${web.codigos_en_comun || "?"} en común)` : web.codigos_cruzan_con_pdf === false ? "no" : "")}
+          </div>` : ""}
+          ${cob.total ? `<h4>Imágenes</h4><div class="man-datos">
+            ${dato("Con foto", `${cob.con_foto || 0} de ${cob.total}`)}${dato("Correctas por código", cob.correcta_por_codigo)}
+            ${dato("Origen principal", img.origen_primario)}</div>` : ""}
+          ${(R.particularidades || []).length ? `<h4>Particularidades ⚠</h4>
+            <ul class="man-part">${R.particularidades.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+          ${r.notas_md ? `<h4>Cómo se cargó</h4><div class="man-notas">${esc(r.notas_md).split("\n").filter(Boolean).map(t => `<p>${t.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")}</p>`).join("")}</div>` : ""}
+          <h4>Listas cargadas</h4>
+          ${hist.length ? `<table class="man-hist"><tr><th>Fecha</th><th>Tipo</th><th>Resultado</th><th>Quién</th></tr>
+            ${hist.map(l => {
+              const s = l.resumen || {};
+              const txt = s.tipo === "actualizacion"
+                ? `${s.precio_subio || 0} ↑ · ${s.precio_bajo || 0} ↓ · ${s.productos_nuevos || 0} nuevos${s.faltantes ? ` · ${s.faltantes} bajas` : ""}`
+                : `${s.productos_nuevos || 0} productos · ${s.con_ficha || 0} con ficha`;
+              return `<tr><td>${l.cargada ? new Date(l.cargada).toLocaleDateString("es-AR") : "—"}</td>
+                <td>${l.tipo === "actualizacion" ? "actualización" : esc(l.tipo)}</td><td>${txt}</td><td>${esc(l.autor || "—")}</td></tr>`;
+            }).join("")}</table>`
+            : `<div class="empty-mini">Sin listas registradas todavía.</div>`}
+        </div></div>`;
+    }).join("");
   }
 
   /* ============ NUEVAS INTEGRACIONES (Fase 3: revisar / aprobar lo importado) ============ */
@@ -1756,7 +1860,7 @@
   }
   function paintInteg(filtro) {
     const body = $("#intgBody"), stat = $("#intgStat"); if (!body) return;
-    if (!INTEG.length) { body.innerHTML = `<div class="empty-mini">Todavía no hay productos importados. Cargá un competidor desde <b>➕ Competencia</b> y esperá a que el worker lo procese.</div>`; if (stat) stat.textContent = ""; return; }
+    if (!INTEG.length) { body.innerHTML = `<div class="empty-mini">Todavía no hay productos importados. El alta de un competidor la hace Análisis Comercial con el asistente de alta; las listas nuevas de marcas ya cargadas se suben desde <b>↻ Actualizar lista</b>.</div>`; if (stat) stat.textContent = ""; return; }
     const f = norm(filtro);
     const ap = INTEG.filter(p => p.aprobado === true).length, de = INTEG.filter(p => p.aprobado === false).length;
     if (stat) stat.textContent = `${INTEG.length} productos · ${ap} aprobados · ${de} descartados · ${INTEG.length - ap - de} sin revisar`;
@@ -1866,7 +1970,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "fichas", "firmas", "stock", "reingresos", "eventos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -1875,7 +1979,8 @@
       pages: [{ p: "comparaciones", t: "Catálogo" },
               { p: "resultados", t: "Comparaciones", count: true },
               { p: "decisiones", t: "Insights" },
-              { p: "integraciones", t: "Nuevas integraciones", gate: () => puedeIntegrar() }],
+              { p: "integraciones", t: "Nuevas integraciones", gate: () => puedeIntegrar() },
+              { p: "manual", t: "Manual de carga" }],
     },
     diseno: {
       label: "Diseño",
@@ -1930,6 +2035,7 @@
     if (page === "resultados") { if (!$("#filters").children.length) buildFilters(); renderTabla(); sbPull().then(renderTabla); }
     if (page === "decisiones") { sbPull().then(renderDecisiones); renderDecisiones(); }
     if (page === "integraciones") renderIntegraciones();
+    if (page === "manual") renderManual();
     // Fichas técnicas: lista con estado + la ficha dibujada, en una sola vista.
     // La arma fichas-panel.js uniendo fichas-ui.js (dibujo) con 06_API.gs (estado).
     if (page === "fichas" && window.renderFichas) window.renderFichas();
@@ -2159,7 +2265,7 @@
   $("#btnDesc").addEventListener("click", openDescuentos);
   $("#btnPrecios").addEventListener("click", openPrecios);
   $("#btnCostos").addEventListener("click", openCostos);
-  $("#btnComp").addEventListener("click", openIntegrar);
+  $("#btnComp").addEventListener("click", openActualizar);
   $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.

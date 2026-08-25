@@ -1893,6 +1893,7 @@
         <div class="intg-marca-head">
           <div><h3>${marca.replace(/[<>]/g, "")}</h3><span class="leuk-fam">${prods.length} productos · ${a} aprobados · ${d} descartados</span></div>
           <div class="intg-bulk">
+            ${prods.some(p => !p.imagen) ? `<button class="btn-ghost" data-bulk="foto" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar los que tienen foto</button>` : ""}
             <button class="btn-ghost" data-bulk="ok" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar todo</button>
             <button class="btn-ghost" data-bulk="no" data-marca="${marca.replace(/"/g, "")}">✕ Descartar todo</button>
           </div></div>
@@ -1964,11 +1965,20 @@
     }
     const bulk = ev.target.closest("[data-bulk]");
     if (bulk && $("#page-integraciones") && !$("#page-integraciones").classList.contains("hidden")) {
-      const marca = bulk.dataset.marca, val = bulk.dataset.bulk === "ok";
-      if (!confirm(`¿${val ? "Aprobar" : "Descartar"} TODO el portfolio de ${marca}? (${INTEG.filter(p => p.marca === marca).length} productos)`)) return;
-      const ok = await guardarAprob(`marca=eq.${encodeURIComponent(marca)}`, val);
+      const marca = bulk.dataset.marca, modo = bulk.dataset.bulk, val = modo !== "no";
+      const dela = INTEG.filter(p => p.marca === marca);
+      // "foto": aprueba sólo los que tienen imagen. Un producto sin foto pierde DOS de las tres
+      // señales (la visual y la etiqueta, que se saca mirando la foto), así que nunca llegaría a
+      // una equivalencia confiable: mejor dejarlo sin revisar que aprobarlo a ciegas.
+      const n = modo === "foto" ? dela.filter(p => p.imagen).length : dela.length;
+      const txt = modo === "foto"
+        ? `¿Aprobar los ${n} productos de ${marca} que tienen foto? Los ${dela.length - n} sin foto quedan sin revisar.`
+        : `¿${val ? "Aprobar" : "Descartar"} TODO el portfolio de ${marca}? (${n} productos)`;
+      if (!confirm(txt)) return;
+      const filtro = `marca=eq.${encodeURIComponent(marca)}` + (modo === "foto" ? "&imagen=not.is.null" : "");
+      const ok = await guardarAprob(filtro, val);
       if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3?"); return; }
-      INTEG.forEach(p => { if (p.marca === marca) p.aprobado = val; });
+      INTEG.forEach(p => { if (p.marca === marca && (modo !== "foto" || p.imagen)) p.aprobado = val; });
       paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
     }
   });

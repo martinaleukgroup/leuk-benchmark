@@ -118,10 +118,19 @@
       const rows = await r.json();
       const remote = {};
       Object.keys(MONO).forEach(k => delete MONO[k]);
+      Object.keys(NOPAR).forEach(k => delete NOPAR[k]);
+      Object.keys(NOENT).forEach(k => delete NOENT[k]);
       rows.forEach(row => {
+        const meta = { autor: row.autor, autor_email: row.autor_email, ts: row.ts ? Date.parse(row.ts) : Date.now() };
         if (typeof row.key === "string" && row.key.indexOf("mono|") === 0) {
           const sku = (row.datos && row.datos.sku) || row.key.slice(5);
-          MONO[sku] = Object.assign({}, row.datos, { autor: row.autor, autor_email: row.autor_email, ts: row.ts ? Date.parse(row.ts) : Date.now() });
+          MONO[sku] = Object.assign({}, row.datos, meta);
+        } else if (typeof row.key === "string" && row.key.indexOf("nover|") === 0) {
+          // "este producto de competencia no va en ninguna comparación"
+          const d = row.datos || {}; NOENT[`${d.marca}|${d.fslug}`] = Object.assign({}, d, meta);
+        } else if (typeof row.key === "string" && row.key.indexOf("no|") === 0) {
+          // "este par no es comparable"
+          const d = row.datos || {}; NOPAR[`${d.sku}|${d.marca}|${d.fslug}`] = Object.assign({}, d, meta);
         } else {
           remote[row.key] = Object.assign({}, row.datos, { key: row.key, autor: row.autor, autor_email: row.autor_email, ts: row.ts ? Date.parse(row.ts) : Date.now() });
         }
@@ -139,6 +148,16 @@
         method: "POST",
         headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
         body: JSON.stringify([{ key: k, autor: a.autor || null, autor_email: a.autor_email || AUTHSES.email() || null, datos: a, ts: new Date(a.ts || Date.now()).toISOString() }]),
+      });
+    } catch (e) { }
+  }
+  // Escribe una fila cualquiera de la tabla compartida (autorizaciones, mono, descartes).
+  async function sbPutRow(key, o) {
+    if (!sbOn()) return;
+    try {
+      await fetch(`${SB.url}/rest/v1/${SB.table}`, {
+        method: "POST", headers: Object.assign(sbHead(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+        body: JSON.stringify([{ key, autor: o.autor || null, autor_email: o.autor_email || AUTHSES.email() || null, datos: o, ts: new Date(o.ts || Date.now()).toISOString() }]),
       });
     } catch (e) { }
   }
@@ -394,6 +413,71 @@
     } catch (e) { }
   }
 
+  /* ---- Descartes: enseñarle al motor qué NO es comparable, compartido ----
+     Dos cosas distintas que la gente llama igual:
+       · NOPAR  — este PAR está mal emparejado (los dos productos existen, el cruce no).
+       · NOENT  — este producto de la competencia no sirve para ninguna comparación
+                  (un accesorio, un diagrama que se coló, una fila mal extraída del PDF).
+     Viven en la misma tabla que las selecciones, con prefijo en la key. El motivo es lo
+     que después permite corregir el motor: sin motivo, un descarte no generaliza. */
+  const NOPAR = {};                                   // "sku|Marca|fslug" -> {..., motivo}
+  const NOENT = {};                                   // "Marca|fslug"     -> {..., motivo}
+  const MOTIVOS = {
+    tipo:   "No es el mismo tipo de producto",
+    tamano: "Muy distinto en tamaño o potencia",
+    foto:   "La foto engaña, no se parecen",
+    precio: "No juegan en la misma liga de precio",
+    otro:   "Otro",
+  };
+  const noParKey  = (sku, prop) => `no|${sku}|${prop.marca}|${prop.fslug}`;
+  const noEntKey  = (marca, fslug) => `nover|${marca}|${fslug}`;
+  const entKey    = (marca, fslug) => `${marca}|${fslug}`;
+  const noParId   = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
+  const isNoEnt   = prop => !!NOENT[entKey(prop.marca, prop.fslug)];
+  const descartado = (sku, prop) => !!NOPAR[noParId(sku, prop)] || isNoEnt(prop);
+  const sinDescartes = (sku, arr) => (arr || []).filter(x => x && !descartado(sku, x));
+
+  function descartarPar(p, prop, motivo) {
+    const o = {
+      sku: p.sku, leukNombre: p.nombre, marca: prop.marca, fslug: prop.fslug,
+      nombre: prop.nombre || prop.familia, familia: prop.familia,
+      veredicto: prop.match && prop.match.veredicto, motivo,
+      autor: autorNombre(), autor_email: AUTHSES.email() || null, ts: Date.now(),
+    };
+    NOPAR[noParId(p.sku, prop)] = o;
+    sbPutRow(noParKey(p.sku, prop), o);
+    // Descartar y tener seleccionado el mismo par se contradicen: gana el descarte.
+    // Pero la selección de otra persona no se toca sin permiso: se avisa.
+    const ak = keyOf(p.sku, prop);
+    if (AUTH[ak]) {
+      if (puedeBorrar(AUTH[ak])) { delete AUTH[ak]; save(); sbDel(ak); }
+      else alert(`Lo descartaste, pero la selección de ${AUTH[ak].autor || "otra persona"} sigue en Comparaciones. Pedile a un administrador que la quite.`);
+    }
+  }
+  function descartarEnt(prop, motivo) {
+    const o = {
+      marca: prop.marca, fslug: prop.fslug, nombre: prop.nombre || prop.familia,
+      familia: prop.familia, motivo,
+      autor: autorNombre(), autor_email: AUTHSES.email() || null, ts: Date.now(),
+    };
+    NOENT[entKey(prop.marca, prop.fslug)] = o;
+    sbPutRow(noEntKey(prop.marca, prop.fslug), o);
+    // se cae lo que hayas seleccionado contra ese producto (lo ajeno queda, con aviso)
+    const tocadas = Object.values(AUTH).filter(a => a.marca === prop.marca && a.fslug === prop.fslug);
+    const ajenas = tocadas.filter(a => !puedeBorrar(a));
+    tocadas.filter(puedeBorrar).forEach(a => { delete AUTH[a.key]; sbDel(a.key); });
+    save();
+    if (ajenas.length) alert(`Quedaron ${ajenas.length} selección(es) de otras personas contra este producto. Pedile a un administrador que las quite.`);
+  }
+  function quitarDescarte(o) {
+    if (!puedeBorrar(o)) { alert(AVISO_BORRAR); return false; }
+    if (o.sku) { delete NOPAR[noParId(o.sku, o)]; sbDel(`no|${o.sku}|${o.marca}|${o.fslug}`); }
+    else { delete NOENT[entKey(o.marca, o.fslug)]; sbDel(noEntKey(o.marca, o.fslug)); }
+    return true;
+  }
+  // Descartes que afectan a un producto Leuk (para la lista de "descartados")
+  const descartesDe = sku => Object.values(NOPAR).filter(o => o.sku === sku);
+
   const keyOf = (sku, prop) => `${sku}|${prop.marca}|${prop.fslug}`;
   const isAuth = k => !!AUTH[k];
   function snapshot(p, prop) {
@@ -430,6 +514,9 @@
     const on = isAuth(keyOf(p.sku, prop));
     return `<button class="auth-btn ${on ? "on" : ""}" data-sku="${p.sku}" data-marca="${prop.marca}" data-fslug="${prop.fslug}">${on ? "✓ Seleccionada" : "＋ Seleccionar"}</button>`;
   };
+  // ✕ "No es comparable": abre el modal que pide el motivo
+  const noBtn = (p, prop) => `<button class="no-btn" data-sku="${p.sku}" data-marca="${prop.marca}" data-fslug="${prop.fslug}" title="No es comparable">✕</button>`;
+
   const findProp = (sku, marca, fslug) => {
     const p = P.find(x => x.sku === sku); if (!p) return null;
     const inList = arr => (arr || []).find(x => x && x.marca === marca && x.fslug === fslug);
@@ -445,6 +532,45 @@
     const comp = CATALOGO.find(c => c.marca === marca && c.fslug === fslug);
     return comp ? suggProp(comp, p) : null;
   };
+  // click delegado en el ✕ de descartar
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest(".no-btn"); if (!b) return;
+    ev.stopPropagation();
+    const p = P.find(x => x.sku === b.dataset.sku);
+    const prop = findProp(b.dataset.sku, b.dataset.marca, b.dataset.fslug);
+    if (p && prop) openNoModal(p, prop);
+  });
+
+  /* Modal del descarte. Pide el motivo porque es lo único que después deja corregir el
+     motor: "no sirve" no generaliza, "no es el mismo tipo de producto" sí. */
+  function openNoModal(p, prop) {
+    const ov = el("div", "detail"); ov.id = "noModal";
+    ov.innerHTML = `<div class="detail-inner no-modal">
+      <button class="detail-close" id="noClose">✕</button>
+      <h2>¿Por qué no es comparable?</h2>
+      <p class="no-par"><b>LEUK ${p.sku}</b> ${p.nombre || ""} <span class="leuk-fam">frente a</span> <b>${prop.marca}</b> ${prop.nombre || prop.familia}</p>
+      <div class="no-motivos">${Object.entries(MOTIVOS).map(([k, txt], i) =>
+        `<label class="no-motivo"><input type="radio" name="motivo" value="${k}"${i === 0 ? " checked" : ""}> ${txt}</label>`).join("")}</div>
+      <label class="no-global"><input type="checkbox" id="noGlobal"><span>Además, <b>${prop.nombre || prop.familia}</b> no sirve para <b>ninguna</b> comparación (accesorio, dato mal extraído, no es una luminaria)</span></label>
+      <div class="no-acciones">
+        <button class="btn-ghost" id="noCancel">Cancelar</button>
+        <button class="btn-primario" id="noOk">Descartar</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector("#noClose").onclick = close;
+    ov.querySelector("#noCancel").onclick = close;
+    ov.addEventListener("click", e => { if (e.target === ov) close(); });
+    ov.querySelector("#noOk").onclick = () => {
+      const motivo = (ov.querySelector('input[name="motivo"]:checked') || {}).value || "otro";
+      if (ov.querySelector("#noGlobal").checked) descartarEnt(prop, motivo);
+      else descartarPar(p, prop, motivo);
+      close();
+      selectProduct(p, true);
+      updateNavCount();
+    };
+  }
+
   // click delegado en botones de autorizar
   document.addEventListener("click", ev => {
     const b = ev.target.closest(".auth-btn"); if (!b) return;
@@ -606,8 +732,8 @@
       <div class="equiv-meta"><div class="equiv-marca">${prop.marca}${prop.manual ? ' · <span class="tag-sug">sugerido</span>' : ""}</div>
         <div class="equiv-name">${prop.nombre || prop.familia}</div>
         <div class="signals">${sigMini(prop.match)} ${confChip(prop.match)}</div></div>
-      <div class="equiv-right">${c.has ? diffHtml(c.diff) : '<span class="leuk-fam">sin precio</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}<br>${badge(prop.match.veredicto)}<br>${authBtn(p, prop)}${extra || ""}</div>`;
-    r.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".rm-sug") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
+      <div class="equiv-right">${c.has ? diffHtml(c.diff) : '<span class="leuk-fam">sin precio</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}<br>${badge(prop.match.veredicto)}<br>${authBtn(p, prop)}${noBtn(p, prop)}${extra || ""}</div>`;
+    r.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".no-btn") && !ev.target.closest(".rm-sug") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
     return r;
   }
   function comparacionView(p) {
@@ -623,7 +749,7 @@
         <div class="comp-price">${fmtUsd(p.precio_usd)} ${priceEdit(pkLeuk(p.sku), p.precio_usd, "LEUK", p.nombre)}</div>${margenHead}</div>`));
 
     // --- Recomendado por tu historial (productos Leuk parecidos) ---
-    const recs = recomendaciones(p);
+    const recs = recomendaciones(p).filter(rec => !descartado(p.sku, rec.comp));
     if (recs.length) {
       wrap.appendChild(el("h3", "sec-title", "★ Recomendado por tu historial"));
       const rl = el("div", "rank-list reco");
@@ -641,7 +767,13 @@
     wrap.appendChild(el("h3", "sec-title", "Mejor equivalente por competidor"));
     const grid = el("div", "marca-grid");
     MARCAS.forEach(m => {
-      const prop = p.mejor_por_marca[m];
+      let prop = p.mejor_por_marca[m];
+      // Si lo descartaste, el puesto no queda vacío: lo toma el siguiente de esa marca.
+      let reemplazo = false;
+      if (prop && descartado(p.sku, prop)) {
+        prop = sinDescartes(p.sku, p.propuestas).find(x => x.marca === m) || null;
+        reemplazo = true;
+      }
       const card = el("div", "marca-card" + (prop ? "" : " vacia"));
       if (prop) {
         const c = cmp(p.precio_usd, prop.precio && prop.precio.usd, prop.marca);
@@ -650,11 +782,12 @@
           <div>${badge(prop.match.veredicto)} ${confChip(prop.match)}</div>
           <div class="signals">${sigMini(prop.match)}</div>
           <div class="marca-price">${c.has ? diffHtml(c.diff) + ' <span class="leuk-fam">' + c.texto + "</span>" : '<span class="leuk-fam">sin precio comp.</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}</div>
-          ${authBtn(p, prop)}`;
-        card.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
+          ${authBtn(p, prop)}${noBtn(p, prop)}`;
+        card.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".no-btn") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
       } else {
-        card.innerHTML = `<div class="marca-name">${m}</div><div class="empty-mini">Sin equivalente claro</div>`;
+        card.innerHTML = `<div class="marca-name">${m}</div><div class="empty-mini">${reemplazo ? "Descartaste el único candidato" : "Sin equivalente claro"}</div>`;
       }
+      if (prop && reemplazo) card.insertAdjacentHTML("beforeend", `<div class="reemplazo">Entró en lugar del que descartaste</div>`);
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
@@ -669,7 +802,7 @@
     wrap.appendChild(monoBox);
 
     // --- Sugeridos a mano + botón para sugerir ---
-    const sugeridos = suggList(p.sku);
+    const sugeridos = sinDescartes(p.sku, suggList(p.sku));
     const secSug = el("div", "sug-sec");
     secSug.innerHTML = `<h3 class="sec-title" style="display:inline-block">Sugeridos a mano</h3>
       <button class="btn-ghost btn-sug" style="float:right">＋ Sugerir equivalente</button>`;
@@ -684,15 +817,16 @@
     });
     wrap.appendChild(sl);
 
-    if (p.propuestas.length) {
+    const propuestas = sinDescartes(p.sku, p.propuestas);
+    if (propuestas.length) {
       const det = el("details", "ranking");
-      det.innerHTML = `<summary>Ranking de equivalentes confiables — ${p.propuestas.length} (coinciden ≥2 señales)</summary>`;
+      det.innerHTML = `<summary>Ranking de equivalentes confiables — ${propuestas.length} (coinciden ≥2 señales)</summary>`;
       const list = el("div", "rank-list");
-      p.propuestas.forEach(prop => list.appendChild(rankRow(p, prop, "")));
+      propuestas.forEach(prop => list.appendChild(rankRow(p, prop, "")));
       det.appendChild(list); wrap.appendChild(det);
     }
     // Posibles: 1 sola señal → baja confianza, a revisar (separado, no mezclado)
-    const posibles = p.posibles || [];
+    const posibles = sinDescartes(p.sku, p.posibles);
     if (posibles.length) {
       const det = el("details", "ranking posibles");
       det.innerHTML = `<summary>⚠ Posibles — a revisar · ${posibles.length} <span class="leuk-fam">(1 sola señal; puede traer algo poco parecido)</span></summary>`;
@@ -700,7 +834,34 @@
       posibles.forEach(prop => list.appendChild(rankRow(p, prop, "")));
       det.appendChild(list); wrap.appendChild(det);
     }
+
+    // --- Descartados: lo que le enseñaste al motor sobre este producto ---
+    const desc = descartesDe(p.sku);
+    const entes = [...new Set([].concat(
+      sinFiltrar(p).filter(isNoEnt).map(x => entKey(x.marca, x.fslug))))].map(k => NOENT[k]);
+    if (desc.length || entes.length) {
+      const det = el("details", "ranking descartados");
+      det.innerHTML = `<summary>✕ Descartados — ${desc.length + entes.length} <span class="leuk-fam">(no vuelven a proponerse)</span></summary>`;
+      const list = el("div", "rank-list");
+      desc.concat(entes).forEach(o => {
+        const row = el("div", "desc-row");
+        row.innerHTML = `<div class="desc-meta"><div class="equiv-marca">${o.marca}${o.sku ? "" : ' · <span class="tag-sug">en todo el benchmark</span>'}</div>
+            <div class="equiv-name">${o.nombre || o.familia || ""}</div>
+            <div class="leuk-fam">${MOTIVOS[o.motivo] || o.motivo || ""} · ${o.autor || ""}</div></div>
+          ${puedeBorrar(o) ? `<button class="btn-ghost desc-undo">Volver a proponer</button>` : ""}`;
+        const u = row.querySelector(".desc-undo");
+        if (u) u.onclick = () => { if (quitarDescarte(o)) selectProduct(p, true); };
+        list.appendChild(row);
+      });
+      det.appendChild(list); wrap.appendChild(det);
+    }
     return wrap;
+  }
+  // Todos los candidatos que el motor propuso para un producto, sin filtrar (para
+  // detectar cuáles cayeron por un descarte global).
+  function sinFiltrar(p) {
+    return [].concat(p.propuestas || [], p.posibles || [],
+      Object.values(p.mejor_por_marca || {}).filter(Boolean), suggList(p.sku) || []);
   }
 
   /* ===================== MODAL: sugerir equivalente (buscar en todo el catálogo) ===================== */
@@ -1011,13 +1172,34 @@
     });
     return sec;
   }
+  /* Lo que el equipo le enseñó al motor. Agrupado por motivo, porque el motivo es lo que
+     después se traduce en un ajuste del matching (categoría, gate técnico, peso visual). */
+  function descartesSection() {
+    const pares = Object.values(NOPAR), ents = Object.values(NOENT);
+    const todos = pares.concat(ents);
+    if (!todos.length) return null;
+    const porMotivo = {};
+    todos.forEach(o => { const m = o.motivo || "otro"; (porMotivo[m] = porMotivo[m] || []).push(o); });
+    const orden = Object.entries(porMotivo).sort((a, b) => b[1].length - a[1].length);
+    const sec = el("div", "dash-sec");
+    sec.innerHTML = `<h3>✕ Descartes <span class="leuk-fam">· ${todos.length}</span></h3>
+      <div class="fam-hint">Comparaciones que el equipo marcó como <b>no comparables</b>. El motor deja de proponerlas, y el motivo es lo que después permite corregir el criterio de fondo. ${ents.length ? `<b>${ents.length}</b> producto(s) quedaron fuera de <b>todo</b> el benchmark.` : ""}</div>
+      <div class="desc-motivos">${orden.map(([m, arr]) => `
+        <div class="desc-motivo">
+          <div class="desc-motivo-h"><b>${MOTIVOS[m] || m}</b><span class="leuk-fam">${arr.length}</span></div>
+          <div class="desc-motivo-l">${arr.slice(0, 6).map(o => `<span class="desc-chip">${o.sku ? "LEUK " + o.sku + " ✕ " : "✕ "}${o.marca} ${(o.nombre || o.familia || "")}</span>`).join("")}${arr.length > 6 ? `<span class="leuk-fam">y ${arr.length - 6} más</span>` : ""}</div>
+        </div>`).join("")}</div>`;
+    return sec;
+  }
   function renderDecisiones() {
     const dash = $("#dash"); dash.innerHTML = "";
     const A = Object.values(AUTH);
     const monos = Object.values(MONO);
     if (monos.length) dash.appendChild(monoSection(monos));
+    const secDesc = descartesSection();
+    if (secDesc) dash.appendChild(secDesc);
     if (!A.length) {
-      if (!monos.length) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
+      if (!monos.length && !secDesc) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
       return;
     }
     const withP = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);

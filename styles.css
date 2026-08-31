@@ -627,3 +627,40 @@ button.rm:hover{background:#f4e2df}
   border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:16px;font-size:12.5px;line-height:1.55;
   color:var(--gray)}
 .man-aviso b{color:var(--warn)}
+
+/* ===== Descartes: "no es comparable" (v217) ================================ */
+.no-btn{margin-top:6px;margin-left:6px;border:1px solid var(--line);background:var(--card);
+  color:var(--gray-soft);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer;line-height:1}
+.no-btn:hover{border-color:var(--no);color:var(--no);background:#fdf3f1}
+.marca-card .no-btn{margin-top:6px}
+.reemplazo{margin-top:6px;font-size:11px;color:var(--gray-soft);font-style:italic}
+
+.no-modal{max-width:520px}
+.no-modal h2{margin:0 0 6px;font-size:18px}
+.no-par{font-size:13px;color:var(--gray);margin:0 0 14px}
+.no-motivos{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+.no-motivo{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;font-size:13.5px;cursor:pointer}
+.no-motivo:hover{background:var(--olive-pale);border-color:var(--olive-soft)}
+.no-motivo input{accent-color:var(--olive)}
+.no-global{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--gray);
+  background:var(--olive-pale);border-radius:9px;padding:11px;line-height:1.45;cursor:pointer}
+.no-global input{margin-top:2px;flex:0 0 auto;accent-color:var(--olive)}
+.no-global span{flex:1}
+.no-acciones{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
+.btn-primario{border:0;background:var(--olive);color:#fff;padding:8px 16px;border-radius:9px;
+  font-size:13px;cursor:pointer}
+.btn-primario:hover{background:var(--olive-mid)}
+
+.ranking.descartados .rank-list{opacity:.9}
+.desc-row{display:flex;gap:12px;align-items:center;justify-content:space-between;
+  padding:10px;border-top:1px solid var(--line)}
+.desc-meta .equiv-name{text-decoration:line-through;color:var(--gray-soft)}
+.desc-undo{white-space:nowrap;font-size:12px;padding:6px 11px}
+
+.desc-motivos{display:flex;flex-direction:column;gap:10px}
+.desc-motivo{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.desc-motivo-h{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-bottom:6px}
+.desc-motivo-l{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.desc-chip{font-size:11.5px;background:var(--olive-pale);color:var(--gray);padding:2px 8px;border-radius:999px}
+@media(max-width:640px){.desc-row{flex-direction:column;align-items:stretch}}

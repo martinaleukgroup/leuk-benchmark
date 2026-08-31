@@ -766,6 +766,7 @@
 
     wrap.appendChild(el("h3", "sec-title", "Mejor equivalente por competidor"));
     const grid = el("div", "marca-grid");
+    const sinEquiv = [];
     MARCAS.forEach(m => {
       let prop = p.mejor_por_marca[m];
       // Si lo descartaste, el puesto no queda vacío: lo toma el siguiente de esa marca.
@@ -774,8 +775,10 @@
         prop = sinDescartes(p.sku, p.propuestas).find(x => x.marca === m) || null;
         reemplazo = true;
       }
-      const card = el("div", "marca-card" + (prop ? "" : " vacia"));
-      if (prop) {
+      // Las marcas sin equivalente no ocupan una tarjeta: se listan abajo en una línea.
+      if (!prop) { sinEquiv.push(m + (reemplazo ? " (lo descartaste)" : "")); return; }
+      const card = el("div", "marca-card");
+      {
         const c = cmp(p.precio_usd, prop.precio && prop.precio.usd, prop.marca);
         card.innerHTML = `<div class="marca-name">${m}</div>${imgTag(prop.imagen)}
           <div class="marca-prod">${prop.nombre || prop.familia}</div>
@@ -784,13 +787,16 @@
           <div class="marca-price">${c.has ? diffHtml(c.diff) + ' <span class="leuk-fam">' + c.texto + "</span>" : '<span class="leuk-fam">sin precio comp.</span>'} ${priceEdit(pkComp(prop.marca, prop.fslug), prop.precio && prop.precio.usd, prop.marca, prop.nombre || prop.familia)}</div>
           ${authBtn(p, prop)}${noBtn(p, prop)}`;
         card.onclick = ev => { if (!ev.target.closest(".auth-btn") && !ev.target.closest(".no-btn") && !ev.target.closest(".price-edit")) openDetail(p, prop); };
-      } else {
-        card.innerHTML = `<div class="marca-name">${m}</div><div class="empty-mini">${reemplazo ? "Descartaste el único candidato" : "Sin equivalente claro"}</div>`;
       }
-      if (prop && reemplazo) card.insertAdjacentHTML("beforeend", `<div class="reemplazo">Entró en lugar del que descartaste</div>`);
+      if (reemplazo) card.insertAdjacentHTML("beforeend", `<div class="reemplazo">Entró en lugar del que descartaste</div>`);
       grid.appendChild(card);
     });
-    wrap.appendChild(grid);
+    if (grid.children.length) wrap.appendChild(grid);
+    if (sinEquiv.length) {
+      wrap.appendChild(el("div", "sin-equiv", grid.children.length
+        ? `Sin equivalente claro en <b>${sinEquiv.join("</b> · <b>")}</b>`
+        : `Ningún competidor tiene un equivalente claro para este producto.`));
+    }
 
     // --- Marcar "sin producto comparable" (oportunidad de monopolio) ---
     const monoOn = isMono(p.sku);

@@ -1,3 +1,9 @@
 .DS_Store
 *.zip
 data.js
+
+# Cronograma de la comunidad: el contenido del mes NO se publica.
+# El repo app/ es público (GitHub Pages) — los .json de contenidos viven en
+# ~/leuk-benchmark/contenidos/ y se cargan al módulo con "⬆ Importar".
+contenidos-*.json
+_test-*.html

@@ -1,0 +1,192 @@
+/* ============================================================
+   Módulo CONTENIDOS — cronograma de la comunidad de WhatsApp.
+   Dos lecturas del mismo mes: CALENDARIO (grilla) y FICHAS (el
+   formato largo, con el copy tal cual va a WhatsApp).
+   Usa las variables de styles.css: acá no se define ni un color nuevo.
+   ============================================================ */
+
+/* ---- Barra del mes: selector + vistas + estado del mes ---- */
+.ct-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 16px}
+.ct-mes{font-family:var(--font-body);font-size:14px;padding:8px 12px;border:1.5px solid var(--line);
+  border-radius:10px;background:var(--card);color:var(--ink);outline:none;min-width:170px}
+.ct-mes:focus{border-color:var(--olive-mid)}
+.ct-vistas{display:flex;background:var(--olive-pale);border-radius:999px;padding:3px}
+.ct-vistas button{border:0;background:transparent;color:var(--gray);padding:7px 15px;border-radius:999px;font-size:13px}
+.ct-vistas button.on{background:var(--card);color:var(--olive);font-weight:600;box-shadow:var(--shadow)}
+.ct-acc{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+/* Resumen de avance: cuántos aprobados, en revisión, etc. */
+.ct-avance{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--gray-soft)}
+.ct-avance .n{font-weight:600}
+
+/* ---- Encabezado del mes (brief + obras) ---- */
+.ct-head{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.ct-eyebrow{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.12em;
+  font-size:12px;color:var(--gray-soft);margin:0 0 6px}
+.ct-titulo{font-family:var(--font-title);font-weight:700;font-size:clamp(30px,5vw,46px);
+  line-height:1;margin:0;letter-spacing:-.01em}
+.ct-dek{margin:10px 0 0;max-width:70ch;color:var(--gray);font-size:15px}
+.ct-brief{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:18px}
+.ct-brief section{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px 15px}
+.ct-brief h4{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
+  font-size:11.5px;color:var(--olive);margin:0 0 6px;font-weight:700}
+.ct-brief p{margin:0;font-size:14px;color:var(--gray)}
+.ct-obras{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px}
+.ct-obras th,.ct-obras td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.ct-obras th{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.09em;
+  font-size:11px;color:var(--gray-soft);font-weight:600}
+.ct-obras td:first-child{white-space:nowrap;font-weight:600}
+.ct-scroll{overflow-x:auto}
+.ct-pend{margin:16px 0 0;padding:12px 14px;background:var(--olive-pale);border-radius:10px;font-size:13.5px;color:var(--gray)}
+.ct-pend b{color:var(--ink)}
+.ct-pend ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+
+/* ---- Estados: un color por estado, igual en las dos vistas ---- */
+.ct-est{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-title);
+  text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:600;
+  padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.ct-est::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.ct-est.borrador{color:var(--gray-soft);background:#f1f1ec;border-color:var(--line)}
+.ct-est.revision{color:var(--warn);background:#fbf3e6;border-color:#e8d6b4}
+.ct-est.cambios {color:var(--no);  background:#f9eae7;border-color:#eccec8}
+.ct-est.aprobado{color:var(--ok);  background:#eaf2e6;border-color:#cfe0c5}
+
+/* ---- Vista CALENDARIO ---- */
+.ct-cal{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow)}
+.ct-cal-dias{display:grid;grid-template-columns:repeat(7,1fr);background:var(--olive-pale)}
+.ct-cal-dias span{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
+  font-size:11px;color:var(--olive);padding:9px 10px;text-align:left;font-weight:600}
+.ct-cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.ct-dia{min-height:112px;border-top:1px solid var(--line);border-left:1px solid var(--line);
+  padding:7px 8px 9px;display:flex;flex-direction:column;gap:6px}
+.ct-dia:nth-child(7n+1){border-left:0}
+.ct-dia.fuera{background:var(--bg)}
+.ct-dia .num{font-family:var(--font-title);font-size:14px;color:var(--gray-soft);font-variant-numeric:tabular-nums}
+.ct-dia.fuera .num{opacity:.35}
+.ct-dia.hoy .num{background:var(--olive);color:#fff;border-radius:50%;width:22px;height:22px;
+  display:inline-flex;align-items:center;justify-content:center}
+/* la tarjetita de un mensaje dentro del día */
+.ct-chip{text-align:left;border:1px solid var(--line);border-left-width:3px;background:var(--bg);
+  border-radius:7px;padding:6px 8px;font-size:12px;line-height:1.35;color:var(--ink);
+  display:flex;flex-direction:column;gap:3px;width:100%;font-family:var(--font-body)}
+.ct-chip:hover{background:var(--olive-pale);border-color:var(--olive-soft)}
+.ct-chip b{font-weight:600;font-size:12.5px}
+.ct-chip .sub{color:var(--gray-soft);font-size:11px}
+.ct-chip .marcas{display:flex;gap:5px;align-items:center;color:var(--gray-soft);font-size:11px}
+.ct-chip.borrador{border-left-color:var(--gray-soft)}
+.ct-chip.revision{border-left-color:var(--warn)}
+.ct-chip.cambios {border-left-color:var(--no)}
+.ct-chip.aprobado{border-left-color:var(--ok)}
+@media (max-width:760px){
+  .ct-cal-dias{display:none}
+  .ct-cal-grid{grid-template-columns:1fr}
+  .ct-dia{min-height:0;border-left:0;flex-direction:row;align-items:flex-start;gap:10px}
+  .ct-dia.vacio{display:none}          /* en celular sólo los días con mensaje */
+  .ct-dia .num{min-width:26px;padding-top:4px}
+  .ct-dia .ct-chips{flex:1;display:flex;flex-direction:column;gap:6px}
+}
+.ct-chips{display:flex;flex-direction:column;gap:6px}
+
+/* ---- Vista FICHAS ---- */
+.ct-msg{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;scroll-margin-top:120px}
+.ct-msg.destacada{border-color:var(--olive-mid);box-shadow:0 0 0 3px var(--olive-pale),var(--shadow)}
+.ct-msg > .ct-msg-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;
+  padding:13px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.ct-fecha{font-family:var(--font-title);font-size:21px;font-weight:700;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.ct-fecha small{font-size:12px;font-weight:600;color:var(--gray-soft);text-transform:uppercase;
+  letter-spacing:.09em;margin-left:6px}
+.ct-crit{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;font-size:12px;
+  color:var(--olive);border:1px solid var(--olive-soft);border-radius:999px;padding:3px 10px}
+.ct-obj{font-size:13px;color:var(--gray-soft);flex:1 1 200px;min-width:0}
+.ct-flag{background:#fbf3e6;color:var(--warn);font-family:var(--font-title);text-transform:uppercase;
+  letter-spacing:.1em;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:600}
+
+.ct-body{padding:18px;display:grid;gap:16px;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+@media (max-width:860px){.ct-body{grid-template-columns:1fr}}
+
+/* el copy con forma de burbuja de WhatsApp: se lee como se va a mandar */
+.ct-copy{background:var(--olive-pale);border:1px solid #dfe3d4;border-radius:12px 12px 12px 4px;
+  padding:15px 17px;white-space:pre-wrap;font-size:15px;line-height:1.6;color:var(--ink);
+  outline:none;overflow-wrap:anywhere}
+.ct-copy b{font-weight:700;color:var(--olive)}
+.ct-copy a{color:var(--olive);text-decoration:underline;text-underline-offset:2px;word-break:break-all}
+
+.ct-meta{display:flex;flex-direction:column;gap:12px;font-size:13.5px}
+.ct-meta dl{margin:0;display:flex;flex-direction:column;gap:10px}
+.ct-meta dt{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
+  font-size:11px;color:var(--gray-soft);margin-bottom:2px}
+.ct-meta dd{margin:0;color:var(--gray);outline:none}
+.ct-meta dd:empty::before{content:"—";color:var(--olive-soft)}
+.ct-meta a{color:var(--olive);word-break:break-all}
+.ct-poll{border:1px dashed var(--olive-soft);border-radius:10px;padding:13px 15px;background:var(--bg)}
+.ct-poll .q{font-weight:600;margin:0 0 3px;outline:none}
+.ct-poll .hint{font-size:12.5px;color:var(--gray-soft);margin:0 0 9px;outline:none}
+.ct-poll ol{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:4px}
+.ct-poll li{outline:none}
+
+/* variantes adaptativas: se abre sólo la que interesa */
+.ct-vars{padding:0 18px 18px;display:flex;flex-direction:column;gap:12px}
+.ct-vars > .ct-lead{font-size:13.5px;color:var(--gray-soft);margin:0;padding-top:14px;
+  border-top:1px solid var(--line);outline:none}
+details.ct-v{border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden}
+details.ct-v > summary{cursor:pointer;list-style:none;padding:11px 15px;display:flex;align-items:center;gap:10px;
+  font-family:var(--font-title);text-transform:uppercase;letter-spacing:.08em;font-size:13px;font-weight:600}
+details.ct-v > summary::-webkit-details-marker{display:none}
+details.ct-v > summary::before{content:"";width:6px;height:6px;border-right:1.5px solid var(--olive);
+  border-bottom:1.5px solid var(--olive);transform:rotate(-45deg);transition:transform .18s ease;flex:none;margin-left:2px}
+details.ct-v[open] > summary::before{transform:rotate(45deg)}
+details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
+.ct-v-del{margin-left:auto;border:0;background:transparent;color:var(--gray-soft);font-size:13px;padding:2px 6px;border-radius:6px}
+.ct-v-del:hover{background:#f9eae7;color:var(--no)}
+
+/* ---- Pie de la ficha: estado, acciones y comentarios ---- */
+.ct-pie{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 18px;
+  border-top:1px solid var(--line);background:var(--bg)}
+.ct-pie .ct-acciones{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.btn-mini{border:1px solid var(--olive-soft);background:var(--card);color:var(--olive);
+  padding:6px 11px;border-radius:999px;font-size:12.5px;white-space:nowrap;font-family:var(--font-body)}
+.btn-mini:hover{background:var(--olive-pale)}
+.btn-mini.on{background:var(--olive);color:#fff;border-color:var(--olive)}
+.btn-mini.peligro{border-color:#eccec8;color:var(--no)}
+.btn-mini.peligro:hover{background:#f9eae7}
+.ct-guardado{font-size:12px;color:var(--gray-soft);white-space:nowrap}
+.ct-guardado.ok{color:var(--ok)}
+
+/* hilo de comentarios */
+.ct-coms{border-top:1px solid var(--line);padding:14px 18px;background:var(--card);
+  display:flex;flex-direction:column;gap:10px}
+.ct-com{display:flex;gap:10px;align-items:flex-start}
+.ct-com .av{width:28px;height:28px;border-radius:50%;background:var(--olive-pale);color:var(--olive);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;
+  font-family:var(--font-title);text-transform:uppercase}
+.ct-com .cuerpo{flex:1;min-width:0}
+.ct-com .quien{font-size:12.5px;font-weight:600}
+.ct-com .cuando{font-size:11.5px;color:var(--gray-soft);margin-left:6px;font-weight:400}
+.ct-com .texto{font-size:14px;color:var(--gray);white-space:pre-wrap;overflow-wrap:anywhere}
+.ct-com.resuelto{opacity:.5}
+.ct-com.resuelto .texto{text-decoration:line-through}
+.ct-com .accs{display:flex;gap:4px;flex:none}
+.ct-com .accs button{border:0;background:transparent;color:var(--gray-soft);font-size:12px;
+  padding:3px 6px;border-radius:6px;cursor:pointer}
+.ct-com .accs button:hover{background:var(--olive-pale);color:var(--olive)}
+.ct-com-alta{display:flex;gap:8px;align-items:flex-start;padding-top:4px;border-top:1px dashed var(--line)}
+.ct-com-alta textarea{flex:1;min-height:38px;max-height:200px;resize:vertical;padding:9px 11px;
+  border:1.5px solid var(--line);border-radius:10px;font-family:var(--font-body);font-size:14px;
+  background:var(--card);color:var(--ink);outline:none;line-height:1.45}
+.ct-com-alta textarea:focus{border-color:var(--olive-mid)}
+.ct-com-vacio{font-size:13px;color:var(--gray-soft)}
+.ct-com-var{font-size:11.5px;color:var(--gray-soft);font-style:italic}
+
+/* marca de "editable" discreta: sólo al pasar el mouse y sólo para quien edita */
+.ct-edit [contenteditable="true"]:hover{background:#fdfdf7;box-shadow:0 0 0 2px var(--olive-pale)}
+.ct-edit [contenteditable="true"]:focus{background:var(--card);box-shadow:0 0 0 2px var(--olive-mid)}
+.ct-edit .ct-copy[contenteditable="true"]:hover,
+.ct-edit .ct-copy[contenteditable="true"]:focus{background:var(--card)}
+[contenteditable="true"]{border-radius:6px;transition:box-shadow .12s,background .12s}
+
+.ct-solo-lectura{font-size:12.5px;color:var(--gray-soft);background:var(--olive-pale);
+  border-radius:8px;padding:7px 11px;display:inline-block;margin-bottom:12px}

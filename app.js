@@ -209,11 +209,13 @@
   // `precios` = ve/edita precios de venta y descuentos. `costos` = ve el costo interno / margen
   // (dato sensible): sólo Admin y Líder. Coordinación ve todo menos costos.
   const ROLES = {
-    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
-    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos"], precios: true,  costos: true,  borrarTodo: false },
-    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos"], precios: true,  costos: false, borrarTodo: false },
+    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "contenidos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
+    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: true,  borrarTodo: false },
+    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: false, borrarTodo: false },
     comercial:    { label: "Comercial",    mods: ["benchmark", "eventos"], precios: false, costos: false, borrarTodo: false },
     diseno:       { label: "Diseño",       mods: ["diseno", "eventos"],   precios: false, costos: false, borrarTodo: false },
+    // Entra sólo al cronograma de la comunidad, a leerlo y comentarlo. No edita ni aprueba.
+    representante:{ label: "Representante de marca", mods: ["contenidos"], precios: false, costos: false, borrarTodo: false },
   };
   // Nombres viejos → nuevos, para que nada se rompa antes/después de migrar la tabla.
   const ROL_ALIAS = { editor: "lider", lector: "comercial", fichas: "diseno" };
@@ -225,6 +227,10 @@
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
   const puedeIntegrar = () => ["admin", "lider", "coordinacion"].includes(rolReal());   // integrar competencia (PDF + web → catálogo)
+  // Contenidos: coordinación para arriba edita el copy y APRUEBA; el representante de
+  // marca sólo lee y comenta. Esto decide qué botones se dibujan — el permiso real lo
+  // aplica la RLS de Supabase (ver supabase/sql/2026-08-31-contenidos.sql).
+  const puedeEditarContenidos = () => ["admin", "lider", "coordinacion"].includes(rolReal());
   // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
   const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.
@@ -386,6 +392,12 @@
     token: () => AUTHSES.token(),
     rol: () => rolReal(),
     puedeEditarFichas: () => AUTHSES.logged() && ROLES_FICHAS_ESCRITURA.includes(rolReal()),
+    // ---- lo que usa contenidos.js ----
+    nombre: () => autorNombre(),
+    head: () => AUTHSES.head(),                    // apikey + JWT, para pegarle a la REST
+    sbUrl: SB.url,
+    puedeVerContenidos: () => AUTHSES.logged() && puedeVer("contenidos"),
+    puedeEditarContenidos: () => AUTHSES.logged() && puedeEditarContenidos(),
   };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
@@ -2172,7 +2184,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2194,6 +2206,10 @@
     eventos: {
       label: "Eventos",
       pages: [{ p: "eventos", t: "Check-in & Sorteo" }],
+    },
+    contenidos: {
+      label: "Contenidos",
+      pages: [{ p: "contenidos", t: "Comunidad de WhatsApp" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2249,6 +2265,8 @@
     if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=139"; }
+    // Contenidos: cronograma de la comunidad (calendario + fichas + comentarios). Lo arma contenidos.js.
+    if (page === "contenidos" && window.renderContenidos) window.renderContenidos();
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
@@ -2275,6 +2293,7 @@
     ["coordinacion", "Coordinación — todo menos costos"],
     ["comercial", "Comercial — sólo Benchmark, sin precios"],
     ["diseno", "Diseño — sólo Fichas técnicas"],
+    ["representante", "Representante de marca — sólo Contenidos, lee y comenta"],
   ];
   async function llamarFn(accion, datos) {
     const r = await fetch(FN_USUARIOS, {
@@ -2416,6 +2435,14 @@
                 "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
                 "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
                 "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
+      { mod: "contenidos", ic: "🗓",
+        d: "El cronograma mensual de la comunidad profesional de WhatsApp: qué se manda, cuándo y en qué estado está.",
+        stats: [],
+        ayuda: ["Elegí el <b>mes</b> arriba y miralo en <b>📅 Calendario</b> (el ritmo del mes) o en <b>🗂 Fichas</b> (el copy tal cual va a WhatsApp).",
+                "Cada mensaje trae su <b>copy, imagen, link, CTA y notas</b>; los de contenido adaptativo traen además sus <b>variantes</b>, una por resultado de encuesta.",
+                "Dejá <b>comentarios o sugerencias</b> en 💬 — quedan visibles para todo el equipo hasta que se marcan como resueltos.",
+                "Coordinación edita el copy en el lugar y lo va moviendo: <b>borrador → en revisión → aprobado</b>.",
+                "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
       { mod: "usuarios", ic: "👥",
         d: "Quién entra a la plataforma y qué ve cada uno.",
         stats: [],

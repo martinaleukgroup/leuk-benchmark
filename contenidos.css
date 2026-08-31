@@ -5,19 +5,50 @@
    Usa las variables de styles.css: acá no se define ni un color nuevo.
    ============================================================ */
 
-/* ---- Barra del mes: selector + vistas + estado del mes ---- */
-.ct-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 16px}
+/* ---- Barra del mes: queda fija bajo la barra de la app ---- */
+/* El margen superior NO es negativo a propósito: así el desplazamiento natural de la
+   barra queda SIEMPRE por debajo de --appbar-h y sticky nunca la empuja hacia abajo
+   sobre el contenido. Con margen negativo, cualquier desfasaje de esa variable
+   (fuentes cargando, ResizeObserver que todavía no corrió) tapaba el encabezado. */
+.ct-bar{position:sticky;top:var(--appbar-h,57px);z-index:5;background:var(--bg);
+  margin:0 -16px 16px;padding:4px 16px 11px;border-bottom:1px solid var(--line);
+  display:flex;flex-direction:column;gap:10px}
+.ct-bar-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ct-mes{font-family:var(--font-body);font-size:14px;padding:8px 12px;border:1.5px solid var(--line);
-  border-radius:10px;background:var(--card);color:var(--ink);outline:none;min-width:170px}
+  border-radius:10px;background:var(--card);color:var(--ink);outline:none;min-width:200px;max-width:100%}
 .ct-mes:focus{border-color:var(--olive-mid)}
 .ct-vistas{display:flex;background:var(--olive-pale);border-radius:999px;padding:3px}
-.ct-vistas button{border:0;background:transparent;color:var(--gray);padding:7px 15px;border-radius:999px;font-size:13px}
+.ct-vistas button{border:0;background:transparent;color:var(--gray);padding:7px 16px;border-radius:999px;font-size:13px}
 .ct-vistas button.on{background:var(--card);color:var(--olive);font-weight:600;box-shadow:var(--shadow)}
-.ct-acc{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ct-acc{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
 
-/* Resumen de avance: cuántos aprobados, en revisión, etc. */
-.ct-avance{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--gray-soft)}
-.ct-avance .n{font-weight:600}
+/* avance del mes: una barra vale más que cuatro números sueltos */
+.ct-fila-2{gap:14px}
+.ct-progreso{display:flex;align-items:center;gap:9px;flex:none}
+.ct-barra{width:110px;height:6px;border-radius:999px;background:var(--olive-pale);overflow:hidden;flex:none}
+.ct-barra span{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s ease}
+.ct-progreso-t{font-size:12.5px;color:var(--gray-soft);white-space:nowrap}
+.ct-progreso-t b{color:var(--ink);font-weight:600}
+
+/* recortes: "¿qué me falta mirar?" — se derivan de los datos, no se escriben */
+.ct-filtros{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.ct-chipf{border:1px solid var(--line);background:var(--card);color:var(--gray);
+  padding:5px 11px;border-radius:999px;font-size:12.5px;font-family:var(--font-body);
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ct-chipf:hover{border-color:var(--olive-soft);background:var(--olive-pale)}
+.ct-chipf .c{font-weight:700;font-size:11.5px;color:var(--gray-soft)}
+.ct-chipf.on{background:var(--olive);border-color:var(--olive);color:#fff}
+.ct-chipf.on .c{color:#fff;opacity:.75}
+.ct-chipf.revisar:not(.on) .c{color:var(--warn)}
+.ct-chipf.comentado:not(.on) .c,.ct-chipf.aviso:not(.on) .c{color:var(--no)}
+.ct-chipf.aprobado:not(.on) .c{color:var(--ok)}
+@media (max-width:700px){
+  .ct-bar{gap:9px}
+  .ct-acc{margin-left:0;width:100%}
+  .ct-progreso{width:100%}
+  .ct-barra{flex:1;width:auto}
+  .ct-filtros{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+}
 
 /* ---- Encabezado del mes (brief + obras) ---- */
 .ct-head{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -38,9 +69,16 @@
   font-size:11px;color:var(--gray-soft);font-weight:600}
 .ct-obras td:first-child{white-space:nowrap;font-weight:600}
 .ct-scroll{overflow-x:auto}
-.ct-pend{margin:16px 0 0;padding:12px 14px;background:var(--olive-pale);border-radius:10px;font-size:13.5px;color:var(--gray)}
-.ct-pend b{color:var(--ink)}
-.ct-pend ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+/* Brief y obras: material de consulta, plegado por defecto */
+.ct-detalle{margin-top:16px;border-top:1px solid var(--line);padding-top:4px}
+.ct-detalle > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;
+  padding:9px 0 4px;font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
+  font-size:11.5px;color:var(--gray-soft);font-weight:600}
+.ct-detalle > summary::-webkit-details-marker{display:none}
+.ct-detalle > summary::before{content:"";width:6px;height:6px;border-right:1.5px solid var(--olive);
+  border-bottom:1.5px solid var(--olive);transform:rotate(-45deg);transition:transform .18s ease;flex:none}
+.ct-detalle[open] > summary::before{transform:rotate(45deg)}
+.ct-detalle > summary:hover{color:var(--olive)}
 
 /* ---- Estados: un color por estado, igual en las dos vistas ---- */
 .ct-est{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-title);
@@ -190,3 +228,18 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 
 .ct-solo-lectura{font-size:12.5px;color:var(--gray-soft);background:var(--olive-pale);
   border-radius:8px;padding:7px 11px;display:inline-block;margin-bottom:12px}
+
+/* ---- Cuánto falta para que salga cada mensaje ---- */
+.ct-cuando{font-size:12px;color:var(--gray-soft);border:1px solid var(--line);background:var(--card);
+  border-radius:999px;padding:2px 9px;white-space:nowrap;flex:none}
+.ct-cuando.pronto{color:var(--olive);border-color:var(--olive-soft);background:var(--olive-pale)}
+.ct-cuando.hoy{color:#fff;background:var(--olive);border-color:var(--olive);font-weight:600}
+.ct-cuando.pasado{opacity:.6}
+
+/* un mensaje que queda fuera del recorte activo sigue en la grilla, atenuado */
+.ct-chip.apagado{opacity:.32}
+.ct-chip.apagado:hover{opacity:.7}
+
+/* la aclaración de los asteriscos, una sola vez al pie */
+.ct-nota{font-size:12.5px;color:var(--gray-soft);text-align:center;margin:22px 0 4px}
+.ct-nota b{color:var(--olive);font-weight:600}

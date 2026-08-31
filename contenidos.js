@@ -32,6 +32,7 @@
   let VISTA = "fichas";  // 'calendario' | 'fichas'
   let ABIERTOS = {};     // contenido_id -> true si el hilo de comentarios está desplegado
   let FOCO = "";         // ficha a resaltar al venir desde el calendario
+  let FILTRO = "todos";  // recorte activo — responde "¿qué me falta mirar?"
   let TIMER = null;
 
   const ESTADOS = {
@@ -40,6 +41,17 @@
     cambios:  { t: "Cambios pedidos" },
     aprobado: { t: "Aprobado" },
   };
+  // Los recortes salen de los datos: nadie tiene que mantener una lista de pendientes.
+  const FILTROS = [
+    { k: "todos",     t: "Todo",             f: () => true },
+    { k: "abiertos",  t: "Sin aprobar",      f: m => m.estado !== "aprobado" },
+    { k: "revisar",   t: "Esperando visto",  f: m => m.estado === "revision" },
+    { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => !c.resuelto) },
+    { k: "aviso",     t: "Con aviso",        f: m => !!m.flag },
+    { k: "aprobado",  t: "Aprobados",        f: m => m.estado === "aprobado" },
+  ];
+  const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
+
   const MES_NOMBRE = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
                       "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const DIA_CORTO = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -51,6 +63,18 @@
   const mesLabel = m => { const p = String(m || "").split("-"); return p.length < 2 ? m : `${MES_NOMBRE[(+p[1]) - 1] || ""} ${p[0]}`; };
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+  // Un cronograma se lee en relación a hoy: "en 3 días" dice más que "11/09".
+  function cuando(iso) {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const d = aFecha(iso); d.setHours(0, 0, 0, 0);
+    const n = Math.round((d - hoy) / 864e5);
+    if (n === 0) return { t: "hoy", c: "hoy" };
+    if (n === 1) return { t: "mañana", c: "pronto" };
+    if (n === -1) return { t: "ayer", c: "pasado" };
+    if (n < 0) return { t: `hace ${-n} días`, c: "pasado" };
+    return { t: `en ${n} días`, c: n <= 7 ? "pronto" : "" };
+  }
 
   // El copy se muestra tal cual va a WhatsApp: los *asteriscos* son su negrita
   // y quedan A LA VISTA a propósito, porque se copian con el mensaje.
@@ -176,29 +200,42 @@
   }
 
   function barraHTML(ed) {
-    const cuenta = { borrador: 0, revision: 0, cambios: 0, aprobado: 0 };
-    MSGS.forEach(m => { cuenta[m.estado] = (cuenta[m.estado] || 0) + 1; });
-    const avance = Object.keys(ESTADOS)
-      .filter(k => cuenta[k])
-      .map(k => `<span class="ct-est ${k}"><span class="n">${cuenta[k]}</span> ${ESTADOS[k].t}</span>`).join("");
+    const n = MSGS.length;
+    const aprobados = MSGS.filter(m => m.estado === "aprobado").length;
+    const pct = n ? Math.round((aprobados / n) * 100) : 0;
+
+    // Sólo se muestran los recortes que tienen algo adentro: una fila de ceros no ayuda.
+    const chips = FILTROS.map(f => ({ f, n: MSGS.filter(f.f).length }))
+      .filter(x => x.f.k === "todos" || x.n > 0 || x.f.k === FILTRO)
+      .map(x => `<button class="ct-chipf ${x.f.k} ${x.f.k === FILTRO ? "on" : ""}" data-filtro="${x.f.k}">
+                   ${x.f.t} <span class="c">${x.n}</span></button>`).join("");
+
     return `
       <div class="ct-bar">
-        <select class="ct-mes" id="ctMes">
-          ${MESES.map(m => `<option value="${esc(m.mes)}" ${m.mes === MES ? "selected" : ""}>${cap(mesLabel(m.mes))} — ${esc(m.titulo || "sin título")}</option>`).join("")}
-        </select>
-        <div class="ct-vistas">
-          <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">📅 Calendario</button>
-          <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">🗂 Fichas</button>
+        <div class="ct-bar-fila">
+          <select class="ct-mes" id="ctMes" title="Elegí el mes">
+            ${MESES.map(m => `<option value="${esc(m.mes)}" ${m.mes === MES ? "selected" : ""}>${cap(mesLabel(m.mes))} — ${esc(m.titulo || "sin título")}</option>`).join("")}
+          </select>
+          <div class="ct-vistas">
+            <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">Calendario</button>
+            <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">Fichas</button>
+          </div>
+          <div class="ct-acc">
+            <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
+            ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ Mensaje</button>
+                    <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
+                    <button class="btn-desc" data-acc="importar" title="Cargar un mes desde un .json">⬆</button>
+                    <button class="btn-desc" data-acc="exportar" title="Bajar este mes como .json">⬇</button>
+                    <input type="file" id="ctFile" accept="application/json" hidden>` : ""}
+          </div>
         </div>
-        <div class="ct-avance">${avance || '<span class="ct-com-vacio">Mes sin mensajes.</span>'}</div>
-        <div class="ct-acc">
-          <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
-          ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ Mensaje</button>
-                  <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
-                  <button class="btn-desc" data-acc="importar" title="Cargar un mes desde un .json">⬆ Importar</button>
-                  <button class="btn-desc" data-acc="exportar" title="Bajar este mes como .json">⬇ Exportar</button>
-                  <input type="file" id="ctFile" accept="application/json" hidden>` : ""}
-        </div>
+        ${n ? `<div class="ct-bar-fila ct-fila-2">
+          <div class="ct-progreso" title="${aprobados} de ${n} mensajes aprobados">
+            <div class="ct-barra"><span style="width:${pct}%"></span></div>
+            <span class="ct-progreso-t"><b>${aprobados}</b>/${n} aprobados</span>
+          </div>
+          <div class="ct-filtros">${chips}</div>
+        </div>` : ""}
       </div>
       ${ed ? "" : `<div class="ct-solo-lectura">Podés leer todo el mes y dejar comentarios o sugerencias en cada mensaje. La edición y la aprobación las hace Coordinación.</div>`}`;
   }
@@ -208,24 +245,27 @@
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const brief = Array.isArray(CAB.brief) ? CAB.brief : [];
     const obras = Array.isArray(CAB.obras) ? CAB.obras : [];
-    const pend = Array.isArray(CAB.pendientes) ? CAB.pendientes : [];
+    // El brief y las obras son material de consulta, no lo que venís a hacer: van
+    // plegados para que los mensajes queden arriba de todo.
+    const hayDetalle = brief.length || obras.length;
     return `
-      <div class="ct-head" data-cab="1">
+      <div class="ct-head">
         <p class="ct-eyebrow"${e} data-cabc="eyebrow">${esc(CAB.eyebrow || "")}</p>
         <h2 class="ct-titulo"${e} data-cabc="titulo">${esc(CAB.titulo || "")}</h2>
         <p class="ct-dek"${e} data-cabc="dek">${esc(CAB.dek || "")}</p>
-        ${brief.length ? `<div class="ct-brief">${brief.map((b, i) => `
-          <section><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
-                   <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`).join("")}</div>` : ""}
-        ${obras.length ? `<div class="ct-scroll"><table class="ct-obras">
-          <thead><tr><th>Tipología</th><th>Obra</th><th>Productos</th></tr></thead>
-          <tbody>${obras.map((o, i) => `<tr>
-            <td${e} data-cabc="obras.${i}.tipologia">${esc(o.tipologia || "")}</td>
-            <td${e} data-cabc="obras.${i}.obra">${esc(o.obra || "")}</td>
-            <td${e} data-cabc="obras.${i}.productos">${esc(o.productos || "")}</td></tr>`).join("")}</tbody>
-        </table></div>` : ""}
-        ${pend.length ? `<div class="ct-pend"><b>Antes de volcarlo al sheet:</b>
-          <ul>${pend.map((p, i) => `<li${e} data-cabc="pendientes.${i}">${esc(p)}</li>`).join("")}</ul></div>` : ""}
+        ${hayDetalle ? `<details class="ct-detalle">
+          <summary>Brief y obras del mes${obras.length ? ` · ${obras.length} obras asignadas` : ""}</summary>
+          ${brief.length ? `<div class="ct-brief">${brief.map((b, i) => `
+            <section><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
+                     <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`).join("")}</div>` : ""}
+          ${obras.length ? `<div class="ct-scroll"><table class="ct-obras">
+            <thead><tr><th>Tipología</th><th>Obra</th><th>Productos</th></tr></thead>
+            <tbody>${obras.map((o, i) => `<tr>
+              <td${e} data-cabc="obras.${i}.tipologia">${esc(o.tipologia || "")}</td>
+              <td${e} data-cabc="obras.${i}.obra">${esc(o.obra || "")}</td>
+              <td${e} data-cabc="obras.${i}.productos">${esc(o.productos || "")}</td></tr>`).join("")}</tbody>
+          </table></div>` : ""}
+        </details>` : ""}
       </div>`;
   }
 
@@ -248,7 +288,8 @@
         <div class="ct-chips">${lista.map(m => {
           const nc = (COMS[m.id] || []).filter(c => !c.resuelto).length;
           const nv = (m.variantes || []).length;
-          return `<button class="ct-chip ${m.estado}" data-ir="${m.id}" title="${esc(m.objetivo || "")}">
+          const fuera = !filtroActivo()(m) ? " apagado" : "";
+          return `<button class="ct-chip ${m.estado}${fuera}" data-ir="${m.id}" title="${esc(m.objetivo || "")}">
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
@@ -280,8 +321,17 @@
       return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene mensajes.</p>
         ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar el primero</button>` : ""}</div>`;
     }
-    return MSGS.map(m => fichaHTML(m, ed)).join("");
+    const lista = MSGS.filter(filtroActivo());
+    if (!lista.length) {
+      const t = (FILTROS.find(x => x.k === FILTRO) || {}).t || "";
+      return `<div class="empty"><div class="big">✓</div><p>Ningún mensaje en «${esc(t)}».</p>
+        <button class="btn-mini" data-filtro="todos" style="margin-top:10px">Ver todo el mes</button></div>`;
+    }
+    return lista.map(m => fichaHTML(m, ed)).join("") + NOTA_PIE;
   }
+
+  // Una sola vez al pie, en vez de repetir la aclaración en cada ficha.
+  const NOTA_PIE = `<p class="ct-nota">Los <b>*asteriscos*</b> son la negrita de WhatsApp: van tal cual en el mensaje y se copian con él.</p>`;
 
   function fichaHTML(m, ed) {
     const f = aFecha(m.fecha);
@@ -294,6 +344,7 @@
       <div class="ct-msg-bar">
         <span class="ct-fecha">${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}
           <small>${DIA_CORTO[f.getDay()]}</small></span>
+        <span class="ct-cuando ${cuando(m.fecha).c}">${cuando(m.fecha).t}</span>
         <span class="ct-crit"${e} data-c="criterio">${esc(m.criterio || "")}</span>
         <span class="ct-obj"${e} data-c="objetivo">${esc(m.objetivo || "")}</span>
         ${m.flag ? `<span class="ct-flag"${e} data-c="flag">${esc(m.flag)}</span>` : ""}
@@ -402,6 +453,9 @@
 
       const v = t.closest("[data-vista]");
       if (v) { VISTA = v.dataset.vista; pintar(); return; }
+
+      const fl = t.closest("[data-filtro]");
+      if (fl) { FILTRO = fl.dataset.filtro; pintar(); return; }
 
       const ir = t.closest("[data-ir]");
       if (ir) { FOCO = ir.dataset.ir; VISTA = "fichas"; pintar(); return; }
@@ -597,7 +651,7 @@
     if (!CAB) return;
     const d = {
       mes: CAB.mes, titulo: CAB.titulo, eyebrow: CAB.eyebrow, dek: CAB.dek,
-      brief: CAB.brief, obras: CAB.obras, pendientes: CAB.pendientes,
+      brief: CAB.brief, obras: CAB.obras,
       mensajes: MSGS.map(m => ({
         fecha: m.fecha, criterio: m.criterio, objetivo: m.objetivo, flag: m.flag || undefined,
         estado: m.estado, copy: m.copy || undefined, meta: m.meta,
@@ -623,7 +677,7 @@
     const autor = SES().nombre ? SES().nombre() : "", email = SES().email ? SES().email() : "";
     const cab = {
       mes: d.mes, titulo: d.titulo || "", eyebrow: d.eyebrow || "", dek: d.dek || "",
-      brief: d.brief || [], obras: d.obras || [], pendientes: d.pendientes || [],
+      brief: d.brief || [], obras: d.obras || [],
       autor, autor_email: email,
     };
     let r = await fetch(url("contenidos_meses"), {

@@ -243,3 +243,85 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 /* la aclaración de los asteriscos, una sola vez al pie */
 .ct-nota{font-size:12.5px;color:var(--gray-soft);text-align:center;margin:22px 0 4px}
 .ct-nota b{color:var(--olive);font-weight:600}
+
+/* ============================================================
+   SUGERENCIAS sobre el copy (estilo Google Docs)
+   ============================================================ */
+
+/* El tramo sugerido, dentro del propio copy: viejo tachado, nuevo al lado. */
+.ct-copy del.ct-del{
+  text-decoration:line-through;text-decoration-color:var(--no);text-decoration-thickness:1.5px;
+  background:#f9eae7;color:var(--no);border-radius:3px 0 0 3px;padding:1px 1px 1px 3px;cursor:pointer
+}
+.ct-copy ins.ct-ins{
+  text-decoration:none;background:#eaf2e6;color:var(--ok);font-weight:500;
+  border-radius:0 3px 3px 0;padding:1px 3px 1px 1px;cursor:pointer
+}
+.ct-copy del.ct-del:hover,.ct-copy ins.ct-ins:hover{outline:1.5px solid var(--olive-mid)}
+.ct-copy.con-sugs{background:var(--card);border-style:dashed}
+.ct-sug-aviso{
+  grid-column:1;margin:-8px 0 0;font-size:12.5px;color:var(--warn);
+  background:#fbf3e6;border-radius:8px;padding:7px 11px
+}
+@media (max-width:860px){.ct-sug-aviso{grid-column:auto}}
+
+/* Panel flotante que aparece al seleccionar texto */
+.ct-seltool{
+  position:fixed;z-index:60;background:var(--card);border:1px solid var(--olive-soft);
+  border-radius:11px;box-shadow:0 6px 24px rgba(40,42,34,.18);padding:5px;
+  font-family:var(--font-body);max-width:min(420px,calc(100vw - 16px))
+}
+.ct-seltool > button{
+  border:0;background:transparent;color:var(--olive);font-size:13px;font-weight:600;
+  padding:7px 13px;border-radius:8px;font-family:var(--font-body);white-space:nowrap
+}
+.ct-seltool > button:hover{background:var(--olive-pale)}
+.ct-seltool.abierto{padding:13px 14px 12px;width:420px;display:flex;flex-direction:column;gap:8px}
+.ct-seltool-t{
+  margin:0;font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
+  font-size:11px;color:var(--gray-soft);font-weight:600
+}
+.ct-seltool-orig{font-size:13px;line-height:1.45;max-height:74px;overflow:auto}
+.ct-seltool-orig del{
+  text-decoration:line-through;text-decoration-color:var(--no);
+  background:#f9eae7;color:var(--no);border-radius:4px;padding:1px 4px
+}
+.ct-seltool-ta,.ct-seltool-porque{
+  width:100%;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;
+  font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--card);
+  outline:none;resize:vertical;line-height:1.5
+}
+.ct-seltool-porque{font-size:13px}
+.ct-seltool-ta:focus,.ct-seltool-porque:focus{border-color:var(--olive-mid)}
+.ct-seltool-accs{display:flex;gap:7px;justify-content:flex-end}
+
+/* La sugerencia en el hilo de comentarios */
+.ct-com.sug{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+.ct-com.sug.aceptada{border-color:#cfe0c5;background:#f6faf4}
+.ct-com.sug.descartada{opacity:.6}
+.ct-com.sug.pulso{animation:ctPulso 1.6s ease}
+@keyframes ctPulso{0%,100%{box-shadow:none}25%,75%{box-shadow:0 0 0 3px var(--olive-pale)}}
+.ct-sug-cambio{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;margin:6px 0 4px;font-size:14px;line-height:1.5
+}
+.ct-sug-cambio del{
+  text-decoration:line-through;text-decoration-color:var(--no);
+  background:#f9eae7;color:var(--no);border-radius:5px;padding:2px 6px
+}
+.ct-sug-cambio ins{text-decoration:none;background:#eaf2e6;color:var(--ok);border-radius:5px;padding:2px 6px;font-weight:500}
+.ct-sug-cambio .fl{color:var(--gray-soft);font-size:13px}
+.ct-sug-suelta{margin:6px 0 0;font-size:12.5px;color:var(--warn);background:#fbf3e6;border-radius:7px;padding:6px 9px}
+.ct-sug-fallo{margin:5px 0 0;font-size:12px;font-weight:600}
+.ct-sug-fallo.aceptada{color:var(--ok)}
+.ct-sug-fallo.descartada{color:var(--gray-soft)}
+.ct-com.sug .accs button.acep{color:var(--ok)}
+.ct-com.sug .accs button.acep:hover{background:#eaf2e6}
+
+/* Contadores del pie: sugerencias y comentarios se cuentan por separado */
+.ct-badge{display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:12px}
+.ct-badge.sug{color:var(--no)}
+.btn-mini.on .ct-badge,.btn-mini.on .ct-badge.sug{color:#fff}
+
+/* Aprobar bloqueado mientras haya sugerencias sin resolver */
+.btn-mini.trabado{opacity:.45;border-style:dashed;cursor:not-allowed}
+.btn-mini.trabado:hover{background:var(--card)}

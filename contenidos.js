@@ -46,7 +46,8 @@
     { k: "todos",     t: "Todo",             f: () => true },
     { k: "abiertos",  t: "Sin aprobar",      f: m => m.estado !== "aprobado" },
     { k: "revisar",   t: "Esperando visto",  f: m => m.estado === "revision" },
-    { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => !c.resuelto) },
+    { k: "sugerido",  t: "Con sugerencias",  f: m => (COMS[m.id] || []).some(c => c.tipo === "sugerencia" && !c.decision) },
+    { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => c.tipo !== "sugerencia" && !c.resuelto) },
     { k: "aviso",     t: "Con aviso",        f: m => !!m.flag },
     { k: "aprobado",  t: "Aprobados",        f: m => m.estado === "aprobado" },
   ];
@@ -75,6 +76,59 @@
     if (n < 0) return { t: `hace ${-n} días`, c: "pasado" };
     return { t: `en ${n} días`, c: n <= 7 ? "pronto" : "" };
   }
+
+  /* ---- Sugerencias sobre el copy (estilo Google Docs) -----------------------
+     Una sugerencia apunta a un tramo del texto FUENTE (el que se guarda), no al
+     HTML. Por eso todo acá traduce entre uno y otro:
+       · el texto fuente se reconstruye leyendo los nodos de texto, salteando los
+         marcados [data-virtual] (el texto propuesto, que todavía no existe en la
+         fuente);
+       · `original` se guarda además del offset, para poder re-anclar la
+         sugerencia si el texto cambió abajo de ella.                          */
+  const sugsDe = (m, campo) => (COMS[m.id] || [])
+    .filter(c => c.tipo === "sugerencia" && c.campo === campo && !c.decision)
+    .sort((a, b) => a.desde - b.desde);
+  const sugsPendientes = m => (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision);
+
+  function caminante(cont) {
+    return document.createTreeWalker(cont, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => (n.parentElement && n.parentElement.closest("[data-virtual]"))
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    });
+  }
+  // Offset de (nodo, pos) dentro del texto fuente. -1 si el nodo no cuenta.
+  function offsetFuente(cont, nodo, pos) {
+    if (nodo.nodeType !== Node.TEXT_NODE) {
+      // selección que arranca/termina en un borde de elemento
+      const w0 = caminante(cont); let acc = 0, visto = false;
+      while (w0.nextNode()) { if (w0.currentNode === nodo) { visto = true; break; } acc += w0.currentNode.data.length; }
+      return visto ? acc : -1;
+    }
+    const w = caminante(cont); let acc = 0;
+    while (w.nextNode()) {
+      if (w.currentNode === nodo) return acc + pos;
+      acc += w.currentNode.data.length;
+    }
+    return -1;
+  }
+  // El copy con las sugerencias pendientes incrustadas: viejo tachado, nuevo al lado.
+  function copyConSugs(txt, sugs) {
+    if (!sugs.length) return copyHTML(txt);
+    let out = "", pos = 0;
+    for (const g of sugs) {
+      if (g.desde < pos || g.hasta > txt.length || txt.slice(g.desde, g.hasta) !== g.original) continue; // descolgada
+      out += copyHTML(txt.slice(pos, g.desde));
+      out += `<del class="ct-del" data-sug="${g.id}" title="Sugerencia de ${esc(g.autor || "")}">${esc(g.original)}</del>`;
+      out += `<ins class="ct-ins" data-virtual="1" data-sug="${g.id}">${esc(g.propuesto)}</ins>`;
+      pos = g.hasta;
+    }
+    return out + copyHTML(txt.slice(pos));
+  }
+  // Una sugerencia queda "descolgada" si el texto que citaba ya no está donde estaba.
+  const descolgada = (fila, g) => {
+    const txt = leerCampo(fila, g.campo);
+    return typeof txt !== "string" || txt.slice(g.desde, g.hasta) !== g.original;
+  };
 
   // El copy se muestra tal cual va a WhatsApp: los *asteriscos* son su negrita
   // y quedan A LA VISTA a propósito, porque se copian con el mensaje.
@@ -166,6 +220,7 @@
     }
     pintar();
     arrancarRefresco();
+    if (!window.__ctSel) { window.__ctSel = true; montarSeleccion(); }
   };
 
   function pintar() {
@@ -286,14 +341,15 @@
       return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}">
         <span class="num">${num}</span>
         <div class="ct-chips">${lista.map(m => {
-          const nc = (COMS[m.id] || []).filter(c => !c.resuelto).length;
+          const nc = (COMS[m.id] || []).filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
+          const ns = (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision).length;
           const nv = (m.variantes || []).length;
           const fuera = !filtroActivo()(m) ? " apagado" : "";
           return `<button class="ct-chip ${m.estado}${fuera}" data-ir="${m.id}" title="${esc(m.objetivo || "")}">
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
-              ${nv ? ` · ${nv} variantes` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
+              ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </button>`;
         }).join("")}</div>
       </div>`;
@@ -337,7 +393,8 @@
     const f = aFecha(m.fecha);
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const coms = COMS[m.id] || [];
-    const pend = coms.filter(c => !c.resuelto).length;
+    const pendCom = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
+    const pendSug = coms.filter(c => c.tipo === "sugerencia" && !c.decision).length;
     const vars = Array.isArray(m.variantes) ? m.variantes : [];
 
     return `<article class="ct-msg" data-id="${m.id}">
@@ -351,20 +408,23 @@
         <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
       </div>
 
-      ${vars.length ? "" : cuerpoHTML(m, "", ed)}
+      ${vars.length ? "" : cuerpoHTML(m, "", ed, m)}
 
       ${vars.length ? `<div class="ct-vars">
         <p class="ct-lead"${e} data-c="lead">${esc(m.lead || "")}</p>
         ${vars.map((v, i) => `<details class="ct-v" ${i === 0 ? "open" : ""}>
           <summary><span${e} data-c="variantes.${i}.titulo">${esc(v.titulo || `Variante ${i + 1}`)}</span>
             ${ed ? `<button class="ct-v-del" data-delvar="${i}" title="Eliminar esta variante">✕</button>` : ""}</summary>
-          ${cuerpoHTML(v, `variantes.${i}.`, ed)}
+          ${cuerpoHTML(v, `variantes.${i}.`, ed, m)}
         </details>`).join("")}
         ${ed ? `<button class="btn-mini" data-addvar="1">+ Variante</button>` : ""}
       </div>` : ""}
 
       <div class="ct-pie">
-        <button class="btn-mini ${ABIERTOS[m.id] ? "on" : ""}" data-coms="${m.id}">💬 ${coms.length ? coms.length : ""} ${pend ? `(${pend} sin resolver)` : "Comentarios"}</button>
+        <button class="btn-mini ${ABIERTOS[m.id] ? "on" : ""}" data-coms="${m.id}">
+          ${pendSug ? `<span class="ct-badge sug">✎ ${pendSug}</span>` : ""}
+          ${pendCom ? `<span class="ct-badge">💬 ${pendCom}</span>` : ""}
+          ${!pendSug && !pendCom ? `💬 Comentarios${coms.length ? ` (${coms.length})` : ""}` : "sin resolver"}</button>
         <button class="btn-mini" data-copiar="${m.id}" title="Copiar el mensaje listo para pegar en WhatsApp">⧉ Copiar</button>
         <span class="ct-guardado" data-guardado="${m.id}"></span>
         <div class="ct-acciones">${accionesHTML(m, ed)}</div>
@@ -373,13 +433,18 @@
     </article>`;
   }
 
-  function cuerpoHTML(o, pre, ed) {
+  function cuerpoHTML(o, pre, ed, m) {
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const meta = o.meta || {};
     const enc = o.encuesta;
     const campo = (t, k) => `<div><dt>${t}</dt><dd${e} data-c="${pre}meta.${k}">${esc(meta[k] || "")}</dd></div>`;
+    // Con sugerencias a la vista el copy NO es editable: el texto en pantalla ya
+    // no es el texto guardado, y tipear encima lo corrompería. Se resuelven y vuelve.
+    const sugs = m ? sugsDe(m, pre + "copy") : [];
+    const eCopy = (ed && !sugs.length) ? e : "";
     return `<div class="ct-body">
-      <div class="ct-copy"${e} data-c="${pre}copy" data-raw="1">${copyHTML(o.copy || "")}</div>
+      <div class="ct-copy ${sugs.length ? "con-sugs" : ""}"${eCopy} data-c="${pre}copy" data-raw="1">${copyConSugs(o.copy || "", sugs)}</div>
+      ${sugs.length ? `<p class="ct-sug-aviso">✎ ${sugs.length} sugerencia${sugs.length > 1 ? "s" : ""} sin resolver — el copy se desbloquea al aceptarlas o descartarlas.</p>` : ""}
       <div class="ct-meta">
         ${enc ? `<div class="ct-poll">
           <p class="q"${e} data-c="${pre}encuesta.q">${esc(enc.q || "")}</p>
@@ -402,11 +467,20 @@
     if (m.estado === "borrador" || m.estado === "cambios")
       return `<button class="btn-mini" data-est="revision" title="Marcarlo listo para que lo revisen">Mandar a revisión</button>
               <button class="btn-mini peligro" data-del="1" title="Eliminar el mensaje">✕</button>`;
-    if (m.estado === "revision")
-      return `<button class="btn-mini peligro" data-est="cambios">Pedir cambios</button>
-              <button class="btn-mini on" data-est="aprobado">✓ Aprobar</button>`;
+    if (m.estado === "revision") {
+      const p = sugsPendientes(m).length;
+      return `<button class="btn-mini peligro" data-est="cambios">Pedir cambios</button>` +
+        (p ? `<button class="btn-mini trabado" data-trabado="${p}"
+                title="Quedan ${p} sugerencias sin resolver">✓ Aprobar</button>`
+           : `<button class="btn-mini on" data-est="aprobado">✓ Aprobar</button>`);
+    }
     return `<button class="btn-mini" data-est="revision" title="Volver a abrirlo para editar">Reabrir</button>`;
   }
+
+  const dondeCampo = c => {
+    const v = /^variantes\.(\d+)\./.exec(c || "");
+    return v ? ` en la variante ${(+v[1]) + 1}` : "";
+  };
 
   function comentariosHTML(m) {
     const coms = COMS[m.id] || [];
@@ -415,11 +489,30 @@
     return `<div class="ct-coms">
       ${coms.length ? coms.map(c => {
         const mio = String(c.autor_email || "").toLowerCase() === yo;
+        if (c.tipo === "sugerencia") {
+          const suelta = !c.decision && descolgada(m, c);
+          return `<div class="ct-com sug ${c.decision || ""}" data-sugcard="${c.id}">
+            <span class="av">${esc(iniciales(c.autor))}</span>
+            <div class="cuerpo">
+              <div class="quien">${esc(c.autor || c.autor_email || "—")}
+                <span class="ct-com-var">sugirió un cambio${dondeCampo(c.campo)}</span>
+                <span class="cuando">${hace(c.creado)}</span></div>
+              <div class="ct-sug-cambio"><del>${esc(c.original)}</del><span class="fl">→</span><ins>${esc(c.propuesto)}</ins></div>
+              ${c.texto ? `<div class="texto">${esc(c.texto)}</div>` : ""}
+              ${suelta ? `<p class="ct-sug-suelta">El texto original cambió, así que esta sugerencia ya no engancha. Descartala y volvé a proponerla.</p>` : ""}
+              ${c.decision ? `<p class="ct-sug-fallo ${c.decision}">${c.decision === "aceptada" ? "✓ Aceptada" : "✗ Descartada"}${c.decidido_por ? " por " + esc(c.decidido_por) : ""}</p>` : ""}
+            </div>
+            <div class="accs">
+              ${(!c.decision && ed && !suelta) ? `<button class="acep" data-acepta="${c.id}" title="Aplicar este cambio al copy">✓</button>` : ""}
+              ${(!c.decision && ed) ? `<button data-descarta="${c.id}" title="Descartar la sugerencia">✗</button>` : ""}
+              ${mio && !c.decision ? `<button data-delcom="${c.id}" title="Eliminar">🗑</button>` : ""}
+            </div>
+          </div>`;
+        }
         return `<div class="ct-com ${c.resuelto ? "resuelto" : ""}">
           <span class="av">${esc(iniciales(c.autor))}</span>
           <div class="cuerpo">
-            <div class="quien">${esc(c.autor || c.autor_email || "—")}<span class="cuando">${hace(c.creado)}</span>
-              ${c.variante != null ? `<span class="ct-com-var"> · sobre la variante ${c.variante + 1}</span>` : ""}</div>
+            <div class="quien">${esc(c.autor || c.autor_email || "—")}<span class="cuando">${hace(c.creado)}</span></div>
             <div class="texto">${esc(c.texto)}</div>
           </div>
           <div class="accs">
@@ -427,7 +520,7 @@
             ${mio ? `<button data-delcom="${c.id}" title="Eliminar">✕</button>` : ""}
           </div>
         </div>`;
-      }).join("") : `<p class="ct-com-vacio">Sin comentarios todavía. Dejá una sugerencia sobre este mensaje.</p>`}
+      }).join("") : `<p class="ct-com-vacio">Sin comentarios todavía. Podés escribir acá abajo, o seleccionar un tramo del copy para sugerir cómo debería quedar.</p>`}
       <div class="ct-com-alta">
         <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o una sugerencia…" rows="1"></textarea>
         <button class="btn-mini" data-enviar="${m.id}">Enviar</button>
@@ -498,6 +591,21 @@
         const m = MSGS.find(x => x.id === id);
         const vs = (m.variantes || []).concat([{ titulo: "Nueva variante", copy: "", meta: {} }]);
         await guardarCampo(id, "variantes", vs); pintar(); return;
+      }
+
+      const ac = t.closest("[data-acepta]");
+      if (ac) return aceptarSugerencia(ac.dataset.acepta);
+      const ds = t.closest("[data-descarta]");
+      if (ds) return descartarSugerencia(ds.dataset.descarta);
+      const tr = t.closest("[data-trabado]");
+      if (tr) { alert(`Quedan ${tr.dataset.trabado} sugerencia(s) sin resolver. Aceptalas o descartalas antes de aprobar el mensaje.`); return; }
+      // click en un tramo sugerido → abre el hilo y resalta la ficha de esa sugerencia
+      const dl = t.closest("[data-sug]");
+      if (dl) {
+        ABIERTOS[id] = true; pintar();
+        const card = document.querySelector(`[data-sugcard="${dl.dataset.sug}"]`);
+        if (card) { card.scrollIntoView({ block: "center", behavior: "smooth" }); card.classList.add("pulso"); }
+        return;
       }
 
       const env = t.closest("[data-enviar]");
@@ -697,6 +805,147 @@
     if (!r.ok) { alert("El mes se creó pero fallaron los mensajes:\n" + (await r.text()).slice(0, 300)); }
 
     MES = d.mes; await traerMeses(); await traerMes(MES); pintar();
+  }
+
+  /* ===================== SUGERIR UN CAMBIO ===================== 
+     Se selecciona un tramo del copy y aparece un botón flotante. Los offsets se
+     calculan CONTRA EL TEXTO FUENTE en el momento de la selección, así que el
+     botón puede robar el foco sin problema.                                     */
+  let TOOL = null;
+  function ocultarTool() { if (TOOL) { TOOL.remove(); TOOL = null; } }
+
+  function montarSeleccion() {
+    document.addEventListener("mouseup", ev => {
+      if (ev.target.closest && ev.target.closest(".ct-seltool")) return;   // click dentro del propio panel
+      setTimeout(verSeleccion, 0);
+    });
+    document.addEventListener("keyup", ev => { if (ev.key === "Escape") ocultarTool(); });
+    // El botón chico se esconde al hacer scroll, pero el cuadro ABIERTO no:
+    // ahí ya hay texto tipeado y perderlo por moverse un poco sería inaceptable.
+    window.addEventListener("scroll", () => {
+      if (TOOL && !TOOL.classList.contains("abierto")) ocultarTool();
+    }, true);
+  }
+
+  function verSeleccion() {
+    ocultarTool();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    const nodo = r.startContainer.nodeType === Node.TEXT_NODE ? r.startContainer.parentElement : r.startContainer;
+    const cont = nodo && nodo.closest && nodo.closest(".ct-copy[data-c]");
+    if (!cont || !cont.contains(r.endContainer)) return;
+
+    const desde = offsetFuente(cont, r.startContainer, r.startOffset);
+    const hasta = offsetFuente(cont, r.endContainer, r.endOffset);
+    if (desde < 0 || hasta < 0 || hasta <= desde) return;
+
+    const msg = cont.closest(".ct-msg"); if (!msg) return;
+    const m = MSGS.find(x => x.id === msg.dataset.id); if (!m) return;
+    const campo = cont.dataset.c;
+    const txt = leerCampo(m, campo);
+    if (typeof txt !== "string" || txt.slice(desde, hasta) !== r.toString()) return;  // desalineado: no arriesgamos
+    // no permitir dos sugerencias sobre el mismo tramo
+    if (sugsDe(m, campo).some(g => desde < g.hasta && hasta > g.desde)) return;
+
+    const caja = r.getBoundingClientRect();
+    TOOL = document.createElement("div");
+    TOOL.className = "ct-seltool";
+    TOOL.dataset.id = m.id; TOOL.dataset.campo = campo;
+    TOOL.dataset.desde = desde; TOOL.dataset.hasta = hasta;
+    TOOL.innerHTML = `<button data-abrir="1">✎ Sugerir cambio</button>`;
+    document.body.appendChild(TOOL);
+    TOOL.style.top = Math.min(innerHeight - 60, caja.bottom + 8) + "px";
+    TOOL.style.left = Math.max(8, Math.min(innerWidth - TOOL.offsetWidth - 8, caja.left)) + "px";
+
+    TOOL.onclick = ev => {
+      if (ev.target.closest("[data-abrir]")) return abrirComposer(txt.slice(desde, hasta));
+      if (ev.target.closest("[data-cancelar]")) return ocultarTool();
+      if (ev.target.closest("[data-enviar-sug]")) return enviarSugerencia();
+    };
+  }
+
+  function abrirComposer(original) {
+    TOOL.classList.add("abierto");
+    TOOL.innerHTML = `
+      <p class="ct-seltool-t">Cómo debería quedar</p>
+      <div class="ct-seltool-orig"><del>${esc(original)}</del></div>
+      <textarea class="ct-seltool-ta" rows="2" spellcheck="false"></textarea>
+      <input class="ct-seltool-porque" placeholder="Por qué (opcional)">
+      <div class="ct-seltool-accs">
+        <button class="btn-mini" data-cancelar="1">Cancelar</button>
+        <button class="btn-mini on" data-enviar-sug="1">Sugerir</button>
+      </div>`;
+    const ta = TOOL.querySelector(".ct-seltool-ta");
+    ta.value = original; ta.focus({ preventScroll: true }); ta.select();
+    TOOL.dataset.original = original;
+    ta.addEventListener("keydown", ev => {
+      if (ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); enviarSugerencia(); }
+      if (ev.key === "Escape") ocultarTool();
+    });
+    // Al abrirse el cuadro crece mucho: hay que reubicarlo en los DOS ejes o se
+    // sale de la pantalla (se notaba en celular, donde ocupa casi todo el ancho).
+    const caja = TOOL.getBoundingClientRect();
+    if (caja.bottom > innerHeight - 8) TOOL.style.top = Math.max(8, innerHeight - caja.height - 8) + "px";
+    TOOL.style.left = Math.max(8, Math.min(innerWidth - caja.width - 8, caja.left)) + "px";
+  }
+
+  async function enviarSugerencia() {
+    const t = TOOL; if (!t) return;
+    const propuesto = t.querySelector(".ct-seltool-ta").value;
+    const porque = t.querySelector(".ct-seltool-porque").value.trim();
+    const original = t.dataset.original;
+    if (propuesto === original) { alert("El texto propuesto es igual al original."); return; }
+    const fila = {
+      contenido_id: t.dataset.id, tipo: "sugerencia", campo: t.dataset.campo,
+      desde: +t.dataset.desde, hasta: +t.dataset.hasta, original, propuesto,
+      texto: porque, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
+    };
+    const id = t.dataset.id;
+    ocultarTool();
+    const r = await fetch(url("contenidos_comentarios"), {
+      method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify([fila]),
+    });
+    if (!r.ok) { alert("No se pudo guardar la sugerencia."); return; }
+    ABIERTOS[id] = true;
+    await traerMes(MES); pintar();
+  }
+
+  const patchCom = (id, datos) => fetch(url(`contenidos_comentarios?id=eq.${id}`), {
+    method: "PATCH", headers: head(), body: JSON.stringify(datos),
+  });
+
+  // Aceptar = aplicar el reemplazo al copy de verdad, y correr las demás
+  // sugerencias del mismo campo para que sigan apuntando donde corresponde.
+  async function aceptarSugerencia(id) {
+    const m = MSGS.find(x => (COMS[x.id] || []).some(c => c.id === id)); if (!m) return;
+    const g = (COMS[m.id] || []).find(c => c.id === id); if (!g) return;
+    const txt = leerCampo(m, g.campo);
+    if (typeof txt !== "string" || txt.slice(g.desde, g.hasta) !== g.original) {
+      alert("El texto original ya cambió, así que esta sugerencia no se puede aplicar. Descartala y volvé a proponerla.");
+      return;
+    }
+    const nuevo = txt.slice(0, g.desde) + g.propuesto + txt.slice(g.hasta);
+    const { col, val } = conCampo(m, g.campo, nuevo);
+    try { await guardarCampo(m.id, col, val); }
+    catch (e) { alert("No se pudo aplicar el cambio. Puede que no tengas permiso."); return; }
+
+    const delta = g.propuesto.length - g.original.length;
+    for (const o of (COMS[m.id] || [])) {
+      if (o.id === id || o.tipo !== "sugerencia" || o.decision || o.campo !== g.campo) continue;
+      const esperado = o.desde >= g.hasta ? o.desde + delta : o.desde;
+      let d = null;
+      if (nuevo.slice(esperado, esperado + o.original.length) === o.original) d = esperado;
+      else { const i = nuevo.indexOf(o.original); if (i >= 0) d = i; }
+      if (d != null && d !== o.desde) await patchCom(o.id, { desde: d, hasta: d + o.original.length });
+    }
+    await patchCom(id, { decision: "aceptada", decidido_por: SES().nombre ? SES().nombre() : "", decidido_en: new Date().toISOString() });
+    await traerMes(MES); pintar();
+  }
+
+  async function descartarSugerencia(id) {
+    await patchCom(id, { decision: "descartada", decidido_por: SES().nombre ? SES().nombre() : "", decidido_en: new Date().toISOString() });
+    await traerMes(MES); pintar();
   }
 
   /* ---- Refresco suave: trae comentarios y cambios de otros sin pisar lo que estás escribiendo ---- */

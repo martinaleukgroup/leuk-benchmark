@@ -216,7 +216,7 @@
       cont.innerHTML = `<div class="empty-mini">Cargando cronograma…</div>`;
       await traerMeses();
       MES = MES || (MESES[0] && MESES[0].mes) || "";
-      await traerMes(MES);
+      await Promise.all([traerMes(MES), traerAvisos()]);
     }
     pintar();
     arrancarRefresco();
@@ -243,8 +243,9 @@
       enganchar(); return;
     }
 
-    cont.innerHTML = barraHTML(ed) + cabeceraHTML(ed) +
+    cont.innerHTML = barraHTML(ed) + (PANEL ? panelHTML() : "") + cabeceraHTML(ed) +
       (VISTA === "calendario" ? calendarioHTML() : fichasHTML(ed));
+    pintarBadgeNav();
     enganchar();
 
     if (FOCO) {
@@ -276,6 +277,9 @@
             <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">Fichas</button>
           </div>
           <div class="ct-acc">
+            <button class="btn-desc ct-campana ${PANEL ? "on" : ""}" data-campana="1" title="Avisos">🔔${(() => {
+              const n = cuentaAvisos(); return n ? `<span class="ct-punto">${n > 9 ? "9+" : n}</span>` : "";
+            })()}</button>
             <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
             ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ Mensaje</button>
                     <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
@@ -553,6 +557,25 @@
       const ir = t.closest("[data-ir]");
       if (ir) { FOCO = ir.dataset.ir; VISTA = "fichas"; pintar(); return; }
 
+      if (t.closest("[data-campana]")) {
+        PANEL = !PANEL;
+        if (PANEL) { pintar(); marcarVisto(); pintarBadgeNav(); }   // se resalta lo nuevo, y recién ahí se da por visto
+        else pintar();
+        return;
+      }
+      if (t.closest("[data-cerrar-panel]")) { PANEL = false; pintar(); return; }
+
+      // un aviso lleva a su mensaje, cambiando de mes si hace falta
+      const av = t.closest("[data-ir-aviso]");
+      if (av) {
+        const idm = av.dataset.irAviso;
+        const dato = [...AVISOS.sale, ...AVISOS.tarde].find(x => x.id === idm)
+          || [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x._m).find(x => x && x.id === idm);
+        PANEL = false; VISTA = "fichas"; FILTRO = "todos"; FOCO = idm; ABIERTOS[idm] = true;
+        if (dato && dato.mes && dato.mes !== MES) { MES = dato.mes; traerMes(MES).then(pintar); return; }
+        pintar(); return;
+      }
+
       const acc = t.closest("[data-acc]");
       if (acc) return accion(acc.dataset.acc);
 
@@ -711,7 +734,7 @@
 
   /* ---- Acciones de la barra ---- */
   async function accion(a) {
-    if (a === "refrescar") { await traerMeses(); await traerMes(MES); pintar(); return; }
+    if (a === "refrescar") { await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]); pintar(); return; }
 
     if (a === "nuevo-mes") {
       const m = (prompt("¿Qué mes? Formato AAAA-MM (ej: 2026-10)") || "").trim();
@@ -805,6 +828,136 @@
     if (!r.ok) { alert("El mes se creó pero fallaron los mensajes:\n" + (await r.text()).slice(0, 300)); }
 
     MES = d.mes; await traerMeses(); await traerMes(MES); pintar();
+  }
+
+  /* ===================== AVISOS (la campanita) =====================
+     No hay mail: los avisos ESPERAN a la persona en la plataforma. Por eso el
+     contenido del panel se calcula SIEMPRE contra la base (lo que está pendiente
+     de verdad, sin importar el mes abierto) y la marca de "visto" sólo decide
+     qué se resalta como nuevo.
+
+     Esa marca vive en localStorage, o sea que es por dispositivo. Es a propósito:
+     evita otra migración y no se pierde nada, porque si se desincroniza lo único
+     que cambia es el número del globo, nunca la lista.                        */
+  const VISTO_KEY = "contenidos_visto_v1";
+  const vistoEn = () => { try { return +localStorage.getItem(VISTO_KEY) || 0; } catch (e) { return 0; } };
+  const marcarVisto = () => { try { localStorage.setItem(VISTO_KEY, String(Date.now())); } catch (e) { } };
+  let AVISOS = { sale: [], tarde: [], sugs: [], coms: [], mias: [], cargado: false };
+  let PANEL = false;
+
+  async function traerAvisos() {
+    if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) return;
+    const hoy = hoyISO();
+    const atras = new Date(); atras.setDate(atras.getDate() - 10);
+    const desde = `${atras.getFullYear()}-${String(atras.getMonth() + 1).padStart(2, "0")}-${String(atras.getDate()).padStart(2, "0")}`;
+    try {
+      const [rm, rs, rc] = await Promise.all([
+        fetch(url(`contenidos?fecha=gte.${desde}&fecha=lte.${hoy}&select=id,mes,fecha,criterio,estado&order=fecha.asc`), { headers: head() }),
+        fetch(url("contenidos_comentarios?tipo=eq.sugerencia&select=*&order=creado.desc&limit=60"), { headers: head() }),
+        fetch(url("contenidos_comentarios?tipo=eq.comentario&resuelto=is.false&select=*&order=creado.desc&limit=40"), { headers: head() }),
+      ]);
+      const msgs = rm.ok ? await rm.json() : [];
+      const sugs = rs.ok ? await rs.json() : [];
+      const coms = rc.ok ? await rc.json() : [];
+      const yo = (SES().email() || "").toLowerCase();
+
+      AVISOS = {
+        // Lo que sale hoy, y lo que ya debería haber salido sin estar aprobado.
+        sale:  msgs.filter(m => m.fecha === hoy),
+        tarde: msgs.filter(m => m.fecha < hoy && m.estado !== "aprobado"),
+        sugs:  sugs.filter(g => !g.decision),
+        coms:  coms.filter(c => String(c.autor_email || "").toLowerCase() !== yo),
+        // Para quien sugiere: en qué terminó lo suyo.
+        mias:  sugs.filter(g => g.decision && String(g.autor_email || "").toLowerCase() === yo),
+        cargado: true,
+      };
+      // nombre del mensaje al que pertenece cada sugerencia/comentario
+      const ids = [...new Set([...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x.contenido_id))];
+      if (ids.length) {
+        const r = await fetch(url(`contenidos?id=in.(${ids.join(",")})&select=id,mes,fecha,criterio`), { headers: head() });
+        if (r.ok) {
+          const por = {}; (await r.json()).forEach(m => { por[m.id] = m; });
+          [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].forEach(x => { x._m = por[x.contenido_id]; });
+        }
+      }
+    } catch (e) { }
+  }
+
+  // Cuántos avisos son NUEVOS desde la última vez que se abrió el panel.
+  function cuentaAvisos() {
+    const v = vistoEn(), ed = puedeEditar();
+    const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+    let n = 0;
+    if (ed) {
+      n += AVISOS.sugs.filter(g => Date.parse(g.creado) > v).length;
+      n += AVISOS.coms.filter(c => Date.parse(c.creado) > v).length;
+      if (v < +hoy0) n += AVISOS.sale.length + AVISOS.tarde.length;   // el recordatorio del día, una vez por día
+    } else {
+      n += AVISOS.mias.filter(g => Date.parse(g.decidido_en || g.creado) > v).length;
+    }
+    return n;
+  }
+
+  // El contador también en la solapa del módulo, para verlo desde cualquier lado.
+  function pintarBadgeNav() {
+    const b = document.querySelector('#nav [data-mod="contenidos"]'); if (!b) return;
+    const n = cuentaAvisos();
+    let p = b.querySelector(".ct-navpunto");
+    if (!n) { if (p) p.remove(); return; }
+    if (!p) { p = document.createElement("span"); p.className = "ct-navpunto"; b.appendChild(p); }
+    p.textContent = n > 9 ? "9+" : String(n);
+  }
+
+  // app.js llama a esto al terminar de arrancar, para que el contador aparezca
+  // aunque la persona todavía no haya entrado al módulo.
+  window.avisosContenidos = async function () { await traerAvisos(); pintarBadgeNav(); };
+
+  function panelHTML() {
+    const ed = puedeEditar(), v = vistoEn();
+    const nuevo = ts => Date.parse(ts) > v ? " nuevo" : "";
+    const linea = (id, cls, ic, txt, sub) =>
+      `<button class="ct-aviso${cls}" data-ir-aviso="${id}"><span class="ic">${ic}</span>
+        <span class="tx">${txt}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
+    const cuando2 = f => { const c = cuando(f); return c.t; };
+
+    let cuerpo = "";
+    if (ed) {
+      if (AVISOS.tarde.length) cuerpo += `<h5>Ya tendrían que haber salido</h5>` +
+        AVISOS.tarde.map(m => linea(m.id, " urgente", "!", esc(m.criterio || "Mensaje"),
+          `${m.fecha.slice(8)}/${m.fecha.slice(5, 7)} · ${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado} · ${cuando2(m.fecha)}`)).join("");
+      if (AVISOS.sale.length) cuerpo += `<h5>Sale hoy</h5>` +
+        AVISOS.sale.map(m => linea(m.id, "", "📤", esc(m.criterio || "Mensaje"),
+          ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado)).join("");
+
+      // Las sugerencias se agrupan por día: un bloque, no un aviso por cada una.
+      if (AVISOS.sugs.length) {
+        const porDia = {};
+        AVISOS.sugs.forEach(g => { const d = String(g.creado).slice(0, 10); (porDia[d] = porDia[d] || []).push(g); });
+        cuerpo += `<h5>Sugerencias sin resolver</h5>`;
+        Object.keys(porDia).sort().reverse().forEach(d => {
+          const c = cuando(d);
+          cuerpo += `<p class="ct-aviso-dia">${c.t === "hoy" ? "Hoy" : c.t === "ayer" ? "Ayer" : d.slice(8) + "/" + d.slice(5, 7)} · ${porDia[d].length}</p>` +
+            porDia[d].map(g => linea(g.contenido_id, nuevo(g.creado), "✎",
+              `${esc(g.autor || "Alguien")} en <b>${esc((g._m || {}).criterio || "un mensaje")}</b>`,
+              `«${esc((g.original || "").slice(0, 40))}» → «${esc((g.propuesto || "").slice(0, 40))}»`)).join("");
+        });
+      }
+      if (AVISOS.coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
+        AVISOS.coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
+          `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "un mensaje")}</b>`,
+          esc((c.texto || "").slice(0, 60))).replace("</button>", "</button>")).join("");
+    } else if (AVISOS.mias.length) {
+      cuerpo += `<h5>Tus sugerencias</h5>` +
+        AVISOS.mias.slice(0, 15).map(g => linea(g.contenido_id, nuevo(g.decidido_en || g.creado),
+          g.decision === "aceptada" ? "✓" : "✗",
+          `<b>${g.decision === "aceptada" ? "Aceptada" : "Descartada"}</b>${g.decidido_por ? " por " + esc(g.decidido_por) : ""}`,
+          `«${esc((g.original || "").slice(0, 45))}»`)).join("");
+    }
+
+    return `<div class="ct-panel">
+      <div class="ct-panel-cab"><b>Avisos</b><button data-cerrar-panel="1" title="Cerrar">✕</button></div>
+      ${cuerpo || `<p class="ct-com-vacio" style="padding:14px">Nada pendiente por ahora.</p>`}
+    </div>`;
   }
 
   /* ===================== SUGERIR UN CAMBIO ===================== 
@@ -956,7 +1109,7 @@
       if (!sec || sec.classList.contains("hidden") || document.hidden) return;
       const foco = document.activeElement;
       if (foco && (foco.isContentEditable || foco.tagName === "TEXTAREA")) return;   // estás editando: no toco nada
-      await traerMes(MES); pintar();
+      await Promise.all([traerMes(MES), traerAvisos()]); pintar();
     }, 30000);
   }
 })();

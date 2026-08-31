@@ -1479,11 +1479,18 @@
     await fetchCostos();                            // costos sólo para admin/líder (la RLS filtra el resto)
     updatePreciosBtn();                             // el rol ya se resolvió al principio
     rerenderActive();
+    avisarContenidos();
+  }
+  // Contador de la solapa Contenidos (sugerencias sin resolver + lo que sale hoy).
+  // Lo calcula contenidos.js; acá sólo se lo dispara al terminar de arrancar.
+  function avisarContenidos() {
+    if (puedeVer("contenidos") && window.avisosContenidos) window.avisosContenidos();
   }
   // Arranque para roles SIN benchmark (ej. Diseño): no se descarga ese archivo.
   function bootSinBenchmark() {
     $("#metaLine").textContent = "";
     goToPage("inicio");                            // la Home ya se filtra por rol
+    avisarContenidos();
   }
   // Tiene cuenta pero nadie le asignó rol: no ve nada y se le dice por qué.
   function bootSinAcceso() {

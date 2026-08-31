@@ -325,3 +325,58 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 /* Aprobar bloqueado mientras haya sugerencias sin resolver */
 .btn-mini.trabado{opacity:.45;border-style:dashed;cursor:not-allowed}
 .btn-mini.trabado:hover{background:var(--card)}
+
+/* ============================================================
+   AVISOS — la campanita y su panel
+   ============================================================ */
+.ct-campana{position:relative;padding:8px 11px}
+.ct-campana.on{background:var(--olive);border-color:var(--olive)}
+.ct-punto{
+  position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;
+  background:var(--no);color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);
+  font-family:var(--font-body);line-height:1
+}
+/* el mismo contador, en la solapa del módulo de la barra de arriba */
+.ct-navpunto{
+  display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
+  padding:0 4px;margin-left:6px;background:var(--no);color:#fff;border-radius:999px;
+  font-size:10px;font-weight:700;line-height:1;vertical-align:middle
+}
+.mode-toggle button.active .ct-navpunto{background:#fff;color:var(--olive)}
+
+.ct-panel{
+  background:var(--card);border:1px solid var(--olive-soft);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;max-height:60vh;overflow-y:auto
+}
+.ct-panel-cab{
+  display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0
+}
+.ct-panel-cab b{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.11em;font-size:12px;color:var(--olive)}
+.ct-panel-cab button{border:0;background:transparent;color:var(--gray-soft);font-size:14px;padding:2px 6px;border-radius:6px}
+.ct-panel-cab button:hover{background:var(--olive-pale);color:var(--olive)}
+.ct-panel h5{
+  margin:0;padding:11px 16px 5px;font-family:var(--font-title);text-transform:uppercase;
+  letter-spacing:.11em;font-size:11px;color:var(--gray-soft);font-weight:600
+}
+.ct-aviso-dia{margin:0;padding:7px 16px 3px;font-size:11.5px;color:var(--olive);font-weight:600}
+.ct-aviso{
+  width:100%;display:flex;align-items:flex-start;gap:11px;text-align:left;border:0;
+  background:transparent;padding:9px 16px;font-family:var(--font-body);
+  border-left:3px solid transparent
+}
+.ct-aviso:hover{background:var(--olive-pale)}
+.ct-aviso.nuevo{border-left-color:var(--olive);background:#fbfbf4}
+.ct-aviso.urgente{border-left-color:var(--no)}
+.ct-aviso .ic{
+  width:24px;height:24px;border-radius:50%;background:var(--olive-pale);color:var(--olive);
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;margin-top:1px
+}
+.ct-aviso.urgente .ic{background:#f9eae7;color:var(--no);font-weight:700}
+.ct-aviso .tx{font-size:13.5px;color:var(--ink);min-width:0;flex:1;line-height:1.4}
+.ct-aviso .tx b{font-weight:600}
+.ct-aviso .tx small{
+  display:block;font-size:12px;color:var(--gray-soft);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}

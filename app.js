@@ -398,6 +398,9 @@
     sbUrl: SB.url,
     puedeVerContenidos: () => AUTHSES.logged() && puedeVer("contenidos"),
     puedeEditarContenidos: () => AUTHSES.logged() && puedeEditarContenidos(),
+    // La campanita de Contenidos junta avisos de TODOS los canales; para llevar a
+    // uno de otro canal necesita cambiar de página, y la navegación vive acá.
+    irA: p => goToPage(p),
   };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
@@ -2191,7 +2194,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2214,9 +2217,12 @@
       label: "Eventos",
       pages: [{ p: "eventos", t: "Check-in & Sorteo" }],
     },
+    // Un cronograma por canal, cada uno su propia página. Sumar LinkedIn son
+    // cuatro líneas: acá, en PAGES, en index.html y en CANALES de contenidos.js.
     contenidos: {
       label: "Contenidos",
-      pages: [{ p: "contenidos", t: "Comunidad de WhatsApp" }],
+      pages: [{ p: "contenidos", t: "💬 Comunidad de WhatsApp" },
+              { p: "contenidos-ig", t: "📸 Instagram" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2272,8 +2278,11 @@
     if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=139"; }
-    // Contenidos: cronograma de la comunidad (calendario + fichas + comentarios). Lo arma contenidos.js.
-    if (page === "contenidos" && window.renderContenidos) window.renderContenidos();
+    // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
+    // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
+    if (MOD_DE[page] === "contenidos" && window.renderContenidos) {
+      window.renderContenidos(page === "contenidos-ig" ? "instagram" : "whatsapp");
+    }
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }

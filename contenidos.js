@@ -23,7 +23,35 @@
   const head = extra => Object.assign({}, SES().head ? SES().head() : {}, extra || {});
   const puedeEditar = () => !!(SES().puedeEditarContenidos && SES().puedeEditarContenidos());
 
+  /* ---- Canales ----------------------------------------------------------
+     Un cronograma por canal, con la MISMA maquinaria: mes → piezas → estados
+     → comentarios → sugerencias → avisos. Lo único que cambia por canal son
+     las palabras y en qué contenedor se dibuja. La página la elige app.js y
+     nos pasa el canal: acá no se navega.
+     Sumar LinkedIn = una entrada acá + la página en app.js e index.html.     */
+  const CANALES = {
+    whatsapp: {
+      label: "Comunidad de WhatsApp", corto: "WhatsApp", icono: "💬",
+      caja: "#contenidos", pagina: "contenidos",
+      unidad: "mensaje", art: "un", unidadPl: "mensajes", nuevo: "Nuevo mensaje",
+      eyebrow: m => `Comunidad profesional de WhatsApp · ${cap(mesLabel(m))}`,
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias en cada mensaje. La edición y la aprobación las hace Coordinación.",
+    },
+    instagram: {
+      label: "Instagram", corto: "Instagram", icono: "📸",
+      caja: "#contenidos-ig", pagina: "contenidos-ig",
+      unidad: "pieza", art: "una", unidadPl: "piezas", nuevo: "Pieza nueva",
+      eyebrow: m => `Instagram · ${cap(mesLabel(m))}`,
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias en cada pieza. La edición y la aprobación las hace Coordinación.",
+    },
+  };
+
   /* ---- Estado en memoria ---- */
+  let CANAL = "whatsapp";  // canal abierto; lo fija app.js al entrar a la página
+  const C = () => CANALES[CANAL] || CANALES.whatsapp;
+  const caja = () => $(C().caja);
+  const enc = s => encodeURIComponent(s);
+  const ULTIMO = {};     // canal -> último mes abierto, para volver donde estabas
   let MESES = [];        // [{mes, titulo, ...}] — para el selector
   let MES = "";          // mes abierto ('2026-09')
   let CAB = null;        // fila de contenidos_meses del mes abierto
@@ -34,6 +62,11 @@
   let FOCO = "";         // ficha a resaltar al venir desde el calendario
   let FILTRO = "todos";  // recorte activo — responde "¿qué me falta mirar?"
   let TIMER = null;
+  let PENDIENTE = null;  // {canal, id, mes} — aviso de otro canal, se abre al llegar
+  let PLACA = {};        // contenido_id -> placa abierta en la ficha
+  let PREV = [];         // piezas ya publicadas de meses anteriores (contexto del feed)
+  let FEEDNOTA = "";     // qué pasó en el último arrastre, para no mover fechas a ciegas
+  let CALNOTA = "";      // qué pieza se movió de día en el calendario, y a dónde
 
   const ESTADOS = {
     borrador: { t: "Borrador" },
@@ -63,6 +96,13 @@
   const aFecha = s => { const p = String(s || "").split("-"); return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1); };
   const mesLabel = m => { const p = String(m || "").split("-"); return p.length < 2 ? m : `${MES_NOMBRE[(+p[1]) - 1] || ""} ${p[0]}`; };
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  // Corta por palabra entera, no a la mitad: "…ambiente por" queda feo.
+  const recorte = (s, n) => {
+    s = String(s || "").trim();
+    if (s.length <= n) return s;
+    const c = s.slice(0, n);
+    return c.slice(0, Math.max(c.lastIndexOf(" "), n - 12)).trim() + "…";
+  };
   const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
   // Un cronograma se lee en relación a hoy: "en 3 días" dice más que "11/09".
@@ -166,28 +206,67 @@
     return ruta.split(".").reduce((o, k) => (o == null ? undefined : o[k]), fila);
   }
 
+  /* ---- Instagram: placas ------------------------------------------------
+     Una pieza de Instagram son N frames: un post o un reel tienen uno, un
+     carrusel varios. Cada placa se aprueba SOLA y el copy es un ítem más; el
+     estado de la pieza no se guarda, lo deriva el trigger de la base
+     (ver 2026-09-03-canales.sql). Acá sólo se dibuja lo mismo que calcula él.  */
+  const esURL = s => /^https?:\/\//i.test(String(s || "").trim());
+  const placasDe = m => (Array.isArray(m.placas) && m.placas.length) ? m.placas : [];
+  // La imagen sale del PNG congelado o del link cargado a mano. Cuando entre
+  // Figma, `png` lo va a llenar el render y esto no cambia.
+  function imagenDe(m, i) {
+    const pl = placasDe(m)[i] || {};
+    if (esURL(pl.png)) return pl.png;
+    if (esURL(pl.url)) return pl.url;
+    if (i === 0 && esURL((m.meta || {}).imagen)) return m.meta.imagen;
+    return "";
+  }
+  // Comentarios sin resolver de UNA placa (1..n) o de la pieza entera (null).
+  // Reusa `variante`, que existía para las variantes de WhatsApp y no se usaba.
+  const comsPlaca = (m, n) => (COMS[m.id] || []).filter(c =>
+    c.tipo !== "sugerencia" && !c.resuelto &&
+    (n === null ? c.variante == null : +c.variante === n));
+  const placasListas = m => placasDe(m).filter(p => p.estado === "aprobado").length;
+  // Las placas mandan sólo cuando existen: una pieza sin placas sigue el flujo viejo.
+  const porPlacas = m => CANAL === "instagram" && placasDe(m).length > 0;
+
   /* ========================= DATOS ========================= */
   async function traerMeses() {
-    const r = await fetch(url("contenidos_meses?select=*&order=mes.desc"), { headers: head() });
+    const r = await fetch(url(`contenidos_meses?canal=eq.${CANAL}&select=*&order=mes.desc`), { headers: head() });
     MESES = r.ok ? await r.json() : [];
   }
   async function traerMes(mes) {
     if (!mes) { CAB = null; MSGS = []; COMS = {}; return; }
+    ULTIMO[CANAL] = mes;
     const [rc, rm] = await Promise.all([
-      fetch(url(`contenidos_meses?mes=eq.${encodeURIComponent(mes)}&select=*`), { headers: head() }),
-      fetch(url(`contenidos?mes=eq.${encodeURIComponent(mes)}&select=*&order=fecha.asc,orden.asc`), { headers: head() }),
+      fetch(url(`contenidos_meses?mes=eq.${enc(mes)}&canal=eq.${CANAL}&select=*`), { headers: head() }),
+      fetch(url(`contenidos?mes=eq.${enc(mes)}&canal=eq.${CANAL}&select=*&order=fecha.asc,orden.asc`), { headers: head() }),
     ]);
     CAB = rc.ok ? (await rc.json())[0] || null : null;
     MSGS = rm.ok ? await rm.json() : [];
     COMS = {};
+    await traerPrevias();
     if (MSGS.length) {
       const ids = MSGS.map(m => m.id).join(",");
       const rk = await fetch(url(`contenidos_comentarios?contenido_id=in.(${ids})&select=*&order=creado.asc`), { headers: head() });
       if (rk.ok) (await rk.json()).forEach(c => { (COMS[c.contenido_id] = COMS[c.contenido_id] || []).push(c); });
     }
   }
-  async function guardarCampo(id, col, val) {
-    const body = {}; body[col] = val;
+  // El feed necesita lo YA PUBLICADO de los meses anteriores: mirar la fila nueva
+  // en el vacío no dice nada. Nueve alcanzan para ver tres filas de contexto.
+  async function traerPrevias() {
+    PREV = [];
+    if (CANAL !== "instagram" || !MES) return;
+    const r = await fetch(url(`contenidos?canal=eq.${CANAL}&mes=lt.${enc(MES)}` +
+      `&select=id,mes,fecha,criterio,tipo,placas,meta,estado&order=fecha.desc&limit=9`), { headers: head() });
+    if (r.ok) PREV = await r.json();
+  }
+
+  const guardarCampo = (id, col, val) => guardarCampos(id, { [col]: val });
+  // Varias columnas de una: reordenar el feed toca fecha Y orden, y no tiene
+  // sentido pegarle dos veces a la base por cada pieza que se corre.
+  async function guardarCampos(id, body) {
     const r = await fetch(url(`contenidos?id=eq.${id}`), {
       method: "PATCH", headers: head({ Prefer: "return=representation" }), body: JSON.stringify(body),
     });
@@ -199,7 +278,7 @@
   }
   async function guardarCab(col, val) {
     const body = {}; body[col] = val;
-    const r = await fetch(url(`contenidos_meses?mes=eq.${encodeURIComponent(MES)}`), {
+    const r = await fetch(url(`contenidos_meses?mes=eq.${enc(MES)}&canal=eq.${CANAL}`), {
       method: "PATCH", headers: head({ Prefer: "return=representation" }), body: JSON.stringify(body),
     });
     if (r.ok) { const f = (await r.json())[0]; if (f) CAB = f; }
@@ -207,8 +286,24 @@
   }
 
   /* ========================= RENDER ========================= */
-  window.renderContenidos = async function () {
-    const cont = $("#contenidos"); if (!cont) return;
+  // app.js pasa el canal de la página en la que se entró. Cambiar de canal es
+  // vaciar lo que hay en memoria: cada uno trae sus meses, sus piezas y sus hilos.
+  window.renderContenidos = async function (canal) {
+    if (canal && CANALES[canal] && canal !== CANAL) {
+      CANAL = canal;
+      MESES = []; CAB = null; MSGS = []; COMS = {}; ABIERTOS = {};
+      MES = ULTIMO[CANAL] || "";
+      PANEL = false; FILTRO = "todos"; FOCO = ""; PREV = []; FEEDNOTA = ""; CALNOTA = "";
+      // El feed es de Instagram: volviendo a WhatsApp esa vista no existe.
+      if (VISTA === "feed" && CANAL !== "instagram") VISTA = "fichas";
+    }
+    // ¿Venimos de un aviso de este canal? Abrir el mes y la pieza que lo disparó.
+    if (PENDIENTE && PENDIENTE.canal === CANAL) {
+      if (PENDIENTE.mes) MES = PENDIENTE.mes;
+      VISTA = "fichas"; FOCO = PENDIENTE.id; ABIERTOS[PENDIENTE.id] = true;
+      PENDIENTE = null;
+    }
+    const cont = caja(); if (!cont) return;
     if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) {
       cont.innerHTML = `<div class="empty">No tenés acceso a esta sección.</div>`; return;
     }
@@ -224,7 +319,7 @@
   };
 
   function pintar() {
-    const cont = $("#contenidos"); if (!cont) return;
+    const cont = caja(); if (!cont) return;
     const ed = puedeEditar();
     cont.className = ed ? "ct-edit" : "";
 
@@ -236,7 +331,7 @@
           ${ed ? `<div class="ct-acc" style="justify-content:center;margin-top:14px">
                     <button class="btn-primary" data-acc="nuevo-mes">Crear un mes</button>
                     <button class="btn-ghost" data-acc="importar">⬆ Importar mes (.json)</button>
-                    <input type="file" id="ctFile" accept="application/json" hidden>
+                    <input type="file" class="ct-file" accept="application/json" hidden>
                   </div>`
                 : `<p class="ct-com-vacio">Pedile a Coordinación que cargue el mes.</p>`}
         </div>`;
@@ -244,7 +339,9 @@
     }
 
     cont.innerHTML = barraHTML(ed) + (PANEL ? panelHTML() : "") + cabeceraHTML(ed) +
-      (VISTA === "calendario" ? calendarioHTML() : fichasHTML(ed));
+      (VISTA === "calendario" ? calendarioHTML()
+       : VISTA === "feed" ? feedHTML(ed)
+       : fichasHTML(ed));
     pintarBadgeNav();
     enganchar();
 
@@ -269,34 +366,36 @@
     return `
       <div class="ct-bar">
         <div class="ct-bar-fila">
-          <select class="ct-mes" id="ctMes" title="Elegí el mes">
+          <select class="ct-mes" title="Elegí el mes">
             ${MESES.map(m => `<option value="${esc(m.mes)}" ${m.mes === MES ? "selected" : ""}>${cap(mesLabel(m.mes))} — ${esc(m.titulo || "sin título")}</option>`).join("")}
           </select>
           <div class="ct-vistas">
             <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">Calendario</button>
             <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">Fichas</button>
+            ${CANAL === "instagram" ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
+              title="Cómo va a quedar la grilla del perfil">Feed</button>` : ""}
           </div>
           <div class="ct-acc">
             <button class="btn-desc ct-campana ${PANEL ? "on" : ""}" data-campana="1" title="Avisos">🔔${(() => {
               const n = cuentaAvisos(); return n ? `<span class="ct-punto">${n > 9 ? "9+" : n}</span>` : "";
             })()}</button>
             <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
-            ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ Mensaje</button>
+            ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ ${cap(C().unidad)}</button>
                     <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
                     <button class="btn-desc" data-acc="importar" title="Cargar un mes desde un .json">⬆</button>
                     <button class="btn-desc" data-acc="exportar" title="Bajar este mes como .json">⬇</button>
-                    <input type="file" id="ctFile" accept="application/json" hidden>` : ""}
+                    <input type="file" class="ct-file" accept="application/json" hidden>` : ""}
           </div>
         </div>
         ${n ? `<div class="ct-bar-fila ct-fila-2">
-          <div class="ct-progreso" title="${aprobados} de ${n} mensajes aprobados">
+          <div class="ct-progreso" title="${aprobados} de ${n} ${C().unidadPl} aprobados">
             <div class="ct-barra"><span style="width:${pct}%"></span></div>
             <span class="ct-progreso-t"><b>${aprobados}</b>/${n} aprobados</span>
           </div>
           <div class="ct-filtros">${chips}</div>
         </div>` : ""}
       </div>
-      ${ed ? "" : `<div class="ct-solo-lectura">Podés leer todo el mes y dejar comentarios o sugerencias en cada mensaje. La edición y la aprobación las hace Coordinación.</div>`}`;
+      ${ed ? "" : `<div class="ct-solo-lectura">${C().lectura}</div>`}`;
   }
 
   function cabeceraHTML(ed) {
@@ -330,6 +429,7 @@
 
   /* ---- Vista calendario ---- */
   function calendarioHTML() {
+    const ed = puedeEditar();
     const p = String(MES).split("-");
     const anio = +p[0], mesIdx = (+p[1]) - 1;
     const primero = new Date(anio, mesIdx, 1);
@@ -340,16 +440,21 @@
     const porDia = {};
     MSGS.forEach(m => { (porDia[m.fecha] = porDia[m.fecha] || []).push(m); });
 
+    // Sólo los días DEL MES abierto son destino de arrastre (data-dia). Los de
+    // relleno (mes anterior/siguiente, grises) no reciben drop: mover una pieza
+    // ahí cambiaría también su "mes" de pertenencia, y eso mejor se hace a mano.
     const celda = (num, iso, fuera) => {
       const lista = porDia[iso] || [];
-      return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}">
+      return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}"
+          ${!fuera ? `data-dia="${iso}"` : ""}>
         <span class="num">${num}</span>
         <div class="ct-chips">${lista.map(m => {
           const nc = (COMS[m.id] || []).filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
           const ns = (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision).length;
           const nv = (m.variantes || []).length;
-          const fuera = !filtroActivo()(m) ? " apagado" : "";
-          return `<button class="ct-chip ${m.estado}${fuera}" data-ir="${m.id}" title="${esc(m.objetivo || "")}">
+          const apagado = !filtroActivo()(m) ? " apagado" : "";
+          return `<button class="ct-chip ${m.estado}${apagado}" data-ir="${m.id}" ${ed ? 'draggable="true"' : ""}
+              title="${esc(m.objetivo || "")}${ed ? " · arrastrá para cambiar el día" : ""}">
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
@@ -370,9 +475,130 @@
     for (let d = 1; d <= resto; d++) celdas += celda(d, "", true);
 
     return `<div class="ct-cal">
+      ${ed ? `<p class="ct-cal-tip">Arrastrá ${C().art} ${C().unidad} a otro día para cambiarle la fecha.</p>` : ""}
+      ${CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
       <div class="ct-cal-dias"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
       <div class="ct-cal-grid">${celdas}</div>
     </div>`;
+  }
+
+  /* ---- Vista feed (sólo Instagram) --------------------------------------
+     La grilla como la va a ver cualquiera que entre al perfil: lo más nuevo
+     arriba a la izquierda. Arriba de la franja, lo que viene; abajo, lo que ya
+     salió (incluidos los meses anteriores). Sin esa parte de abajo la fila
+     nueva se mira en el vacío y no se ve que van tres fotos oscuras seguidas.  */
+  function feedHTML(ed) {
+    if (!MSGS.length) {
+      return `<div class="empty"><div class="big">📸</div><p>Este mes todavía no tiene piezas.</p>
+        ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar la primera</button>` : ""}</div>`;
+    }
+    const hoy = hoyISO();
+    // Orden de Instagram: descendente por fecha. `orden` desempata dentro del día.
+    const orden = MSGS.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
+    const vienen = orden.filter(m => m.fecha >= hoy);
+    const salieron = orden.filter(m => m.fecha < hoy);
+    const contexto = PREV.filter(p => !MSGS.some(m => m.id === p.id));
+
+    const grilla = vienen.map(m => baldosaHTML(m, ed, false)).join("") +
+      (salieron.length || contexto.length
+        ? `<div class="ct-feed-corte"><span>↑ lo que viene · ↓ ya publicado</span></div>` : "") +
+      salieron.map(m => baldosaHTML(m, ed, false)).join("") +
+      contexto.map(m => baldosaHTML(m, ed, true)).join("");
+
+    const aprob = MSGS.filter(m => m.estado === "aprobado").length;
+    return `
+      <div class="ct-feed">
+        <div class="ct-feed-perfil">
+          <span class="av">L</span>
+          <div>
+            <b>leukiluminacion</b>
+            <small>${esc(cap(mesLabel(MES)))} · ${MSGS.length} ${MSGS.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas</small>
+          </div>
+          ${ed ? `<span class="ct-feed-tip">Arrastrá una pieza para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
+        </div>
+        ${FEEDNOTA ? `<p class="ct-feed-nota">${esc(FEEDNOTA)}</p>` : ""}
+        <div class="ct-grid">${grilla}</div>
+        <div class="ct-feed-ley">
+          <span><i class="borrador"></i>Borrador</span>
+          <span><i class="revision"></i>En revisión</span>
+          <span><i class="cambios"></i>Cambios pedidos</span>
+          <span><i class="aprobado"></i>Aprobado</span>
+          <span class="ct-feed-ley-nota">El punto es el estado de la pieza. La barra de abajo tiene un tramo por placa: cada una se aprueba sola.</span>
+        </div>
+      </div>`;
+  }
+
+  function baldosaHTML(m, ed, ajena) {
+    const pls = placasDe(m);
+    const img = imagenDe(m, 0);
+    const f = aFecha(m.fecha);
+    const fecha = `${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}`;
+    const n = pls.length;
+    const badge = m.tipo === "carrusel" ? `▦${n > 1 ? "&#8202;" + n : ""}` : m.tipo === "reel" ? "▶" : "";
+    // La barra de tramos: uno por placa. Sin placas cargadas, un tramo con el
+    // estado de la pieza — así una foto suelta y un carrusel se leen igual.
+    const segs = (n ? pls.map(p => p.estado || "borrador") : [m.estado])
+      .map(e => `<i class="${esc(e)}"></i>`).join("");
+
+    return `<button class="ct-bald ${ajena ? "ajena" : ""}" data-ir="${m.id}" data-bald="${m.id}"
+        ${ed && !ajena ? 'draggable="true"' : ""} title="${esc(m.criterio || "")}">
+      ${img ? `<img src="${esc(img)}" alt="" loading="lazy">`
+            : `<span class="ct-bald-ph"><span>${esc(m.criterio || "Sin título")}</span></span>`}
+      ${ajena ? "" : `<span class="ct-bald-est ${esc(m.estado)}"></span>`}
+      ${badge ? `<span class="ct-bald-tipo">${badge}</span>` : ""}
+      <span class="ct-bald-dia">${fecha}${ajena ? " · " + esc(mesLabel(m.mes).slice(0, 3)) : ""}</span>
+      ${ajena ? "" : `<span class="ct-bald-segs">${segs}</span>`}
+    </button>`;
+  }
+
+  /* Arrastrar = cambiar el lugar en la grilla. Las FECHAS se quedan donde
+     están y las piezas se acomodan a ellas: el mes sigue teniendo la misma
+     cadencia, lo que cambia es qué sale cada día. */
+  async function reordenarFeed(desdeId, hastaId) {
+    if (!desdeId || desdeId === hastaId) return;
+    const orden = MSGS.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
+    const i = orden.findIndex(x => x.id === desdeId), j = orden.findIndex(x => x.id === hastaId);
+    if (i < 0 || j < 0) return;
+    const fechas = orden.map(x => x.fecha);
+    const [mov] = orden.splice(i, 1); orden.splice(j, 0, mov);
+
+    // Además de la fecha se guarda el ORDEN, que es lo que desempata dos piezas
+    // del mismo día: sin esto, moverlas entre sí no quedaba guardado.
+    const total = orden.length;
+    const cambios = [];
+    orden.forEach((m, k) => {
+      const fecha = fechas[k], ord = total - 1 - k;
+      if (m.fecha !== fecha || (m.orden || 0) !== ord) cambios.push({ id: m.id, fecha, orden: ord });
+    });
+    if (!cambios.length) return;
+    try {
+      await Promise.all(cambios.map(c => guardarCampos(c.id, { fecha: c.fecha, orden: c.orden })));
+    } catch (e) { alert("No se pudo mover la pieza. Puede que no tengas permiso."); return; }
+
+    const nueva = (cambios.find(c => c.id === desdeId) || {}).fecha;
+    FEEDNOTA = `«${recorte(mov.criterio || "La pieza", 40)}» pasó al ${nueva ? nueva.slice(8) + "/" + nueva.slice(5, 7) : "nuevo lugar"}` +
+               ` · ${cambios.length} pieza${cambios.length > 1 ? "s" : ""} reacomodada${cambios.length > 1 ? "s" : ""}.`;
+    await traerMes(MES); pintar();
+    setTimeout(() => { if (FEEDNOTA) { FEEDNOTA = ""; if (VISTA === "feed") pintar(); } }, 6000);
+  }
+
+  /* Cambiar el día de una pieza — por arrastre en el calendario o por el
+     selector de fecha de la ficha. A diferencia del feed (donde arrastrar
+     reordena y la fecha NO se toca), acá el día de destino ES la fecha nueva. */
+  async function moverFecha(id, nuevaFecha, avisoFicha) {
+    const m = MSGS.find(x => x.id === id);
+    if (!m || !nuevaFecha || m.fecha === nuevaFecha) return;
+    try { await guardarCampo(id, "fecha", nuevaFecha); }
+    catch (e) {
+      if (avisoFicha) avisar(id, "No se pudo mover la fecha", false);
+      else alert("No se pudo mover la fecha. Puede que no tengas permiso.");
+      return;
+    }
+    const corta = nuevaFecha.slice(8) + "/" + nuevaFecha.slice(5, 7);
+    if (avisoFicha) { await traerMes(MES); pintar(); avisar(id, `Pasó al ${corta} ✓`, true); return; }
+    CALNOTA = `«${recorte(m.criterio || "La pieza", 40)}» pasó al ${corta}.`;
+    await traerMes(MES); pintar();
+    setTimeout(() => { if (CALNOTA) { CALNOTA = ""; if (VISTA === "calendario") pintar(); } }, 6000);
   }
 
   /* ---- Vista fichas ---- */
@@ -403,8 +629,9 @@
 
     return `<article class="ct-msg" data-id="${m.id}">
       <div class="ct-msg-bar">
-        <span class="ct-fecha">${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}
-          <small>${DIA_CORTO[f.getDay()]}</small></span>
+        <span class="ct-fecha ${ed ? "editable" : ""}" title="${ed ? "Cambiar el día" : ""}">${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}
+          <small>${DIA_CORTO[f.getDay()]}</small>
+          ${ed ? `<input type="date" class="ct-fecha-input" value="${m.fecha}" data-fechainput="${m.id}">` : ""}</span>
         <span class="ct-cuando ${cuando(m.fecha).c}">${cuando(m.fecha).t}</span>
         <span class="ct-crit"${e} data-c="criterio">${esc(m.criterio || "")}</span>
         <span class="ct-obj"${e} data-c="objetivo">${esc(m.objetivo || "")}</span>
@@ -424,6 +651,8 @@
         ${ed ? `<button class="btn-mini" data-addvar="1">+ Variante</button>` : ""}
       </div>` : ""}
 
+      ${placasHTML(m, ed)}
+
       <div class="ct-pie">
         <button class="btn-mini ${ABIERTOS[m.id] ? "on" : ""}" data-coms="${m.id}">
           ${pendSug ? `<span class="ct-badge sug">✎ ${pendSug}</span>` : ""}
@@ -435,6 +664,87 @@
       </div>
       ${ABIERTOS[m.id] ? comentariosHTML(m) : ""}
     </article>`;
+  }
+
+  /* ---- Las placas dentro de la ficha (sólo Instagram) --------------------
+     En la grilla se ve UNA placa, como en Instagram. Acá se ven todas, y cada
+     una se aprueba sola: "la foto 3 no, el resto sí" es lo que se dice de
+     verdad de un carrusel. El copy también se aprueba aparte.
+     Regla heredada de WhatsApp: con comentarios sin resolver no se aprueba —
+     pero acá traban SÓLO su placa, no la pieza entera.                       */
+  function placasHTML(m, ed) {
+    if (CANAL !== "instagram") return "";
+    const pls = placasDe(m);
+    const TIPOS = { post: "Post", carrusel: "Carrusel", reel: "Reel" };
+
+    if (!pls.length) {
+      return `<div class="ct-placas-blk vacio">
+        <p>Esta pieza todavía no tiene placas: mientras no las tenga, se aprueba entera como un mensaje.</p>
+        ${ed ? `<button class="btn-mini" data-addplaca="1">+ Agregar la primera placa</button>` : ""}
+      </div>`;
+    }
+
+    const i = Math.min(PLACA[m.id] || 0, pls.length - 1);
+    const act = pls[i] || {};
+    const traba = comsPlaca(m, i + 1).length;
+    const trabaCopy = comsPlaca(m, null).length;
+    const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
+    const chip = est => `<span class="ct-est ${esc(est)}">${ESTADOS[est] ? ESTADOS[est].t : esc(est)}</span>`;
+
+    return `<div class="ct-placas-blk">
+      <div class="ct-placas-cab">
+        <h5>${pls.length > 1 ? `Carrusel de ${pls.length} placas` : "La pieza"}</h5>
+        ${ed ? `<select class="ct-tipo" data-tipo="${m.id}" title="Cómo se publica">
+          ${Object.keys(TIPOS).map(k => `<option value="${k}" ${(m.tipo || "post") === k ? "selected" : ""}>${TIPOS[k]}</option>`).join("")}
+        </select>` : `<span class="ct-pill">${TIPOS[m.tipo] || "Post"}</span>`}
+        <span class="ct-placas-res"><b>${placasListas(m)}</b>/${pls.length} ${pls.length > 1 ? "placas aprobadas" : "aprobada"}
+          · copy ${(((ESTADOS[m.copy_estado] || {}).t) || "borrador").toLowerCase()}</span>
+      </div>
+
+      <div class="ct-placas">
+        ${pls.map((p, n) => {
+          const img = imagenDe(m, n);
+          const c = comsPlaca(m, n + 1).length;
+          return `<button class="ct-placa ${n === i ? "on" : ""}" data-placa="${m.id}:${n}" title="${esc(p.pie || "Placa " + (n + 1))}">
+            ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${n + 1}</span>`}
+            <span class="ct-placa-est ${esc(p.estado || "borrador")}"></span>
+            ${c ? `<span class="ct-placa-pin">${c}</span>` : ""}
+            <span class="ct-placa-n">${n + 1}</span>
+          </button>`;
+        }).join("")}
+        ${ed ? `<button class="ct-placa mas" data-addplaca="1" title="Sumar una placa">+</button>` : ""}
+      </div>
+
+      <div class="ct-placa-cap">
+        ${chip(act.estado || "borrador")}
+        <b>${pls.length > 1 ? `Placa ${i + 1} de ${pls.length}` : "Imagen"}</b>
+        <span class="ct-placa-pie"${e} data-c="placas.${i}.pie">${esc(act.pie || "")}</span>
+        ${traba ? `<span class="ct-placa-traba">· ${traba} comentario${traba > 1 ? "s" : ""} sin resolver acá</span>` : ""}
+      </div>
+
+      <dl class="ct-placa-datos">
+        <div><dt>Frame de Figma</dt><dd${e} data-c="placas.${i}.nodo">${esc(act.nodo || "")}</dd></div>
+        <div><dt>Imagen</dt><dd${e} data-c="placas.${i}.png">${esc(act.png || "")}</dd></div>
+      </dl>
+
+      ${ed ? `<div class="ct-placa-accs">
+        ${act.estado === "aprobado"
+          ? `<button class="btn-mini" data-placaest="${m.id}:${i}:revision">Reabrir esta placa</button>`
+          : traba
+            ? `<button class="btn-mini trabado" data-trabaplaca="${traba}">✓ Aprobar esta placa</button>`
+            : `<button class="btn-mini on" data-placaest="${m.id}:${i}:aprobado">✓ Aprobar esta placa</button>`}
+        ${act.estado === "cambios" ? "" : `<button class="btn-mini peligro" data-placaest="${m.id}:${i}:cambios">Pedir cambios acá</button>`}
+        <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕</button>
+        <span class="ct-placa-sep"></span>
+        ${(m.copy_estado || "borrador") === "aprobado"
+          ? `<button class="btn-mini" data-copyest="${m.id}:revision">Reabrir el copy</button>`
+          : trabaCopy
+            ? `<button class="btn-mini trabado" data-trabaplaca="${trabaCopy}">✓ Aprobar el copy</button>`
+            : `<button class="btn-mini on" data-copyest="${m.id}:aprobado">✓ Aprobar el copy</button>`}
+      </div>
+      ${traba || trabaCopy ? `<p class="ct-placa-nota">No se aprueba con comentarios abiertos. Resolvelos en el hilo de abajo y el botón se habilita.</p>` : ""}
+      <p class="ct-placa-nota tenue">El estado de la pieza sale de las placas y del copy: no se toca a mano.</p>` : ""}
+    </div>`;
   }
 
   function cuerpoHTML(o, pre, ed, m) {
@@ -468,6 +778,9 @@
   // El flujo: borrador → en revisión → aprobado, con "pedir cambios" como vuelta atrás.
   function accionesHTML(m, ed) {
     if (!ed) return "";
+    // Con placas, el estado de la pieza lo deriva la base de sus partes: no hay
+    // botón que valga, se aprueba placa por placa arriba.
+    if (porPlacas(m)) return `<button class="btn-mini peligro" data-del="1" title="Eliminar la pieza">✕</button>`;
     if (m.estado === "borrador" || m.estado === "cambios")
       return `<button class="btn-mini" data-est="revision" title="Marcarlo listo para que lo revisen">Mandar a revisión</button>
               <button class="btn-mini peligro" data-del="1" title="Eliminar el mensaje">✕</button>`;
@@ -516,7 +829,9 @@
         return `<div class="ct-com ${c.resuelto ? "resuelto" : ""}">
           <span class="av">${esc(iniciales(c.autor))}</span>
           <div class="cuerpo">
-            <div class="quien">${esc(c.autor || c.autor_email || "—")}<span class="cuando">${hace(c.creado)}</span></div>
+            <div class="quien">${esc(c.autor || c.autor_email || "—")}
+              ${c.variante ? `<span class="ct-com-var">en la placa ${+c.variante}</span>` : ""}
+              <span class="cuando">${hace(c.creado)}</span></div>
             <div class="texto">${esc(c.texto)}</div>
           </div>
           <div class="accs">
@@ -526,6 +841,10 @@
         </div>`;
       }).join("") : `<p class="ct-com-vacio">Sin comentarios todavía. Podés escribir acá abajo, o seleccionar un tramo del copy para sugerir cómo debería quedar.</p>`}
       <div class="ct-com-alta">
+        ${placasDe(m).length > 1 ? `<select class="ct-com-placa" data-nuevoplaca="${m.id}" title="¿Sobre qué es el comentario?">
+          <option value="">Toda la pieza</option>
+          ${placasDe(m).map((p, n) => `<option value="${n + 1}" ${(PLACA[m.id] || 0) === n ? "selected" : ""}>Placa ${n + 1}${p.pie ? " · " + esc(p.pie.slice(0, 22)) : ""}</option>`).join("")}
+        </select>` : ""}
         <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o una sugerencia…" rows="1"></textarea>
         <button class="btn-mini" data-enviar="${m.id}">Enviar</button>
       </div>
@@ -540,10 +859,65 @@
   }
 
   function enganchar() {
-    const cont = $("#contenidos"); if (!cont) return;
+    const cont = caja(); if (!cont) return;
 
-    const sel = $("#ctMes");
+    const sel = cont.querySelector(".ct-mes");
     if (sel) sel.onchange = async () => { MES = sel.value; ABIERTOS = {}; await traerMes(MES); pintar(); };
+
+    // Post / carrusel / reel: cambia el badge de la grilla, no el contenido.
+    cont.querySelectorAll("[data-tipo]").forEach(s => {
+      s.onchange = async () => {
+        try { await guardarCampo(s.dataset.tipo, "tipo", s.value); pintar(); }
+        catch (e) { alert("No se pudo cambiar el tipo de pieza."); }
+      };
+    });
+
+    // Arrastrar baldosas del feed. Los listeners van por elemento (no se puede
+    // delegar drag) y se vuelven a poner en cada pintado, que es cuando corre esto.
+    let llevando = null;
+    cont.querySelectorAll('.ct-bald[draggable="true"]').forEach(b => {
+      b.addEventListener("dragstart", e => {
+        llevando = b.dataset.bald; b.classList.add("llevando");
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", llevando); } catch (x) { }
+      });
+      b.addEventListener("dragend", () => { llevando = null; b.classList.remove("llevando"); });
+      b.addEventListener("dragover", e => { e.preventDefault(); b.classList.add("destino"); });
+      b.addEventListener("dragleave", () => b.classList.remove("destino"));
+      b.addEventListener("drop", e => {
+        e.preventDefault(); b.classList.remove("destino");
+        const desde = llevando || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+        reordenarFeed(desde, b.dataset.bald);
+      });
+    });
+
+    // Arrastrar en el CALENDARIO: soltar sobre un día cambia la fecha real de la
+    // pieza (al revés que en el feed). El drop se escucha en el día (.ct-dia), no
+    // en cada chip, así soltar en un hueco vacío del día también funciona.
+    let llevandoCal = null;
+    cont.querySelectorAll('.ct-chip[draggable="true"]').forEach(ch => {
+      ch.addEventListener("dragstart", e => {
+        llevandoCal = ch.dataset.ir; ch.classList.add("llevando");
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", llevandoCal); } catch (x) { }
+      });
+      ch.addEventListener("dragend", () => { llevandoCal = null; ch.classList.remove("llevando"); });
+    });
+    cont.querySelectorAll(".ct-dia[data-dia]").forEach(dia => {
+      dia.addEventListener("dragover", e => { e.preventDefault(); dia.classList.add("destino"); });
+      dia.addEventListener("dragleave", () => dia.classList.remove("destino"));
+      dia.addEventListener("drop", e => {
+        e.preventDefault(); dia.classList.remove("destino");
+        const desde = llevandoCal || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+        moverFecha(desde, dia.dataset.dia);
+      });
+    });
+
+    // El selector de fecha de la ficha: alternativa al arrastre para quien no
+    // puede arrastrar (celular) o quiere elegir un día puntual sin ir al calendario.
+    cont.querySelectorAll("[data-fechainput]").forEach(inp => {
+      inp.addEventListener("change", () => { if (inp.value) moverFecha(inp.dataset.fechainput, inp.value, true); });
+    });
 
     cont.onclick = async ev => {
       const t = ev.target;
@@ -565,13 +939,22 @@
       }
       if (t.closest("[data-cerrar-panel]")) { PANEL = false; pintar(); return; }
 
-      // un aviso lleva a su mensaje, cambiando de mes si hace falta
+      // un aviso lleva a su pieza, cambiando de mes —y de canal— si hace falta
       const av = t.closest("[data-ir-aviso]");
       if (av) {
         const idm = av.dataset.irAviso;
         const dato = [...AVISOS.sale, ...AVISOS.tarde].find(x => x.id === idm)
           || [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x._m).find(x => x && x.id === idm);
-        PANEL = false; VISTA = "fichas"; FILTRO = "todos"; FOCO = idm; ABIERTOS[idm] = true;
+        const destino = av.dataset.irCanal || CANAL;
+        PANEL = false; VISTA = "fichas"; FILTRO = "todos";
+        // Otro canal = otra página. Se deja anotado a dónde ir y se navega: al
+        // volver a entrar, renderContenidos levanta la nota.
+        if (destino !== CANAL && CANALES[destino] && SES().irA) {
+          PENDIENTE = { canal: destino, id: idm, mes: dato && dato.mes };
+          SES().irA(CANALES[destino].pagina);
+          return;
+        }
+        FOCO = idm; ABIERTOS[idm] = true;
         if (dato && dato.mes && dato.mes !== MES) { MES = dato.mes; traerMes(MES).then(pintar); return; }
         pintar(); return;
       }
@@ -593,6 +976,57 @@
         const nuevo = est.dataset.est;
         try { await guardarCampo(id, "estado", nuevo); pintar(); }
         catch (e) { alert("No se pudo cambiar el estado. Puede que no tengas permiso."); }
+        return;
+      }
+
+      /* ---- Placas (Instagram) ---- */
+      const pSel = t.closest("[data-placa]");
+      if (pSel) {
+        const [pid, n] = pSel.dataset.placa.split(":");
+        PLACA[pid] = +n; pintar(); return;
+      }
+      const pEst = t.closest("[data-placaest]");
+      if (pEst) {
+        const [pid, n, nuevo] = pEst.dataset.placaest.split(":");
+        const m = MSGS.find(x => x.id === pid); if (!m) return;
+        const pls = placasDe(m).slice(); if (!pls[+n]) return;
+        pls[+n] = Object.assign({}, pls[+n], { estado: nuevo });
+        // El `estado` de la pieza lo recalcula el trigger de la base: no se manda.
+        try { await guardarCampo(pid, "placas", pls); pintar(); }
+        catch (e) { alert("No se pudo cambiar el estado de la placa. Puede que no tengas permiso."); }
+        return;
+      }
+      const cEst = t.closest("[data-copyest]");
+      if (cEst) {
+        const [pid, nuevo] = cEst.dataset.copyest.split(":");
+        try { await guardarCampo(pid, "copy_estado", nuevo); pintar(); }
+        catch (e) { alert("No se pudo cambiar el estado del copy."); }
+        return;
+      }
+      if (t.closest("[data-addplaca]")) {
+        const m = MSGS.find(x => x.id === id); if (!m) return;
+        const pls = placasDe(m).slice();
+        pls.push({ pie: "", nodo: "", png: "", estado: "borrador" });
+        await guardarCampo(id, "placas", pls);
+        PLACA[id] = pls.length - 1;
+        // Con más de una placa ya es un carrusel; con una sola no se toca el tipo.
+        if (pls.length > 1 && m.tipo !== "carrusel") await guardarCampo(id, "tipo", "carrusel");
+        pintar(); return;
+      }
+      const dp = t.closest("[data-delplaca]");
+      if (dp) {
+        const [pid, n] = dp.dataset.delplaca.split(":");
+        if (!confirm("¿Eliminar esta placa? Los comentarios que apunten a ella quedan sueltos.")) return;
+        const m = MSGS.find(x => x.id === pid); if (!m) return;
+        const pls = placasDe(m).slice(); pls.splice(+n, 1);
+        await guardarCampo(pid, "placas", pls);
+        PLACA[pid] = Math.max(0, +n - 1);
+        if (pls.length < 2 && m.tipo === "carrusel") await guardarCampo(pid, "tipo", "post");
+        pintar(); return;
+      }
+      const tp = t.closest("[data-trabaplaca]");
+      if (tp) {
+        alert(`Quedan ${tp.dataset.trabaplaca} comentario(s) sin resolver acá. Resolvelos en el hilo antes de aprobar.`);
         return;
       }
 
@@ -705,10 +1139,14 @@
   async function enviarComentario(id) {
     const ta = document.querySelector(`[data-nuevo="${id}"]`); if (!ta) return;
     const texto = ta.value.trim(); if (!texto) return;
+    // En un carrusel el comentario apunta a una placa: es lo que traba SU aprobación.
+    const selP = document.querySelector(`[data-nuevoplaca="${id}"]`);
+    const variante = selP && selP.value ? +selP.value : null;
     ta.disabled = true;
     const r = await fetch(url("contenidos_comentarios"), {
       method: "POST", headers: head({ Prefer: "return=representation" }),
-      body: JSON.stringify([{ contenido_id: id, texto, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }]),
+      body: JSON.stringify([{ contenido_id: id, texto, variante,
+        autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }]),
     });
     ta.disabled = false;
     if (!r.ok) { alert("No se pudo publicar el comentario."); return; }
@@ -744,7 +1182,7 @@
       const r = await fetch(url("contenidos_meses"), {
         method: "POST", headers: head({ Prefer: "return=representation" }),
         body: JSON.stringify([{
-          mes: m, titulo, eyebrow: `Comunidad profesional de WhatsApp · ${cap(mesLabel(m))}`,
+          mes: m, canal: CANAL, titulo, eyebrow: C().eyebrow(m),
           brief: [{ h: "Objetivo", p: "" }, { h: "Recursos", p: "" }, { h: "Cadencia", p: "" }],
           autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
         }]),
@@ -755,16 +1193,16 @@
 
     if (a === "nuevo-msg") {
       if (!MES) return;
-      const f = (prompt("Fecha del mensaje (AAAA-MM-DD):", `${MES}-01`) || "").trim();
+      const f = (prompt(`Fecha ${CANAL === "instagram" ? "de la pieza" : "del mensaje"} (AAAA-MM-DD):`, `${MES}-01`) || "").trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) { if (f) alert("El formato tiene que ser AAAA-MM-DD."); return; }
       const r = await fetch(url("contenidos"), {
         method: "POST", headers: head({ Prefer: "return=representation" }),
         body: JSON.stringify([{
-          mes: MES, fecha: f, criterio: "Nuevo mensaje", objetivo: "", copy: "", meta: {},
+          mes: MES, canal: CANAL, fecha: f, criterio: C().nuevo, objetivo: "", copy: "", meta: {},
           orden: MSGS.length, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
         }]),
       });
-      if (!r.ok) { alert("No se pudo crear el mensaje."); return; }
+      if (!r.ok) { alert(`No se pudo crear ${CANAL === "instagram" ? "la pieza" : "el mensaje"}.`); return; }
       VISTA = "fichas"; await traerMes(MES);
       FOCO = ((await r.json())[0] || {}).id || ""; pintar(); return;
     }
@@ -772,7 +1210,9 @@
     if (a === "exportar") return exportar();
 
     if (a === "importar") {
-      const f = $("#ctFile"); if (!f) return;
+      // El input vive DENTRO del contenedor del canal: con los dos canales en el
+      // DOM, un id global agarraba el de la página escondida.
+      const f = caja() && caja().querySelector(".ct-file"); if (!f) return;
       f.onchange = () => { const file = f.files[0]; if (file) importar(file); f.value = ""; };
       f.click(); return;
     }
@@ -781,7 +1221,8 @@
   function exportar() {
     if (!CAB) return;
     const d = {
-      mes: CAB.mes, titulo: CAB.titulo, eyebrow: CAB.eyebrow, dek: CAB.dek,
+      mes: CAB.mes, canal: CAB.canal || CANAL,
+      titulo: CAB.titulo, eyebrow: CAB.eyebrow, dek: CAB.dek,
       brief: CAB.brief, obras: CAB.obras,
       mensajes: MSGS.map(m => ({
         fecha: m.fecha, criterio: m.criterio, objetivo: m.objetivo, flag: m.flag || undefined,
@@ -789,11 +1230,17 @@
         encuesta: m.encuesta || undefined,
         lead: m.lead || undefined,
         variantes: (m.variantes || []).length ? m.variantes : undefined,
+        // Instagram: el carrusel y su aprobación por placa. WhatsApp no los trae.
+        tipo: m.tipo && m.tipo !== "post" ? m.tipo : undefined,
+        placas: (m.placas || []).length ? m.placas : undefined,
+        copy_estado: (m.placas || []).length ? m.copy_estado : undefined,
+        figma_file: m.figma_file || undefined,
       })),
     };
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" }));
-    a.download = `contenidos-${CAB.mes}.json`; a.click();
+    // El canal va en el nombre: un mes puede estar dos veces en la misma carpeta.
+    a.download = `contenidos-${CANAL}-${CAB.mes}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
@@ -802,12 +1249,22 @@
   async function importar(file) {
     let d; try { d = JSON.parse(await file.text()); } catch (e) { alert("Ese archivo no es un .json válido."); return; }
     if (!d || !d.mes || !Array.isArray(d.mensajes)) { alert("Al .json le falta 'mes' o 'mensajes'."); return; }
+
+    // Un .json sin canal es de antes de los canales: es de WhatsApp. Y si trae uno
+    // que no es el que estás mirando, se avisa en vez de mezclar los cronogramas.
+    const canalJson = d.canal || "whatsapp";
+    if (canalJson !== CANAL) {
+      alert(`Ese archivo es del cronograma de ${(CANALES[canalJson] || {}).corto || canalJson}` +
+            ` y estás parada en ${C().corto}.\n\nAbrí la solapa de ${(CANALES[canalJson] || {}).corto || canalJson} e importalo desde ahí.`);
+      return;
+    }
+
     const existe = MESES.some(x => x.mes === d.mes);
-    if (existe && !confirm(`${cap(mesLabel(d.mes))} ya está cargado.\n\nImportar REEMPLAZA sus mensajes y borra los comentarios que tengan. ¿Seguir?`)) return;
+    if (existe && !confirm(`${cap(mesLabel(d.mes))} de ${C().corto} ya está cargado.\n\nImportar REEMPLAZA sus ${C().unidadPl} y borra los comentarios que tengan. ¿Seguir?`)) return;
 
     const autor = SES().nombre ? SES().nombre() : "", email = SES().email ? SES().email() : "";
     const cab = {
-      mes: d.mes, titulo: d.titulo || "", eyebrow: d.eyebrow || "", dek: d.dek || "",
+      mes: d.mes, canal: CANAL, titulo: d.titulo || "", eyebrow: d.eyebrow || "", dek: d.dek || "",
       brief: d.brief || [], obras: d.obras || [],
       autor, autor_email: email,
     };
@@ -816,16 +1273,18 @@
     });
     if (!r.ok) { alert("No se pudo crear el mes. ¿Corriste el SQL de contenidos?"); return; }
 
-    if (existe) await fetch(url(`contenidos?mes=eq.${encodeURIComponent(d.mes)}`), { method: "DELETE", headers: head() });
+    if (existe) await fetch(url(`contenidos?mes=eq.${enc(d.mes)}&canal=eq.${CANAL}`), { method: "DELETE", headers: head() });
 
     const filas = d.mensajes.map((m, i) => ({
-      mes: d.mes, fecha: m.fecha, criterio: m.criterio || "", objetivo: m.objetivo || "",
+      mes: d.mes, canal: CANAL, fecha: m.fecha, criterio: m.criterio || "", objetivo: m.objetivo || "",
       flag: m.flag || "", copy: m.copy || "", meta: m.meta || {},
       encuesta: m.encuesta || null, lead: m.lead || "", variantes: m.variantes || [],
+      tipo: m.tipo || "post", placas: m.placas || [], copy_estado: m.copy_estado || "borrador",
+      figma_file: m.figma_file || null,
       estado: m.estado || "borrador", orden: i, autor, autor_email: email,
     }));
     r = await fetch(url("contenidos"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) });
-    if (!r.ok) { alert("El mes se creó pero fallaron los mensajes:\n" + (await r.text()).slice(0, 300)); }
+    if (!r.ok) { alert(`El mes se creó pero fallaron ${C().unidadPl}:\n` + (await r.text()).slice(0, 300)); }
 
     MES = d.mes; await traerMeses(); await traerMes(MES); pintar();
   }
@@ -852,7 +1311,8 @@
     const desde = `${atras.getFullYear()}-${String(atras.getMonth() + 1).padStart(2, "0")}-${String(atras.getDate()).padStart(2, "0")}`;
     try {
       const [rm, rs, rc] = await Promise.all([
-        fetch(url(`contenidos?fecha=gte.${desde}&fecha=lte.${hoy}&select=id,mes,fecha,criterio,estado&order=fecha.asc`), { headers: head() }),
+        // La campanita NO se filtra por canal: es una sola y avisa de todos.
+        fetch(url(`contenidos?fecha=gte.${desde}&fecha=lte.${hoy}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.sugerencia&select=*&order=creado.desc&limit=60"), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.comentario&resuelto=is.false&select=*&order=creado.desc&limit=40"), { headers: head() }),
       ]);
@@ -874,7 +1334,7 @@
       // nombre del mensaje al que pertenece cada sugerencia/comentario
       const ids = [...new Set([...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x.contenido_id))];
       if (ids.length) {
-        const r = await fetch(url(`contenidos?id=in.(${ids.join(",")})&select=id,mes,fecha,criterio`), { headers: head() });
+        const r = await fetch(url(`contenidos?id=in.(${ids.join(",")})&select=id,mes,canal,fecha,criterio`), { headers: head() });
         if (r.ok) {
           const por = {}; (await r.json()).forEach(m => { por[m.id] = m; });
           [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].forEach(x => { x._m = por[x.contenido_id]; });
@@ -915,19 +1375,25 @@
   function panelHTML() {
     const ed = puedeEditar(), v = vistoEn();
     const nuevo = ts => Date.parse(ts) > v ? " nuevo" : "";
-    const linea = (id, cls, ic, txt, sub) =>
-      `<button class="ct-aviso${cls}" data-ir-aviso="${id}"><span class="ic">${ic}</span>
-        <span class="tx">${txt}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
+    // Cada aviso sabe de qué canal es: si no es el que estás mirando, lo dice y
+    // el click cambia de solapa antes de llevarte a la pieza.
+    const linea = (id, cls, ic, txt, sub, canal) => {
+      const cn = canal || CANAL;
+      const otro = cn !== CANAL && CANALES[cn] ? ` <span class="ct-aviso-canal">${CANALES[cn].icono} ${esc(CANALES[cn].corto)}</span>` : "";
+      return `<button class="ct-aviso${cls}" data-ir-aviso="${id}" data-ir-canal="${esc(cn)}"><span class="ic">${ic}</span>
+        <span class="tx">${txt}${otro}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
+    };
     const cuando2 = f => { const c = cuando(f); return c.t; };
 
     let cuerpo = "";
     if (ed) {
       if (AVISOS.tarde.length) cuerpo += `<h5>Ya tendrían que haber salido</h5>` +
-        AVISOS.tarde.map(m => linea(m.id, " urgente", "!", esc(m.criterio || "Mensaje"),
-          `${m.fecha.slice(8)}/${m.fecha.slice(5, 7)} · ${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado} · ${cuando2(m.fecha)}`)).join("");
+        AVISOS.tarde.map(m => linea(m.id, " urgente", "!", esc(m.criterio || "Sin título"),
+          `${m.fecha.slice(8)}/${m.fecha.slice(5, 7)} · ${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado} · ${cuando2(m.fecha)}`,
+          m.canal)).join("");
       if (AVISOS.sale.length) cuerpo += `<h5>Sale hoy</h5>` +
-        AVISOS.sale.map(m => linea(m.id, "", "📤", esc(m.criterio || "Mensaje"),
-          ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado)).join("");
+        AVISOS.sale.map(m => linea(m.id, "", "📤", esc(m.criterio || "Sin título"),
+          ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado, m.canal)).join("");
 
       // Las sugerencias se agrupan por día: un bloque, no un aviso por cada una.
       if (AVISOS.sugs.length) {
@@ -938,20 +1404,21 @@
           const c = cuando(d);
           cuerpo += `<p class="ct-aviso-dia">${c.t === "hoy" ? "Hoy" : c.t === "ayer" ? "Ayer" : d.slice(8) + "/" + d.slice(5, 7)} · ${porDia[d].length}</p>` +
             porDia[d].map(g => linea(g.contenido_id, nuevo(g.creado), "✎",
-              `${esc(g.autor || "Alguien")} en <b>${esc((g._m || {}).criterio || "un mensaje")}</b>`,
-              `«${esc((g.original || "").slice(0, 40))}» → «${esc((g.propuesto || "").slice(0, 40))}»`)).join("");
+              `${esc(g.autor || "Alguien")} en <b>${esc((g._m || {}).criterio || "algo del mes")}</b>`,
+              `«${esc((g.original || "").slice(0, 40))}» → «${esc((g.propuesto || "").slice(0, 40))}»`,
+              (g._m || {}).canal)).join("");
         });
       }
       if (AVISOS.coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
         AVISOS.coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
-          `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "un mensaje")}</b>`,
-          esc((c.texto || "").slice(0, 60))).replace("</button>", "</button>")).join("");
+          `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "algo del mes")}</b>`,
+          esc((c.texto || "").slice(0, 60)), (c._m || {}).canal)).join("");
     } else if (AVISOS.mias.length) {
       cuerpo += `<h5>Tus sugerencias</h5>` +
         AVISOS.mias.slice(0, 15).map(g => linea(g.contenido_id, nuevo(g.decidido_en || g.creado),
           g.decision === "aceptada" ? "✓" : "✗",
           `<b>${g.decision === "aceptada" ? "Aceptada" : "Descartada"}</b>${g.decidido_por ? " por " + esc(g.decidido_por) : ""}`,
-          `«${esc((g.original || "").slice(0, 45))}»`)).join("");
+          `«${esc((g.original || "").slice(0, 45))}»`, (g._m || {}).canal)).join("");
     }
 
     return `<div class="ct-panel">
@@ -1105,7 +1572,7 @@
   function arrancarRefresco() {
     if (TIMER) return;
     TIMER = setInterval(async () => {
-      const sec = $("#page-contenidos");
+      const sec = $("#page-" + C().pagina);
       if (!sec || sec.classList.contains("hidden") || document.hidden) return;
       const foco = document.activeElement;
       if (foco && (foco.isContentEditable || foco.tagName === "TEXTAREA")) return;   // estás editando: no toco nada

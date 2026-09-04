@@ -296,7 +296,8 @@
     // `error` con 200 = respuesta parcial: Figma cortó por cuota. Medido en la prueba
     // real: el corte dura bastante más de un minuto, así que insistir en cada carga de
     // mes sólo lo estira. Se espera, y el botón ◈ Piezas sigue pudiendo forzar.
-    FIGMA = { estado: "ok", msg: d.error || "", espera: d.error ? Date.now() + 5 * 60000 : 0 };
+    const enfriar = d.reintentar_en ? (d.reintentar_en + 5) * 1000 : 5 * 60000;
+    FIGMA = { estado: "ok", msg: d.error || "", espera: d.error ? Date.now() + enfriar : 0 };
     return d;
   }
 
@@ -1360,7 +1361,9 @@
       await traerImagenes(true);
       const n = Object.keys(RENDER).length;
       const q = FIGMA.estado === "ok"
-        ? `${n} ${n === 1 ? "imagen traída" : "imágenes traídas"} de Figma.${FIGMA.msg ? " " + FIGMA.msg : ""}`
+        // Con un corte no tiene sentido abrir con "0 imágenes traídas": lo que hay
+        // que leer es cuánto esperar, no el marcador.
+        ? (FIGMA.msg ? FIGMA.msg : `${n} ${n === 1 ? "imagen traída" : "imágenes traídas"} de Figma.`)
         : FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase."
         : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase."
         : FIGMA.msg || "No se pudieron traer las imágenes.";

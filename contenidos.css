@@ -114,8 +114,24 @@
 .ct-chip b{font-weight:600;font-size:12.5px}
 .ct-chip .sub{color:var(--gray-soft);font-size:11px}
 .ct-chip .marcas{display:flex;gap:5px;align-items:center;color:var(--gray-soft);font-size:11px}
+.ct-chip{position:relative;cursor:pointer}
 .ct-chip[draggable="true"]{cursor:grab}
 .ct-chip.llevando{opacity:.35;cursor:grabbing}
+/* El ✥ alza la pieza sin arrastrarla: es el camino que sí funciona con el dedo. */
+.ct-mover{position:absolute;top:3px;right:3px;width:22px;height:22px;line-height:1;
+  border:1px solid var(--line);background:var(--card);color:var(--gray-soft);
+  border-radius:6px;font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s}
+.ct-chip:hover .ct-mover,.ct-chip.alzada .ct-mover{opacity:1}
+.ct-mover:hover{background:var(--olive-pale);border-color:var(--olive-soft);color:var(--ink)}
+.ct-chip.alzada{outline:2px solid var(--olive);outline-offset:1px;background:var(--olive-pale)}
+/* Con una pieza alzada, todo día es un destino y se nota que lo es. */
+.ct-cal-grid.eligiendo .ct-dia{cursor:pointer}
+.ct-cal-grid.eligiendo .ct-dia:hover{background:var(--olive-pale);
+  outline:2px dashed var(--olive);outline-offset:-2px}
+.ct-cal-grid.eligiendo .ct-dia.origen:hover{outline-style:solid;outline-color:var(--gray-soft)}
+.ct-cal-alzada{margin:0 0 8px;background:var(--olive-pale);border:1px solid var(--olive-soft);
+  border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ct-chip.borrador{border-left-color:var(--gray-soft)}
 .ct-chip.revision{border-left-color:var(--warn)}
 .ct-chip.cambios {border-left-color:var(--no)}
@@ -125,6 +141,8 @@
   .ct-cal-grid{grid-template-columns:1fr}
   .ct-dia{min-height:0;border-left:0;flex-direction:row;align-items:flex-start;gap:10px}
   .ct-dia.vacio{display:none}          /* en celular sólo los días con mensaje */
+  .ct-cal-grid.eligiendo .ct-dia.vacio{display:flex}  /* …salvo eligiendo destino */
+  .ct-mover{opacity:1}                 /* con el dedo no hay hover: siempre visible */
   .ct-dia .num{min-width:26px;padding-top:4px}
   .ct-dia .ct-chips{flex:1;display:flex;flex-direction:column;gap:6px}
 }

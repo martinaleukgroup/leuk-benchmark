@@ -67,6 +67,7 @@
   let PREV = [];         // piezas ya publicadas de meses anteriores (contexto del feed)
   let FEEDNOTA = "";     // qué pasó en el último arrastre, para no mover fechas a ciegas
   let CALNOTA = "";      // qué pieza se movió de día en el calendario, y a dónde
+  let MOVIENDO = "";     // pieza "levantada" a mano: el próximo día que se toque es su fecha nueva
 
   const ESTADOS = {
     borrador: { t: "Borrador" },
@@ -293,7 +294,7 @@
       CANAL = canal;
       MESES = []; CAB = null; MSGS = []; COMS = {}; ABIERTOS = {};
       MES = ULTIMO[CANAL] || "";
-      PANEL = false; FILTRO = "todos"; FOCO = ""; PREV = []; FEEDNOTA = ""; CALNOTA = "";
+      PANEL = false; FILTRO = "todos"; FOCO = ""; PREV = []; FEEDNOTA = ""; CALNOTA = ""; MOVIENDO = "";
       // El feed es de Instagram: volviendo a WhatsApp esa vista no existe.
       if (VISTA === "feed" && CANAL !== "instagram") VISTA = "fichas";
     }
@@ -440,45 +441,58 @@
     const porDia = {};
     MSGS.forEach(m => { (porDia[m.fecha] = porDia[m.fecha] || []).push(m); });
 
-    // Sólo los días DEL MES abierto son destino de arrastre (data-dia). Los de
-    // relleno (mes anterior/siguiente, grises) no reciben drop: mover una pieza
-    // ahí cambiaría también su "mes" de pertenencia, y eso mejor se hace a mano.
+    // TODOS los días son destino, los de relleno (mes anterior/siguiente) también:
+    // soltar ahí manda la pieza al mes vecino, y moverFecha se encarga de cambiarle
+    // también el `mes` de pertenencia y de abrir el mes al que fue a parar.
     const celda = (num, iso, fuera) => {
       const lista = porDia[iso] || [];
-      return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}"
-          ${!fuera ? `data-dia="${iso}"` : ""}>
+      const moviendoAca = MOVIENDO && lista.some(m => m.id === MOVIENDO);
+      return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}${moviendoAca ? " origen" : ""}"
+          data-dia="${iso}">
         <span class="num">${num}</span>
         <div class="ct-chips">${lista.map(m => {
           const nc = (COMS[m.id] || []).filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
           const ns = (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision).length;
           const nv = (m.variantes || []).length;
           const apagado = !filtroActivo()(m) ? " apagado" : "";
-          return `<button class="ct-chip ${m.estado}${apagado}" data-ir="${m.id}" ${ed ? 'draggable="true"' : ""}
-              title="${esc(m.objetivo || "")}${ed ? " · arrastrá para cambiar el día" : ""}">
+          const alzada = MOVIENDO === m.id ? " alzada" : "";
+          return `<div class="ct-chip ${m.estado}${apagado}${alzada}" data-ir="${m.id}" ${ed ? 'draggable="true"' : ""}
+              title="${esc(m.objetivo || "")}${ed ? " · arrastrá o tocá ✥ para cambiarle el día" : ""}">
+            ${ed ? `<button class="ct-mover" data-mover="${m.id}"
+              title="Mover a otro día">${MOVIENDO === m.id ? "✕" : "✥"}</button>` : ""}
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
-          </button>`;
+          </div>`;
         }).join("")}</div>
       </div>`;
     };
 
+    // Los días de relleno también llevan su fecha real: son destino como cualquier otro.
+    const iso = (y, mi, d) => { const f = new Date(y, mi, d), z = n => String(n).padStart(2, "0");
+      return `${f.getFullYear()}-${z(f.getMonth() + 1)}-${z(f.getDate())}`; };
+
     let celdas = "";
     // cola del mes anterior, para que la primera semana quede completa
     const prevDias = new Date(anio, mesIdx, 0).getDate();
-    for (let i = offset - 1; i >= 0; i--) celdas += celda(prevDias - i, "", true);
-    for (let d = 1; d <= dias; d++) {
-      celdas += celda(d, `${anio}-${String(mesIdx + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, false);
-    }
+    for (let i = offset - 1; i >= 0; i--) celdas += celda(prevDias - i, iso(anio, mesIdx - 1, prevDias - i), true);
+    for (let d = 1; d <= dias; d++) celdas += celda(d, iso(anio, mesIdx, d), false);
     const resto = (7 - ((offset + dias) % 7)) % 7;
-    for (let d = 1; d <= resto; d++) celdas += celda(d, "", true);
+    for (let d = 1; d <= resto; d++) celdas += celda(d, iso(anio, mesIdx + 1, d), true);
 
+    const alzada = MOVIENDO && MSGS.find(m => m.id === MOVIENDO);
     return `<div class="ct-cal">
-      ${ed ? `<p class="ct-cal-tip">Arrastrá ${C().art} ${C().unidad} a otro día para cambiarle la fecha.</p>` : ""}
+      ${alzada
+        ? `<p class="ct-cal-alzada">Elegí el día nuevo para <b>«${esc(recorte(alzada.criterio || C().unidad, 40))}»</b>
+             — cualquier día del calendario, incluidos los grises del mes de al lado.
+             <button class="btn-mini" data-mover="">Cancelar</button></p>`
+        : ed ? `<p class="ct-cal-tip">Para cambiar el día: arrastrá ${C().art} ${C().unidad} adonde quieras,
+             o tocá <b>✥</b> y después el día (así también anda en el celular).
+             Los días grises del mes de al lado también sirven.</p>` : ""}
       ${CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
       <div class="ct-cal-dias"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
-      <div class="ct-cal-grid">${celdas}</div>
+      <div class="ct-cal-grid${MOVIENDO ? " eligiendo" : ""}">${celdas}</div>
     </div>`;
   }
 
@@ -587,18 +601,54 @@
      reordena y la fecha NO se toca), acá el día de destino ES la fecha nueva. */
   async function moverFecha(id, nuevaFecha, avisoFicha) {
     const m = MSGS.find(x => x.id === id);
-    if (!m || !nuevaFecha || m.fecha === nuevaFecha) return;
-    try { await guardarCampo(id, "fecha", nuevaFecha); }
+    MOVIENDO = "";
+    if (!m || !nuevaFecha || m.fecha === nuevaFecha) { if (VISTA === "calendario") pintar(); return; }
+    // La fecha manda: si cae en otro mes, la pieza se muda de mes también. Antes
+    // sólo se tocaba `fecha` y la pieza quedaba colgada — seguía perteneciendo al
+    // mes viejo y desaparecía de su calendario. Por eso "no dejaba" mover.
+    const mesNuevo = nuevaFecha.slice(0, 7);
+    const cambiaMes = mesNuevo !== m.mes;
+    if (cambiaMes && !(await asegurarMes(mesNuevo))) {
+      const q = `No se pudo abrir ${mesLabel(mesNuevo)} para mudar ${C().art} ${C().unidad}.`;
+      if (avisoFicha) avisar(id, "No se pudo mover la fecha", false); else alert(q);
+      return;
+    }
+    try { await guardarCampos(id, cambiaMes ? { fecha: nuevaFecha, mes: mesNuevo } : { fecha: nuevaFecha }); }
     catch (e) {
       if (avisoFicha) avisar(id, "No se pudo mover la fecha", false);
       else alert("No se pudo mover la fecha. Puede que no tengas permiso.");
       return;
     }
     const corta = nuevaFecha.slice(8) + "/" + nuevaFecha.slice(5, 7);
-    if (avisoFicha) { await traerMes(MES); pintar(); avisar(id, `Pasó al ${corta} ✓`, true); return; }
-    CALNOTA = `«${recorte(m.criterio || "La pieza", 40)}» pasó al ${corta}.`;
+    const dice = cambiaMes ? `${corta} (${mesLabel(mesNuevo)})` : corta;
+    // Si se mudó de mes hay que seguirla: quedarse en el mes viejo es verla desaparecer.
+    if (cambiaMes) { MES = mesNuevo; await traerMeses(); }
+    if (avisoFicha) {
+      FOCO = id; await traerMes(MES); pintar();
+      avisar(id, `Pasó al ${dice} ✓`, true); return;
+    }
+    CALNOTA = `«${recorte(m.criterio || "La pieza", 40)}» pasó al ${dice}.` +
+      (cambiaMes ? ` Abrimos ${mesLabel(mesNuevo)} para que la sigas viendo.` : "");
+    FOCO = cambiaMes ? id : FOCO;
     await traerMes(MES); pintar();
-    setTimeout(() => { if (CALNOTA) { CALNOTA = ""; if (VISTA === "calendario") pintar(); } }, 6000);
+    setTimeout(() => { if (CALNOTA) { CALNOTA = ""; if (VISTA === "calendario") pintar(); } }, 8000);
+  }
+
+  /* El mes destino tiene que existir en contenidos_meses: la FK de contenidos es
+     (mes, canal). Si nadie lo abrió todavía se crea en el acto, vacío — mover una
+     pieza a octubre no puede depender de acordarse de crear octubre antes. */
+  async function asegurarMes(mes) {
+    if (MESES.some(x => x.mes === mes)) return true;
+    const r = await fetch(url("contenidos_meses"), {
+      method: "POST", headers: head({ Prefer: "return=representation,resolution=merge-duplicates" }),
+      body: JSON.stringify([{
+        mes, canal: CANAL, titulo: "", eyebrow: C().eyebrow(mes),
+        brief: [{ h: "Objetivo", p: "" }, { h: "Recursos", p: "" }, { h: "Cadencia", p: "" }],
+        autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
+      }]),
+    });
+    if (r.ok) await traerMeses();
+    return r.ok;
   }
 
   /* ---- Vista fichas ---- */
@@ -862,7 +912,7 @@
     const cont = caja(); if (!cont) return;
 
     const sel = cont.querySelector(".ct-mes");
-    if (sel) sel.onchange = async () => { MES = sel.value; ABIERTOS = {}; await traerMes(MES); pintar(); };
+    if (sel) sel.onchange = async () => { MES = sel.value; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); };
 
     // Post / carrusel / reel: cambia el badge de la grilla, no el contenido.
     cont.querySelectorAll("[data-tipo]").forEach(s => {
@@ -922,8 +972,24 @@
     cont.onclick = async ev => {
       const t = ev.target;
 
+      // Levantar / soltar una pieza a mano. Va ANTES que data-ir (el ✥ vive dentro
+      // del chip) y antes que data-dia, porque tocar el ✥ no es abrir la ficha.
+      const mv = t.closest("[data-mover]");
+      if (mv) {
+        const q = mv.dataset.mover;
+        MOVIENDO = (!q || q === MOVIENDO) ? "" : q;
+        if (MOVIENDO) VISTA = "calendario";
+        pintar(); return;
+      }
+      // Con una pieza alzada, el próximo día que se toca es su fecha nueva. Es el
+      // camino que sí funciona en el celular: el arrastre nativo no anda con el dedo.
+      if (MOVIENDO) {
+        const d = t.closest(".ct-dia[data-dia]");
+        if (d) { await moverFecha(MOVIENDO, d.dataset.dia); return; }
+      }
+
       const v = t.closest("[data-vista]");
-      if (v) { VISTA = v.dataset.vista; pintar(); return; }
+      if (v) { VISTA = v.dataset.vista; MOVIENDO = ""; pintar(); return; }
 
       const fl = t.closest("[data-filtro]");
       if (fl) { FILTRO = fl.dataset.filtro; pintar(); return; }

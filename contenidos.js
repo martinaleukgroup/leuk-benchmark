@@ -68,6 +68,12 @@
   let FEEDNOTA = "";     // qué pasó en el último arrastre, para no mover fechas a ciegas
   let CALNOTA = "";      // qué pieza se movió de día en el calendario, y a dónde
   let MOVIENDO = "";     // pieza "levantada" a mano: el próximo día que se toque es su fecha nueva
+  let RENDER = {};       // "archivo|nodo" -> URL del render de Figma (vive lo que dure la pestaña)
+  let CONGELADAS = {};   // path en Storage -> URL firmada del PNG congelado
+  // Por qué un estado y no un try/catch suelto: mientras no esté desplegada la
+  // función o cargado el token, la vista tiene que explicarlo una vez y seguir
+  // andando con los placeholders, no romperse ni reintentar en cada pintada.
+  let FIGMA = { estado: "", msg: "" };   // "" | ok | sin-funcion | sin-token | error
 
   const ESTADOS = {
     borrador: { t: "Borrador" },
@@ -218,7 +224,10 @@
   // Figma, `png` lo va a llenar el render y esto no cambia.
   function imagenDe(m, i) {
     const pl = placasDe(m)[i] || {};
-    if (esURL(pl.png)) return pl.png;
+    if (esURL(pl.png)) return pl.png;                       // URL pegada a mano
+    if (pl.png && CONGELADAS[pl.png]) return CONGELADAS[pl.png];   // PNG congelado al aprobar
+    if (m.figma_file && pl.nodo && RENDER[m.figma_file + "|" + pl.nodo])
+      return RENDER[m.figma_file + "|" + pl.nodo];          // render en vivo del frame
     if (esURL(pl.url)) return pl.url;
     if (i === 0 && esURL((m.meta || {}).imagen)) return m.meta.imagen;
     return "";
@@ -256,6 +265,7 @@
       const rk = await fetch(url(`contenidos_comentarios?contenido_id=in.(${ids})&select=*&order=creado.asc`), { headers: head() });
       if (rk.ok) (await rk.json()).forEach(c => { (COMS[c.contenido_id] = COMS[c.contenido_id] || []).push(c); });
     }
+    await traerImagenes();
   }
   // El feed necesita lo YA PUBLICADO de los meses anteriores: mirar la fila nueva
   // en el vacío no dice nada. Nueve alcanzan para ver tres filas de contexto.
@@ -265,6 +275,48 @@
     const r = await fetch(url(`contenidos?canal=eq.${CANAL}&mes=lt.${enc(MES)}` +
       `&select=id,mes,fecha,criterio,tipo,placas,meta,estado&order=fecha.desc&limit=9`), { headers: head() });
     if (r.ok) PREV = await r.json();
+  }
+
+  /* ---- Figma: las imágenes de las placas --------------------------------
+     El token no puede vivir acá (app/ es un repo público), así que todo pasa por
+     la Edge Function `figma-render`. Ver supabase/functions/figma-render.        */
+  async function fnFigma(body) {
+    if (FIGMA.estado === "sin-funcion" || FIGMA.estado === "sin-token") return null;  // ya sabemos, no insistir
+    let r;
+    try { r = await fetch(`${SES().sbUrl}/functions/v1/figma-render`, {
+      method: "POST", headers: head(), body: JSON.stringify(body) }); }
+    catch (e) { FIGMA = { estado: "error", msg: "No se pudo contactar al servidor." }; return null; }
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 404) { FIGMA = { estado: "sin-funcion", msg: "" }; return null; }
+    if (r.status === 503 && d.sin_token) { FIGMA = { estado: "sin-token", msg: "" }; return null; }
+    if (!r.ok) { FIGMA = { estado: "error", msg: d.error || `Error ${r.status}` }; return null; }
+    FIGMA = { estado: "ok", msg: d.error || "" };   // `error` con 200 = respuesta parcial
+    return d;
+  }
+
+  /* Una tanda por vista, nunca una por tarjeta: el plan Starter de Figma se queda
+     sin cuota con ~30 imágenes por minuto. Lo congelado gana sobre lo renderizado:
+     una placa aprobada tiene que mostrar lo que se aprobó, no lo que hay hoy. */
+  async function traerImagenes(forzar) {
+    if (CANAL !== "instagram") return;
+    const porArchivo = {}, paths = [];
+    const juntar = m => (m.placas || []).forEach(p => {
+      if (p.png && !esURL(p.png)) { if (!CONGELADAS[p.png] || forzar) paths.push(p.png); }
+      else if (m.figma_file && p.nodo && (forzar || !RENDER[m.figma_file + "|" + p.nodo]))
+        (porArchivo[m.figma_file] = porArchivo[m.figma_file] || new Set()).add(p.nodo);
+    });
+    MSGS.forEach(juntar); PREV.forEach(juntar);
+
+    const tareas = Object.keys(porArchivo).map(async fk => {
+      const d = await fnFigma({ accion: "render", file_key: fk, forzar: !!forzar,
+        nodos: [...porArchivo[fk]] });
+      if (d) for (const [nodo, u] of Object.entries(d.urls || {})) RENDER[fk + "|" + nodo] = u;
+    });
+    if (paths.length) tareas.push((async () => {
+      const d = await fnFigma({ accion: "ver", file_key: "-", paths: [...new Set(paths)] });
+      if (d) Object.assign(CONGELADAS, d.urls || {});
+    })());
+    await Promise.all(tareas);
   }
 
   const guardarCampo = (id, col, val) => guardarCampos(id, { [col]: val });
@@ -384,6 +436,8 @@
               const n = cuentaAvisos(); return n ? `<span class="ct-punto">${n > 9 ? "9+" : n}</span>` : "";
             })()}</button>
             <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
+            ${CANAL === "instagram" ? `<button class="btn-desc" data-acc="figma"
+              title="Volver a pedirle las imágenes a Figma. Hace falta porque el plan no avisa solo cuando cambia un diseño.">◈ Piezas</button>` : ""}
             ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ ${cap(C().unidad)}</button>
                     <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
                     <button class="btn-desc" data-acc="importar" title="Cargar un mes desde un .json">⬆</button>
@@ -677,7 +731,8 @@
       return `<div class="empty"><div class="big">✓</div><p>Ningún mensaje en «${esc(t)}».</p>
         <button class="btn-mini" data-filtro="todos" style="margin-top:10px">Ver todo el mes</button></div>`;
     }
-    return lista.map(m => fichaHTML(m, ed)).join("") + NOTA_PIE;
+    return (CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : "") +
+      lista.map(m => fichaHTML(m, ed)).join("") + NOTA_PIE;
   }
 
   // Una sola vez al pie, en vez de repetir la aclaración en cada ficha.
@@ -791,10 +846,17 @@
         <div><dt>Frame</dt><dd${e} data-c="placas.${i}.nodo">${esc(act.nodo || "")}</dd></div>
         <div><dt>Imagen</dt><dd${e} data-c="placas.${i}.png">${esc(act.png || "")}</dd></div>
       </dl>
-      ${figmaUrl(m, act)
-        ? `<p class="ct-placa-figma"><a href="${esc(figmaUrl(m, act))}" target="_blank" rel="noopener">◈ Abrir el frame en Figma</a>
-             <span class="tenue">La imagen todavía no se trae sola: por ahora el link te deja parada en el frame.</span></p>`
-        : `<p class="ct-placa-figma tenue">Sin frame de Figma cargado: pegá el archivo y el nodo arriba y aparece el link.</p>`}
+      ${figmaUrl(m, act) ? `<p class="ct-placa-figma">
+          <a href="${esc(figmaUrl(m, act))}" target="_blank" rel="noopener">◈ Abrir el frame en Figma</a>
+          <span class="tenue">${
+            act.png && !esURL(act.png)
+              ? `Imagen congelada${act.png_ts ? " el " + String(act.png_ts).slice(8, 10) + "/" + String(act.png_ts).slice(5, 7) : ""}: esto es lo que se aprobó, aunque el frame haya cambiado después.`
+            : FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase para ver la imagen acá."
+            : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase para ver la imagen acá."
+            : FIGMA.estado === "error" ? esc(FIGMA.msg || "No se pudo traer la imagen de Figma.")
+            : "La imagen se trae de Figma y se congela al aprobar esta placa."
+          }</span></p>`
+        : `<p class="ct-placa-figma tenue">Sin frame de Figma cargado: pegá el archivo y el nodo acá arriba y aparece el link.</p>`}
 
       ${ed ? `<div class="ct-placa-accs">
         ${act.estado === "aprobado"
@@ -1078,7 +1140,26 @@
         pls[+n] = Object.assign({}, pls[+n], { estado: nuevo });
         // El `estado` de la pieza lo recalcula el trigger de la base: no se manda.
         try { await guardarCampo(pid, "placas", pls); pintar(); }
-        catch (e) { alert("No se pudo cambiar el estado de la placa. Puede que no tengas permiso."); }
+        catch (e) { alert("No se pudo cambiar el estado de la placa. Puede que no tengas permiso."); return; }
+        // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame,
+        // así que sin guardar el PNG lo aprobado cambiaría solo cuando la
+        // diseñadora siga trabajando. Si falla, la aprobación igual queda hecha.
+        if (nuevo === "aprobado" && m.figma_file && pls[+n].nodo && !pls[+n].png) {
+          avisar(pid, "Congelando la imagen aprobada…", true);
+          const d = await fnFigma({ accion: "congelar", contenido_id: pid, placa: +n,
+            file_key: m.figma_file, nodo: pls[+n].nodo });
+          if (d && d.path) {
+            const con = placasDe(MSGS.find(x => x.id === pid) || m).slice();
+            con[+n] = Object.assign({}, con[+n], { png: d.path, png_ts: new Date().toISOString() });
+            try { await guardarCampo(pid, "placas", con); } catch (e) { /* la aprobación ya está */ }
+            if (d.url) CONGELADAS[d.path] = d.url;
+            pintar(); avisar(pid, "Imagen congelada ✓", true);
+          } else if (FIGMA.estado === "sin-token" || FIGMA.estado === "sin-funcion") {
+            avisar(pid, "Aprobada. La imagen se congela cuando esté conectado Figma.", true);
+          } else {
+            avisar(pid, "Aprobada, pero no se pudo congelar la imagen.", false);
+          }
+        }
         return;
       }
       const cEst = t.closest("[data-copyest]");
@@ -1258,6 +1339,25 @@
   /* ---- Acciones de la barra ---- */
   async function accion(a) {
     if (a === "refrescar") { await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]); pintar(); return; }
+
+    // Sin webhooks (plan Starter) nadie avisa que un diseño cambió: se vuelve a pedir.
+    // Sólo se repiden las NO congeladas; lo aprobado no se toca, para eso se congeló.
+    if (a === "figma") {
+      if (FIGMA.estado === "sin-funcion" || FIGMA.estado === "sin-token") FIGMA = { estado: "", msg: "" };
+      RENDER = {};
+      FEEDNOTA = CALNOTA = "";
+      await traerImagenes(true);
+      const n = Object.keys(RENDER).length;
+      const q = FIGMA.estado === "ok"
+        ? `${n} ${n === 1 ? "imagen traída" : "imágenes traídas"} de Figma.${FIGMA.msg ? " " + FIGMA.msg : ""}`
+        : FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase."
+        : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase."
+        : FIGMA.msg || "No se pudieron traer las imágenes.";
+      if (VISTA === "feed") FEEDNOTA = q; else CALNOTA = q;
+      pintar();
+      setTimeout(() => { FEEDNOTA = CALNOTA = ""; pintar(); }, 7000);
+      return;
+    }
 
     if (a === "nuevo-mes") {
       const m = (prompt("¿Qué mes? Formato AAAA-MM (ej: 2026-10)") || "").trim();

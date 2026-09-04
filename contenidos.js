@@ -73,7 +73,7 @@
   // Por qué un estado y no un try/catch suelto: mientras no esté desplegada la
   // función o cargado el token, la vista tiene que explicarlo una vez y seguir
   // andando con los placeholders, no romperse ni reintentar en cada pintada.
-  let FIGMA = { estado: "", msg: "" };   // "" | ok | sin-funcion | sin-token | error
+  let FIGMA = { estado: "", msg: "", espera: 0 };  // "" | ok | sin-funcion | sin-token | error
 
   const ESTADOS = {
     borrador: { t: "Borrador" },
@@ -293,7 +293,10 @@
     if (r.status === 404) { FIGMA = { estado: "sin-funcion", msg: "" }; return null; }
     if (r.status === 503 && d.sin_token) { FIGMA = { estado: "sin-token", msg: "" }; return null; }
     if (!r.ok) { FIGMA = { estado: "error", msg: d.error || `Error ${r.status}` }; return null; }
-    FIGMA = { estado: "ok", msg: d.error || "" };   // `error` con 200 = respuesta parcial
+    // `error` con 200 = respuesta parcial: Figma cortó por cuota. Medido en la prueba
+    // real: el corte dura bastante más de un minuto, así que insistir en cada carga de
+    // mes sólo lo estira. Se espera, y el botón ◈ Piezas sigue pudiendo forzar.
+    FIGMA = { estado: "ok", msg: d.error || "", espera: d.error ? Date.now() + 5 * 60000 : 0 };
     return d;
   }
 
@@ -301,7 +304,8 @@
      sin cuota con ~30 imágenes por minuto. Lo congelado gana sobre lo renderizado:
      una placa aprobada tiene que mostrar lo que se aprobó, no lo que hay hoy. */
   async function traerImagenes(forzar) {
-    if (CANAL !== "instagram") return;
+    if (CANAL !== "instagram") return false;
+    if (!forzar && FIGMA.espera && Date.now() < FIGMA.espera) return false;
     const porArchivo = {}, paths = [];
     const juntar = m => (m.placas || []).forEach(p => {
       if (p.png && !esURL(p.png)) { if (!CONGELADAS[p.png] || forzar) paths.push(p.png); }
@@ -1350,7 +1354,7 @@
     // Sin webhooks (plan Starter) nadie avisa que un diseño cambió: se vuelve a pedir.
     // Sólo se repiden las NO congeladas; lo aprobado no se toca, para eso se congeló.
     if (a === "figma") {
-      if (FIGMA.estado === "sin-funcion" || FIGMA.estado === "sin-token") FIGMA = { estado: "", msg: "" };
+      if (FIGMA.estado === "sin-funcion" || FIGMA.estado === "sin-token") FIGMA = { estado: "", msg: "", espera: 0 };
       RENDER = {};
       FEEDNOTA = CALNOTA = "";
       await traerImagenes(true);

@@ -265,7 +265,10 @@
       const rk = await fetch(url(`contenidos_comentarios?contenido_id=in.(${ids})&select=*&order=creado.asc`), { headers: head() });
       if (rk.ok) (await rk.json()).forEach(c => { (COMS[c.contenido_id] = COMS[c.contenido_id] || []).push(c); });
     }
-    await traerImagenes();
+    // A propósito SIN await: la primera tanda de un mes puede tardar (Figma renderiza
+    // por pedido) y el mes tiene que dibujarse igual, con los placeholders. Cuando las
+    // imágenes llegan se vuelve a pintar solo.
+    traerImagenes().then(hubo => { if (hubo) pintar(); });
   }
   // El feed necesita lo YA PUBLICADO de los meses anteriores: mirar la fila nueva
   // en el vacío no dice nada. Nueve alcanzan para ver tres filas de contexto.
@@ -316,7 +319,11 @@
       const d = await fnFigma({ accion: "ver", file_key: "-", paths: [...new Set(paths)] });
       if (d) Object.assign(CONGELADAS, d.urls || {});
     })());
+    if (!tareas.length) return false;
+    const antes = Object.keys(RENDER).length + Object.keys(CONGELADAS).length;
     await Promise.all(tareas);
+    // Devuelve si hay algo nuevo que mostrar: repintar por nada es parpadeo gratis.
+    return Object.keys(RENDER).length + Object.keys(CONGELADAS).length !== antes;
   }
 
   const guardarCampo = (id, col, val) => guardarCampos(id, { [col]: val });

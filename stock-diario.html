@@ -181,6 +181,66 @@ body { font-family: 'Roboto', sans-serif; background: #333; }
   color: #555; text-align: center;
 }
 
+/* --- REFERENCIAS DE DISPONIBILIDAD (al pie de la portada) ---
+   Punteo que explica qué significa cada etiqueta de color. Va dentro del
+   bloque de la portada, así queda antes del desglose de productos y viaja
+   siempre con ella (el exportador corta de a bloques, nunca dentro). */
+/* Banda de margen a margen: align-self:stretch la lleva al ancho del
+   contenido de .portada y los márgenes negativos la sacan por encima del
+   padding (48px a los lados, 40px abajo), para que el gris llegue a los
+   bordes de la hoja y cierre contra el borde inferior de la portada.
+   Si algún día cambia el padding de .portada hay que actualizar estos
+   valores: son la contracara exacta de ese padding. */
+.ref-disp {
+  align-self: stretch;
+  margin: 44px -48px -40px;
+  padding: 24px 48px;
+  background: #F2F2F2;
+}
+/* El grupo (título + columnas) se dimensiona a su contenido y se centra
+   en la hoja con margin auto. El título queda alineado al borde izquierdo
+   del grupo, no al de la hoja. Al no tener anchos fijos, el bloque se
+   recentra solo si cambian los textos o los nombres de las etiquetas. */
+.ref-disp-inner {
+  width: fit-content;
+  margin: 0 auto;
+}
+.ref-disp-titulo {
+  font-family: var(--font-titulo);
+  font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #111; text-align: left;
+  margin-bottom: 12px;
+}
+/* Dos columnas de referencias, ambas al ancho de su contenido. */
+.ref-disp-cols {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 76px;
+}
+/* Cada columna es a su vez una grilla de dos tramos: descripción y badge.
+   Al ser grilla, los badges de las filas de una misma columna quedan
+   alineados verticalmente aunque las descripciones midan distinto —sin
+   necesidad de fijar un ancho a mano, que se rompería si mañana cambia
+   un texto. justify-content:start evita que la grilla estire los tramos
+   hasta el borde de la columna. */
+.ref-disp-col {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 12px; row-gap: 9px;
+  align-items: center;
+  justify-content: start;
+  align-content: start;
+}
+/* Mostrar el badge de verdad (y no un cuadradito de color) evita que la
+   referencia y la etiqueta impresa puedan divergir. */
+.ref-disp-chip { display: flex; justify-content: flex-start; }
+.ref-disp-txt {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 0.74rem; font-weight: 400;
+  color: #333; letter-spacing: 0.02em;
+}
+
 /* --- HEADER DE SECCIÓN --- */
 .sec-header {
   background: var(--gris-hd);
@@ -276,7 +336,60 @@ body { font-family: 'Roboto', sans-serif; background: #333; }
    una línea más del mismo bloque, sin abrir el gap de 6px de la tarjeta. */
 .prod-nota {
   display: block;
+  color: #57614C;
+  /* Tamaño reducido SOLO lo necesario para que las notas largas
+     ("*DISPONIBLE EN VERSIÓN IP44 (USO EXTERIOR)") entren en 2 líneas
+     en lugar de 3 dentro de la tarjeta de la grilla de 5 columnas.
+     Medido: el corte 3→2 líneas está en 0.71rem; usamos 0.70rem para
+     dejar un mínimo margen (diferencia visual: 0.16px, imperceptible).
+     El line-height sigue heredado como 1.3 sin unidad, así que escala
+     solo con este font-size. */
+  font-size: 0.70rem;
 }
+
+/* --- NOTA INTERACTIVA (salto entre versiones IP20 / IP44) ---
+   Sólo las notas que tienen un destino REAL en el archivo del día reciben
+   la clase .prod-nota-link (ver activarLinksNota()). Si el producto de la
+   otra versión no vino con stock, la nota se queda como texto plano: se
+   sigue leyendo la aclaración técnica pero no hay link muerto. */
+.prod-nota-link { cursor: pointer; }
+.prod-nota-link:hover { text-decoration: underline; }
+
+/* Ícono de puntero de mouse al costado derecho del texto de la nota.
+   fill="currentColor" → hereda el color de .prod-nota, así que si algún
+   día cambia el verde se cambia en UN solo lugar.
+
+   El margin-right negativo iguala exactamente al ancho del ícono más su
+   margin-left (0.95em + 0.18em = 1.13em), de modo que el ícono APORTA
+   CERO ANCHO al renglón. Sin esto, el ícono entra en el cálculo de
+   centrado y empuja todo el texto hacia la izquierda (medido: 6.8px de
+   desvío en la última línea). Con esto, el texto centra como si el ícono
+   no existiera y el ícono queda apenas a la derecha del último carácter.
+   Todo en em para que no dependa del tamaño de fuente.
+
+   IMPORTANTE: si se toca margin-left hay que actualizar margin-right para
+   que sigan sumando cero, o el texto se descentra.
+   Separación ícono↔texto = margin-left (0.18em ≈ 2px al tamaño actual). */
+.nota-ico {
+  display: inline-block;
+  width: 0.95em; height: 0.95em;
+  margin-left: 0.18em;
+  margin-right: -1.13em;
+  vertical-align: -0.12em;
+}
+
+/* Resaltado momentáneo de las tarjetas destino al saltar (sólo preview) */
+@keyframes notaFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(87,97,76,0); }
+  15%, 60% { box-shadow: 0 0 0 3px rgba(87,97,76,0.45); }
+}
+.nota-flash { animation: notaFlash 1.6s ease-out; border-radius: 4px; }
+
+/* Durante el export nada de hover ni animaciones: html2canvas captura
+   el estado actual del DOM y un resaltado a medio camino quedaría quemado
+   en el JPG/PDF. */
+.exporting .prod-nota-link:hover { text-decoration: none; }
+.exporting .nota-flash { animation: none; box-shadow: none; }
 
 .prod-sku {
   font-family: 'Roboto Condensed', sans-serif;
@@ -284,28 +397,91 @@ body { font-family: 'Roboto', sans-serif; background: #333; }
   letter-spacing: 0.02em; text-align: center;
 }
 
-/* Badge "NUEVO" en esquina de foto */
+/* --- PILA DE BADGES sobre la foto ---
+   Columna anclada a la esquina superior DERECHA. Orden de arriba hacia
+   abajo: "Nuevo" y debajo el de disponibilidad. El align-items:flex-end
+   alinea los dos por su borde derecho, así quedan a plomo aunque midan
+   distinto de ancho.
+
+   Al ir apilados ya no hay riesgo de que "Nuevo" y "Stock muy bajo"
+   compitan por el ancho de la tarjeta, que era el caso que obligaba a
+   dejar que la fila se partiera en la versión anterior. */
+.badge-stack {
+  position: absolute; top: 6px; right: 6px;
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* --- BADGES DE DISPONIBILIDAD ---
+   Salen del mismo Excel de stock que ya alimenta el PDF: el campo `disp`
+   de STOCK_MAP. No hace falta cargar ningún archivo extra.
+   "SIN STOCK" no tiene badge: esos productos no se renderizan.
+
+   Tipografía: la misma que .badge-nuevo (mismo peso 800, mismo tracking,
+   mismas versalitas) pero en negro y un punto más chica.
+   0.55rem = 8.8px; un punto son 1.33px, así que 0.47rem ≈ 7.5px.
+   Deliberadamente NO se declara font-family: al no declararla hereda
+   exactamente lo mismo que .badge-nuevo, así que si algún día cambia la
+   fuente del documento los dos carteles la siguen juntos.
+   Sin sombra, a diferencia de .badge-nuevo.
+
+   Paleta: ALTO conserva el verde del Excel; MEDIO y BAJO pasan a pastel
+   para no competir en saturación, y ÚLTIMAS UNIDADES a gris claro.
+     ALTO #A9D08E · MEDIO #FBEF97 · BAJO #F8CBAD · ÚLTIMAS #CCCCCC (K 20%)
+   Todos con texto negro. */
+.badge-disp {
+  font-size: 0.47rem; font-weight: 800;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 3px;
+  white-space: nowrap;
+  color: #111;
+}
+.badge-disp-alto    { background: #A9D08E; }
+.badge-disp-medio   { background: #FBEF97; }
+.badge-disp-bajo    { background: #F8CBAD; }
+.badge-disp-ultimas { background: #CCCCCC; }
+
+/* Badge "NUEVO" en esquina de foto.
+   Pasa de verde a negro: el verde competía con el verde de ALTO y los dos
+   carteles conviven en la misma tarjeta. */
 .badge-nuevo {
-  position: absolute; top: 6px; left: 6px;
-  background: #8B9174; color: #fff;
+  background: #111; color: #fff;
   font-size: 0.55rem; font-weight: 800;
   letter-spacing: 1.2px; text-transform: uppercase;
   padding: 3px 7px; border-radius: 3px;
-  z-index: 2;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Badge "STOCK FINAL" (producto discontinuado) en esquina de foto.
-   El texto se uppercasea por CSS, igual que antes.
-   Mismo diseño y ubicación que .badge-nuevo, pero fondo NEGRO. */
+/* NOTA v30: el badge individual "STOCK FINAL" se retiró. Los productos
+   discontinuados ahora se agrupan al final de su familia bajo una banda
+   propia (.sub-header, abajo), así que el cartel por tarjeta era redundante.
+   La clase se deja definida por si algún archivo viejo la referencia. */
 .badge-descontinuado {
-  position: absolute; top: 6px; left: 6px;
   background: #000; color: #fff;
   font-size: 0.55rem; font-weight: 800;
   letter-spacing: 1.2px; text-transform: uppercase;
   padding: 3px 7px; border-radius: 3px;
-  z-index: 2;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* --- SUB-BANDA "DISPONIBLE HASTA AGOTAR STOCK" ---
+   Cierra cada familia que tenga productos discontinuados. Usa la misma
+   banda gris de margen a margen que el header de sección, con un margen
+   superior que la despega de la grilla de productos activos y deja claro
+   que es un cierre de la familia y no una familia nueva. */
+.sub-header {
+  background: var(--gris-hd);
+  padding: 9px 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 14px;
+}
+.sub-header-txt {
+  font-family: var(--font-titulo);
+  font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #111;
 }
 
 /* =========================================================
@@ -652,7 +828,8 @@ body { font-family: 'Roboto', sans-serif; background: #333; }
   page-break-inside: avoid;
   break-inside: avoid;
 }
-.sec-header { page-break-after: avoid; break-after: avoid; }
+.sec-header,
+.sub-header { page-break-after: avoid; break-after: avoid; }
 
 /* Toast/flash de feedback (foto copiada, etc) */
 .photo-flash {
@@ -1037,9 +1214,108 @@ function abreviar(nombre) {
    si vino con stock en el Excel del día.
    ---------------------------------------------------------------- */
 const NOTAS_SKU = {
+  // --- Adaptadores versión SLIM ---
   '7226': 'SLIM*',   // ACCESORIO ADAPTADOR 3EF II NG
   '7227': 'SLIM*',   // ACCESORIO ADAPTADOR 3EF II BL
+
+  // --- Prisma IP20 (interior): existe gemelo IP44 para exterior ---
+  '6736': '*DISPONIBLE EN VERSIÓN IP44 (USO EXTERIOR)',   // APLIQUE PRISMA NEGRO 12W 3CCT
+  '6737': '*DISPONIBLE EN VERSIÓN IP44 (USO EXTERIOR)',   // APLIQUE PRISMA BLANCO 12W 3CCT
+  '6847': '*DISPONIBLE EN VERSIÓN IP44 (USO EXTERIOR)',   // APLIQUE PRISMA BLANCO 20W 3CCT
+  '6848': '*DISPONIBLE EN VERSIÓN IP44 (USO EXTERIOR)',   // APLIQUE PRISMA NEGRO 20W 3CCT
+
+  // --- Prisma IP44 (exterior): existe gemelo IP20 para interior ---
+  '7216': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',   // APLIQUE PRISMA BL 12W IP44
+  '7217': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',   // APLIQUE PRISMA NG 12W IP44
+  '7218': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',   // APLIQUE PRISMA BL 20W IP44
+  '7219': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',   // APLIQUE PRISMA NG 20W IP44
+  '7248': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',
+  '7249': '*DISPONIBLE EN VERSIÓN IP20 (USO INTERIOR)',
 };
+
+/* ----------------------------------------------------------------
+   NOTAS INTERACTIVAS — SALTO ENTRE VERSIONES
+   ----------------------------------------------------------------
+   Los PRISMA existen en dos versiones que viven en secciones distintas
+   y lejanas del archivo (INTERIOR · DE TECHO · APLIQUE  vs
+   EXTERIOR · DE TECHO · APLIQUE). El cliente no recorre todo el PDF,
+   así que la nota de cada versión funciona como link a la otra.
+
+   El destino NO se define por nombre de sección (los títulos se arman
+   dinámicamente desde el Excel de familias y pueden cambiar): se define
+   por SKU.
+
+   MODO DE DESTINO — es distinto en cada dirección:
+     • 'seccion'  (interior → exterior): los PRISMA de exterior son una
+       familia chica y exclusiva, así que saltar al título de la sección
+       muestra el conjunto completo de un vistazo.
+     • 'producto' (exterior → interior): la sección INTERIOR · DE TECHO ·
+       APLIQUE es enorme; caer en su título dejaría al PRISMA perdido
+       entre decenas de productos. Se salta directo al PRIMER PRISMA de
+       interior que aparezca en el documento.
+
+   REGLA DE RECIPROCIDAD: la nota completa (texto + ícono) sólo se muestra
+   si hay al menos UN producto de la otra punta en el archivo del día. Si
+   una de las dos puntas quedó sin stock, la nota desaparece de ambos
+   lados: no queda ni botón que no lleve a ningún lado ni una bajada que
+   prometa una versión que no está publicada. Ver activarLinksNota().
+   ---------------------------------------------------------------- */
+const PRISMA_INTERIOR = ['6736', '6737', '6847', '6848'];
+const PRISMA_EXTERIOR = ['7216', '7217', '7218', '7219', '7248', '7249'];
+
+// SKU → { destinos: SKUs de la otra versión, modo: cómo aterrizar }
+const LINKS_NOTA = {};
+PRISMA_INTERIOR.forEach(sku => { LINKS_NOTA[sku] = { destinos: PRISMA_EXTERIOR, modo: 'seccion'  }; });
+PRISMA_EXTERIOR.forEach(sku => { LINKS_NOTA[sku] = { destinos: PRISMA_INTERIOR, modo: 'producto' }; });
+
+/* Ícono de puntero de mouse. SVG inline (verificado: html2canvas 1.4.1 lo
+   rasteriza bien) con fill="currentColor" para que herede el verde de la
+   nota automáticamente. */
+const ICONO_CURSOR =
+  '<svg class="nota-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+  '<path d="M4 2 L4 19 L8.4 14.8 L11.3 21 L14 19.7 L11.1 13.6 L17.5 13.4 Z"/>' +
+  '</svg>';
+
+/* ----------------------------------------------------------------
+   ESTADOS DE DISPONIBILIDAD
+   ----------------------------------------------------------------
+   Única fuente de verdad para las etiquetas de stock y para el punteo
+   de referencias de la portada: los dos se generan desde esta tabla,
+   así que no pueden quedar desfasados.
+
+   El dato de entrada es el campo `disp` de STOCK_MAP, que ya viene del
+   Excel de stock que se carga con el botón "Stock Excel". No hace falta
+   ningún archivo adicional.
+
+   La paleta parte de la del Excel (columna DISPONIBILIDAD) pero suaviza
+   los tonos saturados para que los carteles no compitan con la foto del
+   producto: ALTO conserva el verde original #A9D08E, MEDIO y BAJO pasan
+   a pastel (#FBEF97 y #F8CBAD) y ÚLTIMAS UNIDADES —que en el Excel no
+   tiene relleno— se muestra como STOCK MUY BAJO en gris K 20%.
+   Los valores concretos viven en el CSS (.badge-disp-*).
+
+   SIN STOCK no figura acá a propósito: esos productos no se renderizan,
+   así que una etiqueta para ese estado nunca se vería.
+   Los textos de referencia salen de las columnas J/K del Excel.
+   ---------------------------------------------------------------- */
+const ESTADOS_DISP = [
+  { disp: 'ALTO',             etiqueta: 'Alto',     clase: 'badge-disp-alto',    ref: 'Más de 50 unidades en stock' },
+  { disp: 'MEDIO',            etiqueta: 'Medio',    clase: 'badge-disp-medio',   ref: 'Entre 50 y 10 unidades en stock' },
+  { disp: 'BAJO',             etiqueta: 'Bajo',     clase: 'badge-disp-bajo',    ref: 'Entre 10 y 5 unidades en stock' },
+  { disp: 'ULTIMAS UNIDADES', etiqueta: 'Muy bajo', clase: 'badge-disp-ultimas', ref: 'Menos de 5 unidades en stock' },
+];
+
+// Índice por valor de `disp`. Se normaliza a mayúsculas y sin espacios
+// sobrantes porque en el Excel algunos rótulos vienen con espacio final
+// (por ejemplo "MEDIO ").
+const ESTADO_DISP_POR_CLAVE = {};
+ESTADOS_DISP.forEach(e => { ESTADO_DISP_POR_CLAVE[e.disp] = e; });
+
+function estadoDisponibilidad(sku) {
+  const p = STOCK_MAP[String(sku)];
+  if (!p || !p.disp) return null;
+  return ESTADO_DISP_POR_CLAVE[String(p.disp).trim().toUpperCase()] || null;
+}
 
 /* ----------------------------------------------------------------
    RENDER
@@ -1282,6 +1558,19 @@ function pesoSubfamilia(sku, ordenSubfamilias) {
   return 999;
 }
 
+// Devuelve un peso para ordenar SKUs dentro de una sección por la línea de
+// producto a la que pertenecen, según aparezca en el nombre. Sirve para
+// mantener juntas las familias comerciales (LAIVA, KRONE…) dentro de una
+// misma sección. Los que no coinciden con ninguna caen al final.
+function pesoLinea(sku, ordenLineas) {
+  const nombre = ((FAMILIAS_MAP[sku] && FAMILIAS_MAP[sku].nombre) ||
+                  (STOCK_MAP[sku]    && STOCK_MAP[sku].nombre)    || '').toUpperCase();
+  for (let i = 0; i < ordenLineas.length; i++) {
+    if (nombre.includes(ordenLineas[i])) return i;
+  }
+  return 999;
+}
+
 function aplicarOrdenInterno(secciones) {
   for (const sec of secciones) {
     const path = sec.path.join(' | ');
@@ -1319,16 +1608,25 @@ function aplicarOrdenInterno(secciones) {
       });
     }
 
-    // CONFORT VISUAL: KRONE primero (juntos), después el resto
+    // CONFORT VISUAL: LAIVA primero, después KRONE, después el resto.
+    //
+    // Por qué LAIVA va primero: las LAIVA nuevas (I y II) ya encabezan la
+    // sección porque el render pone SIEMPRE los productos NUEVO al comienzo,
+    // antes que el resto. Las LAIVA que no son nuevas (7065 / 7066) caían
+    // al final del bloque "resto" y quedaban separadas de sus compañeras
+    // por todas las KRONE y MIRACLE del medio. Poniéndolas al comienzo del
+    // resto quedan pegadas a las nuevas y la línea se lee como un conjunto.
+    //
+    // Esto NO toca el criterio de nuevos-primero ni ninguna otra lógica:
+    // sólo cambia el orden dentro de esta sección. KRONE sigue agrupada,
+    // ahora detrás de LAIVA.
     else if (path === 'INTERIOR | COLECCIÓN | CONFORT VISUAL') {
+      const orden = ['LAIVA', 'KRONE'];
       sec.skus.sort((a, b) => {
-        const nA = ((FAMILIAS_MAP[a] && FAMILIAS_MAP[a].nombre) || (STOCK_MAP[a] && STOCK_MAP[a].nombre) || '').toUpperCase();
-        const nB = ((FAMILIAS_MAP[b] && FAMILIAS_MAP[b].nombre) || (STOCK_MAP[b] && STOCK_MAP[b].nombre) || '').toUpperCase();
-        const aKR = nA.includes('KRONE');
-        const bKR = nB.includes('KRONE');
-        if (aKR && !bKR) return -1;
-        if (!aKR && bKR) return  1;
-        return a - b;  // dentro del mismo grupo, por SKU
+        const pa = pesoLinea(a, orden);
+        const pb = pesoLinea(b, orden);
+        if (pa !== pb) return pa - pb;
+        return a - b;  // dentro de la misma línea, por SKU
       });
     }
 
@@ -1360,11 +1658,38 @@ function render() {
       ? `<img src="${CUSTOM.logoUrl}" class="leuk-logo-img-custom" alt="LEUK Group">`
       : `<img src="assets/logo-leukgroup.png" class="leuk-logo-img-custom" alt="LEUK Group">`;
 
+    // Referencias: se arman desde ESTADOS_DISP, la misma tabla que emite
+    // los badges de las tarjetas, así que la leyenda no puede quedar
+    // desactualizada respecto de lo que realmente se imprime.
+    // Se reparten en dos columnas partiendo la lista al medio, así que si
+    // mañana se agrega o saca un estado el reparto se reacomoda solo.
+    const mitad = Math.ceil(ESTADOS_DISP.length / 2);
+    const columnaHTML = grupo => `
+      <div class="ref-disp-col">
+        ${grupo.map(e => `
+          <span class="ref-disp-txt">${e.ref}</span>
+          <span class="ref-disp-chip">
+<span class="badge-disp ${e.clase}">${e.etiqueta}</span>
+</span>`
+        ).join('')}
+      </div>`;
+    const refDispHTML = `
+      <div class="ref-disp">
+        <div class="ref-disp-inner">
+          <div class="ref-disp-titulo">Referencias</div>
+          <div class="ref-disp-cols">
+            ${columnaHTML(ESTADOS_DISP.slice(0, mitad))}
+            ${columnaHTML(ESTADOS_DISP.slice(mitad))}
+          </div>
+        </div>
+      </div>`;
+
     const portada = document.createElement('div');
     portada.className = 'portada';
     portada.innerHTML = `
       <div class="leuk-logo-wrap">${logoHTML}</div>
       <div class="titulo-stock">STOCK ACTUALIZADO LEUK ${fechaCortaElegida()}</div>
+      ${refDispHTML}
     `;
     area.appendChild(portada);
 
@@ -1415,6 +1740,15 @@ function render() {
 
       totalMostrados += skusVisibles.length;
 
+      // Caso borde: la familia entera está discontinuada (no queda ningún
+      // producto activo). Ahí la banda de cierre quedaría inmediatamente
+      // debajo del título de la familia, dando dos franjas grises pegadas
+      // sin nada en el medio. En ese caso se fusionan en una sola banda:
+      //   EXTERIOR | ESTACAS | ESTACA | DISPONIBLE HASTA AGOTAR STOCK
+      const soloDescontinuados =
+        descontinuadosVisibles.length > 0 &&
+        (nuevosVisibles.length + restoVisibles.length) === 0;
+
       // Contenedor de sección
       const secEl = document.createElement('section');
       secEl.className = 'seccion';
@@ -1422,28 +1756,60 @@ function render() {
       // Header de la sección
       const header = document.createElement('div');
       header.className = 'sec-header';
-      header.innerHTML = secPathHTML(sec.path);
+      // El texto de cierre se suma como un tramo más del título, con el
+      // mismo separador. Va en .sec-part-bold, que es exactamente el mismo
+      // estilo que usa .sub-header-txt en la banda separada, así que el
+      // cartel se lee igual esté fusionado o no. Además .sec-part-bold ya
+      // está en INVISIBLE_TEXT_SELECTORS: el texto sigue siendo buscable
+      // en el PDF sin tocar nada más.
+      header.innerHTML = secPathHTML(sec.path) + (soloDescontinuados
+        ? '<span class="sec-part-sep"> | </span>' +
+          '<span class="sec-part-bold">Disponible hasta agotar stock</span>'
+        : '');
       secEl.appendChild(header);
 
-      // Una sola grilla, con los nuevos primero (mantienen el badge "Nuevo" en cada tarjeta)
+      // Grilla de productos ACTIVOS.
+      // Orden: 1) NUEVOS (badge verde) · 2) resto de activos.
+      // Los discontinuados ya no van acá: desde v30 tienen su propio
+      // bloque al cierre de la familia (ver más abajo).
       const grid = document.createElement('div');
-      grid.className = 'product-grid' + (sec.id === 'ventiladores' ? ' grid-venti' : '');
+      const claseGrid = 'product-grid' + (sec.id === 'ventiladores' ? ' grid-venti' : '');
+      grid.className = claseGrid;
 
-      // Orden dentro de la grilla:
-      //   1) NUEVOS (badge verde "Nuevo")  → al comienzo
-      //   2) Resto de productos activos
-      //   3) DISCONTINUADOS (badge negro "Últimas unidades") → al final
       nuevosVisibles.forEach(sku => {
         grid.appendChild(renderCard(sku, true, hayFotos));            // es nuevo → badge verde
       });
       restoVisibles.forEach(sku => {
         grid.appendChild(renderCard(sku, false, hayFotos));           // producto normal
       });
-      descontinuadosVisibles.forEach(sku => {
-        grid.appendChild(renderCard(sku, false, hayFotos, true));     // discontinuado → badge negro
-      });
 
-      secEl.appendChild(grid);
+      // La grilla de activos sólo se agrega si tiene algo. Puede quedar
+      // vacía si TODOS los productos de la familia están discontinuados:
+      // en ese caso la sección muestra su título y directamente la banda
+      // de "disponible hasta agotar stock".
+      if (grid.children.length > 0) secEl.appendChild(grid);
+
+      // CIERRE DE FAMILIA: productos discontinuados bajo su propia banda.
+      // El título explica el estado del grupo entero, así que las tarjetas
+      // no llevan cartel individual.
+      // Si soloDescontinuados, el aviso ya se fusionó arriba en el título
+      // de la familia y acá sólo va la grilla.
+      if (descontinuadosVisibles.length > 0) {
+        if (!soloDescontinuados) {
+          const subHeader = document.createElement('div');
+          subHeader.className = 'sub-header';
+          subHeader.innerHTML = '<span class="sub-header-txt">Disponible hasta agotar stock</span>';
+          secEl.appendChild(subHeader);
+        }
+
+        const gridDesc = document.createElement('div');
+        gridDesc.className = claseGrid;
+        descontinuadosVisibles.forEach(sku => {
+          gridDesc.appendChild(renderCard(sku, false, hayFotos, true));
+        });
+        secEl.appendChild(gridDesc);
+      }
+
       area.appendChild(secEl);
     });
 
@@ -1453,6 +1819,8 @@ function render() {
     document.getElementById('st-prods').textContent = totalMostrados;
     document.getElementById('st-secs').textContent  = seccionesActivas.length;
     document.getElementById('st-fecha').textContent = fechaLargaElegida();
+
+    activarLinksNota();
 
     // Edición: enganchar click handlers + zonas de "+ insertar corte"
     attachCardClickHandler();
@@ -1494,8 +1862,18 @@ function renderCard(sku, esNuevo, hayFotos, esDescontinuado) {
   // Nota técnica opcional (ver NOTAS_SKU). Se inyecta DENTRO de .prod-name
   // como bloque, así cae siempre en su propia línea justo debajo del nombre,
   // sin importar si el nombre ocupó una o dos líneas.
-  const notaSku  = NOTAS_SKU[String(sku)] || '';
-  const notaHTML = notaSku ? `<span class="prod-nota">${notaSku}</span>` : '';
+  const notaSku   = NOTAS_SKU[String(sku)] || '';
+  const linkCfg   = LINKS_NOTA[String(sku)] || null;
+  let   notaHTML  = '';
+  if (notaSku) {
+    notaHTML = linkCfg
+      // Candidata a link. activarLinksNota() confirma después del render si
+      // la otra versión existe; si no, elimina la nota entera.
+      ? `<span class="prod-nota prod-nota-link" data-destinos="${linkCfg.destinos.join(',')}"` +
+        ` data-modo="${linkCfg.modo}"` +
+        ` title="Ver la otra versión de este producto">${notaSku}${ICONO_CURSOR}</span>`
+      : `<span class="prod-nota">${notaSku}</span>`;
+  }
 
   let photoHTML = '';
   if (hayFotos && PHOTO_MAP[sku]) {
@@ -1509,20 +1887,22 @@ function renderCard(sku, esNuevo, hayFotos, esDescontinuado) {
     photoHTML = `<div class="photo-placeholder">◌</div>`;
   }
 
-  // Badge de estado en la esquina de la foto.
-  //   • "Nuevo"            → fondo verde (producto nuevo)
-  //   • "Stock Final"      → fondo negro (producto discontinuado)
-  // Son mutuamente excluyentes: si por algún motivo un SKU tuviera ambos
-  // estados, prioriza el cartel de discontinuado.
-  // NOTA v24: cambia SÓLO el texto del cartel ("Últimas unidades" → "Stock Final").
-  // El criterio de detección (valor "ULTIMAS UNIDADES" en el Excel), la clase CSS,
-  // el formato y la ubicación quedan exactamente iguales.
-  let estadoBadge = '';
-  if (esDescontinuado) {
-    estadoBadge = '<span class="badge-descontinuado">Stock Final</span>';
-  } else if (esNuevo) {
-    estadoBadge = '<span class="badge-nuevo">Nuevo</span>';
+  // Pila de badges en la esquina superior derecha de la foto:
+  // "Nuevo" arriba y el de disponibilidad debajo (ver .badge-stack).
+  // Ya NO se emite el badge individual "Stock Final": desde v30 los
+  // discontinuados van agrupados bajo la banda "DISPONIBLE HASTA AGOTAR
+  // STOCK" al final de su familia, que cumple la misma función.
+  const badges = [];
+  if (esNuevo && !esDescontinuado) badges.push('<span class="badge-nuevo">Nuevo</span>');
+
+  const estadoDisp = estadoDisponibilidad(sku);
+  if (estadoDisp) {
+    badges.push(`<span class="badge-disp ${estadoDisp.clase}">${estadoDisp.etiqueta}</span>`);
   }
+
+  const estadoBadge = badges.length
+    ? `<div class="badge-stack">${badges.join('')}</div>`
+    : '';
 
   // Toolbar flotante (oculto hasta que se selecciona la tarjeta).
   // Acciones SOLO sobre la foto: la tarjeta (nombre + SKU) viene del Excel
@@ -1544,6 +1924,93 @@ function renderCard(sku, esNuevo, hayFotos, esDescontinuado) {
     <div class="prod-sku">SKU ${sku}</div>
   `;
   return card;
+}
+
+/* ----------------------------------------------------------------
+   NOTAS INTERACTIVAS — RESOLUCIÓN DE DESTINO
+   ----------------------------------------------------------------
+   Un "bloque" es un hijo directo de #pdf-area (portada o sección). Es la
+   unidad que el exportador pega en el PDF, así que todo destino termina
+   expresándose como bloque + desplazamiento dentro del bloque.
+   ---------------------------------------------------------------- */
+
+// Primera tarjeta de la lista que aparezca EN ORDEN DE DOCUMENTO.
+// Ojo: no es el orden de la lista de SKUs. Dentro de una sección las
+// tarjetas se reordenan (nuevos primero, discontinuados al final), así
+// que el "primero que aparece en el PDF" hay que preguntárselo al DOM.
+// querySelector con selectores separados por coma devuelve exactamente eso.
+function primeraTarjetaDeSkus(skus) {
+  const area = document.getElementById('pdf-area');
+  if (!area || !skus || !skus.length) return null;
+  const sel = skus.map(s => `.product-card[data-sku="${s}"]`).join(',');
+  return area.querySelector(sel);
+}
+
+// Sube desde cualquier nodo hasta el hijo directo de #pdf-area.
+function bloqueDe(el) {
+  const area = document.getElementById('pdf-area');
+  if (!area || !el) return null;
+  let b = el;
+  while (b.parentElement && b.parentElement !== area) b = b.parentElement;
+  return (b.parentElement === area) ? b : null;
+}
+
+// Resuelve el destino de una nota a partir de sus data-attributes.
+// Devuelve { ancla, bloque } o null si la otra versión no está publicada.
+//   modo 'producto' → el ancla es la tarjeta (aterriza sobre el producto)
+//   modo 'seccion'  → el ancla es el bloque  (aterriza en el título)
+function destinoDeNota(destinos, modo) {
+  const card = primeraTarjetaDeSkus(destinos);
+  if (!card) return null;
+  const bloque = bloqueDe(card);
+  if (!bloque) return null;
+  return { ancla: (modo === 'producto' ? card : bloque), bloque };
+}
+
+function destinoDeElemento(el) {
+  const destinos = (el.dataset.destinos || '').split(',').filter(Boolean);
+  return destinoDeNota(destinos, el.dataset.modo);
+}
+
+// Después de cada render: la nota sobrevive SÓLO si la otra versión existe
+// en el archivo del día. Si no, se elimina completa (texto + ícono), para
+// no publicar una bajada que promete algo que no está ni un botón que no
+// lleva a ningún lado. Como la regla es recíproca y ambos grupos se
+// apuntan entre sí, alcanza con que una punta quede vacía para que las
+// notas desaparezcan de los dos lados.
+function activarLinksNota() {
+  const area = document.getElementById('pdf-area');
+  if (!area) return;
+  let vivas = 0, quitadas = 0;
+  area.querySelectorAll('.prod-nota-link').forEach(el => {
+    if (destinoDeElemento(el)) { vivas++; return; }
+    el.remove();
+    quitadas++;
+  });
+  console.log(`[NOTAS] interactivas: ${vivas} · quitadas por falta de la otra versión: ${quitadas}`);
+}
+
+// Click en la nota dentro del preview: scrollear al destino y resaltar un
+// instante las tarjetas de la otra versión.
+function irADestinoNota(el) {
+  const destino = destinoDeElemento(el);
+  if (!destino) return;
+  const esProducto = el.dataset.modo === 'producto';
+  destino.ancla.scrollIntoView({
+    behavior: 'smooth',
+    // Sobre un producto puntual conviene centrarlo; sobre una sección
+    // entera, arrancar desde el título.
+    block: esProducto ? 'center' : 'start'
+  });
+  const skus = (el.dataset.destinos || '').split(',').filter(Boolean);
+  skus.forEach(sku => {
+    const c = document.querySelector(`#pdf-area .product-card[data-sku="${sku}"]`);
+    if (!c) return;
+    c.classList.remove('nota-flash');
+    void c.offsetWidth;              // forzar reinicio de la animación
+    c.classList.add('nota-flash');
+    setTimeout(() => c.classList.remove('nota-flash'), 1700);
+  });
 }
 
 /* ----------------------------------------------------------------
@@ -2769,6 +3236,14 @@ function attachCardClickHandler() {
   area._editingWired = true;
 
   area.addEventListener('click', (e) => {
+    // Click en una nota interactiva → saltar a la otra versión del producto.
+    // Va ANTES de todo lo demás para que no se dispare la selección de tarjeta.
+    const notaLink = e.target.closest('.prod-nota-link');
+    if (notaLink) {
+      irADestinoNota(notaLink);
+      e.stopPropagation();
+      return;
+    }
     // Si clickearon adentro del toolbar, no hacer nada (los botones tienen su propio onclick)
     if (e.target.closest('.foto-toolbar')) return;
     // Si clickearon una "X" de un corte de página, manejarlo aparte
@@ -3039,6 +3514,12 @@ async function generatePDF() {
     const totalBlocks = segments.reduce((s, seg) => s + seg.length, 0);
     let renderedBlocks = 0;
 
+    // Contabilidad para los links internos de las notas (ver
+    // recolectarLinksNota / aplicarLinksNota).
+    const blockPos    = new Map();   // bloque DOM → { page, yMm }
+    const pageHeights = [];          // alto en mm por página (1-based)
+    const linksNota   = [];          // rectángulos clickeables pendientes
+
     showOverlay('GENERANDO PDF', `Hoja 0 / ${segments.length}…`, true);
 
     // 4) Procesar cada segmento → una hoja del PDF
@@ -3109,6 +3590,7 @@ async function generatePDF() {
       } else {
         pdf.addPage([PAGE_W_MM, pageHmm], orientation);
       }
+      pageHeights[si + 1] = pageHmm;   // las páginas de jsPDF son 1-based
 
       // 4.4) Colocar cada bloque a su Y correspondiente, uno debajo del otro.
       //      Usamos siempre widthPx como referencia para que la proporción
@@ -3136,9 +3618,18 @@ async function generatePDF() {
         // leer textos y bounding boxes.
         addInvisibleTextLayer(pdf, seg[bi], cYmm, PAGE_W_MM, robotoAvailable);
 
+        // Pasada 1 de los links internos: dónde quedó este bloque y qué
+        // notas clickeables contiene.
+        blockPos.set(seg[bi], { page: si + 1, yMm: cYmm });
+        recolectarLinksNota(seg[bi], cYmm, PAGE_W_MM, si + 1, linksNota);
+
         cursorPx += c.height;
       }
     }
+
+    // Pasada 2: ahora que existen todas las hojas, resolver los destinos.
+    showOverlay('GENERANDO PDF', 'Escribiendo links internos…', false);
+    aplicarLinksNota(pdf, linksNota, blockPos, pageHeights, PAGE_W_MM);
 
     pdf.save(filename);
 
@@ -3268,6 +3759,10 @@ const INVISIBLE_TEXT_SELECTORS = [
   '.banner-nuevos',
   '.badge-nuevo',
   '.badge-descontinuado',
+  '.badge-disp',
+  '.ref-disp-titulo',
+  '.ref-disp-txt',
+  '.sub-header-txt',
   '.prod-name',
   '.prod-sku'
 ].join(',');
@@ -3389,6 +3884,94 @@ function addInvisibleTextLayer(pdf, block, blockOffsetYmm, pageWmm, robotoAvaila
       } catch(e) { /* defensive: nunca abortar PDF por un texto raro */ }
     }
   }
+}
+
+/* ----------------------------------------------------------------
+   LINKS INTERNOS EN EL PDF (notas interactivas)
+   ----------------------------------------------------------------
+   Se resuelven en DOS PASADAS porque un link puede apuntar hacia
+   adelante, a una página que todavía no existe cuando se dibuja la
+   página de origen.
+
+     Pasada 1 (durante el loop de export): se anota el rectángulo
+       clickeable de cada nota, en mm y ya referido a su página.
+     Pasada 2 (una vez creadas todas las hojas): se resuelve el destino
+       a página + Y y se escriben las anotaciones /Link.
+
+   Detalle fino de jsPDF 2.5.1: para el destino se usa magFactor 'FitH',
+   que escribe el valor de `top` CRUDO en el PDF. Los otros modos pasan
+   por getVerticalCoordinate(), que convierte usando el alto de la página
+   ACTIVA en el momento de guardar — y acá las hojas tienen alto variable,
+   así que esa conversión daría destinos corridos. Con 'FitH' calculamos
+   nosotros el punto exacto contra el alto de la hoja destino.
+   ---------------------------------------------------------------- */
+function recolectarLinksNota(block, blockOffsetYmm, pageWmm, pageNumber, out) {
+  if (!block || !block.querySelectorAll) return;
+  const blockRect = block.getBoundingClientRect();
+  if (blockRect.width <= 0) return;
+  const mmPerPx = pageWmm / blockRect.width;
+
+  // Un poco de área extra alrededor del texto: el target real de click en
+  // un visor de PDF conviene que sea algo más generoso que el glifo.
+  const PAD_MM = 1.2;
+
+  block.querySelectorAll('.prod-nota-link').forEach(el => {
+    const destinos = (el.dataset.destinos || '').split(',').filter(Boolean);
+    if (!destinos.length) return;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return;
+    out.push({
+      pageNumber,
+      x: (r.left - blockRect.left) * mmPerPx - PAD_MM,
+      y: (r.top  - blockRect.top ) * mmPerPx + blockOffsetYmm - PAD_MM,
+      w: r.width  * mmPerPx + PAD_MM * 2,
+      h: r.height * mmPerPx + PAD_MM * 2,
+      destinos,
+      modo: el.dataset.modo || 'seccion'
+    });
+  });
+}
+
+function aplicarLinksNota(pdf, links, blockPos, pageHeights, pageWmm) {
+  if (!links || !links.length) return 0;
+  const SF = pdf.internal.scaleFactor;      // mm → pt
+  const MARGEN_MM = 4;                      // aire arriba del destino
+  let aplicados = 0;
+
+  for (const L of links) {
+    const destino = destinoDeNota(L.destinos, L.modo);
+    if (!destino) continue;
+    const pos = blockPos.get(destino.bloque);
+    if (!pos) continue;
+    const hDestMm = pageHeights[pos.page];
+    if (!hDestMm) continue;
+
+    // Desplazamiento del ancla DENTRO de su bloque. En modo 'seccion' el
+    // ancla es el bloque mismo, así que da 0 y se aterriza en el título.
+    // En modo 'producto' da la altura hasta la tarjeta del PRISMA.
+    const bRect = destino.bloque.getBoundingClientRect();
+    let offsetMm = 0;
+    if (bRect.width > 0 && destino.ancla !== destino.bloque) {
+      const aRect = destino.ancla.getBoundingClientRect();
+      offsetMm = (aRect.top - bRect.top) * (pageWmm / bRect.width);
+    }
+
+    // Y destino medida desde el TOPE de la hoja → punto PDF desde abajo
+    const yDestMm = Math.max(0, pos.yMm + offsetMm - MARGEN_MM);
+    const topPt   = (hDestMm - yDestMm) * SF;
+
+    // setPage antes de link(): el rectángulo de origen se convierte contra
+    // el alto de la página activa, y acá cada hoja mide distinto.
+    pdf.setPage(L.pageNumber);
+    pdf.link(L.x, L.y, L.w, L.h, {
+      pageNumber: pos.page,
+      magFactor: 'FitH',
+      top: topPt
+    });
+    aplicados++;
+  }
+  console.log(`[PDF] links internos escritos: ${aplicados} / ${links.length}`);
+  return aplicados;
 }
 
 /* ----------------------------------------------------------------

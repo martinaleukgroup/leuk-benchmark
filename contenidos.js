@@ -463,6 +463,7 @@
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
+              ${CANAL === "instagram" ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </div>`;
         }).join("")}</div>
@@ -507,11 +508,21 @@
         ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar la primera</button>` : ""}</div>`;
     }
     const hoy = hoyISO();
+    // El feed dibuja el PERFIL, y una historia se va a las 24 horas sin dejar
+    // baldosa. Van al calendario y a las fichas, pero acá desentonarían: mostrarían
+    // una grilla que nadie va a ver nunca así.
+    const enFeed = MSGS.filter(m => m.tipo !== "historia");
+    const historias = MSGS.length - enFeed.length;
+    if (!enFeed.length) {
+      return `<div class="empty"><div class="big">📸</div>
+        <p>Este mes son todas historias: no dejan baldosa en el perfil.</p>
+        <button class="btn-mini" data-vista="calendario" style="margin-top:10px">Verlas en el calendario</button></div>`;
+    }
     // Orden de Instagram: descendente por fecha. `orden` desempata dentro del día.
-    const orden = MSGS.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
+    const orden = enFeed.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
     const vienen = orden.filter(m => m.fecha >= hoy);
     const salieron = orden.filter(m => m.fecha < hoy);
-    const contexto = PREV.filter(p => !MSGS.some(m => m.id === p.id));
+    const contexto = PREV.filter(p => p.tipo !== "historia" && !MSGS.some(m => m.id === p.id));
 
     const grilla = vienen.map(m => baldosaHTML(m, ed, false)).join("") +
       (salieron.length || contexto.length
@@ -519,14 +530,14 @@
       salieron.map(m => baldosaHTML(m, ed, false)).join("") +
       contexto.map(m => baldosaHTML(m, ed, true)).join("");
 
-    const aprob = MSGS.filter(m => m.estado === "aprobado").length;
+    const aprob = enFeed.filter(m => m.estado === "aprobado").length;
     return `
       <div class="ct-feed">
         <div class="ct-feed-perfil">
           <span class="av">L</span>
           <div>
             <b>leukiluminacion</b>
-            <small>${esc(cap(mesLabel(MES)))} · ${MSGS.length} ${MSGS.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas</small>
+            <small>${esc(cap(mesLabel(MES)))} · ${enFeed.length} ${enFeed.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas${historias ? ` · ${historias} historia${historias > 1 ? "s" : ""} aparte` : ""}</small>
           </div>
           ${ed ? `<span class="ct-feed-tip">Arrastrá una pieza para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
         </div>
@@ -725,7 +736,7 @@
   function placasHTML(m, ed) {
     if (CANAL !== "instagram") return "";
     const pls = placasDe(m);
-    const TIPOS = { post: "Post", carrusel: "Carrusel", reel: "Reel" };
+    const TIPOS = { post: "Post", carrusel: "Carrusel", reel: "Reel", historia: "Historia" };
 
     if (!pls.length) {
       return `<div class="ct-placas-blk vacio">

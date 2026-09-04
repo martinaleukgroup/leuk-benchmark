@@ -229,6 +229,9 @@
     c.tipo !== "sugerencia" && !c.resuelto &&
     (n === null ? c.variante == null : +c.variante === n));
   const placasListas = m => placasDe(m).filter(p => p.estado === "aprobado").length;
+  const figmaUrl = (m, p) => (m.figma_file && p && p.nodo)
+    ? `https://www.figma.com/design/${encodeURIComponent(m.figma_file)}/?node-id=${encodeURIComponent(String(p.nodo).replace(/:/g, "-"))}`
+    : "";
   // Las placas mandan sólo cuando existen: una pieza sin placas sigue el flujo viejo.
   const porPlacas = m => CANAL === "instagram" && placasDe(m).length > 0;
 
@@ -784,9 +787,14 @@
       </div>
 
       <dl class="ct-placa-datos">
-        <div><dt>Frame de Figma</dt><dd${e} data-c="placas.${i}.nodo">${esc(act.nodo || "")}</dd></div>
+        <div><dt>Archivo de Figma</dt><dd${e} data-c="figma_file">${esc(m.figma_file || "")}</dd></div>
+        <div><dt>Frame</dt><dd${e} data-c="placas.${i}.nodo">${esc(act.nodo || "")}</dd></div>
         <div><dt>Imagen</dt><dd${e} data-c="placas.${i}.png">${esc(act.png || "")}</dd></div>
       </dl>
+      ${figmaUrl(m, act)
+        ? `<p class="ct-placa-figma"><a href="${esc(figmaUrl(m, act))}" target="_blank" rel="noopener">◈ Abrir el frame en Figma</a>
+             <span class="tenue">La imagen todavía no se trae sola: por ahora el link te deja parada en el frame.</span></p>`
+        : `<p class="ct-placa-figma tenue">Sin frame de Figma cargado: pegá el archivo y el nodo arriba y aparece el link.</p>`}
 
       ${ed ? `<div class="ct-placa-accs">
         ${act.estado === "aprobado"

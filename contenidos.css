@@ -540,3 +540,10 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   .ct-bald-dia{font-size:10.5px}
   .ct-placas-res{margin-left:0;flex:1 1 100%}
 }
+
+/* El link al frame: un nodo suelto ("1297:239") no le dice nada a nadie. */
+.ct-placa-figma{margin:6px 0 0;font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.ct-placa-figma a{color:var(--olive);font-weight:600;text-decoration:none;
+  border-bottom:1px solid var(--olive-soft)}
+.ct-placa-figma a:hover{background:var(--olive-pale)}
+.ct-placa-figma .tenue,.ct-placa-figma.tenue{color:var(--gray-soft);font-weight:400}

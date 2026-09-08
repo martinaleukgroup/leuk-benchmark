@@ -42,6 +42,7 @@
 .ct-chipf.revisar:not(.on) .c{color:var(--warn)}
 .ct-chipf.comentado:not(.on) .c,.ct-chipf.aviso:not(.on) .c{color:var(--no)}
 .ct-chipf.aprobado:not(.on) .c{color:var(--ok)}
+.ct-chipf.publicado:not(.on) .c{color:var(--olive)}
 @media (max-width:700px){
   .ct-bar{gap:9px}
   .ct-acc{margin-left:0;width:100%}
@@ -89,6 +90,7 @@
 .ct-est.revision{color:var(--warn);background:#fbf3e6;border-color:#e8d6b4}
 .ct-est.cambios {color:var(--no);  background:#f9eae7;border-color:#eccec8}
 .ct-est.aprobado{color:var(--ok);  background:#eaf2e6;border-color:#cfe0c5}
+.ct-est.publicado{color:var(--olive);background:#eceee5;border-color:#d7d9c9}
 
 /* ---- Vista CALENDARIO ---- */
 .ct-cal{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -136,6 +138,7 @@
 .ct-chip.revision{border-left-color:var(--warn)}
 .ct-chip.cambios {border-left-color:var(--no)}
 .ct-chip.aprobado{border-left-color:var(--ok)}
+.ct-chip.publicado{border-left-color:var(--olive)}
 @media (max-width:760px){
   .ct-cal-dias{display:none}
   .ct-cal-grid{grid-template-columns:1fr}
@@ -462,10 +465,12 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-bald-segs i.revision{background:#d9a441}
 .ct-bald-segs i.cambios{background:#c96a5b}
 .ct-bald-segs i.aprobado{background:#5f9c4a}
+.ct-bald-segs i.publicado{background:#676B55}
 .ct-bald-est.borrador{background:#b4b7a8}
 .ct-bald-est.revision{background:#d9a441}
 .ct-bald-est.cambios{background:#c96a5b}
 .ct-bald-est.aprobado{background:#5f9c4a}
+.ct-bald-est.publicado{background:#676B55}
 
 /* La franja que parte el feed en dos: arriba lo que viene, abajo lo publicado */
 .ct-feed-corte{grid-column:1/-1;background:var(--card);display:flex;align-items:center;gap:10px;
@@ -481,6 +486,7 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-feed-ley i.revision{background:#d9a441}
 .ct-feed-ley i.cambios{background:#c96a5b}
 .ct-feed-ley i.aprobado{background:#5f9c4a}
+.ct-feed-ley i.publicado{background:#676B55}
 .ct-feed-ley-nota{flex:1 1 100%;line-height:1.4}
 
 /* ---- Las placas dentro de la ficha ---- */

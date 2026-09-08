@@ -76,20 +76,25 @@
   let FIGMA = { estado: "", msg: "", espera: 0 };  // "" | ok | sin-funcion | sin-token | error
 
   const ESTADOS = {
-    borrador: { t: "Borrador" },
-    revision: { t: "En revisión" },
-    cambios:  { t: "Cambios pedidos" },
-    aprobado: { t: "Aprobado" },
+    borrador:  { t: "Borrador" },
+    revision:  { t: "En revisión" },
+    cambios:   { t: "Cambios pedidos" },
+    aprobado:  { t: "Aprobado" },
+    publicado: { t: "Publicado" },
   };
+  // "Publicado" es un paso más allá de "aprobado" (ya salió al canal), no una
+  // vuelta a pendiente: para todo lo que cuenta avance, los dos cuentan igual.
+  const yaAprobado = m => m.estado === "aprobado" || m.estado === "publicado";
   // Los recortes salen de los datos: nadie tiene que mantener una lista de pendientes.
   const FILTROS = [
     { k: "todos",     t: "Todo",             f: () => true },
-    { k: "abiertos",  t: "Sin aprobar",      f: m => m.estado !== "aprobado" },
+    { k: "abiertos",  t: "Sin aprobar",      f: m => !yaAprobado(m) },
     { k: "revisar",   t: "Esperando visto",  f: m => m.estado === "revision" },
     { k: "sugerido",  t: "Con sugerencias",  f: m => (COMS[m.id] || []).some(c => c.tipo === "sugerencia" && !c.decision) },
     { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => c.tipo !== "sugerencia" && !c.resuelto) },
     { k: "aviso",     t: "Con aviso",        f: m => !!m.flag },
-    { k: "aprobado",  t: "Aprobados",        f: m => m.estado === "aprobado" },
+    { k: "aprobado",  t: "Aprobados",        f: m => yaAprobado(m) },
+    { k: "publicado", t: "Publicados",       f: m => m.estado === "publicado" },
   ];
   const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
 
@@ -422,7 +427,7 @@
 
   function barraHTML(ed) {
     const n = MSGS.length;
-    const aprobados = MSGS.filter(m => m.estado === "aprobado").length;
+    const aprobados = MSGS.filter(yaAprobado).length;
     const pct = n ? Math.round((aprobados / n) * 100) : 0;
 
     // Sólo se muestran los recortes que tienen algo adentro: una fila de ceros no ayuda.
@@ -599,7 +604,7 @@
       salieron.map(m => baldosaHTML(m, ed, false)).join("") +
       contexto.map(m => baldosaHTML(m, ed, true)).join("");
 
-    const aprob = enFeed.filter(m => m.estado === "aprobado").length;
+    const aprob = enFeed.filter(yaAprobado).length;
     return `
       <div class="ct-feed">
         <div class="ct-feed-perfil">
@@ -617,6 +622,7 @@
           <span><i class="revision"></i>En revisión</span>
           <span><i class="cambios"></i>Cambios pedidos</span>
           <span><i class="aprobado"></i>Aprobado</span>
+          <span><i class="publicado"></i>Publicado</span>
           <span class="ct-feed-ley-nota">El punto es el estado de la pieza. La barra de abajo tiene un tramo por placa: cada una se aprueba sola.</span>
         </div>
       </div>`;
@@ -918,7 +924,7 @@
     </div>`;
   }
 
-  // El flujo: borrador → en revisión → aprobado, con "pedir cambios" como vuelta atrás.
+  // El flujo: borrador → en revisión → aprobado → publicado, con "pedir cambios" como vuelta atrás.
   function accionesHTML(m, ed) {
     if (!ed) return "";
     // Con placas, el estado de la pieza lo deriva la base de sus partes: no hay
@@ -934,6 +940,9 @@
                 title="Quedan ${p} sugerencias sin resolver">✓ Aprobar</button>`
            : `<button class="btn-mini on" data-est="aprobado">✓ Aprobar</button>`);
     }
+    if (m.estado === "aprobado")
+      return `<button class="btn-mini on" data-est="publicado" title="Marcarlo como ya publicado en el canal">✓ Marcar publicado</button>
+              <button class="btn-mini" data-est="revision" title="Volver a abrirlo para editar">Reabrir</button>`;
     return `<button class="btn-mini" data-est="revision" title="Volver a abrirlo para editar">Reabrir</button>`;
   }
 
@@ -1523,7 +1532,7 @@
       AVISOS = {
         // Lo que sale hoy, y lo que ya debería haber salido sin estar aprobado.
         sale:  msgs.filter(m => m.fecha === hoy),
-        tarde: msgs.filter(m => m.fecha < hoy && m.estado !== "aprobado"),
+        tarde: msgs.filter(m => m.fecha < hoy && !yaAprobado(m)),
         sugs:  sugs.filter(g => !g.decision),
         coms:  coms.filter(c => String(c.autor_email || "").toLowerCase() !== yo),
         // Para quien sugiere: en qué terminó lo suyo.

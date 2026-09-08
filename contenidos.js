@@ -273,7 +273,22 @@
     // A propósito SIN await: la primera tanda de un mes puede tardar (Figma renderiza
     // por pedido) y el mes tiene que dibujarse igual, con los placeholders. Cuando las
     // imágenes llegan se vuelve a pintar solo.
-    traerImagenes().then(hubo => { if (hubo) pintar(); });
+    traerImagenes().then(hubo => {
+      if (hubo) { pintar(); return; }
+      // Si Figma cortó (token, función o cuota) esta carga automática se quedaba
+      // muda: ni imagen ni aviso, como si no hubiera pasado nada. Ahora avisa igual,
+      // para no tentar a resolverlo a fuerza de clics en "◈ Piezas" (eso sólo estira
+      // el corte: cada click vuelve a pedir todo, ignorando el enfriamiento).
+      const q = FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase."
+        : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase."
+        : FIGMA.estado === "error" ? (FIGMA.msg || "No se pudieron traer las imágenes.")
+        : (FIGMA.estado === "ok" && FIGMA.msg) ? FIGMA.msg
+        : "";
+      if (!q) return;
+      if (VISTA === "feed") FEEDNOTA = q; else CALNOTA = q;
+      pintar();
+      setTimeout(() => { FEEDNOTA = CALNOTA = ""; pintar(); }, 7000);
+    });
   }
   // El feed necesita lo YA PUBLICADO de los meses anteriores: mirar la fila nueva
   // en el vacío no dice nada. Nueve alcanzan para ver tres filas de contexto.

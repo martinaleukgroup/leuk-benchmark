@@ -209,11 +209,11 @@
   // `precios` = ve/edita precios de venta y descuentos. `costos` = ve el costo interno / margen
   // (dato sensible): sólo Admin y Líder. Coordinación ve todo menos costos.
   const ROLES = {
-    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "contenidos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
-    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: true,  borrarTodo: false },
-    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: false, borrarTodo: false },
-    comercial:    { label: "Comercial",    mods: ["benchmark", "eventos"], precios: false, costos: false, borrarTodo: false },
-    diseno:       { label: "Diseño",       mods: ["diseno", "eventos"],   precios: false, costos: false, borrarTodo: false },
+    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "votacion", "contenidos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
+    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "votacion", "contenidos"], precios: true,  costos: true,  borrarTodo: false },
+    coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos", "votacion", "contenidos"], precios: true,  costos: false, borrarTodo: false },
+    comercial:    { label: "Comercial",    mods: ["benchmark", "eventos", "votacion"], precios: false, costos: false, borrarTodo: false },
+    diseno:       { label: "Diseño",       mods: ["diseno", "eventos", "votacion"],   precios: false, costos: false, borrarTodo: false },
     // Entra sólo al cronograma de la comunidad, a leerlo y comentarlo. No edita ni aprueba.
     representante:{ label: "Representante de marca", mods: ["contenidos"], precios: false, costos: false, borrarTodo: false },
   };
@@ -2194,7 +2194,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "votacion", "contenidos", "contenidos-ig", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2216,6 +2216,12 @@
     eventos: {
       label: "Eventos",
       pages: [{ p: "eventos", t: "Check-in & Sorteo" }],
+    },
+    // Función temporal: votación interárea sobre las propuestas de packaging
+    // (jul 2026). Sacar de acá y de ROLES.mods cuando termine el ciclo de votación.
+    votacion: {
+      label: "Votación",
+      pages: [{ p: "votacion", t: "Packaging" }],
     },
     // Un cronograma por canal, cada uno su propia página. Sumar LinkedIn son
     // cuatro líneas: acá, en PAGES, en index.html y en CANALES de contenidos.js.
@@ -2278,6 +2284,8 @@
     if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=139"; }
+    // Votación: app autocontenida embebida (votación interárea de packaging, temporal).
+    if (page === "votacion") { const f = $("#votacionFrame"); if (f && !f.src) f.src = "votacion.html?v=1"; }
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
     // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {
@@ -2451,6 +2459,12 @@
                 "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
                 "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
                 "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
+      { mod: "votacion", ic: "🗳️",
+        d: "Votación interárea: elegí la trama y la etiqueta para las próximas cajas de Leuk.",
+        stats: [],
+        ayuda: ["Elegí <b>una trama</b> y <b>una etiqueta</b> y mandá tu voto — uno por persona, se puede cambiar mientras esté abierta.",
+                "Los resultados quedan <b>ocultos</b> hasta que se cierra la votación, para no arrastrar el voto de nadie.",
+                "Admin/Líder ven el parcial y cierran la votación desde el panel al pie de la página."] },
       { mod: "contenidos", ic: "🗓",
         d: "El cronograma mensual de la comunidad profesional de WhatsApp: qué se manda, cuándo y en qué estado está.",
         stats: [],

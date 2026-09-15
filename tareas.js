@@ -56,7 +56,7 @@
   const PRIORIDADES = [{ k: "alta", t: "Alta" }, { k: "media", t: "Media" }, { k: "baja", t: "Baja" }];
   const PRIO_PESO = { alta: 0, media: 1, baja: 2 };
   // Áreas del equipo de marketing: lista cerrada (decisión de la usuaria, sep 2026).
-  const AREAS = ["Ecosistema digital", "Eventos", "Diseño", "Comercial"];
+  const AREAS = ["Ecosistema digital", "Eventos", "Diseño", "Comercial", "Acciones de mkt", "Brand"];
   const DIAS_HECHAS = 14;    // el tablero muestra lo terminado en las últimas 2 semanas
   const DIAS_HISTORIA = 90;  // lo terminado hace más que esto ya no se baja
 

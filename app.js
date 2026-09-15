@@ -222,7 +222,10 @@
   const rolReal = () => ROL_ALIAS[ROL] || ROL;
   const SIN_ACCESO = { label: "Sin acceso", mods: [], precios: false, costos: false, borrarTodo: false };
   const rolCfg = () => SIN_PERFIL ? SIN_ACCESO : (ROLES[rolReal()] || ROLES.comercial);
-  const puedeVer = mod => rolCfg().mods.includes(mod);
+  // Tareas no sale del rol sino de la marca `perfiles.marketing` (se tilda en Usuarios):
+  // así alguien puede ser Líder o Diseño Y del equipo de marketing. El admin entra siempre.
+  const esMarketing = () => !SIN_PERFIL && (MARKETING || rolReal() === "admin");
+  const puedeVer = mod => mod === "tareas" ? esMarketing() : rolCfg().mods.includes(mod);
   const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
@@ -266,16 +269,17 @@
   }
   const margenTxt = mg => mg == null ? "—" : `US$ ${mg.usd.toLocaleString("es-AR")}${mg.pct != null ? ` · ${mg.pct}%` : ""}`;
   let SIN_PERFIL = false;                            // tiene cuenta pero nadie le asignó rol
+  let MARKETING = false;                             // del equipo de marketing → ve Tareas
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
-    SIN_PERFIL = false;
+    SIN_PERFIL = false; MARKETING = false;
     try {
       const email = encodeURIComponent(AUTHSES.email() || "");
       const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&email=ilike.${email}`, { headers: AUTHSES.head() });
       if (r.status === 404) ROL = "admin";             // sistema de roles no configurado aún → todos pueden todo (como antes)
       else if (r.ok) {
         const rows = await r.json();
-        if (rows.length) { ROL = rows[0].rol || "comercial"; NOMBRE = rows[0].nombre || ""; }
+        if (rows.length) { ROL = rows[0].rol || "comercial"; NOMBRE = rows[0].nombre || ""; MARKETING = !!rows[0].marketing; }
         // El registro es abierto: tener cuenta NO da acceso. Sin perfil asignado, nada.
         else { ROL = ""; SIN_PERFIL = true; }
       }
@@ -401,6 +405,8 @@
     // La campanita de Contenidos junta avisos de TODOS los canales; para llevar a
     // uno de otro canal necesita cambiar de página, y la navegación vive acá.
     irA: p => goToPage(p),
+    // ---- lo que usa tareas.js ----
+    puedeVerTareas: () => AUTHSES.logged() && puedeVer("tareas"),
   };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
@@ -1488,6 +1494,7 @@
   // Lo calcula contenidos.js; acá sólo se lo dispara al terminar de arrancar.
   function avisarContenidos() {
     if (puedeVer("contenidos") && window.avisosContenidos) window.avisosContenidos();
+    if (puedeVer("tareas") && window.avisosTareas) window.avisosTareas();   // lo tuyo que vence hoy o ya venció
   }
   // Arranque para roles SIN benchmark (ej. Diseño): no se descarga ese archivo.
   function bootSinBenchmark() {
@@ -2194,7 +2201,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "votacion", "contenidos", "contenidos-ig", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "votacion", "contenidos", "contenidos-ig", "tareas", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2229,6 +2236,11 @@
       label: "Contenidos",
       pages: [{ p: "contenidos", t: "💬 Comunidad de WhatsApp" },
               { p: "contenidos-ig", t: "📸 Instagram" }],
+    },
+    // Sólo el equipo de marketing (ver esMarketing): no está en ROLES.mods a propósito.
+    tareas: {
+      label: "Tareas",
+      pages: [{ p: "tareas", t: "Equipo de marketing" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2291,6 +2303,8 @@
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {
       window.renderContenidos(page === "contenidos-ig" ? "instagram" : "whatsapp");
     }
+    // Tareas del equipo de marketing: tablero + lista + calendario. Lo arma tareas.js.
+    if (page === "tareas" && window.renderTareas) window.renderTareas();
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
@@ -2356,7 +2370,7 @@
         <div id="usMsg" class="us-msg"></div>
       </div>
       <table class="us-tabla">
-        <thead><tr><th>Persona</th><th>Rol</th><th>Ve</th><th></th></tr></thead>
+        <thead><tr><th>Persona</th><th>Rol</th><th title="Equipo de marketing: ve el módulo Tareas">Marketing</th><th>Ve</th><th></th></tr></thead>
         <tbody>${perfiles.map(p => {
           const cfg = ROLES[ROL_ALIAS[p.rol] || p.rol] || {};
           const soyYo = String(p.email).toLowerCase() === yo;
@@ -2366,7 +2380,10 @@
             <td><select class="us-rol" ${soyYo ? "disabled" : ""}>
               ${ROL_OPCIONES.map(([v, t]) => `<option value="${v}" ${(ROL_ALIAS[p.rol] || p.rol) === v ? "selected" : ""}>${rolLabel(v)}</option>`).join("")}
             </select></td>
-            <td class="leuk-fam">${(cfg.mods || []).map(m => (MODULOS[m] || {}).label || m).join(" · ") || "—"}</td>
+            <td class="us-mkt"><input type="checkbox" class="us-marketing" ${p.marketing ? "checked" : ""}
+              title="Del equipo de marketing: ve Tareas" aria-label="Equipo de marketing"></td>
+            <td class="leuk-fam">${[...(cfg.mods || []), ...(p.marketing || (ROL_ALIAS[p.rol] || p.rol) === "admin" ? ["tareas"] : [])]
+              .map(m => (MODULOS[m] || {}).label || m).join(" · ") || "—"}</td>
             <td class="us-acc">${soyYo ? "" :
               `<button class="btn-ghost us-pass" title="Asignar una contraseña nueva">🔑</button>
                <button class="btn-ghost us-del" title="Quitar acceso">✕</button>`}</td>
@@ -2386,6 +2403,23 @@
       const d = await r.json().catch(() => []);
       if (r.ok && d.length) msg(`Listo: ${email} ahora es ${sel.value}.`, true);
       else msg("No se pudo cambiar el rol (¿corriste el SQL de permisos?).", false);
+    });
+
+    // equipo de marketing → directo a la tabla (columna `marketing`, ver 2026-09-15-tareas.sql)
+    cont.querySelectorAll(".us-marketing").forEach(chk => chk.onchange = async () => {
+      const email = chk.closest("tr").dataset.email;
+      const r = await fetch(`${SB.url}/rest/v1/perfiles?email=eq.${encodeURIComponent(email)}`, {
+        method: "PATCH", headers: Object.assign(AUTHSES.head(), { Prefer: "return=representation" }),
+        body: JSON.stringify({ marketing: chk.checked }),
+      });
+      const d = await r.json().catch(() => []);
+      if (r.ok && d.length) {
+        msg(chk.checked ? `Listo: ${email} ahora es del equipo de marketing y ve Tareas.` : `Listo: ${email} ya no ve Tareas.`, true);
+        if (String(email).toLowerCase() === yo) { MARKETING = chk.checked; aplicarRol(); }
+      } else {
+        chk.checked = !chk.checked;
+        msg("No se pudo guardar (¿corriste el SQL 2026-09-15-tareas.sql?).", false);
+      }
     });
 
     // crear acceso (necesita la función del servidor)
@@ -2473,6 +2507,14 @@
                 "Dejá <b>comentarios o sugerencias</b> en 💬 — quedan visibles para todo el equipo hasta que se marcan como resueltos.",
                 "Coordinación edita el copy en el lugar y lo va moviendo: <b>borrador → en revisión → aprobado</b>.",
                 "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
+      { mod: "tareas", ic: "✅",
+        d: "Las tareas del equipo de marketing: quién hace qué, para cuándo y en qué estado está.",
+        stats: [],
+        ayuda: ["Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>.",
+                "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
+                "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
+                "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",
+                "El número en la solapa <b>Tareas</b> son las tuyas que vencen hoy o ya vencieron."] },
       { mod: "usuarios", ic: "👥",
         d: "Quién entra a la plataforma y qué ve cada uno.",
         stats: [],

@@ -253,3 +253,16 @@
   .tk-panel{padding:12px 16px 28px}
   body.tk-panel-abierto{overflow:hidden}
 }
+
+/* ---- Menciones (@) ---- */
+.tk-arroba{color:var(--olive);font-weight:600;background:var(--olive-pale);padding:0 4px;border-radius:5px}
+.tk-arroba.yo{background:#f7efdf;color:#8a6424}
+.tk-menc{position:fixed;z-index:60;width:250px;max-width:calc(100vw - 16px);background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 10px 30px rgba(40,42,34,.18);padding:4px;display:flex;flex-direction:column}
+.tk-menc button{display:flex;align-items:center;gap:9px;border:0;background:transparent;text-align:left;
+  padding:6px 8px;border-radius:7px;font-size:14px;color:var(--ink)}
+.tk-menc button.on,.tk-menc button:hover{background:var(--olive-pale)}
+.tk-check-menc{display:flex;gap:2px;flex:none}
+.tk-check-menc .tk-avatar{width:20px;height:20px;font-size:9px}
+.tk-meta.tk-arrobado{font-weight:700;color:var(--olive)}
+.tk-meta.tk-arrobado.nueva{background:var(--olive);color:#fff;border-radius:999px;padding:0 7px}

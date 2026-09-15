@@ -79,6 +79,11 @@
   let NOTA = "", NOTA_ERR = false, NOTA_T = null;
   let TIMER = null;
   const SEQ = {};          // tarea_id -> nº del último guardado enviado
+  let MENC = null;         // {el, desde, lista, i} mientras está abierto el desplegable de @
+  // Cuándo abriste cada tarea por última vez, para avisar sólo las menciones nuevas.
+  // Vive en este navegador a propósito (igual que la campanita de Contenidos): el
+  // contenido sale siempre de la base, esto sólo decide qué se marca como nuevo.
+  let VISTO = (() => { try { return JSON.parse(leer("tareas_visto") || "{}"); } catch (e) { return {}; } })();
 
   /* ---- Lecturas derivadas ---- */
   const abierta = t => t.estado !== "hecha";
@@ -91,6 +96,7 @@
     { k: "alta",     t: "Prioridad alta",   f: t => abierta(t) && t.prioridad === "alta" },
     { k: "sin",      t: "Sin responsable",  f: t => abierta(t) && !t.responsable_email },
     { k: "hitos",    t: "★ Hitos",          f: t => abierta(t) && !!t.hito },
+    { k: "menciones", t: "@ Menciones",     f: t => abierta(t) && meMencionan(t) },
   ];
   const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
 
@@ -108,6 +114,56 @@
     const p = EQUIPO.find(x => low(x.email) === low(email));
     return p ? p.nombre : String(email).split("@")[0];
   }
+  /* ---- Menciones (@Nombre) ----------------------------------------------
+     Se guardan como texto plano ("@Lucía Paz") y se reconocen contra los nombres
+     del equipo: sin columna nueva, y el paso del checklist sigue siendo un input. */
+  const escRe = x => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const tms = x => Date.parse(x) || 0;
+  function reMenciones(escapar) {
+    const nombres = EQUIPO.map(p => p.nombre).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!nombres.length) return null;
+    return new RegExp(`@(${nombres.map(n => escRe(escapar ? esc(n) : n)).join("|")})(?![\\p{L}\\p{N}])`, "giu");
+  }
+  const personaDe = nombre => EQUIPO.find(p => low(p.nombre) === low(nombre));
+  function mencionesEn(texto) {
+    const re = texto && texto.includes("@") && reMenciones(false);
+    if (!re) return [];
+    const out = new Set();
+    for (const m of texto.matchAll(re)) { const p = personaDe(m[1]); if (p) out.add(low(p.email)); }
+    return [...out];
+  }
+  // Texto de comentario → HTML con las menciones resaltadas (la tuya, en otro color).
+  function conMenciones(texto) {
+    const re = reMenciones(true);
+    let h = esc(texto);
+    if (re) h = h.replace(re, (m, n) => {
+      const p = EQUIPO.find(x => esc(low(x.nombre)) === low(n));
+      return `<span class="tk-arroba ${p && low(p.email) === yo() ? "yo" : ""}">${m}</span>`;
+    });
+    return h.replace(/\n/g, "<br>");
+  }
+  // Cada paso recuerda a quién menciona, quién lo escribió y cuándo: así el aviso
+  // salta sólo cuando la mención es nueva, no cada vez que alguien toca la tarea.
+  function sellarMenciones(lista) {
+    lista.forEach(x => {
+      const m = mencionesEn(x.t).sort().join(",");
+      if (m !== (x.menc || "")) { x.menc = m; x.mts = new Date().toISOString(); x.mpor = yo(); }
+    });
+    return lista;
+  }
+  const pasoMeMenciona = x => !x.ok && !!yo() && mencionesEn(x.t).includes(yo());
+  const comMeMenciona = c => !!yo() && low(c.autor_email) !== yo() && mencionesEn(c.texto).includes(yo());
+  const meMencionan = t => t.checklist.some(pasoMeMenciona) || (COMS[t.id] || []).some(comMeMenciona);
+  function mencionNueva(t) {
+    const v = tms(VISTO[t.id]);
+    return t.checklist.some(x => pasoMeMenciona(x) && low(x.mpor) !== yo() && tms(x.mts) > v) ||
+      (COMS[t.id] || []).some(c => comMeMenciona(c) && tms(c.creado) > v);
+  }
+  function marcarVisto(id) {
+    VISTO[id] = new Date().toISOString();
+    escribir("tareas_visto", JSON.stringify(VISTO));
+  }
+
   const iniciales = nombre => String(nombre || "?").trim().split(/[\s._-]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
   // Mismo color para la misma área, siempre, sin tener que configurarlo.
   const tono = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
@@ -151,29 +207,37 @@
     const n = caja() && caja().querySelector(".tk-nota"); if (!n) return;
     n.textContent = NOTA; n.classList.toggle("err", NOTA_ERR);
   }
-  // Contador en la solapa Tareas: lo tuyo que vence hoy o ya venció.
-  function marcarNav(n) {
+  // Contador en la solapa Tareas: lo tuyo que vence hoy o ya venció, más las tareas
+  // donde te mencionaron y todavía no abriste.
+  function avisos() {
+    const vencen = TAREAS.filter(t => abierta(t) && mia(t) && t.fecha_limite && diasHasta(t.fecha_limite) <= 0);
+    const menc = TAREAS.filter(t => abierta(t) && mencionNueva(t));
+    return { n: new Set([...vencen, ...menc].map(t => t.id)).size, vencen: vencen.length, menc: menc.length };
+  }
+  function marcarNav(a) {
     const b = document.querySelector('#nav button[data-mod="tareas"]'); if (!b) return;
     let s = b.querySelector(".nav-count");
-    if (!n) { if (s) s.remove(); b.removeAttribute("title"); return; }
+    if (!a || !a.n) { if (s) s.remove(); b.removeAttribute("title"); return; }
     if (!s) { s = document.createElement("span"); s.className = "nav-count"; b.appendChild(s); }
-    s.textContent = n;
-    b.title = n === 1 ? "Tenés 1 tarea para hoy o vencida" : `Tenés ${n} tareas para hoy o vencidas`;
-  }
-  function contarMias() {
-    return TAREAS.filter(t => abierta(t) && mia(t) && t.fecha_limite && diasHasta(t.fecha_limite) <= 0).length;
+    s.textContent = a.n;
+    b.title = [a.vencen ? `${a.vencen} tuya${a.vencen === 1 ? "" : "s"} para hoy o vencida${a.vencen === 1 ? "" : "s"}` : "",
+               a.menc ? `${a.menc} con menciones nuevas` : ""].filter(Boolean).join(" · ");
   }
   window.avisosTareas = async function () {
-    if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return marcarNav(0);
-    if (CARGADO) return marcarNav(contarMias());
-    try {
-      const r = await fetch(url(`tareas?select=id&estado=neq.hecha&responsable_email=ilike.${enc(yo())}&fecha_limite=lte.${hoyISO()}`), { headers: head() });
-      if (r.ok) marcarNav((await r.json()).length);
-    } catch (e) { }
+    if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return marcarNav(null);
+    if (!CARGADO) await traer();
+    marcarNav(avisos());
   };
 
   /* ---- Datos ---- */
-  async function traer() {
+  // Al arrancar piden datos a la vez el contador de la solapa y la vista: comparten
+  // la misma carga en curso. Dos cargas intercaladas duplicaban los comentarios.
+  let TRAYENDO = null;
+  function traer() {
+    if (!TRAYENDO) TRAYENDO = traerAhora().finally(() => { TRAYENDO = null; });
+    return TRAYENDO;
+  }
+  async function traerAhora() {
     const desde = new Date(Date.now() - DIAS_HISTORIA * 864e5).toISOString();
     try {
       const [rT, rC, rE] = await Promise.all([
@@ -182,12 +246,13 @@
         fetch(url("rpc/equipo_marketing"), { method: "POST", headers: head(), body: "{}" }),
       ]);
       if (!rT.ok) { ERROR = rT.status === 404 ? "sql" : "red"; return; }
-      TAREAS = (await rT.json()).map(t => Object.assign(t, { checklist: Array.isArray(t.checklist) ? t.checklist : [], hito: !!t.hito }));
-      COMS = {};
-      (rC.ok ? await rC.json() : []).forEach(c => { (COMS[c.tarea_id] = COMS[c.tarea_id] || []).push(c); });
+      const tareas = (await rT.json()).map(t => Object.assign(t, { checklist: Array.isArray(t.checklist) ? t.checklist : [], hito: !!t.hito }));
+      const coms = {};
+      (rC.ok ? await rC.json() : []).forEach(c => { (coms[c.tarea_id] = coms[c.tarea_id] || []).push(c); });
       if (rE.ok) EQUIPO = await rE.json();
+      TAREAS = tareas; COMS = coms;
       ERROR = ""; CARGADO = true;
-      marcarNav(contarMias());
+      marcarNav(avisos());
     } catch (e) { ERROR = "red"; }
   }
 
@@ -197,7 +262,7 @@
     antes.completada = t.completada;
     Object.assign(t, campos);                      // optimista: se ve al instante
     if ("estado" in campos) t.completada = campos.estado === "hecha" ? (t.completada || new Date().toISOString()) : null;
-    pintarBarra(); pintarCuerpo(); marcarNav(contarMias());
+    pintarBarra(); pintarCuerpo(); marcarNav(avisos());
     // Si salen dos guardados seguidos (tildar dos pasos rápido), la respuesta del
     // primero no puede pisar en memoria lo que ya cambió el segundo.
     const turno = SEQ[id] = (SEQ[id] || 0) + 1;
@@ -239,7 +304,7 @@
       TAREAS.push(t);
       BORRADOR = null; ABIERTA = t.id;
       nota("Tarea creada.");
-      pintar(); marcarNav(contarMias());
+      pintar(); marcarNav(avisos());
     } catch (e) {
       if (boton) boton.disabled = false;
       nota("No se pudo crear la tarea. Revisá la conexión y probá de nuevo.", true);
@@ -255,7 +320,7 @@
       if (!d.length) throw new Error("sin permiso");
       TAREAS = TAREAS.filter(x => x.id !== id); delete COMS[id];
       ABIERTA = null; nota("Tarea eliminada.");
-      pintar(); marcarNav(contarMias());
+      pintar(); marcarNav(avisos());
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien la creó o un admin.", true); }
   }
 
@@ -294,7 +359,8 @@
   function abrir(id) {
     if (ABIERTA === "nueva" && !descartarBorrador()) return;
     ABIERTA = id; BORRADOR = null;
-    pintarPanel(); pintarCuerpo();
+    marcarVisto(id);
+    pintarPanel(); pintarCuerpo(); marcarNav(avisos());
   }
   function nueva(def) {
     if (ABIERTA === "nueva" && !descartarBorrador()) return;
@@ -413,6 +479,7 @@
         ${v ? `<span class="tk-vence ${v.c}">${esc(v.t)}</span>` : ""}
         ${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}" title="Checklist">☑ ${ok}/${n}</span>` : ""}
         ${nc ? `<span class="tk-meta" title="Comentarios">💬 ${nc}</span>` : ""}
+        ${abierta(t) && meMencionan(t) ? `<span class="tk-meta tk-arrobado ${mencionNueva(t) ? "nueva" : ""}" title="${mencionNueva(t) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}
         ${avatarHTML(t.responsable_email)}
       </div>
     </article>`;
@@ -484,7 +551,7 @@
         title="${abierta(t) ? "Marcar como hecha" : "Volver a abrir"}" aria-label="Marcar como hecha">
       <div class="tk-fila-t">
         <b>${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</b>
-        <span class="tk-fila-meta">${areaHTML(t.area)}${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}">☑ ${ok}/${n}</span>` : ""}${nc ? `<span class="tk-meta">💬 ${nc}</span>` : ""}</span>
+        <span class="tk-fila-meta">${areaHTML(t.area)}${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}">☑ ${ok}/${n}</span>` : ""}${nc ? `<span class="tk-meta">💬 ${nc}</span>` : ""}${abierta(t) && meMencionan(t) ? `<span class="tk-meta tk-arrobado ${mencionNueva(t) ? "nueva" : ""}" title="${mencionNueva(t) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}</span>
       </div>
       <span class="tk-estado e-${esc(t.estado)}"><span class="tk-dot e-${esc(t.estado)}"></span>${estadoT(t.estado)}</span>
       <span class="tk-prio ${esc(t.prioridad)}">${prio.t}</span>
@@ -556,6 +623,7 @@
     const miCom = x => esAdmin() || low(x.autor_email) === yo();
     // Re-pintar la MISMA tarea (tildar un paso, el refresco) no puede mover el scroll
     // ni repetir la animación de entrada: el próximo clic caería en otro lado.
+    cerrarMenc();
     const previo = w.querySelector(".tk-panel");
     const misma = previo && previo.dataset.id === String(ABIERTA);
     const scroll = misma ? previo.scrollTop : 0;
@@ -593,8 +661,9 @@
           <ul class="tk-check">${t.checklist.map((x, i) => `<li class="${x.ok ? "ok" : ""}">
             <input type="checkbox" data-accion="check-toggle" data-i="${i}" ${x.ok ? "checked" : ""} aria-label="Hecho">
             <input class="tk-check-t" data-check-i="${i}" value="${esc(x.t)}" aria-label="Paso">
+            ${mencionesEn(x.t).length ? `<span class="tk-check-menc">${mencionesEn(x.t).map(avatarHTML).join("")}</span>` : ""}
             <button class="tk-mini" data-accion="check-del" data-i="${i}" title="Quitar paso" aria-label="Quitar paso">✕</button></li>`).join("")}</ul>
-          <input class="tk-check-nuevo" placeholder="＋ Agregar un paso y Enter" autocomplete="off">
+          <input class="tk-check-nuevo" placeholder="＋ Agregar un paso y Enter · con @ lo asignás a alguien" autocomplete="off">
         </div>
 
         ${nuevo ? `
@@ -607,9 +676,9 @@
           <div class="tk-coms">${coms.map(x => `<div class="tk-com">
               <div class="tk-com-h">${avatarHTML(x.autor_email)}<b>${esc(x.autor || nombreDe(x.autor_email))}</b><span>${hace(x.creado)}</span>
                 ${miCom(x) ? `<button class="tk-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
-              <p>${esc(x.texto).replace(/\n/g, "<br>")}</p>
+              <p>${conMenciones(x.texto)}</p>
             </div>`).join("") || `<p class="tk-vacio-mini">Todavía no hay comentarios.</p>`}</div>
-          <textarea class="tk-com-nuevo" rows="2" placeholder="Escribí un comentario…  (⌘/Ctrl + Enter para enviar)"></textarea>
+          <textarea class="tk-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien  (⌘/Ctrl + Enter para enviar)"></textarea>
           <div class="tk-com-acc"><button class="btn-ghost" data-accion="comentar">Comentar</button></div>
         </div>
         <div class="tk-p-pie">
@@ -627,6 +696,7 @@
     const t = tareaAbierta(); if (!t) return;
     const lista = t.checklist.map(x => Object.assign({}, x));
     fn(lista);
+    sellarMenciones(lista);
     if (ABIERTA === "nueva") { BORRADOR.checklist = lista; pintarPanel(); return Promise.resolve(); }
     const p = guardarTarea(ABIERTA, { checklist: lista });
     pintarPanel();
@@ -664,6 +734,48 @@
     comentar: () => comentar(ABIERTA),
     "com-del": a => borrarComentario(ABIERTA, a.dataset.id),
   };
+
+  /* ---- Autocompletar @ en comentarios y pasos del checklist ---- */
+  const CAMPOS_MENC = ".tk-com-nuevo,.tk-check-nuevo,.tk-check-t";
+  function buscarMencion(el) {
+    const pos = el.selectionStart;
+    const m = el.value.slice(0, pos).match(/(^|\s)@([^@\n]{0,30})$/);
+    if (!m) return cerrarMenc();
+    const q = sinTildes(m[2]);
+    // Recién elegida ("@Lucía Paz "): no volver a abrir la lista.
+    if (/\s$/.test(m[2]) && EQUIPO.some(p => sinTildes(p.nombre) === q.trim())) return cerrarMenc();
+    const lista = EQUIPO.filter(p => {
+      const n = sinTildes(p.nombre);
+      return !q || n.startsWith(q) || n.split(/\s+/).some(w => w.startsWith(q));
+    }).slice(0, 6);
+    if (!lista.length) return cerrarMenc();
+    const i = MENC && MENC.el === el ? Math.min(MENC.i, lista.length - 1) : 0;
+    MENC = { el, desde: pos - m[2].length - 1, lista, i };
+    pintarMenc();
+  }
+  function pintarMenc() {
+    let d = caja().querySelector(".tk-menc");
+    if (!d) { d = document.createElement("div"); d.className = "tk-menc"; d.setAttribute("role", "listbox"); caja().appendChild(d); }
+    d.innerHTML = MENC.lista.map((p, i) => `<button type="button" class="${i === MENC.i ? "on" : ""}" data-menc="${i}" role="option" aria-selected="${i === MENC.i}">
+      ${avatarHTML(p.email)}<span>${esc(p.nombre)}${low(p.email) === yo() ? " (vos)" : ""}</span></button>`).join("");
+    const r = MENC.el.getBoundingClientRect(), alto = d.offsetHeight;
+    d.style.left = Math.max(8, Math.min(r.left, innerWidth - d.offsetWidth - 8)) + "px";
+    d.style.top = (r.bottom + 4 + alto > innerHeight ? Math.max(8, r.top - alto - 4) : r.bottom + 4) + "px";
+  }
+  function cerrarMenc() {
+    MENC = null;
+    const d = caja() && caja().querySelector(".tk-menc"); if (d) d.remove();
+  }
+  function elegirMenc(i) {
+    if (!MENC || !MENC.lista[i]) return;
+    const { el, desde } = MENC, p = MENC.lista[i];
+    const ins = `@${p.nombre} `;
+    el.value = el.value.slice(0, desde) + ins + el.value.slice(el.selectionStart);
+    const caret = desde + ins.length;
+    cerrarMenc();
+    el.focus(); el.setSelectionRange(caret, caret);
+    if (el.tagName === "TEXTAREA") crecer(el);
+  }
 
   function agregarPaso(input) {
     const texto = input.value.trim(); if (!texto) return;
@@ -714,10 +826,31 @@
       const el = ev.target;
       if (el.classList.contains("tk-busca")) { BUSCA = el.value; pintarBarra(); pintarCuerpo(); return; }
       if (el.tagName === "TEXTAREA") crecer(el);
+      if (el.matches(CAMPOS_MENC)) buscarMencion(el);
     });
+    // Elegir con el mouse sin que el campo pierda el foco.
+    c.addEventListener("mousedown", ev => {
+      const b = ev.target.closest("[data-menc]"); if (!b) return;
+      ev.preventDefault(); elegirMenc(+b.dataset.menc);
+    });
+    c.addEventListener("focusout", ev => {
+      if (MENC && ev.target === MENC.el) setTimeout(() => { if (MENC && document.activeElement !== MENC.el) cerrarMenc(); }, 150);
+    });
+    document.addEventListener("scroll", ev => {
+      if (MENC && !(ev.target instanceof Element && ev.target.matches(CAMPOS_MENC))) cerrarMenc();
+    }, true);
 
     c.addEventListener("keydown", ev => {
       const el = ev.target;
+      if (MENC && MENC.el === el) {
+        if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+          ev.preventDefault();
+          MENC.i = (MENC.i + (ev.key === "ArrowDown" ? 1 : -1) + MENC.lista.length) % MENC.lista.length;
+          return pintarMenc();
+        }
+        if ((ev.key === "Enter" && !ev.metaKey && !ev.ctrlKey) || ev.key === "Tab") { ev.preventDefault(); return elegirMenc(MENC.i); }
+        if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); return cerrarMenc(); }
+      }
       if (el.classList.contains("tk-check-nuevo") && ev.key === "Enter") { ev.preventDefault(); agregarPaso(el); return; }
       if (el.classList.contains("tk-check-t") && ev.key === "Enter") { ev.preventDefault(); el.blur(); return; }
       if (el.classList.contains("tk-p-titulo") && ev.key === "Enter" && !ev.shiftKey) {
@@ -792,7 +925,9 @@
       if (!sec || sec.classList.contains("hidden") || document.hidden || ARRASTRA || ABIERTA === "nueva") return;
       const foco = document.activeElement;
       if (foco && caja().contains(foco) && /^(INPUT|TEXTAREA|SELECT)$/.test(foco.tagName)) return;
-      await traer(); pintar();
+      await traer();
+      if (ABIERTA && ABIERTA !== "nueva") marcarVisto(ABIERTA);
+      pintar(); marcarNav(avisos());
     }, 30000);
   }
 

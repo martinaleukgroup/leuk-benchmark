@@ -49,8 +49,41 @@
     </div>`;
   }
 
+  // Hoja de texto "Equipo de emergencia" (DYNA): intro + una columna por proveedor
+  function emergenciaHTML(f) {
+    const cols = (f.proveedores || []).map(p => {
+      const eqs = (p.equipos || []).map(e => `<div class="f-em-eq">
+          <div class="f-em-largo">${esc(e.largo)}</div>
+          <div>MODELO ${esc(e.modelo)}</div>
+          <div>AUTONOMÍA: ${esc(e.autonomia)}</div>
+          <div>RENDIMIENTO: ${esc(e.rendimiento)}</div>
+        </div>`).join("");
+      return `<div class="f-em-col">
+        <div class="f-em-tag">${esc(p.nombre)}</div>
+        <div class="f-em-desc">${esc(p.desc)}</div>
+        ${eqs}
+        <div class="f-em-web">${esc(p.web)}</div>
+      </div>`;
+    }).join("");
+    return `<div class="f-page f-page-em">
+      <div class="f-head">
+        <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
+        <img class="f-logo" src="${ICON}logo.png" alt="Leuk">
+      </div>
+      <div class="f-hr"></div>
+      <div class="f-em">
+        <div class="f-em-h">${esc(f.seccion)}</div>
+        <p>${esc(f.intro)} <b>${esc(f.intro_destacado)}</b></p>
+        <p>• ${esc(f.bajada)}</p>
+        <div class="f-em-cols">${cols}</div>
+      </div>
+      <div class="f-foot"><div class="f-web">www.leukiluminacion.com</div></div>
+    </div>`;
+  }
+
   function fichaHTML(f) {
     if (f.tipo === "accesorios") return accHTML(f);
+    if (f.tipo === "emergencia") return emergenciaHTML(f);
     // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta
     const rows = f.filas.map(r => `<div class="f-row"><div class="k">${r.k}</div><div class="v">${esc(r.v)}</div></div>`).join("");
 

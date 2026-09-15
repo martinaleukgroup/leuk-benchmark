@@ -109,6 +109,21 @@
 .f-host .f-acc-grid.is-dense .f-acc-img{height:92px}
 .f-host .f-acc-grid.is-dense .f-acc-cap{font-size:7px;line-height:1.5}
 
+/* --- Hoja de texto: equipo de emergencia (DYNA) --- */
+.f-host .f-em{flex:1;padding-top:12px;font-family:'DINLightCond','DINCond',sans-serif;font-size:15.5px;line-height:1.5}
+.f-host .f-em-h{font-family:'DINCond',sans-serif;font-size:19px;letter-spacing:.3px;text-transform:uppercase;
+  width:55%;padding-bottom:4px;border-bottom:1px solid var(--ink);margin-bottom:18px}
+.f-host .f-em p{margin:0 0 20px}
+.f-host .f-em p b{font-family:'DINCond',sans-serif;font-weight:400}
+.f-host .f-em-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 60px;margin-top:40px;
+  font-size:12.5px;line-height:1.5}
+.f-host .f-em-tag{display:inline-block;background:var(--ink);color:#fff;font-family:'DINBold',sans-serif;
+  font-size:12.5px;letter-spacing:.3px;padding:1px 4px 0;margin-bottom:2px}
+.f-host .f-em-desc{margin-bottom:18px}
+.f-host .f-em-eq{margin-bottom:18px}
+.f-host .f-em-largo{font-family:'DINCond',sans-serif}
+.f-host .f-em-web{font-family:'DINBold',sans-serif;margin-top:4px}
+
 .f-host .f-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:8px}
 .f-host .f-web{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:1px}
 .f-host .f-seals{display:flex;align-items:center;gap:12px}

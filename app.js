@@ -2496,7 +2496,7 @@
       { mod: "tareas", ic: "✅",
         d: "Las tareas del equipo de marketing: quién hace qué, para cuándo y en qué estado está.",
         stats: [],
-        ayuda: ["Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>.",
+        ayuda: ["Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
                 "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
                 "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
                 "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",

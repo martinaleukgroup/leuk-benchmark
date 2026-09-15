@@ -154,7 +154,16 @@
 .tk-panel.quieto,.tk-velo.quieto{animation:none}
 @keyframes tk-entra{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.tk-panel{animation:none}}
-.tk-p-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.tk-p-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.tk-p-top .tk-x{margin-left:auto}
+/* Hito: la estrellita marca las tareas que son hitos del plan */
+.tk-estrella{border:1px solid var(--line);background:var(--card);color:var(--gray);padding:4px 11px;border-radius:999px;font-size:12.5px}
+.tk-estrella:hover{border-color:var(--warn);color:var(--warn)}
+.tk-estrella.on{background:#f7efdf;border-color:var(--warn);color:#8a6424;font-weight:600}
+.tk-hito{color:var(--warn);margin-right:4px;font-size:1.05em}
+.tk-card.hito{background:linear-gradient(#fffaf0,#fff 60%)}
+.tk-cal-chip .tk-hito{margin:0}
+.tk-chip.hitos:not(.on) .c{color:var(--warn)}
 .tk-eyebrow{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--olive-mid)}
 .tk-x{border:0;background:transparent;font-size:18px;color:var(--gray-soft);width:34px;height:34px;border-radius:8px}
 .tk-x:hover{background:var(--olive-pale);color:var(--ink)}

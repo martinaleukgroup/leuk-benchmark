@@ -55,8 +55,8 @@
   const estadoT = k => (ESTADOS.find(e => e.k === k) || ESTADOS[0]).t;
   const PRIORIDADES = [{ k: "alta", t: "Alta" }, { k: "media", t: "Media" }, { k: "baja", t: "Baja" }];
   const PRIO_PESO = { alta: 0, media: 1, baja: 2 };
-  // Sugerencias para el campo Área; se suman solas las que el equipo vaya escribiendo.
-  const AREAS_BASE = ["Contenidos", "Redes", "Comunidad", "Diseño", "Eventos", "Benchmark", "Web", "Prensa"];
+  // Áreas del equipo de marketing: lista cerrada (decisión de la usuaria, sep 2026).
+  const AREAS = ["Ecosistema digital", "Eventos", "Diseño", "Comercial"];
   const DIAS_HECHAS = 14;    // el tablero muestra lo terminado en las últimas 2 semanas
   const DIAS_HISTORIA = 90;  // lo terminado hace más que esto ya no se baja
 
@@ -90,6 +90,7 @@
     { k: "semana",   t: "Próximos 7 días",  f: t => abierta(t) && !!t.fecha_limite && diasHasta(t.fecha_limite) >= 0 && diasHasta(t.fecha_limite) <= 7 },
     { k: "alta",     t: "Prioridad alta",   f: t => abierta(t) && t.prioridad === "alta" },
     { k: "sin",      t: "Sin responsable",  f: t => abierta(t) && !t.responsable_email },
+    { k: "hitos",    t: "★ Hitos",          f: t => abierta(t) && !!t.hito },
   ];
   const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
 
@@ -111,7 +112,8 @@
   // Mismo color para la misma área, siempre, sin tener que configurarlo.
   const tono = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
   const porOrden = (a, b) => (a.orden - b.orden) || String(a.creado || "").localeCompare(String(b.creado || ""));
-  const areas = () => [...new Set(TAREAS.map(t => t.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  // Las fijas primero; si alguna tarea vieja trae otra, se suma al final para no perderla de vista.
+  const areas = () => [...new Set([...AREAS, ...TAREAS.map(t => t.area).filter(Boolean)])];
 
   // Una tarea se lee en relación a hoy: "vence mañana" dice más que "16/09".
   function vence(t) {
@@ -180,7 +182,7 @@
         fetch(url("rpc/equipo_marketing"), { method: "POST", headers: head(), body: "{}" }),
       ]);
       if (!rT.ok) { ERROR = rT.status === 404 ? "sql" : "red"; return; }
-      TAREAS = (await rT.json()).map(t => Object.assign(t, { checklist: Array.isArray(t.checklist) ? t.checklist : [] }));
+      TAREAS = (await rT.json()).map(t => Object.assign(t, { checklist: Array.isArray(t.checklist) ? t.checklist : [], hito: !!t.hito }));
       COMS = {};
       (rC.ok ? await rC.json() : []).forEach(c => { (COMS[c.tarea_id] = COMS[c.tarea_id] || []).push(c); });
       if (rE.ok) EQUIPO = await rE.json();
@@ -224,6 +226,7 @@
     const cuerpo = {
       titulo: b.titulo, descripcion: b.descripcion, estado: b.estado, prioridad: b.prioridad, area: b.area,
       responsable_email: b.responsable_email || null, fecha_limite: b.fecha_limite || null, checklist: b.checklist,
+      ...(b.hito ? { hito: true } : {}),
       orden: hermanas.length ? Math.min(...hermanas.map(t => t.orden)) - 1 : 0,   // entra arriba de su columna
       autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
     };
@@ -299,7 +302,7 @@
     BORRADOR = {
       id: null, titulo: "", descripcion: "", estado: def.estado || "pendiente", prioridad: "media",
       area: AREA || "", responsable_email: PERSONA || (enEquipo ? yo() : null),
-      fecha_limite: def.fecha || null, checklist: [], creado: null,
+      fecha_limite: def.fecha || null, checklist: [], hito: false, creado: null,
     };
     ABIERTA = "nueva";
     pintarPanel(); pintarCuerpo();
@@ -342,8 +345,7 @@
         </div>
       </div>
       <div class="tk-cuerpo"></div>
-      <div class="tk-panel-wrap"></div>
-      <datalist id="tkAreas"></datalist>`;
+      <div class="tk-panel-wrap"></div>`;
   }
 
   function pintar() { pintarBarra(); pintarCuerpo(); pintarPanel(); }
@@ -364,14 +366,11 @@
     if (AREA && !ar.includes(AREA)) AREA = "";
     selA.innerHTML = `<option value="">Todas las áreas</option>` + ar.map(a => `<option>${esc(a)}</option>`).join("");
     selA.value = AREA;
-    selA.hidden = !ar.length;
     const b = base();
     c.querySelector(".tk-chips").innerHTML = FILTROS.map(f => {
       const n = f.k === "todas" ? b.filter(abierta).length : b.filter(f.f).length;
       return `<button class="tk-chip ${f.k} ${FILTRO === f.k ? "on" : ""}" data-accion="filtro" data-k="${f.k}">${f.t} <span class="c">${n}</span></button>`;
     }).join("");
-    const dl = c.querySelector("#tkAreas");
-    if (dl) dl.innerHTML = [...new Set([...AREAS_BASE, ...ar])].map(a => `<option value="${esc(a)}">`).join("");
     pintarNota();
   }
 
@@ -406,10 +405,10 @@
     const n = t.checklist.length, ok = t.checklist.filter(x => x.ok).length;
     const nc = (COMS[t.id] || []).length;
     const tags = (t.prioridad === "alta" && abierta(t) ? `<span class="tk-prio alta">Alta</span>` : "") + areaHTML(t.area);
-    return `<article class="tk-card p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${ABIERTA === t.id ? "abierta" : ""}"
+    return `<article class="tk-card p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.hito ? "hito" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
         draggable="true" data-drag="${t.id}" data-abrir="${t.id}" tabindex="0">
       ${tags ? `<div class="tk-card-tags">${tags}</div>` : ""}
-      <h4 class="tk-card-t">${esc(t.titulo) || "<i>Sin título</i>"}</h4>
+      <h4 class="tk-card-t">${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</h4>
       <div class="tk-card-pie">
         ${v ? `<span class="tk-vence ${v.c}">${esc(v.t)}</span>` : ""}
         ${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}" title="Checklist">☑ ${ok}/${n}</span>` : ""}
@@ -484,7 +483,7 @@
       <input type="checkbox" class="tk-fila-ok" data-accion="hecha" data-id="${t.id}" ${abierta(t) ? "" : "checked"}
         title="${abierta(t) ? "Marcar como hecha" : "Volver a abrir"}" aria-label="Marcar como hecha">
       <div class="tk-fila-t">
-        <b>${esc(t.titulo) || "<i>Sin título</i>"}</b>
+        <b>${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</b>
         <span class="tk-fila-meta">${areaHTML(t.area)}${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}">☑ ${ok}/${n}</span>` : ""}${nc ? `<span class="tk-meta">💬 ${nc}</span>` : ""}</span>
       </div>
       <span class="tk-estado e-${esc(t.estado)}"><span class="tk-dot e-${esc(t.estado)}"></span>${estadoT(t.estado)}</span>
@@ -508,9 +507,9 @@
     const hoy = hoyISO();
     const porDia = {};
     ts.forEach(t => { if (t.fecha_limite) (porDia[t.fecha_limite] = porDia[t.fecha_limite] || []).push(t); });
-    const chip = t => `<div class="tk-cal-chip p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${abierta(t) && t.fecha_limite && diasHasta(t.fecha_limite) < 0 ? "vencida" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
+    const chip = t => `<div class="tk-cal-chip p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.hito ? "hito" : ""} ${abierta(t) && t.fecha_limite && diasHasta(t.fecha_limite) < 0 ? "vencida" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
         draggable="true" data-drag="${t.id}" data-abrir="${t.id}" tabindex="0" title="${esc(t.titulo)} · ${esc(nombreDe(t.responsable_email) || "sin responsable")}">
-        ${avatarHTML(t.responsable_email)}<span>${esc(t.titulo) || "Sin título"}</span></div>`;
+        ${avatarHTML(t.responsable_email)}${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}<span>${esc(t.titulo) || "Sin título"}</span></div>`;
     let grilla = "";
     for (let i = 0; i < celdas; i++) {
       const d = new Date(y, m - 1, 1 - offset + i);
@@ -566,6 +565,8 @@
       <aside class="tk-panel ${misma ? "quieto" : ""}" data-id="${esc(ABIERTA)}" role="dialog" aria-label="${nuevo ? "Tarea nueva" : "Detalle de la tarea"}">
         <div class="tk-p-top">
           <span class="tk-eyebrow">${nuevo ? "Tarea nueva" : "Tarea"}</span>
+          <button class="tk-estrella ${t.hito ? "on" : ""}" data-accion="hito" aria-pressed="${t.hito ? "true" : "false"}"
+            title="${t.hito ? "Es un hito — tocá para quitarlo" : "Marcar como hito"}">${t.hito ? "★" : "☆"} Hito</button>
           <button class="tk-x" data-accion="cerrar" aria-label="Cerrar">✕</button>
         </div>
         <textarea class="tk-p-titulo" data-campo="titulo" rows="1" placeholder="¿Qué hay que hacer?">${esc(t.titulo)}</textarea>
@@ -576,7 +577,8 @@
           <label><span>Responsable</span><select data-campo="responsable_email">${opcResp}</select></label>
           <label><span>Vence</span><input type="date" data-campo="fecha_limite" value="${esc(t.fecha_limite || "")}"></label>
           <label><span>Prioridad</span><select data-campo="prioridad">${PRIORIDADES.map(p => `<option value="${p.k}" ${t.prioridad === p.k ? "selected" : ""}>${p.t}</option>`).join("")}</select></label>
-          <label><span>Área</span><input data-campo="area" list="tkAreas" value="${esc(t.area)}" placeholder="Contenidos, Redes…" autocomplete="off"></label>
+          <label><span>Área</span><select data-campo="area"><option value="">Sin área</option>${areas().map(a =>
+            `<option ${t.area === a ? "selected" : ""}>${esc(a)}</option>`).join("")}</select></label>
         </div>
         ${v && v.c ? `<div class="tk-p-vence ${v.c}">${v.c === "vencida" ? "⚠ " : ""}${cap(v.t)}</div>` : ""}
 
@@ -645,6 +647,7 @@
     crear: () => crearTarea(),
     borrar: () => borrarTarea(ABIERTA),
     estado: a => { guardar({ estado: a.dataset.k }); pintarPanel(); },
+    hito: () => { const t = tareaAbierta(); if (!t) return; guardar({ hito: !t.hito }); pintarPanel(); },
     hecha: a => {
       const t = TAREAS.find(x => x.id === a.dataset.id); if (!t) return;
       guardarTarea(t.id, { estado: abierta(t) ? "hecha" : "pendiente" }).then(() => { if (ABIERTA === t.id) pintarPanel(); });
@@ -692,7 +695,7 @@
       }
       const campo = el.dataset.campo; if (!campo) return;
       let valor = el.value;
-      if (campo === "titulo" || campo === "area") valor = valor.trim();
+      if (campo === "titulo") valor = valor.trim();
       if (campo === "titulo" && !valor && ABIERTA !== "nueva") {
         const t = tareaAbierta(); el.value = t ? t.titulo : "";
         return nota("El título no puede quedar vacío.", true);

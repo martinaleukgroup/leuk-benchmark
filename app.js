@@ -213,7 +213,7 @@
     lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: true,  borrarTodo: false },
     coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: false, borrarTodo: false },
     comercial:    { label: "Comercial",    mods: ["benchmark", "eventos"], precios: false, costos: false, borrarTodo: false },
-    diseno:       { label: "Diseño",       mods: ["diseno", "eventos"],   precios: false, costos: false, borrarTodo: false },
+    diseno:       { label: "Diseño",       mods: ["diseno", "eventos", "contenidos"],   precios: false, costos: false, borrarTodo: false },
     // Entra sólo al cronograma de la comunidad, a leerlo y comentarlo. No edita ni aprueba.
     representante:{ label: "Representante de marca", mods: ["contenidos"], precios: false, costos: false, borrarTodo: false },
   };
@@ -230,10 +230,10 @@
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
   const puedeIntegrar = () => ["admin", "lider", "coordinacion"].includes(rolReal());   // integrar competencia (PDF + web → catálogo)
-  // Contenidos: coordinación para arriba edita el copy y APRUEBA; el representante de
-  // marca sólo lee y comenta. Esto decide qué botones se dibujan — el permiso real lo
-  // aplica la RLS de Supabase (ver supabase/sql/2026-08-31-contenidos.sql).
-  const puedeEditarContenidos = () => ["admin", "lider", "coordinacion"].includes(rolReal());
+  // Contenidos: coordinación para arriba (+ diseño, sep 2026) edita el copy y APRUEBA;
+  // el representante de marca sólo lee y comenta. Esto decide qué botones se dibujan —
+  // el permiso real lo aplica la RLS de Supabase (ver supabase/sql/2026-09-17-diseno-contenidos.sql).
+  const puedeEditarContenidos = () => ["admin", "lider", "coordinacion", "diseno"].includes(rolReal());
   // Rol sin acceso al benchmark: no se le baja ese archivo (ver bootApp) ni ve el módulo.
   const esFichas = () => !puedeVer("benchmark");
   // Cada uno puede eliminar lo que seleccionó él mismo; los admin, cualquier cosa.

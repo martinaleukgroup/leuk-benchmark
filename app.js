@@ -209,8 +209,8 @@
   // `precios` = ve/edita precios de venta y descuentos. `costos` = ve el costo interno / margen
   // (dato sensible): sólo Admin y Líder. Coordinación ve todo menos costos.
   const ROLES = {
-    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "contenidos", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
-    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: true,  borrarTodo: false },
+    admin:        { label: "Admin",        mods: ["benchmark", "diseno", "eventos", "contenidos", "acciones", "usuarios"], precios: true,  costos: true,  borrarTodo: true },
+    lider:        { label: "Líder",        mods: ["benchmark", "diseno", "eventos", "contenidos", "acciones"], precios: true,  costos: true,  borrarTodo: false },
     coordinacion: { label: "Coordinación", mods: ["benchmark", "diseno", "eventos", "contenidos"], precios: true,  costos: false, borrarTodo: false },
     comercial:    { label: "Comercial",    mods: ["benchmark", "eventos"], precios: false, costos: false, borrarTodo: false },
     diseno:       { label: "Diseño",       mods: ["diseno", "eventos", "contenidos"],   precios: false, costos: false, borrarTodo: false },
@@ -407,6 +407,8 @@
     irA: p => goToPage(p),
     // ---- lo que usa tareas.js ----
     puedeVerTareas: () => AUTHSES.logged() && puedeVer("tareas"),
+    // ---- lo que usa acciones.js ----
+    puedeVerAcciones: () => AUTHSES.logged() && puedeVer("acciones"),
   };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
@@ -2201,7 +2203,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "tareas", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "tareas", "acciones", "usuarios"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2235,6 +2237,11 @@
     tareas: {
       label: "Tareas",
       pages: [{ p: "tareas", t: "Equipo de marketing" }],
+    },
+    // Seguimiento de acciones (alianzas, eventos, sponsoreos…): sólo Admin y Líder (ver ROLES).
+    acciones: {
+      label: "Acciones",
+      pages: [{ p: "acciones", t: "Seguimiento de acciones" }],
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2297,6 +2304,8 @@
     }
     // Tareas del equipo de marketing: tablero + lista + calendario. Lo arma tareas.js.
     if (page === "tareas" && window.renderTareas) window.renderTareas();
+    // Acciones de marketing: lista + ficha con línea de tiempo y métricas. Lo arma acciones.js.
+    if (page === "acciones" && window.renderAcciones) window.renderAcciones();
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
@@ -2502,6 +2511,14 @@
                 "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",
                 "Escribí <b>@</b> en un comentario o en un paso del checklist para <b>mencionar</b> a alguien del equipo: le aparece marcado en su solapa Tareas.",
                 "El número en la solapa <b>Tareas</b> son las tuyas que vencen hoy o ya vencieron, más las menciones nuevas."] },
+      { mod: "acciones", ic: "🎯",
+        d: "Seguimiento de las acciones de marketing: propuestas, negociación, inversión y resultados.",
+        stats: [],
+        ayuda: ["Creá una acción con <b>＋ Nueva acción</b>: tipo, socio, fechas y responsable.",
+                "Movela de estado a medida que avanza: <b>idea → evaluación → negociación → aprobada → en curso → finalizada</b>. Cada cambio queda en la línea de tiempo.",
+                "En la <b>línea de tiempo</b> tirá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
+                "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
+                "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
       { mod: "usuarios", ic: "👥",
         d: "Quién entra a la plataforma y qué ve cada uno.",
         stats: [],

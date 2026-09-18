@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="fichas-panel.css?v=234">
 <link rel="stylesheet" href="contenidos.css?v=234">
 <link rel="stylesheet" href="tareas.css?v=3">
+<link rel="stylesheet" href="acciones.css?v=1">
 </head>
 <body class="locked">
 
@@ -44,6 +45,7 @@
       <button data-mod="eventos">Eventos</button>
       <button data-mod="contenidos">Contenidos</button>
       <button data-mod="tareas">Tareas</button>
+      <button data-mod="acciones">Acciones</button>
       <button data-mod="usuarios">Usuarios</button>
     </nav>
     <button id="btnAuth" class="btn-desc" title="Cerrar sesión">👤</button>
@@ -138,6 +140,9 @@
   <!-- PÁGINA TAREAS — sólo el equipo de marketing (tablero + lista + calendario, lo dibuja tareas.js) -->
   <section id="page-tareas" class="page hidden"><div id="tareas"></div></section>
 
+  <!-- PÁGINA ACCIONES — sólo Admin y Líder (lista + ficha con línea de tiempo y métricas, lo dibuja acciones.js) -->
+  <section id="page-acciones" class="page hidden"><div id="acciones"></div></section>
+
   <!-- PÁGINA USUARIOS (sólo admin) -->
   <section id="page-usuarios" class="page hidden"><div id="usuarios"></div></section>
 </main>
@@ -150,12 +155,13 @@
 <script src="vendor/html2canvas.min.js?v=234"></script>
 <script src="vendor/jspdf.umd.min.js?v=234"></script>
 <script src="vendor/jszip.min.js?v=234"></script>
-<script src="app.js?v=236"></script>
+<script src="app.js?v=237"></script>
 <script src="fichas-data.js?v=234"></script>
 <script src="fichas-ui.js?v=234"></script>
 <script src="fichas-panel.js?v=234"></script>
 <script src="contenidos.js?v=234"></script>
 <script src="tareas.js?v=4"></script>
+<script src="acciones.js?v=1"></script>
 
 <!-- Mantiene --appbar-h igual al alto real de la barra (topbar + sub-barra),
      para que las mini-apps embebidas llenen exacto el alto de pantalla. -->

@@ -87,6 +87,9 @@
     { k: "resultado",       t: "Resultado",       ic: "📈" },
   ];
   const hitoTipo = k => HITO_TIPOS.find(h => h.k === k) || { k: "estado", t: "Cambio de estado", ic: "•" };
+  // Rubros de la inversión. "Otro" + detalle cubre lo que no entre acá.
+  const RUBROS = ["Producto (canje)", "Material / impresión", "Espacio / fee", "Producción / montaje",
+                  "Logística / traslados", "Catering", "Honorarios", "Pauta / publicidad", "Otro"];
   // Sugerencias para arrancar rápido; después se editan libremente.
   const METRICAS_SUG = [
     { n: "Asistentes", u: "personas" },
@@ -197,7 +200,10 @@
   }
 
   /* ---- Datos ---- */
-  const normal = a => Object.assign(a, { metricas: Array.isArray(a.metricas) ? a.metricas : [] });
+  const normal = a => Object.assign(a, {
+    metricas: Array.isArray(a.metricas) ? a.metricas : [],
+    inversion_items: Array.isArray(a.inversion_items) ? a.inversion_items : [],
+  });
   const normalH = h => Object.assign(h, { archivos: Array.isArray(h.archivos) ? h.archivos : [] });
   let TRAYENDO = null;
   function traer() {
@@ -626,24 +632,66 @@
       </div>`;
   }
 
+  // Rubros de la inversión. Las acciones cargadas antes del desglose traen sólo los
+  // totales: se muestran como una fila "Otro" y se guardan como rubro al primer cambio.
+  function itemsDe(a) {
+    if (a.inversion_items.length) return a.inversion_items;
+    if (num(a.inversion_estimada) != null || num(a.inversion_real) != null)
+      return [{ cat: "Otro", det: "", est: num(a.inversion_estimada), real: num(a.inversion_real) }];
+    return [];
+  }
+  const sumar = (l, k) => l.some(x => num(x[k]) != null) ? l.reduce((t, x) => t + (num(x[k]) || 0), 0) : null;
+  const tonoDesvio = d => d == null ? "" : d > 0.1 ? "no" : d > 0 ? "warn" : "ok";
+  const desvioTxt = d => d == null ? "—" : `${d > 0 ? "+" : ""}${Math.round(d * 100)}%`;
+
   function pintarInversion() {
     const w = caja() && caja().querySelector(".ac-inv-box"); if (!w) return;
     const a = accionAbierta(); if (!a) return;
-    const d = desvio(a);
+    const items = itemsDe(a);
+    const usados = new Set(items.map(x => x.cat));
+    const val = v => esc(v == null ? "" : v);
     w.innerHTML = `
       <h4 class="ac-box-h">Inversión
         <select data-campo="moneda" class="ac-mon" aria-label="Moneda">
           <option value="ARS" ${a.moneda !== "USD" ? "selected" : ""}>$ ARS</option>
           <option value="USD" ${a.moneda === "USD" ? "selected" : ""}>US$</option>
         </select></h4>
-      <div class="ac-inv">
-        <label><span>Estimada</span><input type="number" step="any" inputmode="decimal" data-campo="inversion_estimada" value="${esc(a.inversion_estimada == null ? "" : a.inversion_estimada)}" placeholder="—"></label>
-        <label><span>Real</span><input type="number" step="any" inputmode="decimal" data-campo="inversion_real" value="${esc(a.inversion_real == null ? "" : a.inversion_real)}" placeholder="—"></label>
-        <div class="ac-inv-d ${d == null ? "" : d > 0.1 ? "no" : d > 0 ? "warn" : "ok"}">
-          <span>Desvío</span><b>${d == null ? "—" : `${d > 0 ? "+" : ""}${Math.round(d * 100)}%`}</b>
-        </div>
+      ${items.length ? `<div class="ac-inv-t">
+        <div class="ac-inv-h"><span>Rubro</span><span>Detalle</span><span>Estimada</span><span>Real</span><span></span></div>
+        ${items.map((x, i) => `<div class="ac-inv-f">
+          <select data-inv="${i}" data-k="cat" aria-label="Rubro">${[...new Set([...RUBROS, x.cat].filter(Boolean))].map(r =>
+            `<option ${x.cat === r ? "selected" : ""}>${esc(r)}</option>`).join("")}</select>
+          <input data-inv="${i}" data-k="det" value="${esc(x.det)}" placeholder="detalle" aria-label="Detalle">
+          <input data-inv="${i}" data-k="est" type="number" step="any" inputmode="decimal" value="${val(x.est)}" placeholder="estimada" aria-label="Estimada">
+          <input data-inv="${i}" data-k="real" type="number" step="any" inputmode="decimal" value="${val(x.real)}" placeholder="real" aria-label="Real">
+          <button class="ac-mini" data-accion="inv-del" data-i="${i}" title="Quitar rubro" aria-label="Quitar rubro">✕</button>
+        </div>`).join("")}
+        <div class="ac-inv-tot"></div>
+      </div>` : `<p class="ac-vacio-mini">Cargá cuánto se va a invertir por rubro; al cierre, lo real.</p>`}
+      <div class="ac-met-add">
+        <button class="btn-ghost" data-accion="inv-add">＋ Rubro</button>
+        ${RUBROS.filter(r => r !== "Otro" && !usados.has(r)).slice(0, 4).map(r => `<button class="ac-sug" data-accion="inv-sug" data-r="${esc(r)}">${esc(r)}</button>`).join("")}
       </div>
-      <p class="ac-inv-nota">Contá plata y producto entregado (canjes) a valor de lista.</p>`;
+      <p class="ac-inv-nota">El producto entregado en canje, a valor de lista.</p>`;
+    pintarTotalesInv();
+  }
+  // Sólo la fila de totales: se repinta al tipear un monto sin perder el foco.
+  function pintarTotalesInv() {
+    const w = caja() && caja().querySelector(".ac-inv-tot"); if (!w) return;
+    const a = accionAbierta(); if (!a) return;
+    const d = desvio(a);
+    w.innerHTML = `<span>Total</span><span></span>
+      <b>${plata(num(a.inversion_estimada), a.moneda)}</b><b>${plata(num(a.inversion_real), a.moneda)}</b>
+      <span class="ac-inv-d ${tonoDesvio(d)}" title="Desvío real vs estimada">${desvioTxt(d)}</span>`;
+  }
+  // Los totales se guardan junto con los rubros: la lista y el resumen del año los leen directo.
+  function cambiarInversion(fn, repintar) {
+    const a = accionAbierta(); if (!a) return;
+    const lista = itemsDe(a).map(x => Object.assign({}, x));
+    fn(lista);
+    const p = guardarAccion(a.id, { inversion_items: lista, inversion_estimada: sumar(lista, "est"), inversion_real: sumar(lista, "real") });
+    if (repintar !== false) pintarInversion(); else pintarTotalesInv();
+    return p;
   }
 
   /* ---- Métricas: editar ---- */
@@ -662,7 +710,7 @@
     BORRADOR = {
       id: null, titulo: "", descripcion: "", tipo: TIPO || "", estado: "idea", socio: "",
       responsable_email: EQUIPO.some(p => low(p.email) === yo()) ? yo() : null,
-      fecha_inicio: null, fecha_fin: null, moneda: "ARS", inversion_estimada: null, inversion_real: null,
+      fecha_inicio: null, fecha_fin: null, moneda: "ARS", inversion_estimada: null, inversion_real: null, inversion_items: [],
       veredicto: "", metricas: [], aprendizajes: "",
     };
     ABIERTA = "nueva"; pintar();
@@ -706,6 +754,13 @@
     }),
     "met-sug": a => { const s = METRICAS_SUG.find(x => x.n === a.dataset.n); if (s) cambiarMetricas(l => l.push({ n: s.n, u: s.u, esp: null, real: null, menos: !!s.menos })); },
     "met-del": a => cambiarMetricas(l => l.splice(+a.dataset.i, 1)),
+    "inv-add": () => cambiarInversion(l => l.push({ cat: "Otro", det: "", est: null, real: null })).then(() => {
+      const ins = caja().querySelectorAll('.ac-inv-f input[data-k="det"]'); if (ins.length) ins[ins.length - 1].focus();
+    }),
+    "inv-sug": a => cambiarInversion(l => l.push({ cat: a.dataset.r, det: "", est: null, real: null })).then(() => {
+      const ins = caja().querySelectorAll('.ac-inv-f input[data-k="est"]'); if (ins.length) ins[ins.length - 1].focus();
+    }),
+    "inv-del": a => cambiarInversion(l => l.splice(+a.dataset.i, 1)),
     "met-menos": a => cambiarMetricas(l => { const m = l[+a.dataset.i]; if (m) m.menos = !m.menos; }),
   };
 
@@ -741,6 +796,12 @@
         }
         return;
       }
+      if (el.dataset.inv != null) {
+        const i = +el.dataset.inv, k = el.dataset.k;
+        const v = (k === "est" || k === "real") ? num(el.value) : el.value.trim();
+        cambiarInversion(l => { if (l[i]) l[i][k] = v; }, k === "cat");   // el rubro cambia las sugerencias
+        return;
+      }
       const campo = el.dataset.campo; if (!campo) return;
       let valor = el.value;
       if (campo === "titulo") valor = valor.trim();
@@ -749,14 +810,8 @@
         return nota("El nombre no puede quedar vacío.", true);
       }
       if (["fecha_inicio", "fecha_fin", "responsable_email"].includes(campo) && !valor) valor = null;
-      if (campo === "inversion_estimada" || campo === "inversion_real") valor = num(valor);
       if (campo === "veredicto") el.className = `ac-ver v-${valor}`;
-      guardar({ [campo]: valor }).then(ok => {
-        if (ok && ["inversion_estimada", "inversion_real", "moneda"].includes(campo) && ABIERTA !== "nueva") {
-          const d = desvio(accionAbierta()), box = caja().querySelector(".ac-inv-d");
-          if (box) { box.className = `ac-inv-d ${d == null ? "" : d > 0.1 ? "no" : d > 0 ? "warn" : "ok"}`; box.querySelector("b").textContent = d == null ? "—" : `${d > 0 ? "+" : ""}${Math.round(d * 100)}%`; }
-        }
-      });
+      guardar({ [campo]: valor }).then(ok => { if (ok && campo === "moneda") pintarTotalesInv(); });
     });
 
     c.addEventListener("input", ev => {

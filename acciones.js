@@ -109,6 +109,7 @@
   let ERROR = "";          // "" | sql | red
   let FILTRO = "activas";
   let TIPO = "";
+  let DISTRI = "";         // filtro por distribuidor, "" = todos
   let BUSCA = "";
   let ABIERTA = null;      // id de la acción en pantalla, "nueva" para un borrador
   let BORRADOR = null;
@@ -159,8 +160,8 @@
   ];
   function base() {
     const q = sinTildes(BUSCA.trim());
-    return ACC.filter(a => (!TIPO || a.tipo === TIPO) &&
-      (!q || sinTildes(`${a.titulo} ${a.socio} ${a.tipo} ${a.descripcion} ${nombreDe(a.responsable_email)}`).includes(q)));
+    return ACC.filter(a => (!TIPO || a.tipo === TIPO) && (!DISTRI || low(a.distribuidor) === DISTRI) &&
+      (!q || sinTildes(`${a.titulo} ${a.socio} ${a.distribuidor || ""} ${a.tipo} ${a.descripcion} ${nombreDe(a.responsable_email)}`).includes(q)));
   }
   const visibles = () => base().filter((FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f);
 
@@ -174,6 +175,12 @@
     if (!email) return `<span class="ac-avatar vacio" title="Sin responsable">?</span>`;
     const n = nombreDe(email);
     return `<span class="ac-avatar ${low(email) === yo() ? "yo" : ""}" title="${esc(n)}">${esc(iniciales(n))}</span>`;
+  }
+  // Distribuidores ya cargados (sin repetir por mayúsculas): autocompletan el campo y arman el filtro.
+  function distribuidores() {
+    const m = new Map();
+    ACC.forEach(a => { const d = String(a.distribuidor || "").trim(); if (d && !m.has(low(d))) m.set(low(d), d); });
+    return [...m.values()].sort((x, y) => x.localeCompare(y, "es"));
   }
   const tiposEnUso = () => [...new Set([...TIPOS, ...ACC.map(a => a.tipo).filter(Boolean)])];
   function rango(a) {
@@ -411,10 +418,13 @@
       tms(y.creado) - tms(x.creado));
     w.innerHTML = `
       <div class="ac-bar">
-        <input class="ac-busca" type="search" placeholder="Buscar acción, socio…" autocomplete="off" aria-label="Buscar acción" value="${esc(BUSCA)}">
+        <input class="ac-busca" type="search" placeholder="Buscar acción, socio, distribuidor…" autocomplete="off" aria-label="Buscar acción" value="${esc(BUSCA)}">
         <select class="ac-sel" data-f="tipo" aria-label="Tipo">
           <option value="">Todos los tipos</option>${tiposEnUso().map(t => `<option ${TIPO === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
         </select>
+        ${distribuidores().length ? `<select class="ac-sel" data-f="distri" aria-label="Distribuidor">
+          <option value="">Todos los distribuidores</option>${distribuidores().map(d => `<option value="${esc(low(d))}" ${DISTRI === low(d) ? "selected" : ""}>${esc(d)}</option>`).join("")}
+        </select>` : ""}
         <button class="btn-primary ac-nueva" data-accion="nueva">＋ Nueva acción</button>
       </div>
       <div class="ac-stats">
@@ -445,7 +455,8 @@
         ${faltanResultados(a) ? `<span class="ac-falta" title="Terminó y faltan cargar las métricas reales">Faltan resultados</span>` : ""}
       </div>
       <h3 class="ac-card-t">${esc(a.titulo) || "<i>Sin nombre</i>"}</h3>
-      ${a.socio || rango(a) ? `<p class="ac-card-sub">${[a.socio ? `con <b>${esc(a.socio)}</b>` : "", esc(rango(a))].filter(Boolean).join(" · ")}</p>` : ""}
+      ${a.socio || a.distribuidor || rango(a) ? `<p class="ac-card-sub">${[a.socio ? `con <b>${esc(a.socio)}</b>` : "",
+        a.distribuidor ? `junto a <b>${esc(a.distribuidor)}</b>` : "", esc(rango(a))].filter(Boolean).join(" · ")}</p>` : ""}
       ${r.total ? `<div class="ac-card-met">
           <span class="ac-barra ${tonoCumpl(r.prom)}"><span style="width:${r.prom == null ? 0 : Math.min(100, Math.round(r.prom * 100))}%"></span></span>
           <span>${r.medidas ? `${pct(r.prom)} · ${r.llegaron}/${r.total} cumplidas${r.medidas < r.total ? ` · ${r.total - r.medidas} sin medir` : ""}` : `${r.total} métrica${r.total === 1 ? "" : "s"} esperada${r.total === 1 ? "" : "s"}`}</span>
@@ -484,6 +495,8 @@
         <div class="ac-campos">
           <label><span>Tipo</span><select data-campo="tipo"><option value="">—</option>${tiposEnUso().map(t => `<option ${a.tipo === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
           <label><span>Socio / organizador</span><input data-campo="socio" value="${esc(a.socio)}" placeholder="Con quién"></label>
+          <label><span>Distribuidor</span><input data-campo="distribuidor" value="${esc(a.distribuidor || "")}" placeholder="Si participa alguno" list="ac-distris" autocomplete="off">
+            <datalist id="ac-distris">${distribuidores().map(d => `<option value="${esc(d)}">`).join("")}</datalist></label>
           <label><span>Responsable</span><select data-campo="responsable_email">${opcResp}</select></label>
           <label><span>Desde</span><input type="date" data-campo="fecha_inicio" value="${esc(a.fecha_inicio || "")}"></label>
           <label><span>Hasta</span><input type="date" data-campo="fecha_fin" value="${esc(a.fecha_fin || "")}"></label>
@@ -708,7 +721,7 @@
   function abrir(id) { ABIERTA = id; BORRADOR = null; COMP = compVacio(); PEND = []; pintar(); window.scrollTo({ top: 0 }); }
   function nueva() {
     BORRADOR = {
-      id: null, titulo: "", descripcion: "", tipo: TIPO || "", estado: "idea", socio: "",
+      id: null, titulo: "", descripcion: "", tipo: TIPO || "", estado: "idea", socio: "", distribuidor: "",
       responsable_email: EQUIPO.some(p => low(p.email) === yo()) ? yo() : null,
       fecha_inicio: null, fecha_fin: null, moneda: "ARS", inversion_estimada: null, inversion_real: null, inversion_items: [],
       veredicto: "", metricas: [], aprendizajes: "",
@@ -732,7 +745,7 @@
   /* ---- Eventos (se enganchan una sola vez sobre #acciones) ---- */
   const ACCIONES = {
     filtro: a => { FILTRO = a.dataset.k; pintarLista(); },
-    limpiar: () => { FILTRO = "todas"; TIPO = ""; BUSCA = ""; pintarLista(); },
+    limpiar: () => { FILTRO = "todas"; TIPO = ""; DISTRI = ""; BUSCA = ""; pintarLista(); },
     nueva: () => nueva(),
     volver: () => volver(),
     crear: () => crearAccion(),
@@ -779,6 +792,7 @@
     c.addEventListener("change", ev => {
       const el = ev.target;
       if (el.dataset.f === "tipo") { TIPO = el.value; pintarLista(); return; }
+      if (el.dataset.f === "distri") { DISTRI = el.value; pintarLista(); return; }
       if (el.classList.contains("ac-file")) { sumarArchivos(el.files); el.value = ""; return; }
       if (el.classList.contains("ac-comp-f")) { COMP.fecha = el.value || hoyISO(); return; }
       if (el.dataset.met != null) {
@@ -804,7 +818,7 @@
       }
       const campo = el.dataset.campo; if (!campo) return;
       let valor = el.value;
-      if (campo === "titulo") valor = valor.trim();
+      if (campo === "titulo" || campo === "socio" || campo === "distribuidor") valor = valor.trim();
       if (campo === "titulo" && !valor && ABIERTA !== "nueva") {
         const a = accionAbierta(); el.value = a ? a.titulo : "";
         return nota("El nombre no puede quedar vacío.", true);

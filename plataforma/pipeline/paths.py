@@ -47,11 +47,12 @@ IMG_COMP_SRC = {
 }
 
 # Índice FAISS de competencia (embeddings visuales OpenCLIP ViT-B-32, dim 512)
-FAISS_INDEX = HOME / "leuk-benchmark/pipeline/faiss/catalog.faiss"
-FAISS_PATHS = HOME / "leuk-benchmark/pipeline/faiss/paths.json"
+FAISS_INDEX = None  # se define abajo, relativo a ROOT
+FAISS_PATHS = None
 
 # Salidas del proyecto
-ROOT = HOME / "leuk-benchmark"
+# En otra máquina (repo clonado) se apunta con LEUK_ROOT, p. ej. <repo>/plataforma
+ROOT = Path(os.environ["LEUK_ROOT"]).expanduser() if os.environ.get("LEUK_ROOT") else HOME / "leuk-benchmark"
 DATA = ROOT / "data"
 IMG_LEUK = DATA / "img/leuk"           # fotos Leuk optimizadas para web
 IMG_COMP = DATA / "img/competencia"    # fotos competencia optimizadas para web
@@ -60,3 +61,6 @@ LEUK_IMG_MANIFEST = ROOT / "pipeline/leuk_image_manifest.json"   # SKU -> Drive 
 LEUK_TAGS = ROOT / "pipeline/leuk_etiquetas.json"                # SKU -> etiquetas visuales
 LEUK_EMB = ROOT / "pipeline/leuk_embeddings.npz"                 # SKU -> vector 512
 BUILD_LOG = ROOT / "pipeline/build_log.txt"
+
+FAISS_INDEX = ROOT / "pipeline/faiss/catalog.faiss"
+FAISS_PATHS = ROOT / "pipeline/faiss/paths.json"

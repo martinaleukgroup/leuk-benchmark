@@ -7,9 +7,9 @@ vive cada una.
 
 | Pieza | Dónde | Para qué |
 |---|---|---|
-| **Repo / pipeline** | `~/leuk-benchmark/` (fuera de iCloud) | scripts y datos |
+| **Repo / pipeline** | `~/leuk-benchmark/` en la Mac de Martina; en otra máquina, el repo clonado → `plataforma/` (con `LEUK_ROOT` apuntando ahí) | scripts y datos |
 | **App publicada** | https://martinaleukgroup.github.io/leuk-benchmark/ | la plataforma |
-| **Repo público** | `~/leuk-benchmark/app/` (rama `main`) | sólo `app/`, nunca el pipeline |
+| **Repo público** | `~/leuk-benchmark/app/` (rama `main`) | la app + `plataforma/` (copia versionada del pipeline, worker, SQL y esta skill; se actualiza con `plataforma/sincronizar.sh`) |
 | **Supabase** | proyecto `cswqoretlhppxkelysny` | cola, productos, recetas, datos |
 | **Worker** | `~/leuk-benchmark/worker/worker.py` — Modal app `leuk-integracion` | extracción con Claude |
 | **Login de scripts** | `pipeline/auth_sesion.py` — tu cuenta de la plataforma (`LEUK_EMAIL`/`LEUK_PASSWORD`) | scripts locales. Probar con `python3 probar_acceso.py`. **Ya no se usa la service key** (sólo el worker de Modal la tiene) |
@@ -30,6 +30,17 @@ Buckets: **`integracion`** (privado, los PDF) · **`catalogo-img`** (público, l
 **`datos`** (privado, el `benchmark_data.json`).
 
 ## Comandos
+
+**Subir una lista (encolar un job)** — con la cuenta personal, sin service key:
+
+```bash
+cd <pipeline>
+python3 encolar_lista.py --marca <slug> lista.pdf                        # actualización (marca con receta)
+python3 encolar_lista.py --alta "Marca" --url https://sitio lista.pdf    # alta: extracción de prueba/completa
+python3 encolar_lista.py --estado                                        # últimos trabajos
+```
+
+**Worker** (sólo quien tiene la cuenta de Modal):
 
 ```bash
 cd ~/leuk-benchmark/worker

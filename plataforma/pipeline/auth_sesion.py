@@ -38,8 +38,15 @@ def headers():
     }
 
 
+def email():
+    """Email de la cuenta logueada (para firmar lo que se sube)."""
+    headers()
+    return _cache.get("email")
+
+
 def _login():
     email = os.environ.get("LEUK_EMAIL") or input("Email de Supabase: ").strip()
+    _cache["email"] = email
     password = os.environ.get("LEUK_PASSWORD") or getpass.getpass("Contraseña: ")
     req = urllib.request.Request(
         f"{SB_URL}/auth/v1/token?grant_type=password",

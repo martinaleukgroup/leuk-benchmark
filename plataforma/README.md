@@ -19,6 +19,19 @@ Esta carpeta es una copia versionada de lo que vive en `~/leuk-benchmark` por fu
 - Para correr el circuito completo sin la service key, primero hay que aplicar
   `supabase/sql/2026-09-17-alta-sin-service-key.sql` en Supabase.
 
+## Subir listas desde Claude (otra persona / otra computadora)
+
+1. **Instalar la skill** `alta-competidor`:
+   - Claude Code: `cp -r plataforma/skills/alta-competidor ~/.claude/skills/`
+   - App de Claude: Settings → Capabilities → Skills → subir el `.zip` de la carpeta
+     `plataforma/skills/alta-competidor` (pedírselo a Martina o comprimir la carpeta).
+2. **Pedirle a Claude:** "Subí esta lista de Vonderk al Benchmark" (adjuntando el PDF). La skill
+   clona este repo, se loguea con tu cuenta de la plataforma (te pide email y contraseña en la
+   terminal) y corre `pipeline/encolar_lista.py`.
+3. Revisar lo importado en la app → Benchmark → Nuevas integraciones.
+
+Requisitos: Python 3 (sin librerías extra para subir listas) y rol admin/líder/coordinación.
+
 ## Secretos
 
 Ninguna llave está en el repo. Las del worker (Anthropic, Supabase service role) viven en el

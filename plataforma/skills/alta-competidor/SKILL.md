@@ -1,6 +1,6 @@
 ---
 name: alta-competidor
-description: Da de alta un competidor nuevo en el Benchmark de Leuk (o rehace la carga de uno existente) a partir de su lista de precios, catálogo y sitio web. Usala SIEMPRE que aparezca una marca de iluminación que todavía no está en el Benchmark y haya que incorporar su portfolio — aunque el pedido no diga "alta" ni "competidor": alcanza con que manden una lista de precios, un catálogo PDF o un link de una marca y pidan "subila", "cargala", "metela al benchmark", "comparala con Leuk". Usala también cuando una carga previa salió mal y hay que rehacerla, cuando hay que documentar cómo se cargó una marca, o cuando falla/hay que reprocesar un job de integración. NO la uses para actualizar la lista de precios de una marca YA cargada que ya tiene receta (eso se hace solo desde la app, botón "↻ Actualizar lista"), ni para tocar productos de Leuk.
+description: Da de alta un competidor nuevo en el Benchmark de Leuk (o rehace la carga de uno existente) a partir de su lista de precios, catálogo y sitio web. Usala SIEMPRE que aparezca una marca de iluminación que todavía no está en el Benchmark y haya que incorporar su portfolio — aunque el pedido no diga "alta" ni "competidor": alcanza con que manden una lista de precios, un catálogo PDF o un link de una marca y pidan "subila", "cargala", "metela al benchmark", "comparala con Leuk". Usala también cuando una carga previa salió mal y hay que rehacerla, cuando hay que documentar cómo se cargó una marca, o cuando falla/hay que reprocesar un job de integración. Usala también para SUBIR la lista de precios nueva de una marca ya cargada (con receta) desde Claude: es un solo comando, `encolar_lista.py --marca <slug>` (ver "Actualizar una marca ya cargada"). NO la uses para tocar productos de Leuk.
 ---
 
 # Alta de un competidor nuevo — Benchmark Leuk
@@ -8,6 +8,44 @@ description: Da de alta un competidor nuevo en el Benchmark de Leuk (o rehace la
 Sos quien incorpora una marca nueva al Benchmark de Leuk Iluminación. La interlocutora habitual
 es Martina (Análisis Comercial), pero **esta skill está escrita para que el proceso salga bien
 aunque ella no esté**: todo lo que hay que preguntar, verificar y dejar documentado está acá.
+
+---
+
+## Antes de empezar: dónde está el código (leelo si no estás en la Mac de Martina)
+
+Todo el código vive en el repo público `https://github.com/martinaleukgroup/leuk-benchmark`,
+carpeta `plataforma/`. En la Mac de Martina la carpeta de trabajo es `~/leuk-benchmark/`; en
+cualquier otra computadora es `<repo>/plataforma/`. En esta skill, **`pipeline/` significa
+`~/leuk-benchmark/pipeline/` o `<repo>/plataforma/pipeline/`**, lo que exista.
+
+Primera vez en una computadora nueva (lo hace Claude, preguntando email y contraseña a la persona):
+
+```bash
+git clone https://github.com/martinaleukgroup/leuk-benchmark.git ~/leuk-benchmark-repo   # o git pull si ya está
+cd ~/leuk-benchmark-repo/plataforma/pipeline
+export LEUK_ROOT=~/leuk-benchmark-repo/plataforma
+python3 probar_acceso.py        # pide email y contraseña de la plataforma
+```
+
+`probar_acceso.py` tiene que dar `puede_integrar() → True`. Si da False, la cuenta no tiene rol
+admin/líder/coordinación: se cambia en la app → Usuarios. **Nunca** pidas ni uses la service key:
+los scripts entran con la cuenta personal y los permisos los pone Supabase.
+
+La contraseña se tipea en la terminal (la pide `getpass`). No la escribas en archivos, en el chat
+ni en comandos.
+
+## Actualizar una marca ya cargada (lo más común)
+
+Si la marca ya tiene receta (Vonderk, Artelum, WLG, Lucciola…), no hace falta ninguna fase:
+
+```bash
+cd <pipeline>
+python3 encolar_lista.py --marca vonderk "/ruta/a/Lista Vonderk.pdf"
+python3 encolar_lista.py --estado          # seguir el trabajo (listo en ~5-15 min)
+```
+
+Si el slug no existe, el script lista los disponibles. Después se revisa lo importado en la app →
+Benchmark → **Nuevas integraciones**. Es lo mismo que el botón "↻ Actualizar lista".
 
 ---
 

@@ -256,3 +256,14 @@
 .ac-menc button.on,.ac-menc button:hover{background:var(--olive-pale)}
 .ac-arrobado{font-weight:700;color:var(--olive)}
 .ac-arrobado.nueva{background:var(--olive);color:#fff;border-radius:999px;padding:0 7px}
+
+/* ---- Hilo de comentarios de cada entrada de la línea de tiempo ---- */
+.ac-hilo{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+.ac-hilo-btn{border:0;background:transparent;color:var(--gray);font-size:12.5px;padding:3px 6px;margin-left:-6px;border-radius:6px}
+.ac-hilo-btn:hover{background:var(--olive-pale);color:var(--olive)}
+.ac-hilo-btn.nueva{background:var(--olive);color:#fff;font-weight:600}
+.ac-hilo.abierto .ac-coms{margin:6px 0 8px;gap:6px}
+.ac-hilo .ac-com{padding:6px 9px}
+.ac-hilo .ac-com p{font-size:13.5px}
+.ac-hilo .ac-com-nuevo{font-size:13.5px;padding:6px 9px;margin-top:4px}
+.ac-hilo .ac-com-acc .btn-ghost{padding:4px 11px;font-size:13px}

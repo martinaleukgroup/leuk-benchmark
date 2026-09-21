@@ -5,9 +5,9 @@
    Dos pantallas:
      · LISTA   → todas las acciones con su estado, fechas y cómo vienen las métricas.
      · FICHA   → una acción: datos, métricas esperadas vs reales, inversión, y la
-                 LÍNEA DE TIEMPO donde se van tirando notas, propuestas y archivos,
-                 y los COMENTARIOS del equipo. En los dos se menciona con @Nombre,
-                 igual que en Tareas.
+                 LÍNEA DE TIEMPO donde se van tirando notas, propuestas y archivos.
+                 Cada entrada tiene su propio hilo de COMENTARIOS. En los dos se
+                 menciona con @Nombre, igual que en Tareas.
 
    Quién entra: sólo Admin y Líder (ROLES en app.js). El permiso REAL lo aplica
    Supabase por RLS (supabase/sql/2026-09-18-acciones.sql): esto sólo decide qué
@@ -118,8 +118,10 @@
   let COMP = null;         // lo que se está escribiendo en la línea de tiempo
   let PEND = [];           // archivos elegidos, todavía sin subir: [File]
   let SUBIENDO = false;
-  let COMS = {};           // accion_id -> [comentarios]
+  let COMS = {};           // accion_id -> [comentarios]; cada uno con su hito_id (entrada de la línea de tiempo)
   let SIN_COMS = false;    // falta correr 2026-09-21-acciones-comentarios.sql
+  let HILOS = new Set();   // entradas con el hilo de comentarios desplegado
+  const BORR_COM = {};     // hito_id -> comentario a medio escribir (sobrevive a los repintados)
   let MENC = null;         // {el, desde, lista, i} mientras está abierto el desplegable de @
   // Cuándo abriste cada acción por última vez, para avisar sólo las menciones nuevas.
   // Vive en este navegador, igual que en Tareas: sólo decide qué se marca como nuevo.
@@ -434,13 +436,15 @@
   }
   async function borrarHito(hid) {
     const id = ABIERTA, h = (HITOS[id] || []).find(x => x.id === hid); if (!h) return;
-    const n = h.archivos.length;
-    if (!confirm(`¿Borrar esta entrada de la línea de tiempo?${n ? `\n\nSe borra${n === 1 ? " su archivo" : `n sus ${n} archivos`} también.` : ""}`)) return;
+    const n = h.archivos.length, nc = comsDe(hid).length;
+    const tambien = [n ? (n === 1 ? "su archivo" : `sus ${n} archivos`) : "", nc ? (nc === 1 ? "su comentario" : `sus ${nc} comentarios`) : ""].filter(Boolean).join(" y ");
+    if (!confirm(`¿Borrar esta entrada de la línea de tiempo?${tambien ? `\n\nSe borra${n + nc > 1 ? "n" : ""} ${tambien} también.` : ""}`)) return;
     const r = await fetch(url(`acciones_hitos?id=eq.${enc(hid)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) }).catch(() => null);
     const d = r && r.ok ? await r.json() : [];
     if (!d.length) return nota("No se pudo borrar. Sólo puede hacerlo quien la escribió o un admin.", true);
     await borrarArchivos(h.archivos.map(f => f.path));
     HITOS[id] = HITOS[id].filter(x => x.id !== hid);
+    COMS[id] = (COMS[id] || []).filter(c => c.hito_id !== hid);   // en la base los borra el cascade
     pintarTimeline();
   }
   function sumarArchivos(lista) {
@@ -451,26 +455,30 @@
   }
 
   /* ---- Comentarios ---- */
-  async function comentar() {
-    const id = ABIERTA; if (!id || id === "nueva") return;
-    const campo = caja().querySelector(".ac-com-nuevo");
+  const comsDe = hid => (COMS[ABIERTA] || []).filter(c => c.hito_id === hid);
+  async function comentar(hid) {
+    const id = ABIERTA; if (!id || id === "nueva" || !hid) return;
+    const campo = caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`);
     const texto = campo ? campo.value.trim() : "";
     if (!texto) return;
     campo.disabled = true;
     try {
       const r = await fetch(url("acciones_comentarios"), {
         method: "POST", headers: head({ Prefer: "return=representation" }),
-        body: JSON.stringify({ accion_id: id, texto, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }),
+        body: JSON.stringify({ accion_id: id, hito_id: hid, texto, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }),
       });
       const d = r.ok ? await r.json() : [];
-      if (!d.length) throw new Error(r.status === 404 ? "sql" : "sin fila");
+      if (!d.length) throw new Error(r.status === 404 ? "sql" : r.status === 400 ? "col" : "sin fila");
       (COMS[id] = COMS[id] || []).push(d[0]);
-      campo.value = "";
+      delete BORR_COM[hid];
       marcarVisto(id);
-      pintarComentarios();
+      pintarTimeline();
+      const n = caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`); if (n) n.focus();
     } catch (e) {
       campo.disabled = false;
-      nota(e.message === "sql" ? "Falta correr 2026-09-21-acciones-comentarios.sql en Supabase." : "No se pudo guardar el comentario.", true);
+      nota(e.message === "sql" ? "Falta correr 2026-09-21-acciones-comentarios.sql en Supabase."
+         : e.message === "col" ? "Falta correr 2026-09-21-acciones-comentarios-por-entrada.sql en Supabase."
+         : "No se pudo guardar el comentario.", true);
     }
   }
   async function borrarComentario(cid) {
@@ -480,7 +488,7 @@
     const d = r && r.ok ? await r.json() : [];
     if (!d.length) return nota("No se pudo borrar. Sólo puede hacerlo quien lo escribió o un admin.", true);
     COMS[id] = (COMS[id] || []).filter(c => c.id !== cid);
-    pintarComentarios();
+    pintarTimeline(); pintarComentarios();
   }
 
   /* ---- Pintar ---- */
@@ -626,7 +634,7 @@
           </section>
         </div>
         <div class="ac-col-datos">
-          <section class="ac-box ac-com-box"></section>
+          <section class="ac-box ac-com-box" hidden></section>
           <section class="ac-box ac-met-box"></section>
           <section class="ac-box ac-inv-box"></section>
           <section class="ac-box">
@@ -685,6 +693,7 @@
   function pintarTimeline() {
     const w = caja() && caja().querySelector(".ac-tl"); if (!w) return;
     const hs = hitosDe(ABIERTA);
+    requestAnimationFrame(() => w.querySelectorAll(".ac-com-nuevo").forEach(crecer));
     if (!hs.length) { w.innerHTML = `<p class="ac-vacio-mini">Todavía no hay nada. Sumá la primera propuesta o nota arriba.</p>`; return; }
     let mesAnt = "";
     w.innerHTML = hs.map(h => {
@@ -710,6 +719,7 @@
           ${h.archivos.length ? `<div class="ac-tl-files">${h.archivos.map(f =>
             `<button class="ac-file-chip" data-accion="archivo" data-path="${esc(f.path)}" title="Abrir ${esc(f.nombre)}">
               <span class="ac-file-ic">${iconoArchivo(f.nombre)}</span><span class="n">${esc(f.nombre)}</span><span class="t">${pesoArchivo(f.tam)}</span></button>`).join("")}</div>` : ""}
+          ${hiloHTML(h)}
         </div>
       </div>`;
     }).join("");
@@ -718,25 +728,34 @@
   // y las menciones resaltadas.
   const linkear = t => marcarMenciones(esc(t).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`)).replace(/\n/g, "<br>");
 
+  // Hilo de comentarios de UNA entrada de la línea de tiempo. Plegado muestra sólo
+  // cuántos hay; se despliega solo si ahí te mencionaron y no lo viste.
+  function hiloHTML(h) {
+    if (SIN_COMS) return "";
+    const coms = comsDe(h.id);
+    const abierto = HILOS.has(h.id);
+    const nuevo = coms.some(c => meNombra(c) && tms(c.creado) > tms(VISTO[ABIERTA]));
+    const boton = `<button class="ac-hilo-btn ${nuevo ? "nueva" : ""}" data-accion="hilo" data-id="${h.id}" aria-expanded="${abierto}">
+      💬 ${coms.length ? `${coms.length} comentario${coms.length === 1 ? "" : "s"}` : "Comentar"}${abierto && coms.length ? " · ocultar" : ""}</button>`;
+    if (!abierto) return `<div class="ac-hilo">${boton}</div>`;
+    return `<div class="ac-hilo abierto">${boton}
+      ${coms.length ? `<div class="ac-coms">${coms.map(comHTML).join("")}</div>` : ""}
+      <textarea class="ac-com-nuevo" data-hito="${h.id}" rows="1" placeholder="Comentá esta ${esc(low(hitoTipo(h.tipo).t))}… Con @ mencionás a alguien  (⌘/Ctrl + Enter)">${esc(BORR_COM[h.id] || "")}</textarea>
+      <div class="ac-com-acc"><button class="btn-ghost" data-accion="comentar" data-id="${h.id}">Comentar</button></div>
+    </div>`;
+  }
+  const comHTML = x => `<div class="ac-com">
+      <div class="ac-com-h">${avatarHTML(x.autor_email)}<b>${esc(x.autor || nombreDe(x.autor_email))}</b><span>${hace(x.creado)}</span>
+        ${esAdmin() || low(x.autor_email) === yo() ? `<button class="ac-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
+      <p>${linkear(x.texto)}</p>
+    </div>`;
+  // Comentarios de antes de que colgaran de una entrada: se muestran aparte, sólo si hay.
   function pintarComentarios() {
     const w = caja() && caja().querySelector(".ac-com-box"); if (!w) return;
-    const coms = COMS[ABIERTA] || [];
-    const borrador = (w.querySelector(".ac-com-nuevo") || {}).value || "";
-    if (SIN_COMS) {
-      w.innerHTML = `<h4 class="ac-box-h">Comentarios</h4>
-        <p class="ac-vacio-mini">Para comentar, corré <code>supabase/sql/2026-09-21-acciones-comentarios.sql</code> en Supabase y recargá.</p>`;
-      return;
-    }
-    w.innerHTML = `
-      <h4 class="ac-box-h">Comentarios ${coms.length ? `<span class="ac-box-sub">${coms.length}</span>` : ""}</h4>
-      <div class="ac-coms">${coms.map(x => `<div class="ac-com">
-          <div class="ac-com-h">${avatarHTML(x.autor_email)}<b>${esc(x.autor || nombreDe(x.autor_email))}</b><span>${hace(x.creado)}</span>
-            ${esAdmin() || low(x.autor_email) === yo() ? `<button class="ac-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
-          <p>${linkear(x.texto)}</p>
-        </div>`).join("") || `<p class="ac-vacio-mini">Todavía no hay comentarios.</p>`}</div>
-      <textarea class="ac-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien  (⌘/Ctrl + Enter para enviar)">${esc(borrador)}</textarea>
-      <div class="ac-com-acc"><button class="btn-ghost" data-accion="comentar">Comentar</button></div>`;
-    crecer(w.querySelector(".ac-com-nuevo"));
+    const coms = comsDe(null).concat(comsDe(undefined));
+    w.hidden = !coms.length;
+    w.innerHTML = coms.length ? `<h4 class="ac-box-h">Comentarios generales <span class="ac-box-sub">${coms.length}</span></h4>
+      <div class="ac-coms">${coms.map(comHTML).join("")}</div>` : "";
   }
 
   function pintarMetricas() {
@@ -841,7 +860,12 @@
   }
 
   /* ---- Abrir / nueva / volver ---- */
-  function abrir(id) { ABIERTA = id; BORRADOR = null; COMP = compVacio(); PEND = []; marcarVisto(id); pintar(); window.scrollTo({ top: 0 }); }
+  function abrir(id) {
+    ABIERTA = id; BORRADOR = null; COMP = compVacio(); PEND = [];
+    // Los hilos donde te mencionaron desde la última vez, ya abiertos.
+    HILOS = new Set((COMS[id] || []).filter(c => c.hito_id && meNombra(c) && tms(c.creado) > tms(VISTO[id])).map(c => c.hito_id));
+    marcarVisto(id); pintar(); window.scrollTo({ top: 0 });
+  }
   function nueva() {
     BORRADOR = {
       id: null, titulo: "", descripcion: "", tipo: TIPO || "", estado: "idea", socio: "", distribuidor: "",
@@ -857,8 +881,8 @@
       const t = caja().querySelector(".ac-titulo");
       if (t && t.value.trim() && !confirm("¿Descartar la acción que estabas creando?")) return;
     } else if ((COMP.texto.trim() || PEND.length) && !confirm("Tenés una entrada sin agregar a la línea de tiempo. ¿Salir igual?")) return;
-    const c = caja().querySelector(".ac-com-nuevo");
-    if (c && c.value.trim() && !confirm("Tenés un comentario sin enviar. ¿Salir igual?")) return;
+    if (Object.values(BORR_COM).some(v => v.trim()) && !confirm("Tenés un comentario sin enviar. ¿Salir igual?")) return;
+    Object.keys(BORR_COM).forEach(k => delete BORR_COM[k]);
     cerrarMenc();
     ABIERTA = null; BORRADOR = null; COMP = compVacio(); PEND = [];
     pintar();
@@ -901,7 +925,13 @@
     }),
     "inv-del": a => cambiarInversion(l => l.splice(+a.dataset.i, 1)),
     "met-menos": a => cambiarMetricas(l => { const m = l[+a.dataset.i]; if (m) m.menos = !m.menos; }),
-    comentar: () => comentar(),
+    comentar: a => comentar(a.dataset.id),
+    hilo: a => {
+      const hid = a.dataset.id;
+      if (HILOS.has(hid)) HILOS.delete(hid); else HILOS.add(hid);
+      pintarTimeline();
+      const t = HILOS.has(hid) && caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`); if (t) t.focus();
+    },
     "com-del": a => borrarComentario(a.dataset.id),
   };
 
@@ -945,6 +975,7 @@
     cerrarMenc();
     el.focus(); el.setSelectionRange(caret, caret);
     if (el.classList.contains("ac-comp-texto")) COMP.texto = el.value;
+    if (el.classList.contains("ac-com-nuevo")) BORR_COM[el.dataset.hito] = el.value;
     crecer(el);
   }
 
@@ -1008,6 +1039,7 @@
         return;
       }
       if (el.classList.contains("ac-comp-texto")) COMP.texto = el.value;
+      if (el.classList.contains("ac-com-nuevo")) BORR_COM[el.dataset.hito] = el.value;
       if (el.tagName === "TEXTAREA") crecer(el);
       if (el.matches(CAMPOS_MENC)) buscarMencion(el);
     });
@@ -1035,7 +1067,7 @@
         if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); return cerrarMenc(); }
       }
       if (el.classList.contains("ac-comp-texto") && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); agregarHito(); return; }
-      if (el.classList.contains("ac-com-nuevo") && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); comentar(); return; }
+      if (el.classList.contains("ac-com-nuevo") && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); comentar(el.dataset.hito); return; }
       if (el.classList.contains("ac-titulo") && ev.key === "Enter" && !ev.shiftKey) {
         ev.preventDefault(); if (ABIERTA === "nueva") crearAccion(); else el.blur(); return;
       }
@@ -1087,8 +1119,7 @@
     if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) { c.innerHTML = ""; return; }
     enganchar();
     // Si hay algo a medio escribir, no se re-dibuja encima al volver a la solapa.
-    const borradorCom = c.querySelector(".ac-com-nuevo");
-    if (CARGADO && (ABIERTA === "nueva" || COMP.texto.trim() || PEND.length || (borradorCom && borradorCom.value.trim()))) return;
+    if (CARGADO && (ABIERTA === "nueva" || COMP.texto.trim() || PEND.length || Object.values(BORR_COM).some(v => v.trim()))) return;
     pintar();
     await traer();
     pintar();

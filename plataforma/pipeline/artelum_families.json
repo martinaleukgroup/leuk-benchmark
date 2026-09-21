@@ -1,0 +1,470 @@
+{
+ "752": {
+  "nombre": "LINEA FLEX",
+  "img": "img/artelum/752.jpg"
+ },
+ "751": {
+  "nombre": "MAGNA",
+  "img": "img/artelum/751.jpg"
+ },
+ "750": {
+  "nombre": "MONA",
+  "img": "img/artelum/750.jpg"
+ },
+ "749": {
+  "nombre": "RULER",
+  "img": "img/artelum/749.jpg"
+ },
+ "748": {
+  "nombre": "WING",
+  "img": "img/artelum/748.jpg"
+ },
+ "746": {
+  "nombre": "QBO",
+  "img": "img/artelum/746.jpg"
+ },
+ "745": {
+  "nombre": "VENTO",
+  "img": "img/artelum/745.jpg"
+ },
+ "743": {
+  "nombre": "LINE XS",
+  "img": "img/artelum/743.jpg"
+ },
+ "742": {
+  "nombre": "TUBO LINE HAT / HAT ELI",
+  "img": "img/artelum/742.jpg"
+ },
+ "741": {
+  "nombre": "TUBO LINE IP54",
+  "img": "img/artelum/741.jpg"
+ },
+ "739": {
+  "nombre": "JIMP",
+  "img": "img/artelum/739.jpg"
+ },
+ "738": {
+  "nombre": "FACE",
+  "img": "img/artelum/738.jpg"
+ },
+ "737": {
+  "nombre": "JIMP WALL",
+  "img": "img/artelum/737.jpg"
+ },
+ "734": {
+  "nombre": "NOVEDADES 2026",
+  "img": "img/artelum/734.jpg"
+ },
+ "732": {
+  "nombre": "PROYECTOR \"GRID\" EXTERIOR CUAD. C/PUNTAL Y BASE",
+  "img": "img/artelum/732.jpg"
+ },
+ "731": {
+  "nombre": "TUBO LINE",
+  "img": "img/artelum/731.jpg"
+ },
+ "730": {
+  "nombre": "EMBUTIDO \"BOX\" DE TECHO CUAD. C/MOVIMIENTO AR111",
+  "img": "img/artelum/730.jpg"
+ },
+ "729": {
+  "nombre": "EMBUTIDO \"FORMO\" DE TECHO CUADRADO AR111",
+  "img": "img/artelum/729.jpg"
+ },
+ "728": {
+  "nombre": "EMBUTIDO \"RONDO\" DE TECHO REDONDO AR111",
+  "img": "img/artelum/728.jpg"
+ },
+ "727": {
+  "nombre": "CABEZAL \"CYLIN\" CON FLORON PAR 16 GU10",
+  "img": "img/artelum/727.jpg"
+ },
+ "726": {
+  "nombre": "APLIQUE \"CUBE\" DE TECHO RECTANGULAR MOVIL LAMP. PA",
+  "img": "img/artelum/726.jpg"
+ },
+ "725": {
+  "nombre": "APLIQUE \"CUBE\" DE TECHO RECTANGULAR FIJO LAMP. PAR",
+  "img": "img/artelum/725.jpg"
+ },
+ "723": {
+  "nombre": "APLIQUE \"ROLL\" DE TECHO CILINDRICO MOVIL LAMP. PAR",
+  "img": "img/artelum/723.jpg"
+ },
+ "722": {
+  "nombre": "APLIQUE \"ROLL\" DE TECHO CILINDRICO FIJO LAMP. PAR1",
+  "img": "img/artelum/722.jpg"
+ },
+ "721": {
+  "nombre": "EMBUTIDO \"KRONO\" CUADRADO MOVIL LAMP. PAR16 GU10",
+  "img": "img/artelum/721.jpg"
+ },
+ "720": {
+  "nombre": "EMBUTIDO \"KRONO\" CUADRADO FIJO LAMP. PAR16 GU10",
+  "img": "img/artelum/720.jpg"
+ },
+ "719": {
+  "nombre": "EMBUTIDO \"SPIN\" REDONDO MOVIL LAMP. PAR16 GU10",
+  "img": "img/artelum/719.jpg"
+ },
+ "718": {
+  "nombre": "EMBUTIDO \"SPIN\" REDONDO FIJO PAR16 GU10 - ARLIGTH",
+  "img": "img/artelum/718.jpg"
+ },
+ "717": {
+  "nombre": "APLIQUE",
+  "img": "img/artelum/717.jpg"
+ },
+ "716": {
+  "nombre": "APLIQUE \"FLICK\" DE PARED",
+  "img": "img/artelum/716.jpg"
+ },
+ "715": {
+  "nombre": "APLIQUE \"ICE\" DE PARED",
+  "img": "img/artelum/715.jpg"
+ },
+ "712": {
+  "nombre": "PROYECTOR \"CIRCA\" EXTERIOR REDONDO C/PUNTAL Y BASE",
+  "img": "img/artelum/712.jpg"
+ },
+ "711": {
+  "nombre": "UFO CAMPANA COLGANTE LED",
+  "img": "img/artelum/711.jpg"
+ },
+ "709": {
+  "nombre": "GARDEN",
+  "img": "img/artelum/709.jpg"
+ },
+ "706": {
+  "nombre": "POINT",
+  "img": "img/artelum/706.jpg"
+ },
+ "701": {
+  "nombre": "ALISON",
+  "img": "img/artelum/701.jpg"
+ },
+ "700": {
+  "nombre": "SET DOBLE",
+  "img": "img/artelum/700.jpg"
+ },
+ "699": {
+  "nombre": "SET",
+  "img": "img/artelum/699.jpg"
+ },
+ "698": {
+  "nombre": "SKY",
+  "img": "img/artelum/698.jpg"
+ },
+ "697": {
+  "nombre": "NEKY",
+  "img": "img/artelum/697.jpg"
+ },
+ "696": {
+  "nombre": "DOT",
+  "img": "img/artelum/696.jpg"
+ },
+ "695": {
+  "nombre": "TWINS-R",
+  "img": "img/artelum/695.jpg"
+ },
+ "694": {
+  "nombre": "TWINS-C",
+  "img": "img/artelum/694.jpg"
+ },
+ "692": {
+  "nombre": "FENIX DICRO",
+  "img": "img/artelum/692.jpg"
+ },
+ "691": {
+  "nombre": "GUMP",
+  "img": "img/artelum/691.jpg"
+ },
+ "690": {
+  "nombre": "MINI LINE DE EMBUTIR",
+  "img": "img/artelum/690.jpg"
+ },
+ "689": {
+  "nombre": "RING II C",
+  "img": "img/artelum/689.jpg"
+ },
+ "688": {
+  "nombre": "LISTON ESTANCO",
+  "img": "img/artelum/688.jpg"
+ },
+ "682": {
+  "nombre": "TORTUGAS LED - ARLIGHT",
+  "img": "img/artelum/682.jpg"
+ },
+ "681": {
+  "nombre": "PANEL LED DE EMBUTIR REDONDO",
+  "img": "img/artelum/681.jpg"
+ },
+ "679": {
+  "nombre": "NICO AR111",
+  "img": "img/artelum/679.jpg"
+ },
+ "674": {
+  "nombre": "LUMINARIA VIAL STREET",
+  "img": "img/artelum/674.jpg"
+ },
+ "673": {
+  "nombre": "LINE DE EMBUTIR",
+  "img": "img/artelum/673.jpg"
+ },
+ "671": {
+  "nombre": "PLAFON LED CIRCULAR",
+  "img": "img/artelum/671.jpg"
+ },
+ "670": {
+  "nombre": "PLAFON LED CUADRADO",
+  "img": "img/artelum/670.jpg"
+ },
+ "669": {
+  "nombre": "PANELES CUADRADOS DE EMBUTIR",
+  "img": "img/artelum/669.jpg"
+ },
+ "641": {
+  "nombre": "FENIX LED CARDÁNICO",
+  "img": "img/artelum/641.jpg"
+ },
+ "640": {
+  "nombre": "FENIX DIFUSOR CARDÁNICO",
+  "img": "img/artelum/640.jpg"
+ },
+ "639": {
+  "nombre": "FENIX LED REFLECTOR CUADRADO",
+  "img": "img/artelum/639.jpg"
+ },
+ "635": {
+  "nombre": "ACUATIC LED",
+  "img": "img/artelum/635.jpg"
+ },
+ "633": {
+  "nombre": "INDYC",
+  "img": "img/artelum/633.jpg"
+ },
+ "624": {
+  "nombre": "MINI CHANNEL",
+  "img": "img/artelum/624.jpg"
+ },
+ "614": {
+  "nombre": "PEKE II",
+  "img": "img/artelum/614.jpg"
+ },
+ "603": {
+  "nombre": "LINE QUAD",
+  "img": "img/artelum/603.jpg"
+ },
+ "602": {
+  "nombre": "RING II",
+  "img": "img/artelum/602.jpg"
+ },
+ "600": {
+  "nombre": "EGRAND",
+  "img": "img/artelum/600.jpg"
+ },
+ "593": {
+  "nombre": "SIWALL",
+  "img": "img/artelum/593.jpg"
+ },
+ "592": {
+  "nombre": "MINI LINE DE APLICAR O SUSPENDER",
+  "img": "img/artelum/592.jpg"
+ },
+ "589": {
+  "nombre": "MILI IV",
+  "img": "img/artelum/589.jpg"
+ },
+ "584": {
+  "nombre": "SPOT DE EMBUTIR",
+  "img": "img/artelum/584.jpg"
+ },
+ "573": {
+  "nombre": "NICO",
+  "img": "img/artelum/573.jpg"
+ },
+ "563": {
+  "nombre": "GABINETES  ESTANCOS",
+  "img": "img/artelum/563.jpg"
+ },
+ "548": {
+  "nombre": "RIELES",
+  "img": "img/artelum/548.jpg"
+ },
+ "536": {
+  "nombre": "LINE DE APLICAR O SUSPENDER",
+  "img": "img/artelum/536.jpg"
+ },
+ "490": {
+  "nombre": "MOLL",
+  "img": "img/artelum/490.jpg"
+ },
+ "474": {
+  "nombre": "MINI-C",
+  "img": "img/artelum/474.jpg"
+ },
+ "435": {
+  "nombre": "TELESCOPY AR111",
+  "img": "img/artelum/435.jpg"
+ },
+ "403": {
+  "nombre": "TANGO",
+  "img": "img/artelum/403.jpg"
+ },
+ "326": {
+  "nombre": "FENIX LED DIFUSOR",
+  "img": "img/artelum/326.jpg"
+ },
+ "226": {
+  "nombre": "GEBO II",
+  "img": "img/artelum/226.jpg"
+ },
+ "218": {
+  "nombre": "CRIP",
+  "img": "img/artelum/218.jpg"
+ },
+ "199": {
+  "nombre": "ONIX",
+  "img": "img/artelum/199.jpg"
+ },
+ "163": {
+  "nombre": "ANKA",
+  "img": "img/artelum/163.jpg"
+ },
+ "150": {
+  "nombre": "PETRA",
+  "img": "img/artelum/150.jpg"
+ },
+ "146": {
+  "nombre": "ECO",
+  "img": "img/artelum/146.jpg"
+ },
+ "29": {
+  "nombre": "BOXER",
+  "img": "img/artelum/29.jpg"
+ },
+ "9": {
+  "nombre": "ACUATIC",
+  "img": "img/artelum/9.jpg"
+ },
+ "611": {
+  "nombre": "38420-L43",
+  "img": "img/artelum/611.jpg"
+ },
+ "733": {
+  "nombre": "38422-L38-DALI",
+  "img": "img/artelum/733.jpg"
+ },
+ "714": {
+  "nombre": "APLIQUE \"ECO ABS\" DE PARED",
+  "img": "img/artelum/714.jpg"
+ },
+ "713": {
+  "nombre": "40038",
+  "img": "img/artelum/713.jpg"
+ },
+ "708": {
+  "nombre": "41074-NT",
+  "img": "img/artelum/708.jpg"
+ },
+ "707": {
+  "nombre": "41072-NT",
+  "img": "img/artelum/707.jpg"
+ },
+ "705": {
+  "nombre": "76004-NT",
+  "img": "img/artelum/705.jpg"
+ },
+ "704": {
+  "nombre": "34131-NT-3000K",
+  "img": "img/artelum/704.jpg"
+ },
+ "703": {
+  "nombre": "42030-NT-3000K",
+  "img": "img/artelum/703.jpg"
+ },
+ "702": {
+  "nombre": "41068-NT",
+  "img": "img/artelum/702.jpg"
+ },
+ "665": {
+  "nombre": "42080",
+  "img": "img/artelum/665.jpg"
+ },
+ "567": {
+  "nombre": "77028",
+  "img": "img/artelum/567.jpg"
+ },
+ "566": {
+  "nombre": "77031",
+  "img": "img/artelum/566.jpg"
+ },
+ "523": {
+  "nombre": "41059",
+  "img": "img/artelum/523.jpg"
+ },
+ "368": {
+  "nombre": "35282-24-30-B",
+  "img": "img/artelum/368.jpg"
+ },
+ "212": {
+  "nombre": "42025",
+  "img": "img/artelum/212.jpg"
+ },
+ "117": {
+  "nombre": "61626-GZ10",
+  "img": "img/artelum/117.jpg"
+ },
+ "53": {
+  "nombre": "61626-GZ10",
+  "img": "img/artelum/53.jpg"
+ },
+ "line-aplicar": {
+  "nombre": "line-aplicar",
+  "img": "img/artelum/line-aplicar.jpg"
+ },
+ "spin": {
+  "nombre": "spin",
+  "img": "img/artelum/spin.jpg"
+ },
+ "krono": {
+  "nombre": "krono",
+  "img": "img/artelum/krono.jpg"
+ },
+ "rondo": {
+  "nombre": "rondo",
+  "img": "img/artelum/rondo.jpg"
+ },
+ "formo": {
+  "nombre": "formo",
+  "img": "img/artelum/formo.jpg"
+ },
+ "box": {
+  "nombre": "box",
+  "img": "img/artelum/box.jpg"
+ },
+ "spot-embutir": {
+  "nombre": "spot-embutir",
+  "img": "img/artelum/spot-embutir.jpg"
+ },
+ "a-spin-movil": {
+  "nombre": "a-spin-movil",
+  "img": "img/artelum/a-spin-movil.jpg"
+ },
+ "a-krono-movil": {
+  "nombre": "a-krono-movil",
+  "img": "img/artelum/a-krono-movil.jpg"
+ },
+ "cabezal-neky-cob-10w": {
+  "nombre": "cabezal-neky-cob-10w",
+  "img": "img/artelum/cabezal-neky-cob-10w.jpg"
+ },
+ "cabezal-neky-cob-20w": {
+  "nombre": "cabezal-neky-cob-20w",
+  "img": "img/artelum/cabezal-neky-cob-20w.jpg"
+ },
+ "cabezal-neky-cob-30w": {
+  "nombre": "cabezal-neky-cob-30w",
+  "img": "img/artelum/cabezal-neky-cob-30w.jpg"
+ }
+}

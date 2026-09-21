@@ -1,0 +1,75 @@
+{
+  "marca": "World Leds Go",
+  "slug": "wlg",
+  "estado": "activa",
+  "circuito": "offline",
+  "alta": {
+    "fecha": "2026-07-13",
+    "autor": "analisiscomercial@leukiluminacion.com.ar",
+    "material": [
+      "Ficha técnica WLG_Fichas_Tecnicas_N28.xlsx (hoja «Catálogo completo»)",
+      "Lista de Precios n29, julio 2026 (PDF de 173 páginas)",
+      "Carpeta de imágenes WLG_Imagenes (~523 fotos en 91 carpetas)"
+    ],
+    "material_faltante": [
+      "precios limpios de cof, disk, zohar, gan, kislev, tsipor y konus"
+    ]
+  },
+  "lista_precios": {
+    "formato": "excel_ficha",
+    "archivo_fuente": "Bases de datos/Fichas técnicas/WLG_Fichas_Tecnicas_N28.xlsx · hoja «Catálogo completo»",
+    "lista_pdf": "Lista de Precios n29 Julio 2026 (173 pág). OJO: la que está en «Listas de precios/» es la N°28, anterior",
+    "codigo": {
+      "columna": "Nombre/SKU",
+      "ejemplos": [
+        "KATAN-BLACK-331",
+        "WALLY-X-PRO"
+      ]
+    },
+    "precio": {
+      "columna": "Precio ($)",
+      "cual": "la SEGUNDA del PDF («$», lista) — NO la primera («PMP»)"
+    },
+    "moneda": "ARS",
+    "iva": "desconocido",
+    "tipo_lista": "distribuidor",
+    "descuento_lista": 0,
+    "tipo_cambio": 1435,
+    "unidad_precio": "unidad",
+    "excepciones_unidad": [],
+    "tipo_cambio_fuente": "TC blue, tabla `config` de ~/.leuk_pricing/pricing.db"
+  },
+  "web": {
+    "url": "https://wlgled.com.ar",
+    "codigo_donde": "no aplica: el sitio no expone los códigos de forma cruzable",
+    "foto_url": "no aplica: las fotos vinieron de la carpeta de imágenes que pasó el proveedor",
+    "codigos_cruzan_con_pdf": false,
+    "precios_publicos": false
+  },
+  "imagenes": {
+    "origen_primario": "carpeta_del_proveedor",
+    "fallbacks": [],
+    "bucket": "app/img/wlg/<slug>.jpg (una foto por familia, empaquetadas en el repo)",
+    "cobertura": {
+      "total": 153,
+      "con_foto": 102,
+      "correcta_por_codigo": 102
+    }
+  },
+  "particularidades": [
+    "La lista tiene DOS columnas de precio: «PMP» y «$». La correcta es la SEGUNDA («$», precio de lista) — coincide con los precios que ya teníamos. Elegir la primera desvirtúa toda la comparación.",
+    "El layout de la lista es variable: los productos GAN, COF y las fuentes están maquetados distinto y no se extraen limpio. Esos quedaron en un mapeo curado a mano (wlg_precio_manual.json, 8 entradas).",
+    "El código y las dimensiones van como CABECERA de la tabla de cada producto, no como una columna más.",
+    "Las fotos las pasó el proveedor en carpetas, no se scrapean. De 523 imágenes en 91 carpetas salieron 153 sub-productos, y el filtro de calidad (descarta ambientadas y renders mirando el marco del borde) los dejó en 102 limpios.",
+    "wlgled.com.ar NO publica precios: la sección «Descargas» lleva a un formulario de contacto. Verificado, no reintentar.",
+    "Los precios vienen en ARS: se dividen por el TC blue. Si el blue se mueve mucho, la comparación con Leuk (USD) se corre.",
+    "Antes WLG no tenía señal visual en el matching; se la sumó con wlg_build.py + wlg_tag.py (embeddings + etiquetado)."
+  ],
+  "notas_md": "Cargada por el pipeline offline. Se la conoce como WLG; el nombre completo es World Leds Go y así aparece en las rutas del pipeline.\n\nLa extracción de la lista n29 salió imperfecta por el layout variable, así que en vez de forzarla se hizo un mapeo curado de las familias que importaban: wally, wally-fit, wally-x-pro, katan (blanco y negro) y fuente slim. Es poco elegante pero es verificable, que en precios vale más.\n\nCobertura final: **66 de 82 con precio** en comparaciones. Los ~16 que faltan (cof, disk, zohar, gan, kislev, tsipor, konus) o no se extrajeron limpio o directamente no están en la lista.",
+  "actualizacion": {
+    "habilitada": false,
+    "motivo": "WLG vive en el pipeline offline (benchmark_data.json), no en la tabla competencia_extra. Para actualizarla hay que editar la ficha Excel y re-correr consolidate.py.",
+    "clave_de_cruce": "codigo",
+    "frecuencia_esperada": "cuando llega lista nueva"
+  }
+}

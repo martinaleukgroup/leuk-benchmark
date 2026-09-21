@@ -1,0 +1,77 @@
+{
+  "marca": "Artelum",
+  "slug": "artelum",
+  "estado": "activa",
+  "circuito": "offline",
+  "alta": {
+    "fecha": "2026-07-10",
+    "autor": "analisiscomercial@leukiluminacion.com.ar",
+    "material": [
+      "Ficha técnica Artelum_Fichas_Tecnicas_N110.xlsx (hoja «Catálogo completo», 249 familias)",
+      "Lista de precios Artelum N°110 (PDF)",
+      "Fotos desde intranet.artelum.com.ar y artelum.com.ar/productos"
+    ],
+    "material_faltante": [
+      "un mapeo confiable de familia → precio para LINEA FLEX, MILI IV, MINI-C y APLIQUE"
+    ]
+  },
+  "lista_precios": {
+    "formato": "excel_ficha",
+    "archivo_fuente": "Bases de datos/Fichas técnicas/Artelum_Fichas_Tecnicas_N110.xlsx · hoja «Catálogo completo»",
+    "lista_pdf": "Listas de precios/Artelum_Nro.110.pdf",
+    "codigo": {
+      "columna": "Nombre/SKU",
+      "ejemplos": [
+        "A-08.12"
+      ]
+    },
+    "precio": {
+      "columna": "Precio ($)",
+      "cual": "única"
+    },
+    "moneda": "ARS",
+    "iva": "desconocido",
+    "tipo_lista": "distribuidor",
+    "descuento_lista": 0,
+    "tipo_cambio": 1435,
+    "unidad_precio": "unidad",
+    "excepciones_unidad": [],
+    "tipo_cambio_fuente": "TC blue, tabla `config` de ~/.leuk_pricing/pricing.db"
+  },
+  "web": {
+    "url": "https://artelum.com.ar",
+    "listado_url": "artelum.com.ar/productos → cada producto en /producto/{id}-slug (108 productos)",
+    "codigo_donde": "el id numérico de la URL es el mismo fslug que usa la entidad del pipeline",
+    "foto_url": "https://intranet.artelum.com.ar/uploads/lineas/linea_{id}_principal.{png,jpg}",
+    "codigos_cruzan_con_pdf": false,
+    "precios_publicos": false
+  },
+  "imagenes": {
+    "origen_primario": "id_web",
+    "fallbacks": [
+      "foto_local_del_indice"
+    ],
+    "bucket": "app/img/artelum/{id}.jpg (empaquetadas en el repo)",
+    "cobertura": {
+      "total": 249,
+      "con_foto": 117,
+      "correcta_por_codigo": 117
+    }
+  },
+  "particularidades": [
+    "«La intranet no carga afuera» era FALSO. intranet.artelum.com.ar/uploads/lineas/linea_{id}_principal.png SÍ responde públicamente, y de ahí salieron la mayoría de las fotos. El supuesto contrario costó que Artelum mostrara 0 imágenes durante un tiempo.",
+    "Para variantes que no existen, el server responde 200 con un HTML en vez de un 404 → hay que validar Content-Type image/* y probar .png Y .jpg antes de dar la foto por buena.",
+    "El índice de imágenes keyea por NOMBRE y las entidades por ID numérico (fslug=752) → no cruzaban solos. El puente es el id de la URL del sitio, que es el mismo fslug.",
+    "Los códigos internos (A-08.xx) NO aparecen en el texto del PDF del catálogo → el PDF no sirve para cruzar precio con producto. Por eso la reconciliación es manual.",
+    "El match fuzzy de familia NO sirve acá: mapea mal (MINI-C terminaba en RING II C, US$842). Sólo mapeo curado a mano — ART_PRECIO_MANUAL en consolidate.py, 12 familias en dos tandas.",
+    "«line», «embutir» y «de» son stop-words del normalizador, y por eso las familias LINE/MINI LINE no reconciliaban solas.",
+    "Los precios vienen en ARS: se dividen por el TC blue de la tabla config. Si el blue se mueve mucho, la comparación con Leuk (USD) se corre."
+  ],
+  "notas_md": "Cargada por el pipeline offline. Es la marca que más trabajo manual necesitó, por dos motivos que se suman: el catálogo identifica los productos por un id numérico interno que no aparece en la lista de precios, y los nombres de familia son genéricos («LINE EMBUTIR», «PANEL LED APLICAR») justo en las palabras que el normalizador trata como stop-words.\n\nLas fotos se resolvieron en tres tandas: primero empaquetando la mejor foto local ya descargada (0 → 87), después bajando la principal por id desde la intranet (+18), y por último mapeando a mano las familias que faltaban a su id en el sitio público (+12).\n\nCobertura final: **117 de 249 con imagen** — pero de los 99 que aparecen en comparaciones, **98 tienen foto**. Precio: **67 de 71** en comparaciones.",
+  "actualizacion": {
+    "habilitada": false,
+    "motivo": "Artelum vive en el pipeline offline (benchmark_data.json), no en la tabla competencia_extra. Para actualizarla hay que editar la ficha Excel y re-correr consolidate.py.",
+    "clave_de_cruce": "codigo",
+    "frecuencia_esperada": "cuando llega lista nueva"
+  }
+}

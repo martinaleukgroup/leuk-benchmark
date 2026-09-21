@@ -1,0 +1,75 @@
+{
+  "marca": "Vonderk",
+  "slug": "vonderk",
+  "estado": "activa",
+  "circuito": "offline",
+  "alta": {
+    "fecha": "2026-07-10",
+    "autor": "analisiscomercial@leukiluminacion.com.ar",
+    "material": [
+      "Ficha técnica Vonderk_Fichas_Tecnicas_N49.xlsx (hoja «Catálogo completo», 237 familias)",
+      "LISTA DE PRECIOS GENERAL N49, PDF de 122 páginas",
+      "Listas separadas por línea: PERFILES N49, VK-TRACK 220, TONONE N48, LOS NARANJOS",
+      "Índice de imágenes con URLs públicas de vonderk.com"
+    ],
+    "material_faltante": [
+      "lista de precios de los productos 2026 (NEBULA, BORE, FANY, AKU, BEL, S70/S80, POINT)",
+      "precios por componente de los sistemas magnéticos y de riel"
+    ]
+  },
+  "lista_precios": {
+    "formato": "excel_ficha",
+    "archivo_fuente": "Bases de datos/Fichas técnicas/Vonderk_Fichas_Tecnicas_N49.xlsx · hoja «Catálogo completo»",
+    "lista_pdf": "LISTA DE PRECIOS GENERAL N49 (122 pág) + listas por línea",
+    "codigo": {
+      "columna": "Nombre/SKU",
+      "ejemplos": [
+        "VK-SETRA-042-BM",
+        "VK-NECK D 2215-BL"
+      ]
+    },
+    "precio": {
+      "columna": "Precio",
+      "cual": "única"
+    },
+    "moneda": "USD",
+    "iva": "desconocido",
+    "tipo_lista": "distribuidor",
+    "descuento_lista": 0,
+    "tipo_cambio": null,
+    "unidad_precio": "unidad",
+    "excepciones_unidad": [
+      "Los perfiles NECK se cotizan POR METRO, no por unidad (D2215, L, T, CENTRAL, PERIMETRAL, PARED, M1)",
+      "Los sistemas magnéticos (VK-MR5X) y los rieles se cotizan POR COMPONENTE, no por familia"
+    ]
+  },
+  "web": {
+    "url": "https://vonderk.com",
+    "codigo_donde": "no aplica: el sitio es un catálogo B2B, los códigos salen de la ficha Excel",
+    "foto_url": "URLs completas en el índice de imágenes (indice.csv)",
+    "codigos_cruzan_con_pdf": true,
+    "precios_publicos": false
+  },
+  "imagenes": {
+    "origen_primario": "url_web_del_indice",
+    "fallbacks": [],
+    "bucket": "no aplica (el pipeline usa las URLs de vonderk.com directamente)"
+  },
+  "particularidades": [
+    "NO todos los precios están en la lista general: los perfiles NECK estaban en la lista PERFILES N49, aparte. Antes de dar un producto por «sin precio», buscar si hay OTRA lista (por línea, por sistema, por accesorios).",
+    "En las listas de perfiles el filtro de accesorios hay que aplicarlo al CÓDIGO, no a la línea entera: la descripción dice «resortes y extremos» y genera falsos positivos.",
+    "Los precios de Vonderk que ya teníamos estaban al día: al cruzar la lista N49 dieron 115 códigos coincidentes y 0 diferencias (a diferencia de Leuk, donde la lista corrigió ~62).",
+    "Al elegir la foto del índice: «portada» suele ser LA foto buena (antes se descartaba por error) y «cota» es el dibujo dimensional (antes no se descartaba) → 17+ perfiles mostraban el dibujo. También ojo con «mesa-de-trabajo», que es el nombre por defecto de Illustrator y sí suele ser la foto.",
+    "Después de arreglar el ranking de fotos quedaron 277 productos con imagen y NINGUNO mostrando el dibujo dimensional. Los embeddings visuales, en cambio, siguen calculados sobre las imágenes locales viejas: eso arregla lo que se MUESTRA, no la señal de match.",
+    "Los slugs de la ficha de precios (10-w-20w) no coinciden con los del scrape de imágenes (vk-setra-042-bm): el universo se reconcilia uniendo las tres fuentes por slug normalizado.",
+    "vonderk.com NO publica precios (catálogo B2B sin carrito). Verificado: no reintentar scraping de precios, los precios sólo salen de las listas de distribuidor.",
+    "Quedan ~54 productos sin precio en ninguna lista provista: son lanzamientos 2026 o sistemas modulares que se cotizan por componente."
+  ],
+  "notas_md": "Cargada por el pipeline offline, antes de que existiera el circuito de la app. La fuente que consume el motor es la ficha Excel N49, no el PDF: el PDF se usó para verificar y para rescatar precios que la ficha no tenía.\n\nDe la lista N49 se extrajeron 510 códigos con pdfplumber, emparejando código y precio por posición Y dentro de la fila. De las 65 entidades sin precio, sólo 4 estaban en la lista general; los NECK aparecieron después, en la lista de PERFILES. Todo eso se enganchó por un mecanismo de **precio manual** (11 entradas en vonderk_precio_manual.json), que es un mapeo curado a mano y verificado, no fuzzy.\n\nCobertura final: **172 de 226 productos con precio** en las comparaciones.",
+  "actualizacion": {
+    "habilitada": false,
+    "motivo": "Vonderk vive en el pipeline offline (benchmark_data.json), no en la tabla competencia_extra. Para actualizarla hay que editar la ficha Excel y re-correr consolidate.py. Migrarla al circuito nuevo es un trabajo aparte.",
+    "clave_de_cruce": "codigo",
+    "frecuencia_esperada": "cuando llega lista nueva"
+  }
+}

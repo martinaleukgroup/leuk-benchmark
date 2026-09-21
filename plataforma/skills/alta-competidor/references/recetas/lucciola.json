@@ -1,0 +1,89 @@
+{
+  "marca": "Lucciola",
+  "slug": "lucciola",
+  "estado": "activa",
+  "alta": {
+    "fecha": "2026-07-30",
+    "autor": "analisiscomercial@leukiluminacion.com.ar",
+    "material": [
+      "Lista de precios / catálogo Metaluz N°29, PDF de 104 páginas",
+      "Sitio web lucciola.com.ar (23 listados linea.php + 184 fichas ficha.php)"
+    ],
+    "material_faltante": [
+      "banco de imágenes del proveedor"
+    ],
+    "lista_origen": "Lista Lucciola-Metaluz N°29"
+  },
+  "lista_precios": {
+    "formato": "pdf_tabla",
+    "paginas_ignorar": [],
+    "codigo": {
+      "columna": "CODIGO",
+      "x": 120,
+      "ejemplos": [
+        "6100GU",
+        "NRP060"
+      ]
+    },
+    "nombre": {
+      "columna": "DESCRIPCION",
+      "x": 180
+    },
+    "precio": {
+      "columna": "PRECIO",
+      "cual": "única"
+    },
+    "moneda": "USD",
+    "iva": "desconocido",
+    "tipo_lista": "distribuidor",
+    "descuento_lista": 0,
+    "tipo_cambio": null,
+    "unidad_precio": "unidad",
+    "excepciones_unidad": []
+  },
+  "web": {
+    "url": "https://lucciola.com.ar",
+    "listado_url": "linea.php?api=N",
+    "ficha_url": "ficha.php?id=N",
+    "codigo_donde": "primera celda (CODIGO) de cada <tr> de la tabla de la ficha — NO body.innerText",
+    "foto_url": "img/productos/grandes/<primer código>.jpg",
+    "codigos_cruzan_con_pdf": true,
+    "codigos_en_comun": 563,
+    "sitio_fabricante": {
+      "url": "https://metaluz.com.ar",
+      "buscador": "resultados.php?buscar=<código> — acepta el CÓDIGO exacto y devuelve el producto con TODAS sus fotos",
+      "nota": "Mismo CMS que lucciola.com.ar. 56 fichas, 282 códigos. Cada ficha tiene VARIAS imágenes: hay que juntarlas todas y elegir, no quedarse con la primera."
+    }
+  },
+  "imagenes": {
+    "origen_primario": "codigo_web",
+    "fallbacks": [
+      "crop_pdf_por_codigo",
+      "codigo_web_metaluz",
+      "familia_web_fuzzy"
+    ],
+    "bucket": "catalogo-img/lucciola/",
+    "cobertura": {
+      "total": 1249,
+      "con_foto": 1176,
+      "correcta_por_codigo": 1073
+    }
+  },
+  "particularidades": [
+    "El catálogo tiene UNA foto por familia, no por SKU: varios códigos comparten la misma foto. No es un error, es cómo está armado.",
+    "Los códigos del PDF son de la línea Metaluz (6100GU, NRP060) y los de la web parecen otros (ET1024). Igual cruzan en 563 casos, pero sólo si se lee la primera celda de la tabla de la ficha: body.innerText mezcla códigos de productos relacionados.",
+    "La columna CODIGO está en x≈120, no en x≥150 como parece a ojo. Filtrar por el valor equivocado descarta la mitad del catálogo.",
+    "Las fotos del PDF son las correctas pero chicas; las de la web son 1000×800 pero algunas son de ambiente/lifestyle, no product-shot.",
+    "Accesorios, uniones y fuentes se excluyen del match por familia contra la web: arrastran la foto de la luminaria que acompañan.",
+    "Hay 7 productos sin código buscable y 91 que quedaron sin foto: llevan placeholder limpio.",
+    "Hay DOS sitios del mismo fabricante: lucciola.com.ar (marca comercial) y metaluz.com.ar (la línea técnica, que es de donde salen los códigos del PDF). Mismo CMS, misma tabla de CODIGO. Revisar los dos: metaluz.com.ar sumó 13 fotos que en lucciola.com.ar no estaban.",
+    "En metaluz.com.ar, buscar por el CÓDIGO exacto (resultados.php?buscar=DOI109) devuelve el producto con TODAS sus fotos. Cada ficha tiene varias: quedarse con la primera es un error — en los DORIS la primera es una foto de jardín y la buena (el bolardo sobre fondo liso) es la segunda. De ahí salieron las 6 fotos de DORIS que faltaban.",
+    "Metaluz publica para muchas familias una COMPOSICIÓN (varios productos en diagonal con etiquetas «Combi small / Super-Mix») en vez de un product-shot por SKU. El detector automático de composiciones NO las agarra cuando están en diagonal y se superponen: hay que verlas en el montage. Quedaron 13 sin usar por esto."
+  ],
+  "notas_md": "Primera marca cargada por el circuito nuevo (app → Supabase → worker Modal), agosto 2026. La extracción cerró en 1.249 productos, 1.239 con ficha técnica y 993 con precio, por ~US$3 de API con claude-sonnet-5.\n\nLas imágenes llevaron cuatro intentos y ahí está el aprendizaje principal: se empezó emparejando por nombre de familia (fuzzy) y quedó flojo; se pasó a recortar la foto del PDF por posición; se probó priorizar la foto web grande; y recién la v4 —crawlear las 184 fichas y armar un mapa código→foto— dio el resultado bueno. La conclusión que vale para cualquier marca nueva: **emparejar bien por código importa mucho más que tener la foto más grande**, porque el matching visual achica todo a 224 px igual.\n\nTodo el trabajo de imágenes fue local y one-off (scripts en scratchpad, crop_v3.py). El worker todavía no lo hace solo.",
+  "actualizacion": {
+    "habilitada": true,
+    "clave_de_cruce": "codigo",
+    "frecuencia_esperada": "mensual"
+  }
+}

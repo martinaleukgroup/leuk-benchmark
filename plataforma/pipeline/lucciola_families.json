@@ -1,0 +1,1222 @@
+{
+ "yolo-led-aplique": {
+  "nombre": "YOLO LED APLIQUE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-yol100-3-jpg.jpg"
+ },
+ "campanas-led": {
+  "nombre": "Campanas LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cal202-jpg.jpg"
+ },
+ "accesorios": {
+  "nombre": "Accesorios",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-til360a-jpg.jpg"
+ },
+ "policarbonato": {
+  "nombre": "Policarbonato",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_33_250.jpg"
+ },
+ "igny": {
+  "nombre": "Igny",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_35_341.jpg"
+ },
+ "liset": {
+  "nombre": "LISET",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-liset-jpg.jpg"
+ },
+ "laos-plafon": {
+  "nombre": "Laos Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_33_329.jpg"
+ },
+ "full-eco": {
+  "nombre": "Full Eco",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_43_766.jpg"
+ },
+ "track-iii": {
+  "nombre": "TRACK III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-riel-nuevo-jpg.jpg"
+ },
+ "nuovo-elegante-plafon": {
+  "nombre": "Nuovo Elegante Plafón",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-blp066-web-jpg.jpg"
+ },
+ "domo": {
+  "nombre": "Domo",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_37_847.jpg"
+ },
+ "full": {
+  "nombre": "Full",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_43_696.jpg"
+ },
+ "emergencias-plasma": {
+  "nombre": "Emergencias Plasma",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-em36-jpg.jpg"
+ },
+ "paneles-backlight-plafon": {
+  "nombre": "Paneles Backlight Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-plbl2-jpg.jpg"
+ },
+ "klapp": {
+  "nombre": "KLAPP",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-klapp4-jpg.jpg"
+ },
+ "fuentes-24v": {
+  "nombre": "Fuentes 24V",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p021_45_774.jpg"
+ },
+ "opal-shop-asimetrico-empotrable": {
+  "nombre": "Opal Shop Asimetrico Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_25_775.jpg"
+ },
+ "brooklyn-nano-accesorios": {
+  "nombre": "Brooklyn Nano - Accesorios",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p011_23_418.jpg"
+ },
+ "paneles-led-plafon": {
+  "nombre": "Paneles LED Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-plasma-jpg.jpg"
+ },
+ "rieles-empotrables": {
+  "nombre": "Rieles Empotrables",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p013_27_560.jpg"
+ },
+ "donna-plafon": {
+  "nombre": "Donna Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_24_811.jpg"
+ },
+ "random": {
+  "nombre": "Random",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-random-jpg.jpg"
+ },
+ "line-up": {
+  "nombre": "LINE UP",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-line-led-jpg.jpg"
+ },
+ "elegante-accesorios": {
+  "nombre": "Elegante Accesorios",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-nuovoeleganteweb-jpg.jpg"
+ },
+ "jackie-ii": {
+  "nombre": "JACKIE II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p023_30_366.jpg"
+ },
+ "wing-vi": {
+  "nombre": "WING VI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing-6s-jpg.jpg"
+ },
+ "lumix": {
+  "nombre": "LUMIX",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_30_794.jpg"
+ },
+ "nuovo-elegante-empotrable": {
+  "nombre": "Nuovo Elegante Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-nuovoeleganteweb-jpg.jpg"
+ },
+ "doblo-colgante": {
+  "nombre": "DOBLO COLGANTE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-doblo-colgante-2-jpg.jpg"
+ },
+ "kevin-plafon": {
+  "nombre": "Kevin Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-pl500c-jpg.jpg"
+ },
+ "block": {
+  "nombre": "Block",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_33_489.jpg"
+ },
+ "paneles-led-empotrable": {
+  "nombre": "Paneles LED Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p067_28_808.jpg"
+ },
+ "kevin": {
+  "nombre": "KEVIN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-kevin3-jpg.jpg"
+ },
+ "doris-iii": {
+  "nombre": "DORIS III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/DOP255.jpg"
+ },
+ "tasso-nano-con-difusor": {
+  "nombre": "Tasso Nano con Difusor",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-nano1-jpg.jpg"
+ },
+ "perfiles": {
+  "nombre": "Perfiles",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cano-1-jpg.jpg"
+ },
+ "tasso-asimetrico": {
+  "nombre": "TASSO ASIMETRICO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-tasso-asimetrico-jpg.jpg"
+ },
+ "doris-i": {
+  "nombre": "DORIS I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/DOI109.jpg"
+ },
+ "rhino": {
+  "nombre": "RHINO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p085_22_661.jpg"
+ },
+ "dry": {
+  "nombre": "DRY",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-dry-jpg.jpg"
+ },
+ "perfiles-empotrar": {
+  "nombre": "Perfiles Empotrar",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cano-1-jpg.jpg"
+ },
+ "laos-empotrable": {
+  "nombre": "Laos Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/LAE100.jpg"
+ },
+ "alther-led": {
+  "nombre": "Alther Led",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-alther-ii-jpg.jpg"
+ },
+ "maximo-day-combi-plafon": {
+  "nombre": "MAXIMO DAY COMBI PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/MCP170.jpg"
+ },
+ "grid": {
+  "nombre": "GRID",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p079_28_339.jpg"
+ },
+ "infanti-max-led": {
+  "nombre": "INFANTI MAX LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-infanti-max-led-jpg.jpg"
+ },
+ "aneta": {
+  "nombre": "ANETA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-pc3930-bt-jpg.jpg"
+ },
+ "union-90o-tasso": {
+  "nombre": "UNION 90º TASSO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-tasso-led-jpg.jpg"
+ },
+ "tasso-led": {
+  "nombre": "TASSO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_22_337.jpg"
+ },
+ "losa": {
+  "nombre": "LOSA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p079_27_160.jpg"
+ },
+ "mare-led-mini": {
+  "nombre": "MARE LED MINI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-mare-mini-jpg.jpg"
+ },
+ "infanti": {
+  "nombre": "Infanti",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-infanti-mezzi-receled-jpg.jpg"
+ },
+ "infanti-mezzi": {
+  "nombre": "INFANTI MEZZI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-infanti-mezzi-receled-jpg.jpg"
+ },
+ "bollard-iii": {
+  "nombre": "BOLLARD III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-bollard-iii-jpg.jpg"
+ },
+ "tasso-nano-con-opticas": {
+  "nombre": "Tasso Nano con Opticas",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-nano1-jpg.jpg"
+ },
+ "shine": {
+  "nombre": "SHINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-shine2-jpg.jpg"
+ },
+ "dazzle": {
+  "nombre": "DAZZLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-dazzle2-jpg.jpg"
+ },
+ "zonic": {
+  "nombre": "ZONIC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p083_29_517.jpg"
+ },
+ "space-plafon": {
+  "nombre": "SPACE PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-space-plafon-jpg.jpg"
+ },
+ "horizonte": {
+  "nombre": "HORIZONTE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p097_22_172.jpg"
+ },
+ "bilamp-led": {
+  "nombre": "BILAMP LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-bilamp2-jpg.jpg"
+ },
+ "mare-led": {
+  "nombre": "MARE LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_24_250.jpg"
+ },
+ "empotrables-infanti-nano-con-opticas": {
+  "nombre": "Empotrables Infanti Nano con Opticas",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-infantinano-jpg.jpg"
+ },
+ "kevin-ip54": {
+  "nombre": "KEVIN IP54",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-kevin3-jpg.jpg"
+ },
+ "wing-ii": {
+  "nombre": "WING II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing-ii-jpg.jpg"
+ },
+ "track-rieles-3-efectos": {
+  "nombre": "TRACK Rieles 3 efectos",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p017_64_858.jpg"
+ },
+ "impact": {
+  "nombre": "IMPACT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-impact-jpg.jpg"
+ },
+ "gyon-full-colgante": {
+  "nombre": "Gyon Full Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p029_21_152.jpg"
+ },
+ "infanti-mini-ii": {
+  "nombre": "INFANTI MINI II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-imi-pres2-jpg.jpg"
+ },
+ "mare-slim-para-tubo-led": {
+  "nombre": "MARE SLIM PARA TUBO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_24_618.jpg"
+ },
+ "sima-led": {
+  "nombre": "Sima Led",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-sima-jpg.jpg"
+ },
+ "uniline": {
+  "nombre": "UNILINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-uniline-jpg.jpg"
+ },
+ "fuentes-triac": {
+  "nombre": "Fuentes TRIAC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p013_23_869.jpg"
+ },
+ "segno-senalizadores": {
+  "nombre": "Segno Señalizadores",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p069_71_715.jpg"
+ },
+ "fuentes": {
+  "nombre": "Fuentes",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p013_23_869.jpg"
+ },
+ "rieles-adosables": {
+  "nombre": "Rieles Adosables",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-portadaweb-jpg.jpg"
+ },
+ "brooklyn-nano": {
+  "nombre": "Brooklyn Nano",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p011_23_172.jpg"
+ },
+ "lorna": {
+  "nombre": "LORNA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-lorna-jpg.jpg"
+ },
+ "empotrables-infanti-nano-con-difusor": {
+  "nombre": "Empotrables Infanti Nano con Difusor",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-infantinano-jpg.jpg"
+ },
+ "brooklyn-rotondo": {
+  "nombre": "Brooklyn Rotondo",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-brooklynrotondo-jpg.jpg"
+ },
+ "solar-led": {
+  "nombre": "SOLAR LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-solar1-jpg.jpg"
+ },
+ "atlantis": {
+  "nombre": "ATLANTIS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-atlantis-led-jpg.jpg"
+ },
+ "icon": {
+  "nombre": "ICON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-icon-jpg.jpg"
+ },
+ "brooklyn-rotondo-rieles": {
+  "nombre": "Brooklyn Rotondo - Rieles",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-brooklynrotondo-jpg.jpg"
+ },
+ "brooklyn-rotondo-fuentes": {
+  "nombre": "Brooklyn Rotondo - Fuentes",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-brooklynrotondo-jpg.jpg"
+ },
+ "inoxa-led": {
+  "nombre": "INOXA LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p091_28_449.jpg"
+ },
+ "argos": {
+  "nombre": "ARGOS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-210030-jpg.jpg"
+ },
+ "look-empotrable": {
+  "nombre": "LOOK EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-et1024-jpg.jpg"
+ },
+ "maximo-day-empotrable": {
+  "nombre": "MAXIMO DAY EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_23_728.jpg"
+ },
+ "look-cabezales-led-cob": {
+  "nombre": "LOOK Cabezales LED COB",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-look-mod-jpg.jpg"
+ },
+ "ultra": {
+  "nombre": "ULTRA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-1a-jpg.jpg"
+ },
+ "guardare-ii-semiempotrable": {
+  "nombre": "Guardare II Semiempotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p071_38_850.jpg"
+ },
+ "lukka-colgante": {
+  "nombre": "LUKKA COLGANTE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p015_21_811.jpg"
+ },
+ "opal-shop-colgante": {
+  "nombre": "Opal Shop Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_33_478.jpg"
+ },
+ "fuentes-12v": {
+  "nombre": "Fuentes 12V",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p025_39_657.jpg"
+ },
+ "lukka-spot": {
+  "nombre": "LUKKA SPOT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-los-3-copia-jpg.jpg"
+ },
+ "classic-led": {
+  "nombre": "CLASSIC LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p103_33_328.jpg"
+ },
+ "brooklyn-rieles-48v": {
+  "nombre": "BROOKLYN Rieles 48V",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-portadaweb-jpg.jpg"
+ },
+ "gyon-spot-combinado-empotrable": {
+  "nombre": "Gyon Spot Combinado Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyon-plus-120-emb-05-jpg.jpg"
+ },
+ "gyon-line-combinado": {
+  "nombre": "Gyon Line Combinado",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyones-jpg.jpg"
+ },
+ "brooklyn-rieles-24v-triac": {
+  "nombre": "BROOKLYN Rieles 24V TRIAC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-portadaweb-jpg.jpg"
+ },
+ "kellie-ii": {
+  "nombre": "KELLIE II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p023_57_880.jpg"
+ },
+ "gyon-bidireccional": {
+  "nombre": "Gyon Bidireccional",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyones-jpg.jpg"
+ },
+ "lamparas-dimerizables-ar111": {
+  "nombre": "Lamparas dimerizables AR111",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p077_34_561.jpg"
+ },
+ "lamparas-led-220v": {
+  "nombre": "Lamparas LED 220V",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p077_35_735.jpg"
+ },
+ "gyon-plus": {
+  "nombre": "Gyon Plus",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyonplusempotrable-jpg.jpg"
+ },
+ "gyon-plus-empotrable": {
+  "nombre": "Gyon Plus Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyonplusempotrable-jpg.jpg"
+ },
+ "paneles-backlight-empotrable": {
+  "nombre": "Paneles Backlight Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-plbl2-jpg.jpg"
+ },
+ "linea-gyon-ip65": {
+  "nombre": "Linea Gyon IP65",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyon-ip-artefactos-juntos-jpg.jpg"
+ },
+ "tasso-led-mezzi": {
+  "nombre": "TASSO LED MEZZI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-tasso-mezzi-led-jpg.jpg"
+ },
+ "gyon-plus-con-opticas-osram": {
+  "nombre": "Gyon Plus Con Opticas Osram",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyonplusempotrable-jpg.jpg"
+ },
+ "infanti-led": {
+  "nombre": "INFANTI LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-infanti-led-jpg.jpg"
+ },
+ "liner": {
+  "nombre": "LINER",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p043_24_827.jpg"
+ },
+ "maximo": {
+  "nombre": "MAXIMO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/KIT299.jpg"
+ },
+ "doblo-aplique-bidireccional": {
+  "nombre": "DOBLO APLIQUE BIDIRECCIONAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-doblo-aplique-2-jpg.jpg"
+ },
+ "doblo-aplique-unidireccional": {
+  "nombre": "DOBLO APLIQUE UNIDIRECCIONAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-doblo-aplique-2-jpg.jpg"
+ },
+ "maximo-combi-plafon": {
+  "nombre": "MAXIMO COMBI PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/MCP240.jpg"
+ },
+ "irupe-classic": {
+  "nombre": "Irupe Classic",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_34_170.jpg"
+ },
+ "maximo-classic-empotrable": {
+  "nombre": "MAXIMO CLASSIC EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_25_350.jpg"
+ },
+ "opal-shop-empotrable": {
+  "nombre": "Opal Shop Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_33_478.jpg"
+ },
+ "infinit": {
+  "nombre": "INFINIT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/IFC120.jpg"
+ },
+ "maximo-day-plafon": {
+  "nombre": "MAXIMO DAY PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_22_651.jpg"
+ },
+ "maximo-day-combi-empotrable": {
+  "nombre": "MAXIMO DAY COMBI EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_28_862.jpg"
+ },
+ "maximo-combi-empotrable": {
+  "nombre": "MAXIMO COMBI EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_23_551.jpg"
+ },
+ "bloom-ii": {
+  "nombre": "BLOOM II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p049_25_483.jpg"
+ },
+ "myst-ii": {
+  "nombre": "MYST II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p051_23_444.jpg"
+ },
+ "mare-para-tubo-led": {
+  "nombre": "MARE PARA TUBO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_25_519.jpg"
+ },
+ "opal-shop-plafon": {
+  "nombre": "Opal Shop Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_32_568.jpg"
+ },
+ "optical": {
+  "nombre": "OPTICAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-optical2-jpg.jpg"
+ },
+ "colgante-evoline": {
+  "nombre": "COLGANTE EVOLINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-evoline-jpg.jpg"
+ },
+ "opal-shop-asimetrico-colgante": {
+  "nombre": "Opal Shop Asimetrico Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_25_775.jpg"
+ },
+ "opal-shop-asimetrico-plafon": {
+  "nombre": "Opal Shop Asimetrico Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p057_25_884.jpg"
+ },
+ "prisma-mini": {
+  "nombre": "PRISMA MINI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/PRM025.jpg"
+ },
+ "donna-empotrable": {
+  "nombre": "Donna Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_29_748.jpg"
+ },
+ "donna-colgante": {
+  "nombre": "Donna Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_23_646.jpg"
+ },
+ "laos-colgante": {
+  "nombre": "Laos Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p059_31_402.jpg"
+ },
+ "nuovo-elegante-profesional": {
+  "nombre": "Nuovo Elegante Profesional",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-nuovoeleganteweb-jpg.jpg"
+ },
+ "union-90o": {
+  "nombre": "UNION 90º",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-infanti-led-jpg.jpg"
+ },
+ "menoline": {
+  "nombre": "Menoline",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-menoline-1-jpg.jpg"
+ },
+ "split-line-plafon": {
+  "nombre": "Split Line Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p071_19_605.jpg"
+ },
+ "tomasso-ii": {
+  "nombre": "Tomasso II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tomasso-ii-jpg.jpg"
+ },
+ "tomasso-iii": {
+  "nombre": "Tomasso III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tomasso-iii-1-jpg.jpg"
+ },
+ "split-line": {
+  "nombre": "Split Line",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-split-line-jpg.jpg"
+ },
+ "water-panel": {
+  "nombre": "Water Panel",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-panel-water-2-jpg.jpg"
+ },
+ "mini-linea-linea-continua": {
+  "nombre": "MINI LINEA LINEA CONTINUA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/MLF114.jpg"
+ },
+ "bass-plafon": {
+  "nombre": "Bass Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p071_71_795.jpg"
+ },
+ "senso": {
+  "nombre": "SENSO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-senso2-jpg.jpg"
+ },
+ "senso-ii": {
+  "nombre": "SENSO II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-senso-5-jpg.jpg"
+ },
+ "deli": {
+  "nombre": "DELI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_26_143.jpg"
+ },
+ "ser": {
+  "nombre": "SER",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-ser4-jpg.jpg"
+ },
+ "fox": {
+  "nombre": "FOX",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_26_834.jpg"
+ },
+ "bass": {
+  "nombre": "BASS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_25_895.jpg"
+ },
+ "miro": {
+  "nombre": "MIRO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p083_46_150.jpg"
+ },
+ "tasso-nano-rotondo-con-difusor": {
+  "nombre": "Tasso Nano Rotondo con Difusor",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-rotondo-fondo-blanco-jpg-jpg.jpg"
+ },
+ "plus": {
+  "nombre": "PLUS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-giardino2-jpg.jpg"
+ },
+ "space": {
+  "nombre": "SPACE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p079_42_653.jpg"
+ },
+ "dooku": {
+  "nombre": "DOOKU",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-dooku-1-jpg.jpg"
+ },
+ "ras-jab": {
+  "nombre": "RAS-JAB",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-ep008-jpg.jpg"
+ },
+ "rhino-ii": {
+  "nombre": "RHINO II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-6000l-4-jpg.jpg"
+ },
+ "flat": {
+  "nombre": "FLAT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-proa-nuevos-jpg.jpg"
+ },
+ "yolo-street-ii": {
+  "nombre": "YOLO STREET II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-yol100-3-jpg.jpg"
+ },
+ "aya-i-bidireccional": {
+  "nombre": "AYA I BIDIRECCIONAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p089_21_396.jpg"
+ },
+ "disco": {
+  "nombre": "DISCO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-disco5-jpg.jpg"
+ },
+ "wing-i": {
+  "nombre": "WING I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing-i-jpg.jpg"
+ },
+ "vega": {
+  "nombre": "VEGA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-vega-jpg.jpg"
+ },
+ "wing-iv": {
+  "nombre": "WING IV",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing3-4-jpg.jpg"
+ },
+ "prisma-plafon": {
+  "nombre": "PRISMA PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_39_753.jpg"
+ },
+ "prisma": {
+  "nombre": "PRISMA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_43_431.jpg"
+ },
+ "aya-i-plafon": {
+  "nombre": "AYA I PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_21_285.jpg"
+ },
+ "tribeca": {
+  "nombre": "TRIBECA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tribeca-jpg.jpg"
+ },
+ "bollard-led": {
+  "nombre": "BOLLARD LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-bollard-led-jpg.jpg"
+ },
+ "garden": {
+  "nombre": "GARDEN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p099_51_720.jpg"
+ },
+ "aya-i": {
+  "nombre": "AYA I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_25_223.jpg"
+ },
+ "prisma-farol": {
+  "nombre": "PRISMA FAROL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_44_542.jpg"
+ },
+ "aya-ii": {
+  "nombre": "AYA II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p093_21_285.jpg"
+ },
+ "walkie-ii": {
+  "nombre": "WALKIE II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_68_577.jpg"
+ },
+ "walkie-i": {
+  "nombre": "WALKIE I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_68_577.jpg"
+ },
+ "doris-iv": {
+  "nombre": "DORIS IV",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/DOI447.jpg"
+ },
+ "planet-led": {
+  "nombre": "PLANET LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-planet-jpg.jpg"
+ },
+ "floor": {
+  "nombre": "FLOOR",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-epl201-jpg.jpg"
+ },
+ "maya": {
+  "nombre": "MAYA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p101_30_459.jpg"
+ },
+ "mini-linea-plafon": {
+  "nombre": "MINI LINEA PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/MLP123.jpg"
+ },
+ "jackie-360o": {
+  "nombre": "JACKIE 360º",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p021_30_329.jpg"
+ },
+ "fuentes-24v-triac": {
+  "nombre": "Fuentes 24V TRIAC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p013_23_869.jpg"
+ },
+ "aplique-bidireccional-tasso-nano-con-opticas": {
+  "nombre": "Aplique Bidireccional Tasso Nano con Opticas",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-nano1-jpg.jpg"
+ },
+ "colgante-bidireccional-tasso-nano-con-opticas": {
+  "nombre": "Colgante Bidireccional Tasso Nano con Opticas",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-nano1-jpg.jpg"
+ },
+ "cintas-led": {
+  "nombre": "Cintas Led",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cintasled3-jpg.jpg"
+ },
+ "gyon-plus-movil-antideslum": {
+  "nombre": "Gyon Plus Movil Antideslum.",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyonplusempotrable-jpg.jpg"
+ },
+ "tasso-square": {
+  "nombre": "TASSO SQUARE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tassocuadrado-2-jpg.jpg"
+ },
+ "lamparas-ar111": {
+  "nombre": "Lamparas AR111",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-lamparasled4-jpg.jpg"
+ },
+ "infanti-mezzi-receled": {
+  "nombre": "INFANTI MEZZI RECELED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p037_24_842.jpg"
+ },
+ "tasso-mini-ii": {
+  "nombre": "TASSO MINI II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tmi-pres-jpg.jpg"
+ },
+ "kit-accesorios-tasso-nano": {
+  "nombre": "Kit Accesorios Tasso Nano",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-tasso-nano1-jpg.jpg"
+ },
+ "fuentes-plasma": {
+  "nombre": "Fuentes Plasma",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-plasma-jpg.jpg"
+ },
+ "kellie": {
+  "nombre": "KELLIE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p023_48_693.jpg"
+ },
+ "maximo-classic-plafon": {
+  "nombre": "MAXIMO CLASSIC PLAFON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p045_28_225.jpg"
+ },
+ "square-led": {
+  "nombre": "Square Led",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-square-jpg.jpg"
+ },
+ "guardare-i": {
+  "nombre": "GUARDARE I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-guardare1-jpg.jpg"
+ },
+ "dicro": {
+  "nombre": "DICRO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p015_51_696.jpg"
+ },
+ "pesca": {
+  "nombre": "PESCA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-2648-blanco-jpg.jpg"
+ },
+ "bases": {
+  "nombre": "BASES",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p019_27_848.jpg"
+ },
+ "xero": {
+  "nombre": "XERO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-xero-jpg.jpg"
+ },
+ "guardare-ii": {
+  "nombre": "GUARDARE II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-guardare1-jpg.jpg"
+ },
+ "falco-led": {
+  "nombre": "FALCO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-falco-led-2-jpg.jpg"
+ },
+ "jackie-sumergible": {
+  "nombre": "JACKIE Sumergible",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p023_43_520.jpg"
+ },
+ "gyon-line-colgante": {
+  "nombre": "Gyon Line Colgante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyones-jpg.jpg"
+ },
+ "gyon-plus-cabezal": {
+  "nombre": "Gyon Plus Cabezal",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-infanti-cabezal-gyon-1-jpg.jpg"
+ },
+ "gyon-square-plafon": {
+  "nombre": "Gyon Square Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p031_29_708.jpg"
+ },
+ "tasso-led-max": {
+  "nombre": "TASSO LED MAX",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-foto-tasso-max-led-jpg.jpg"
+ },
+ "linus": {
+  "nombre": "LINUS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p043_22_179.jpg"
+ },
+ "mini-linea-empotrable": {
+  "nombre": "MINI LINEA EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/MLE120.jpg"
+ },
+ "myst-i": {
+  "nombre": "MYST I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-al082-web-jpg.jpg"
+ },
+ "midi": {
+  "nombre": "MIDI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-080010-web-jpg.jpg"
+ },
+ "bloom-i": {
+  "nombre": "BLOOM I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p049_34_649.jpg"
+ },
+ "kira-i": {
+  "nombre": "KIRA I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p051_30_531.jpg"
+ },
+ "licis-i": {
+  "nombre": "LICIS I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p051_28_145.jpg"
+ },
+ "kira-ii": {
+  "nombre": "KIRA II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p051_34_626.jpg"
+ },
+ "mare-con-tubo-led": {
+  "nombre": "MARE CON TUBO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_25_519.jpg"
+ },
+ "megavide": {
+  "nombre": "Megavide",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-megavideweb1-jpg.jpg"
+ },
+ "prada": {
+  "nombre": "Prada",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-prada-jpg.jpg"
+ },
+ "alther-line": {
+  "nombre": "Alther Line",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-alther-line-jpg.jpg"
+ },
+ "cartel-salida": {
+  "nombre": "Cartel Salida",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-salidas-jpg.jpg"
+ },
+ "emergencias-y-fuentes-plasma-backlight": {
+  "nombre": "Emergencias y Fuentes Plasma Backlight",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-em36-jpg.jpg"
+ },
+ "fuentes-plasma-backlight": {
+  "nombre": "Fuentes Plasma Backlight",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-plbl2-jpg.jpg"
+ },
+ "lukka-semi-empotrable": {
+  "nombre": "Lukka Semi Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-et2900a4-jpg.jpg"
+ },
+ "prada-plafon": {
+  "nombre": "Prada Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-prada-plafon-jpg.jpg"
+ },
+ "megavide-plafon": {
+  "nombre": "Megavide Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-megavideweb1-jpg.jpg"
+ },
+ "random-plafon": {
+  "nombre": "Random Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-rnp-perf-jpg.jpg"
+ },
+ "serena": {
+  "nombre": "SERENA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p091_22_837.jpg"
+ },
+ "sima-led-plafon": {
+  "nombre": "Sima Led Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-sima-plafon-jpg.jpg"
+ },
+ "hermes-ii": {
+  "nombre": "HERMES II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-hermesii-jpg.jpg"
+ },
+ "aston-iii": {
+  "nombre": "ASTON III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-aston3c-jpg.jpg"
+ },
+ "okkyo": {
+  "nombre": "OKKYO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-okkyo-jpg.jpg"
+ },
+ "techno": {
+  "nombre": "TECHNO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_31_199.jpg"
+ },
+ "still": {
+  "nombre": "STILL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_34_626.jpg"
+ },
+ "cobo": {
+  "nombre": "COBO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-etl518-jpg.jpg"
+ },
+ "ser-ii": {
+  "nombre": "SER II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_36_519.jpg"
+ },
+ "mabe": {
+  "nombre": "MABE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_37_696.jpg"
+ },
+ "hermes": {
+  "nombre": "HERMES",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p075_34_772.jpg"
+ },
+ "superspot": {
+  "nombre": "SUPERSPOT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-super-spot-jpg.jpg"
+ },
+ "yolo-led-empotrable": {
+  "nombre": "YOLO LED EMPOTRABLE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p085_19_306.jpg"
+ },
+ "proa": {
+  "nombre": "PROA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p087_34_568.jpg"
+ },
+ "wing-v": {
+  "nombre": "WING V",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing-6s-jpg.jpg"
+ },
+ "lancia": {
+  "nombre": "LANCIA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p087_27_764.jpg"
+ },
+ "duplo-led": {
+  "nombre": "DUPLO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p089_25_161.jpg"
+ },
+ "spina": {
+  "nombre": "SPINA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-spina2-jpg.jpg"
+ },
+ "level": {
+  "nombre": "LEVEL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-level-jpg.jpg"
+ },
+ "iria": {
+  "nombre": "IRIA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-iria-jpg.jpg"
+ },
+ "trian": {
+  "nombre": "TRIAN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-trian-jpg.jpg"
+ },
+ "enya": {
+  "nombre": "ENYA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-enya-jpg.jpg"
+ },
+ "flag": {
+  "nombre": "FLAG",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-flag-jpg.jpg"
+ },
+ "licelot": {
+  "nombre": "LICELOT",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-licelot-jpg.jpg"
+ },
+ "queen": {
+  "nombre": "QUEEN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-queen-jpg.jpg"
+ },
+ "polux": {
+  "nombre": "POLUX",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-polux-jpg.jpg"
+ },
+ "wing-iii": {
+  "nombre": "WING III",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wing3-4-jpg.jpg"
+ },
+ "kio": {
+  "nombre": "KIO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-kio-jpg.jpg"
+ },
+ "petra": {
+  "nombre": "PETRA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-petra-jpg.jpg"
+ },
+ "alba-i": {
+  "nombre": "ALBA I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-albas-jpg.jpg"
+ },
+ "alba-ii": {
+  "nombre": "ALBA II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-albas-jpg.jpg"
+ },
+ "dida": {
+  "nombre": "DIDA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-dida-jpg.jpg"
+ },
+ "muro-i": {
+  "nombre": "MURO I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_28_230.jpg"
+ },
+ "linea-kika": {
+  "nombre": "Linea Kika",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-definitivokicolgante-jpg.jpg"
+ },
+ "muro-ii": {
+  "nombre": "MURO II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_32_282.jpg"
+ },
+ "gym": {
+  "nombre": "GYM",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gym-jpg.jpg"
+ },
+ "wall-i": {
+  "nombre": "WALL I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-wall-i-chico-jpg.jpg"
+ },
+ "miro-led": {
+  "nombre": "MIRO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_35_806.jpg"
+ },
+ "flow": {
+  "nombre": "FLOW",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-flow-para-web-jpg.jpg"
+ },
+ "vela-i": {
+  "nombre": "VELA I",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-vela-jpg.jpg"
+ },
+ "kuarden-calado": {
+  "nombre": "KUARDEN CALADO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/metaluz/KAA070.jpg"
+ },
+ "control": {
+  "nombre": "Control",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-unidad-de-control-dali-pagina-web-jpg.jpg"
+ },
+ "roda": {
+  "nombre": "RODA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-roda-copia2-jpg.jpg"
+ },
+ "kubic": {
+  "nombre": "KUBIC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-kubik2-jpg.jpg"
+ },
+ "lukka": {
+  "nombre": "LUKKA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-rielblancoblanco-jpg.jpg"
+ },
+ "falco-i-y-ii": {
+  "nombre": "FALCO I y II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-falco-i-ii-jpg.jpg"
+ },
+ "control-dali": {
+  "nombre": "Control DALI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-unidad-de-control-dali-pagina-web-jpg.jpg"
+ },
+ "fuentes-24v-slim": {
+  "nombre": "Fuentes 24V SLIM",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-slim-led-jpg.jpg"
+ },
+ "gyon-line-empotrable": {
+  "nombre": "Gyon Line Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyon-plus-120-emb-05-jpg.jpg"
+ },
+ "gyon-square-empotrable": {
+  "nombre": "Gyon Square Empotrable",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gyonsquareempotrable2-jpg.jpg"
+ },
+ "gyon-plus-plafon": {
+  "nombre": "Gyon Plus Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-lucciola-14-10-2144003-familia-copia-jpg.jpg"
+ },
+ "halley-led": {
+  "nombre": "HALLEY LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p103_25_155.jpg"
+ },
+ "cosmic": {
+  "nombre": "COSMIC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cosmic-jpg.jpg"
+ },
+ "trisio": {
+  "nombre": "TRISIO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-cosmic-jpg.jpg"
+ },
+ "sub-eos": {
+  "nombre": "SUB EOS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-eos-jpg.jpg"
+ },
+ "bluline": {
+  "nombre": "BLULINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-blu-pres-2-jpg.jpg"
+ },
+ "mauiline": {
+  "nombre": "MAUILINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-l55-recessed-reflector-dwrlr436-s-jpg.jpg"
+ },
+ "uniline-wall": {
+  "nombre": "UNILINE WALL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-unilinewall-jpg.jpg"
+ },
+ "licis-ii": {
+  "nombre": "LICIS II",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p051_31_231.jpg"
+ },
+ "mare-profesional": {
+  "nombre": "MARE PROFESIONAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p053_24_162.jpg"
+ },
+ "klein": {
+  "nombre": "KLEIN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-klein-x3-jpg.jpg"
+ },
+ "ufo": {
+  "nombre": "UFO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p055_23_161.jpg"
+ },
+ "floor-2": {
+  "nombre": "FLOOR 2",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-floorfinal-jpg.jpg"
+ },
+ "nuovo-binario-led": {
+  "nombre": "NUOVO BINARIO LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-trisio-jpg.jpg"
+ },
+ "paneles-led-backlight-nuovo-elegante": {
+  "nombre": "Paneles LED BackLight Nuovo Elegante",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-nuovoeleganteweb-jpg.jpg"
+ },
+ "duo": {
+  "nombre": "Duo",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p069_71_829.jpg"
+ },
+ "maui": {
+  "nombre": "Maui",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-mauiline-jpg.jpg"
+ },
+ "bow-plafon": {
+  "nombre": "Bow Plafon",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p071_43_915.jpg"
+ },
+ "gala": {
+  "nombre": "GALA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-gala-1-jpg.jpg"
+ },
+ "team-led": {
+  "nombre": "TEAM LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p073_31_508.jpg"
+ },
+ "giardino": {
+  "nombre": "GIARDINO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-giardino2-jpg.jpg"
+ },
+ "maxine": {
+  "nombre": "MAXINE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-maxine-vita-jpg.jpg"
+ },
+ "vita": {
+  "nombre": "VITA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-maxine-vita-jpg.jpg"
+ },
+ "buffer": {
+  "nombre": "BUFFER",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-parlantebuffer-jpg.jpg"
+ },
+ "aya-ii-bidireccional": {
+  "nombre": "AYA II BIDIRECCIONAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p089_85_459.jpg"
+ },
+ "muro-iv": {
+  "nombre": "MURO IV",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/crop/p095_22_339.jpg"
+ },
+ "list-iii-bar": {
+  "nombre": "LIST III / BAR",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/lucciola/fam/g_img-productos-grandes-bar1-jpg.jpg"
+ }
+}

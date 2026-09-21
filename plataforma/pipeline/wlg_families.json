@@ -1,0 +1,410 @@
+{
+ "adar-nn": {
+  "nombre": "ADAR NN",
+  "img": "img/wlg/adar-nn.jpg"
+ },
+ "cinor": {
+  "nombre": "CINOR",
+  "img": "img/wlg/cinor.jpg"
+ },
+ "cinor-20w": {
+  "nombre": "CINOR 20W",
+  "img": "img/wlg/cinor-20w.jpg"
+ },
+ "cinor-dak": {
+  "nombre": "CINOR DAK",
+  "img": "img/wlg/cinor-dak.jpg"
+ },
+ "cinor-11w": {
+  "nombre": "CINOR 11W",
+  "img": "img/wlg/cinor-11w.jpg"
+ },
+ "cinor-shell": {
+  "nombre": "CINOR SHELL",
+  "img": "img/wlg/cinor-shell.jpg"
+ },
+ "cof-1500": {
+  "nombre": "COF 1500",
+  "img": "img/wlg/cof-1500.jpg"
+ },
+ "cof-660": {
+  "nombre": "COF 660",
+  "img": "img/wlg/cof-660.jpg"
+ },
+ "cof-900": {
+  "nombre": "COF 900",
+  "img": "img/wlg/cof-900.jpg"
+ },
+ "controladora-dmx-touch-panel": {
+  "nombre": "CONTROLADORA DMX TOUCH PANEL",
+  "img": "img/wlg/controladora-dmx-touch-panel.jpg"
+ },
+ "data-repeater-rgb-10x3": {
+  "nombre": "DATA REPEATER RGB 10X3",
+  "img": "img/wlg/data-repeater-rgb-10x3.jpg"
+ },
+ "dicro-gu10": {
+  "nombre": "DICRO GU10",
+  "img": "img/wlg/dicro-gu10.jpg"
+ },
+ "difusor": {
+  "nombre": "DIFUSOR",
+  "img": "img/wlg/difusor.jpg"
+ },
+ "disk": {
+  "nombre": "DISK",
+  "img": "img/wlg/disk.jpg"
+ },
+ "driver-dv512-dmx-rgb": {
+  "nombre": "DRIVER DV512 DMX RGB",
+  "img": "img/wlg/driver-dv512-dmx-rgb.jpg"
+ },
+ "elul-c": {
+  "nombre": "ELUL C",
+  "img": "img/wlg/elul-c.jpg"
+ },
+ "elul-g": {
+  "nombre": "ELUL G",
+  "img": "img/wlg/elul-g.jpg"
+ },
+ "fuente": {
+  "nombre": "FUENTE",
+  "img": "img/wlg/fuente.jpg"
+ },
+ "fuente-dali": {
+  "nombre": "FUENTE DALI",
+  "img": "img/wlg/fuente-dali.jpg"
+ },
+ "fuente-dimerizable": {
+  "nombre": "FUENTE DIMERIZABLE",
+  "img": "img/wlg/fuente-dimerizable.jpg"
+ },
+ "fuente-slim": {
+  "nombre": "FUENTE SLIM",
+  "img": "img/wlg/fuente-slim.jpg"
+ },
+ "fuente-slim-2-0": {
+  "nombre": "FUENTE SLIM 2 0",
+  "img": "img/wlg/fuente-slim-2-0.jpg"
+ },
+ "fuente-slim-dim": {
+  "nombre": "FUENTE SLIM DIM",
+  "img": "img/wlg/fuente-slim-dim.jpg"
+ },
+ "fuente-switching-18w": {
+  "nombre": "FUENTE SWITCHING 18W",
+  "img": "img/wlg/fuente-switching-18w.jpg"
+ },
+ "gamal": {
+  "nombre": "GAMAL",
+  "img": "img/wlg/gamal.jpg"
+ },
+ "gan-8w": {
+  "nombre": "GAN 8W",
+  "img": "img/wlg/gan-8w.jpg"
+ },
+ "gan-3w": {
+  "nombre": "GAN 3W",
+  "img": "img/wlg/gan-3w.jpg"
+ },
+ "gan-15w": {
+  "nombre": "GAN 15W",
+  "img": "img/wlg/gan-15w.jpg"
+ },
+ "gan-5w": {
+  "nombre": "GAN 5W",
+  "img": "img/wlg/gan-5w.jpg"
+ },
+ "gil-am": {
+  "nombre": "GIL AM",
+  "img": "img/wlg/gil-am.jpg"
+ },
+ "jatul-rf": {
+  "nombre": "JATUL RF",
+  "img": "img/wlg/jatul-rf.jpg"
+ },
+ "jatul-ro": {
+  "nombre": "JATUL RO",
+  "img": "img/wlg/jatul-ro.jpg"
+ },
+ "jenny-ss": {
+  "nombre": "JENNY SS",
+  "img": "img/wlg/jenny-ss.jpg"
+ },
+ "jenny-x-pro": {
+  "nombre": "JENNY X PRO",
+  "img": "img/wlg/jenny-x-pro.jpg"
+ },
+ "jenny": {
+  "nombre": "JENNY",
+  "img": "img/wlg/jenny.jpg"
+ },
+ "jenny-magic": {
+  "nombre": "JENNY MAGIC",
+  "img": "img/wlg/jenny-magic.jpg"
+ },
+ "katan-white-546": {
+  "nombre": "KATAN WHITE 546",
+  "img": "img/wlg/katan-white-546.jpg"
+ },
+ "katan-white-346": {
+  "nombre": "KATAN WHITE 346",
+  "img": "img/wlg/katan-white-346.jpg"
+ },
+ "katan-black-331": {
+  "nombre": "KATAN BLACK 331",
+  "img": "img/wlg/katan-black-331.jpg"
+ },
+ "kelev-c": {
+  "nombre": "KELEV C",
+  "img": "img/wlg/kelev-c.jpg"
+ },
+ "kelev-r": {
+  "nombre": "KELEV R",
+  "img": "img/wlg/kelev-r.jpg"
+ },
+ "kibuni": {
+  "nombre": "KIBUNI",
+  "img": "img/wlg/kibuni.jpg"
+ },
+ "kislev": {
+  "nombre": "KISLEV",
+  "img": "img/wlg/kislev.jpg"
+ },
+ "kobra": {
+  "nombre": "KOBRA",
+  "img": "img/wlg/kobra.jpg"
+ },
+ "konus": {
+  "nombre": "KONUS",
+  "img": "img/wlg/konus.jpg"
+ },
+ "kutz": {
+  "nombre": "KUTZ",
+  "img": "img/wlg/kutz.jpg"
+ },
+ "linear-3735": {
+  "nombre": "LINEAR 3735",
+  "img": "img/wlg/linear-3735.jpg"
+ },
+ "linear-slim-ls25": {
+  "nombre": "LINEAR SLIM LS25",
+  "img": "img/wlg/linear-slim-ls25.jpg"
+ },
+ "linear-slim-le25": {
+  "nombre": "LINEAR SLIM LE25",
+  "img": "img/wlg/linear-slim-le25.jpg"
+ },
+ "memu": {
+  "nombre": "MEMU",
+  "img": "img/wlg/memu.jpg"
+ },
+ "micro-cinor": {
+  "nombre": "MICRO CINOR",
+  "img": "img/wlg/micro-cinor.jpg"
+ },
+ "micro-runner-10": {
+  "nombre": "MICRO RUNNER 10",
+  "img": "img/wlg/micro-runner-10.jpg"
+ },
+ "micro-runner-4": {
+  "nombre": "MICRO RUNNER 4",
+  "img": "img/wlg/micro-runner-4.jpg"
+ },
+ "micro-runner-9": {
+  "nombre": "MICRO RUNNER 9",
+  "img": "img/wlg/micro-runner-9.jpg"
+ },
+ "micro-runner-5": {
+  "nombre": "MICRO RUNNER 5",
+  "img": "img/wlg/micro-runner-5.jpg"
+ },
+ "micro-track-m7e": {
+  "nombre": "MICRO TRACK M7E",
+  "img": "img/wlg/micro-track-m7e.jpg"
+ },
+ "micro-track-m7": {
+  "nombre": "MICRO TRACK M7",
+  "img": "img/wlg/micro-track-m7.jpg"
+ },
+ "micro-track-m7a": {
+  "nombre": "MICRO TRACK M7A",
+  "img": "img/wlg/micro-track-m7a.jpg"
+ },
+ "micro-track-m7h": {
+  "nombre": "MICRO TRACK M7H",
+  "img": "img/wlg/micro-track-m7h.jpg"
+ },
+ "mini-magic": {
+  "nombre": "MINI MAGIC",
+  "img": "img/wlg/mini-magic.jpg"
+ },
+ "mini-jenny": {
+  "nombre": "MINI JENNY",
+  "img": "img/wlg/mini-jenny.jpg"
+ },
+ "mini-jenny-3d": {
+  "nombre": "MINI JENNY 3D",
+  "img": "img/wlg/mini-jenny-3d.jpg"
+ },
+ "mote": {
+  "nombre": "MOTE",
+  "img": "img/wlg/mote.jpg"
+ },
+ "nadir": {
+  "nombre": "NADIR",
+  "img": "img/wlg/nadir.jpg"
+ },
+ "natz": {
+  "nombre": "NATZ",
+  "img": "img/wlg/natz.jpg"
+ },
+ "nisan": {
+  "nombre": "NISAN",
+  "img": "img/wlg/nisan.jpg"
+ },
+ "or": {
+  "nombre": "OR",
+  "img": "img/wlg/or.jpg"
+ },
+ "porta-led-1616": {
+  "nombre": "PORTA LED 1616",
+  "img": "img/wlg/porta-led-1616.jpg"
+ },
+ "rishon": {
+  "nombre": "RISHON",
+  "img": "img/wlg/rishon.jpg"
+ },
+ "runner": {
+  "nombre": "RUNNER",
+  "img": "img/wlg/runner.jpg"
+ },
+ "runner-orientable": {
+  "nombre": "RUNNER ORIENTABLE",
+  "img": "img/wlg/runner-orientable.jpg"
+ },
+ "runner-x-pro-12w": {
+  "nombre": "RUNNER X PRO 12W",
+  "img": "img/wlg/runner-x-pro-12w.jpg"
+ },
+ "runner-x-pro": {
+  "nombre": "RUNNER X PRO",
+  "img": "img/wlg/runner-x-pro.jpg"
+ },
+ "runner-x-pro-surface": {
+  "nombre": "RUNNER X PRO SURFACE",
+  "img": "img/wlg/runner-x-pro-surface.jpg"
+ },
+ "runner-x-surface": {
+  "nombre": "RUNNER X SURFACE",
+  "img": "img/wlg/runner-x-surface.jpg"
+ },
+ "saman": {
+  "nombre": "SAMAN",
+  "img": "img/wlg/saman.jpg"
+ },
+ "shab": {
+  "nombre": "SHAB",
+  "img": "img/wlg/shab.jpg"
+ },
+ "shevat-c": {
+  "nombre": "SHEVAT C",
+  "img": "img/wlg/shevat-c.jpg"
+ },
+ "shevat-cnn": {
+  "nombre": "SHEVAT CNN",
+  "img": "img/wlg/shevat-cnn.jpg"
+ },
+ "shevat-rnn": {
+  "nombre": "SHEVAT RNN",
+  "img": "img/wlg/shevat-rnn.jpg"
+ },
+ "splitter-dmx102": {
+  "nombre": "SPLITTER DMX102",
+  "img": "img/wlg/splitter-dmx102.jpg"
+ },
+ "sunset-light": {
+  "nombre": "SUNSET LIGHT",
+  "img": "img/wlg/sunset-light.jpg"
+ },
+ "tamus-c": {
+  "nombre": "TAMUS C",
+  "img": "img/wlg/tamus-c.jpg"
+ },
+ "tamus-o": {
+  "nombre": "TAMUS O",
+  "img": "img/wlg/tamus-o.jpg"
+ },
+ "ta-jat": {
+  "nombre": "TA JAT",
+  "img": "img/wlg/ta-jat.jpg"
+ },
+ "ta-jat-premarco": {
+  "nombre": "TA JAT PREMARCO",
+  "img": "img/wlg/ta-jat-premarco.jpg"
+ },
+ "tevet-c": {
+  "nombre": "TEVET C",
+  "img": "img/wlg/tevet-c.jpg"
+ },
+ "tevet-r": {
+  "nombre": "TEVET R",
+  "img": "img/wlg/tevet-r.jpg"
+ },
+ "3528-60": {
+  "nombre": "3528 60",
+  "img": "img/wlg/3528-60.jpg"
+ },
+ "2835-280": {
+  "nombre": "2835 280",
+  "img": "img/wlg/2835-280.jpg"
+ },
+ "2835-80": {
+  "nombre": "2835 80",
+  "img": "img/wlg/2835-80.jpg"
+ },
+ "2835-98": {
+  "nombre": "2835 98",
+  "img": "img/wlg/2835-98.jpg"
+ },
+ "2835-256": {
+  "nombre": "2835 256",
+  "img": "img/wlg/2835-256.jpg"
+ },
+ "5050-60-rgb": {
+  "nombre": "5050 60 RGB",
+  "img": "img/wlg/5050-60-rgb.jpg"
+ },
+ "2835-120": {
+  "nombre": "2835 120",
+  "img": "img/wlg/2835-120.jpg"
+ },
+ "tsipor": {
+  "nombre": "TSIPOR",
+  "img": "img/wlg/tsipor.jpg"
+ },
+ "wallwasher-ww": {
+  "nombre": "WALLWASHER WW",
+  "img": "img/wlg/wallwasher-ww.jpg"
+ },
+ "wally-fit": {
+  "nombre": "WALLY FIT",
+  "img": "img/wlg/wally-fit.jpg"
+ },
+ "wally": {
+  "nombre": "WALLY",
+  "img": "img/wlg/wally.jpg"
+ },
+ "wally-x-pro": {
+  "nombre": "WALLY X PRO",
+  "img": "img/wlg/wally-x-pro.jpg"
+ },
+ "washer-b": {
+  "nombre": "WASHER B",
+  "img": "img/wlg/washer-b.jpg"
+ },
+ "zohar": {
+  "nombre": "ZOHAR",
+  "img": "img/wlg/zohar.jpg"
+ }
+}

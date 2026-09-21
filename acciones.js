@@ -5,7 +5,9 @@
    Dos pantallas:
      · LISTA   → todas las acciones con su estado, fechas y cómo vienen las métricas.
      · FICHA   → una acción: datos, métricas esperadas vs reales, inversión, y la
-                 LÍNEA DE TIEMPO donde se van tirando notas, propuestas y archivos.
+                 LÍNEA DE TIEMPO donde se van tirando notas, propuestas y archivos,
+                 y los COMENTARIOS del equipo. En los dos se menciona con @Nombre,
+                 igual que en Tareas.
 
    Quién entra: sólo Admin y Líder (ROLES en app.js). El permiso REAL lo aplica
    Supabase por RLS (supabase/sql/2026-09-18-acciones.sql): esto sólo decide qué
@@ -116,6 +118,12 @@
   let COMP = null;         // lo que se está escribiendo en la línea de tiempo
   let PEND = [];           // archivos elegidos, todavía sin subir: [File]
   let SUBIENDO = false;
+  let COMS = {};           // accion_id -> [comentarios]
+  let SIN_COMS = false;    // falta correr 2026-09-21-acciones-comentarios.sql
+  let MENC = null;         // {el, desde, lista, i} mientras está abierto el desplegable de @
+  // Cuándo abriste cada acción por última vez, para avisar sólo las menciones nuevas.
+  // Vive en este navegador, igual que en Tareas: sólo decide qué se marca como nuevo.
+  let VISTO = (() => { try { return JSON.parse(localStorage.getItem("acciones_visto") || "{}"); } catch (e) { return {}; } })();
   let NOTA = "", NOTA_ERR = false, NOTA_T = null;
   const SEQ = {};
   const compVacio = () => ({ tipo: "nota", fecha: hoyISO(), texto: "" });
@@ -156,6 +164,7 @@
     { k: "resultados", t: "Faltan resultados",     f: faltanResultados },
     { k: "finalizada", t: "Finalizadas",           f: a => a.estado === "finalizada" },
     { k: "descartada", t: "Descartadas",           f: a => a.estado === "descartada" },
+    { k: "menciones",  t: "@ Menciones",           f: a => meMencionan(a) },
     { k: "todas",      t: "Todas",                 f: () => true },
   ];
   function base() {
@@ -170,6 +179,57 @@
     const p = EQUIPO.find(x => low(x.email) === low(email));
     return p ? p.nombre : String(email).split("@")[0];
   }
+  /* ---- Menciones (@Nombre) ----------------------------------------------
+     Mismo criterio que Tareas: se guardan como texto plano ("@Carla Ruiz") y se
+     reconocen contra los nombres del equipo. Valen en comentarios y en la línea
+     de tiempo. Te "mencionan" sólo si lo escribió otra persona. */
+  const escRe = x => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function reMenciones(escapar) {
+    const nombres = EQUIPO.map(p => p.nombre).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!nombres.length) return null;
+    return new RegExp(`@(${nombres.map(n => escRe(escapar ? esc(n) : n)).join("|")})(?![\\p{L}\\p{N}])`, "giu");
+  }
+  const personaDe = nombre => EQUIPO.find(p => low(p.nombre) === low(nombre));
+  function mencionesEn(texto) {
+    const re = texto && texto.includes("@") && reMenciones(false);
+    if (!re) return [];
+    const out = new Set();
+    for (const m of texto.matchAll(re)) { const p = personaDe(m[1]); if (p) out.add(low(p.email)); }
+    return [...out];
+  }
+  // HTML ya escapado → menciones resaltadas (la tuya, en otro color).
+  function marcarMenciones(h) {
+    const re = reMenciones(true);
+    return re ? h.replace(re, (m, n) => {
+      const p = EQUIPO.find(x => esc(low(x.nombre)) === low(n));
+      return `<span class="ac-arroba ${p && low(p.email) === yo() ? "yo" : ""}">${m}</span>`;
+    }) : h;
+  }
+  const meNombra = x => !!yo() && low(x.autor_email) !== yo() && mencionesEn(x.texto).includes(yo());
+  const escritos = id => [...(COMS[id] || []), ...(HITOS[id] || []).filter(h => h.tipo !== "estado")];
+  const meMencionan = a => escritos(a.id).some(meNombra);
+  const mencionNueva = a => escritos(a.id).some(x => meNombra(x) && tms(x.creado) > tms(VISTO[a.id]));
+  function marcarVisto(id) {
+    VISTO[id] = new Date().toISOString();
+    try { localStorage.setItem("acciones_visto", JSON.stringify(VISTO)); } catch (e) { }
+    marcarNav();
+  }
+  // Contador en la solapa Acciones: acciones donde te mencionaron y no abriste desde entonces.
+  function marcarNav() {
+    const b = document.querySelector('#nav button[data-mod="acciones"]'); if (!b) return;
+    const n = CARGADO ? ACC.filter(mencionNueva).length : 0;
+    let s = b.querySelector(".nav-count");
+    if (!n) { if (s) s.remove(); b.removeAttribute("title"); return; }
+    if (!s) { s = document.createElement("span"); s.className = "nav-count"; b.appendChild(s); }
+    s.textContent = n;
+    b.title = `${n} acci${n === 1 ? "ón" : "ones"} con menciones nuevas`;
+  }
+  window.avisosAcciones = async function () {
+    if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) return;
+    if (!CARGADO) await traer();
+    marcarNav();
+  };
+
   const iniciales = nombre => String(nombre || "?").trim().split(/[\s._-]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
   function avatarHTML(email) {
     if (!email) return `<span class="ac-avatar vacio" title="Sin responsable">?</span>`;
@@ -219,18 +279,23 @@
   }
   async function traerAhora() {
     try {
-      const [rA, rH, rE] = await Promise.all([
+      const [rA, rH, rE, rC] = await Promise.all([
         fetch(url("acciones?select=*&order=creado.desc"), { headers: head() }),
         fetch(url("acciones_hitos?select=*&order=fecha.desc,creado.desc"), { headers: head() }),
         fetch(url("rpc/equipo_acciones"), { method: "POST", headers: head(), body: "{}" }),
+        fetch(url("acciones_comentarios?select=*&order=creado.asc"), { headers: head() }),
       ]);
       if (!rA.ok) { ERROR = rA.status === 404 ? "sql" : "red"; return; }
       const acc = (await rA.json()).map(normal);
       const hs = {};
       (rH.ok ? await rH.json() : []).forEach(h => { (hs[h.accion_id] = hs[h.accion_id] || []).push(normalH(h)); });
+      const cs = {};
+      (rC.ok ? await rC.json() : []).forEach(c => { (cs[c.accion_id] = cs[c.accion_id] || []).push(c); });
+      SIN_COMS = rC.status === 404;
       if (rE.ok) EQUIPO = await rE.json();
-      ACC = acc; HITOS = hs;
+      ACC = acc; HITOS = hs; COMS = cs;
       ERROR = ""; CARGADO = true;
+      marcarNav();
     } catch (e) { ERROR = "red"; }
   }
 
@@ -288,7 +353,7 @@
       const d = r.ok ? await r.json() : [];
       if (!d.length) throw new Error("sin permiso");
       await borrarArchivos(paths);
-      ACC = ACC.filter(x => x.id !== id); delete HITOS[id];
+      ACC = ACC.filter(x => x.id !== id); delete HITOS[id]; delete COMS[id];
       ABIERTA = null; nota("Acción eliminada.");
       pintar();
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien la creó o un admin.", true); }
@@ -385,6 +450,39 @@
     pintarComp();
   }
 
+  /* ---- Comentarios ---- */
+  async function comentar() {
+    const id = ABIERTA; if (!id || id === "nueva") return;
+    const campo = caja().querySelector(".ac-com-nuevo");
+    const texto = campo ? campo.value.trim() : "";
+    if (!texto) return;
+    campo.disabled = true;
+    try {
+      const r = await fetch(url("acciones_comentarios"), {
+        method: "POST", headers: head({ Prefer: "return=representation" }),
+        body: JSON.stringify({ accion_id: id, texto, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }),
+      });
+      const d = r.ok ? await r.json() : [];
+      if (!d.length) throw new Error(r.status === 404 ? "sql" : "sin fila");
+      (COMS[id] = COMS[id] || []).push(d[0]);
+      campo.value = "";
+      marcarVisto(id);
+      pintarComentarios();
+    } catch (e) {
+      campo.disabled = false;
+      nota(e.message === "sql" ? "Falta correr 2026-09-21-acciones-comentarios.sql en Supabase." : "No se pudo guardar el comentario.", true);
+    }
+  }
+  async function borrarComentario(cid) {
+    const id = ABIERTA;
+    if (!confirm("¿Borrar este comentario?")) return;
+    const r = await fetch(url(`acciones_comentarios?id=eq.${enc(cid)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) }).catch(() => null);
+    const d = r && r.ok ? await r.json() : [];
+    if (!d.length) return nota("No se pudo borrar. Sólo puede hacerlo quien lo escribió o un admin.", true);
+    COMS[id] = (COMS[id] || []).filter(c => c.id !== cid);
+    pintarComentarios();
+  }
+
   /* ---- Pintar ---- */
   function pintar() {
     const c = caja(); if (!c) return;
@@ -464,6 +562,8 @@
       <div class="ac-card-pie">
         ${n ? `<span title="Entradas en la línea de tiempo">🕓 ${n}</span>` : ""}
         ${nArch ? `<span title="Archivos">📎 ${nArch}</span>` : ""}
+        ${(COMS[a.id] || []).length ? `<span title="Comentarios">💬 ${COMS[a.id].length}</span>` : ""}
+        ${meMencionan(a) ? `<span class="ac-arrobado ${mencionNueva(a) ? "nueva" : ""}" title="${mencionNueva(a) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}
         ${ult ? `<span class="ac-ult">últ. mov. ${hace(ult.creado)}</span>` : ""}
         ${avatarHTML(a.responsable_email)}
       </div>
@@ -526,6 +626,7 @@
           </section>
         </div>
         <div class="ac-col-datos">
+          <section class="ac-box ac-com-box"></section>
           <section class="ac-box ac-met-box"></section>
           <section class="ac-box ac-inv-box"></section>
           <section class="ac-box">
@@ -543,7 +644,7 @@
         </div>
       </div>`}`;
     w.querySelectorAll("textarea").forEach(crecer);
-    if (!nuevo) { pintarComp(); pintarTimeline(); pintarMetricas(); pintarInversion(); }
+    if (!nuevo) { pintarComp(); pintarTimeline(); pintarComentarios(); pintarMetricas(); pintarInversion(); }
     pintarNota();
   }
   const crecer = el => { el.style.height = "auto"; el.style.height = el.scrollHeight + 2 + "px"; };
@@ -555,7 +656,7 @@
       <div class="ac-comp-tipos" role="group" aria-label="Tipo de entrada">
         ${HITO_TIPOS.map(h => `<button class="${COMP.tipo === h.k ? "on" : ""} h-${h.k}" data-accion="comp-tipo" data-k="${h.k}">${h.ic} ${h.t}</button>`).join("")}
       </div>
-      <textarea class="ac-comp-texto" rows="2" placeholder="${COMP.tipo === "propuesta" ? "Qué propone el socio: condiciones, contraprestaciones, montos…" : COMP.tipo === "contrapropuesta" ? "Qué le contrapropusimos y por qué…" : COMP.tipo === "reunion" ? "Con quién, qué se habló, próximos pasos…" : COMP.tipo === "resultado" ? "Cómo salió: números, repercusión, feedback…" : "Escribí una nota…"}  (⌘/Ctrl + Enter para agregar)" ${SUBIENDO ? "disabled" : ""}>${esc(COMP.texto)}</textarea>
+      <textarea class="ac-comp-texto" rows="2" placeholder="${COMP.tipo === "propuesta" ? "Qué propone el socio: condiciones, contraprestaciones, montos…" : COMP.tipo === "contrapropuesta" ? "Qué le contrapropusimos y por qué…" : COMP.tipo === "reunion" ? "Con quién, qué se habló, próximos pasos…" : COMP.tipo === "resultado" ? "Cómo salió: números, repercusión, feedback…" : "Escribí una nota…"} Con @ mencionás a alguien  (⌘/Ctrl + Enter para agregar)" ${SUBIENDO ? "disabled" : ""}>${esc(COMP.texto)}</textarea>
       <label class="ac-drop" tabindex="0">
         <input type="file" multiple class="ac-file" hidden ${SUBIENDO ? "disabled" : ""}>
         <span>📎 Arrastrá archivos acá o <u>elegilos</u> <small>· PDF, imágenes, Word, Excel… hasta ${MAX_MB} MB c/u</small></span>
@@ -613,8 +714,30 @@
       </div>`;
     }).join("");
   }
-  // Texto → HTML con saltos de línea y los links clickeables (propuestas en Drive, etc.).
-  const linkear = t => esc(t).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`).replace(/\n/g, "<br>");
+  // Texto → HTML con saltos de línea, los links clickeables (propuestas en Drive, etc.)
+  // y las menciones resaltadas.
+  const linkear = t => marcarMenciones(esc(t).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`)).replace(/\n/g, "<br>");
+
+  function pintarComentarios() {
+    const w = caja() && caja().querySelector(".ac-com-box"); if (!w) return;
+    const coms = COMS[ABIERTA] || [];
+    const borrador = (w.querySelector(".ac-com-nuevo") || {}).value || "";
+    if (SIN_COMS) {
+      w.innerHTML = `<h4 class="ac-box-h">Comentarios</h4>
+        <p class="ac-vacio-mini">Para comentar, corré <code>supabase/sql/2026-09-21-acciones-comentarios.sql</code> en Supabase y recargá.</p>`;
+      return;
+    }
+    w.innerHTML = `
+      <h4 class="ac-box-h">Comentarios ${coms.length ? `<span class="ac-box-sub">${coms.length}</span>` : ""}</h4>
+      <div class="ac-coms">${coms.map(x => `<div class="ac-com">
+          <div class="ac-com-h">${avatarHTML(x.autor_email)}<b>${esc(x.autor || nombreDe(x.autor_email))}</b><span>${hace(x.creado)}</span>
+            ${esAdmin() || low(x.autor_email) === yo() ? `<button class="ac-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
+          <p>${linkear(x.texto)}</p>
+        </div>`).join("") || `<p class="ac-vacio-mini">Todavía no hay comentarios.</p>`}</div>
+      <textarea class="ac-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien  (⌘/Ctrl + Enter para enviar)">${esc(borrador)}</textarea>
+      <div class="ac-com-acc"><button class="btn-ghost" data-accion="comentar">Comentar</button></div>`;
+    crecer(w.querySelector(".ac-com-nuevo"));
+  }
 
   function pintarMetricas() {
     const w = caja() && caja().querySelector(".ac-met-box"); if (!w) return;
@@ -718,7 +841,7 @@
   }
 
   /* ---- Abrir / nueva / volver ---- */
-  function abrir(id) { ABIERTA = id; BORRADOR = null; COMP = compVacio(); PEND = []; pintar(); window.scrollTo({ top: 0 }); }
+  function abrir(id) { ABIERTA = id; BORRADOR = null; COMP = compVacio(); PEND = []; marcarVisto(id); pintar(); window.scrollTo({ top: 0 }); }
   function nueva() {
     BORRADOR = {
       id: null, titulo: "", descripcion: "", tipo: TIPO || "", estado: "idea", socio: "", distribuidor: "",
@@ -734,6 +857,9 @@
       const t = caja().querySelector(".ac-titulo");
       if (t && t.value.trim() && !confirm("¿Descartar la acción que estabas creando?")) return;
     } else if ((COMP.texto.trim() || PEND.length) && !confirm("Tenés una entrada sin agregar a la línea de tiempo. ¿Salir igual?")) return;
+    const c = caja().querySelector(".ac-com-nuevo");
+    if (c && c.value.trim() && !confirm("Tenés un comentario sin enviar. ¿Salir igual?")) return;
+    cerrarMenc();
     ABIERTA = null; BORRADOR = null; COMP = compVacio(); PEND = [];
     pintar();
   }
@@ -775,7 +901,52 @@
     }),
     "inv-del": a => cambiarInversion(l => l.splice(+a.dataset.i, 1)),
     "met-menos": a => cambiarMetricas(l => { const m = l[+a.dataset.i]; if (m) m.menos = !m.menos; }),
+    comentar: () => comentar(),
+    "com-del": a => borrarComentario(a.dataset.id),
   };
+
+  /* ---- Autocompletar @ en comentarios y en la línea de tiempo ---- */
+  const CAMPOS_MENC = ".ac-com-nuevo,.ac-comp-texto";
+  function buscarMencion(el) {
+    const pos = el.selectionStart;
+    const m = el.value.slice(0, pos).match(/(^|\s)@([^@\n]{0,30})$/);
+    if (!m) return cerrarMenc();
+    const q = sinTildes(m[2]);
+    // Recién elegida ("@Carla Ruiz "): no volver a abrir la lista.
+    if (/\s$/.test(m[2]) && EQUIPO.some(p => sinTildes(p.nombre) === q.trim())) return cerrarMenc();
+    const lista = EQUIPO.filter(p => {
+      const n = sinTildes(p.nombre);
+      return !q || n.startsWith(q) || n.split(/\s+/).some(w => w.startsWith(q));
+    }).slice(0, 6);
+    if (!lista.length) return cerrarMenc();
+    const i = MENC && MENC.el === el ? Math.min(MENC.i, lista.length - 1) : 0;
+    MENC = { el, desde: pos - m[2].length - 1, lista, i };
+    pintarMenc();
+  }
+  function pintarMenc() {
+    let d = caja().querySelector(".ac-menc");
+    if (!d) { d = document.createElement("div"); d.className = "ac-menc"; d.setAttribute("role", "listbox"); caja().appendChild(d); }
+    d.innerHTML = MENC.lista.map((p, i) => `<button type="button" class="${i === MENC.i ? "on" : ""}" data-menc="${i}" role="option" aria-selected="${i === MENC.i}">
+      ${avatarHTML(p.email)}<span>${esc(p.nombre)}${low(p.email) === yo() ? " (vos)" : ""}</span></button>`).join("");
+    const r = MENC.el.getBoundingClientRect(), alto = d.offsetHeight;
+    d.style.left = Math.max(8, Math.min(r.left, innerWidth - d.offsetWidth - 8)) + "px";
+    d.style.top = (r.bottom + 4 + alto > innerHeight ? Math.max(8, r.top - alto - 4) : r.bottom + 4) + "px";
+  }
+  function cerrarMenc() {
+    MENC = null;
+    const d = caja() && caja().querySelector(".ac-menc"); if (d) d.remove();
+  }
+  function elegirMenc(i) {
+    if (!MENC || !MENC.lista[i]) return;
+    const { el, desde } = MENC, p = MENC.lista[i];
+    const ins = `@${p.nombre} `;
+    el.value = el.value.slice(0, desde) + ins + el.value.slice(el.selectionStart);
+    const caret = desde + ins.length;
+    cerrarMenc();
+    el.focus(); el.setSelectionRange(caret, caret);
+    if (el.classList.contains("ac-comp-texto")) COMP.texto = el.value;
+    crecer(el);
+  }
 
   function enganchar() {
     const c = caja();
@@ -838,11 +1009,33 @@
       }
       if (el.classList.contains("ac-comp-texto")) COMP.texto = el.value;
       if (el.tagName === "TEXTAREA") crecer(el);
+      if (el.matches(CAMPOS_MENC)) buscarMencion(el);
     });
+    // Elegir con el mouse sin que el campo pierda el foco.
+    c.addEventListener("mousedown", ev => {
+      const b = ev.target.closest("[data-menc]"); if (!b) return;
+      ev.preventDefault(); elegirMenc(+b.dataset.menc);
+    });
+    c.addEventListener("focusout", ev => {
+      if (MENC && ev.target === MENC.el) setTimeout(() => { if (MENC && document.activeElement !== MENC.el) cerrarMenc(); }, 150);
+    });
+    document.addEventListener("scroll", ev => {
+      if (MENC && !(ev.target instanceof Element && ev.target.matches(CAMPOS_MENC))) cerrarMenc();
+    }, true);
 
     c.addEventListener("keydown", ev => {
       const el = ev.target;
+      if (MENC && MENC.el === el) {
+        if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+          ev.preventDefault();
+          MENC.i = (MENC.i + (ev.key === "ArrowDown" ? 1 : -1) + MENC.lista.length) % MENC.lista.length;
+          return pintarMenc();
+        }
+        if ((ev.key === "Enter" && !ev.metaKey && !ev.ctrlKey) || ev.key === "Tab") { ev.preventDefault(); return elegirMenc(MENC.i); }
+        if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); return cerrarMenc(); }
+      }
       if (el.classList.contains("ac-comp-texto") && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); agregarHito(); return; }
+      if (el.classList.contains("ac-com-nuevo") && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); comentar(); return; }
       if (el.classList.contains("ac-titulo") && ev.key === "Enter" && !ev.shiftKey) {
         ev.preventDefault(); if (ABIERTA === "nueva") crearAccion(); else el.blur(); return;
       }
@@ -894,7 +1087,8 @@
     if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) { c.innerHTML = ""; return; }
     enganchar();
     // Si hay algo a medio escribir, no se re-dibuja encima al volver a la solapa.
-    if (CARGADO && (ABIERTA === "nueva" || COMP.texto.trim() || PEND.length)) return;
+    const borradorCom = c.querySelector(".ac-com-nuevo");
+    if (CARGADO && (ABIERTA === "nueva" || COMP.texto.trim() || PEND.length || (borradorCom && borradorCom.value.trim()))) return;
     pintar();
     await traer();
     pintar();

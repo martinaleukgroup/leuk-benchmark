@@ -1497,6 +1497,7 @@
   function avisarContenidos() {
     if (puedeVer("contenidos") && window.avisosContenidos) window.avisosContenidos();
     if (puedeVer("tareas") && window.avisosTareas) window.avisosTareas();   // lo tuyo que vence hoy o ya venció
+    if (puedeVer("acciones") && window.avisosAcciones) window.avisosAcciones();   // acciones donde te mencionaron
   }
   // Arranque para roles SIN benchmark (ej. Diseño): no se descarga ese archivo.
   function bootSinBenchmark() {

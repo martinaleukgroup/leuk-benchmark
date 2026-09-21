@@ -232,3 +232,27 @@
   .ac-comp-fecha{flex:1 1 100%}
   .ac-comp-acc .btn-primary{flex:1}
 }
+
+/* ---- Comentarios y menciones (@) — mismo criterio que Tareas ---- */
+.ac-coms{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.ac-com{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.ac-com-h{display:flex;align-items:center;gap:7px;font-size:12.5px}
+.ac-com-h b{font-weight:600}
+.ac-com-h > span:not(.ac-avatar){color:var(--gray-soft)}
+.ac-com-h .ac-avatar{width:20px;height:20px;font-size:9px}
+.ac-com-h .ac-mini{margin-left:auto}
+.ac-com p{margin:5px 0 0;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.ac-com p a{color:var(--olive)}
+.ac-com-nuevo{font-family:var(--font-body);font-size:14px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;
+  background:var(--card);color:var(--ink);outline:none;min-width:0;width:100%;resize:none;line-height:1.45;overflow:hidden}
+.ac-com-nuevo:focus{border-color:var(--olive-mid)}
+.ac-com-acc{display:flex;justify-content:flex-end;margin-top:6px}
+.ac-arroba{color:var(--olive);font-weight:600;background:var(--olive-pale);padding:0 4px;border-radius:5px}
+.ac-arroba.yo{background:#f7efdf;color:#8a6424}
+.ac-menc{position:fixed;z-index:60;width:250px;max-width:calc(100vw - 16px);background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 10px 30px rgba(40,42,34,.18);padding:4px;display:flex;flex-direction:column}
+.ac-menc button{display:flex;align-items:center;gap:9px;border:0;background:transparent;text-align:left;
+  padding:6px 8px;border-radius:7px;font-size:14px;color:var(--ink)}
+.ac-menc button.on,.ac-menc button:hover{background:var(--olive-pale)}
+.ac-arrobado{font-weight:700;color:var(--olive)}
+.ac-arrobado.nueva{background:var(--olive);color:#fff;border-radius:999px;padding:0 7px}

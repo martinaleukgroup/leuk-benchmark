@@ -223,6 +223,25 @@
     b.title = [a.vencen ? `${a.vencen} tuya${a.vencen === 1 ? "" : "s"} para hoy o vencida${a.vencen === 1 ? "" : "s"}` : "",
                a.menc ? `${a.menc} con menciones nuevas` : ""].filter(Boolean).join(" · ");
   }
+  /* ---- Mi día (Inicio) ----
+     Lo que la pantalla de Inicio muestra de Tareas: lo tuyo con fecha límite vencida o en
+     los próximos 7 días, y las tareas donde te mencionaron. Devuelve datos, no HTML: el
+     dibujo es de app.js, que junta los tres módulos en una sola bandeja. */
+  let IR_A = null;          // tarea a abrir apenas se entre al módulo (viene de Inicio)
+  window.miDiaTareas = async function () {
+    if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return null;
+    if (!CARGADO) await traer();
+    if (ERROR) return null;
+    const out = [];
+    TAREAS.filter(abierta).forEach(t => {
+      const n = t.fecha_limite ? diasHasta(t.fecha_limite) : null;
+      if (mia(t) && n != null && n <= 7) out.push({ tipo: "tarea", id: t.id, titulo: t.titulo, dias: n, alta: t.prioridad === "alta", hito: !!t.hito });
+      if (mencionNueva(t)) out.push({ tipo: "mencion", id: t.id, titulo: t.titulo });
+    });
+    return out;
+  };
+  window.irATarea = id => { IR_A = id; SES().irA("tareas"); };
+
   window.avisosTareas = async function () {
     if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return marcarNav(null);
     if (!CARGADO) await traer();
@@ -939,5 +958,6 @@
     await traer();
     pintar();
     arrancarRefresco();
+    if (IR_A) { const id = IR_A; IR_A = null; if (TAREAS.some(t => t.id === id)) abrir(id); }
   };
 })();

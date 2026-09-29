@@ -226,6 +226,28 @@
     s.textContent = n;
     b.title = `${n} acci${n === 1 ? "ón" : "ones"} con menciones nuevas`;
   }
+  /* ---- Mi día (Inicio) ----
+     Acciones donde te mencionaron, y las tuyas que arrancan o terminan en los
+     próximos 7 días. Devuelve datos; el dibujo lo hace app.js. */
+  let IR_A = null;          // acción a abrir apenas se entre al módulo (viene de Inicio)
+  const diasHasta = s => Math.round((aFecha(s) - aFecha(hoyISO())) / 864e5);
+  window.miDiaAcciones = async function () {
+    if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) return null;
+    if (!CARGADO) await traer();
+    if (ERROR) return null;
+    const out = [];
+    ACC.forEach(a => {
+      if (mencionNueva(a)) out.push({ tipo: "mencion", id: a.id, titulo: a.titulo });
+      if (low(a.responsable_email) !== yo() || ["finalizada", "descartada"].includes(a.estado)) return;
+      const ini = a.fecha_inicio ? diasHasta(a.fecha_inicio) : null;
+      const fin = a.fecha_fin ? diasHasta(a.fecha_fin) : null;
+      if (ini != null && ini >= 0 && ini <= 7) out.push({ tipo: "arranca", id: a.id, titulo: a.titulo, dias: ini, estado: estadoT(a.estado) });
+      else if (fin != null && fin >= 0 && fin <= 7) out.push({ tipo: "termina", id: a.id, titulo: a.titulo, dias: fin, estado: estadoT(a.estado) });
+    });
+    return out;
+  };
+  window.irAAccion = id => { IR_A = id; SES().irA("acciones"); };
+
   window.avisosAcciones = async function () {
     if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) return;
     if (!CARGADO) await traer();
@@ -1123,5 +1145,6 @@
     pintar();
     await traer();
     pintar();
+    if (IR_A) { const id = IR_A; IR_A = null; if (ACC.some(a => a.id === id)) abrir(id); }
   };
 })();

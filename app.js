@@ -2250,7 +2250,7 @@
   // de su módulo (ej. Fichas técnicas es del módulo Diseño pero se muestra en Producto).
   // Sumar una página al menú = una línea en PAG + ponerla en el grupo que corresponda.
   const PAG = {
-    inicio:          { t: "Inicio",               ic: "home" },
+    inicio:          { t: "Mi día",               ic: "home" },
     tareas:          { t: "Tareas",               ic: "view_kanban",  badge: "tareas" },
     acciones:        { t: "Acciones",             ic: "campaign",     badge: "acciones" },
     eventos:         { t: "Eventos",              ic: "confirmation_number" },
@@ -2635,66 +2635,108 @@
   }
 
   /* ===================== INICIO (home) ===================== */
+  /* ===================== MI DÍA (Inicio) =====================
+     La entrada a la plataforma: qué te toca hoy, sin tener que recorrer cada sección.
+     Cada módulo aporta sus datos (window.miDiaTareas / miDiaContenidos / miDiaAcciones,
+     cada uno ya filtra por permiso y devuelve null si no lo ves) y acá se juntan en
+     una sola bandeja, en dos tramos: lo que necesita atención ya, y los próximos 7 días.
+     Cada ítem lleva directo a lo suyo (window.irATarea / irAPieza / irAAccion). */
+  let MD_SEQ = 0;                                   // descarta respuestas de una visita anterior
+  const MD_MAX = 8;                                 // ítems por tramo antes del "ver más"
+  const escH = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const capi = t => t.charAt(0).toUpperCase() + t.slice(1);
   function renderInicio() {
     const cont = $("#inicio"); if (!cont) return;
-    const nProd = P.length;
-    const price = pr => { const pe = pr && pr.precio; return (pe && pe.usd != null) ? pe.usd : null; };
-    const conComp = P.filter(p => p.precio_usd && MARCAS.some(m => p.mejor_por_marca[m] && price(p.mejor_por_marca[m]) != null)).length;
-    const nAuth = Object.keys(AUTH).length;
     const nombre = NOMBRE || (AUTHSES.email() || "").split("@")[0];
-    const nFichas = (window.FICHAS || []).length;
-    // La Home se arma desde los MÓDULOS: sumar uno (o esconderlo por rol) se refleja acá solo.
-    const mods = [
-      { mod: "benchmark", ic: "📊",
-        d: "Compará precios y datos técnicos de tus productos contra el mercado.",
-        stats: [[nProd, "productos"], [conComp, "con comparación"], [nAuth, "seleccionadas"]] },
-      { mod: "diseno", ic: "📄",
-        d: "Fichas técnicas de producto, listas para descargar y compartir con clientes.",
-        stats: [[nFichas, "fichas"]] },
-      { mod: "eventos", ic: "🎟️",
-        d: "Check-in de eventos y sorteo en vivo, compartido con todo el equipo.",
-        stats: [] },
-      { mod: "contenidos", ic: "🗓",
-        d: "El cronograma mensual de la comunidad profesional de WhatsApp: qué se manda, cuándo y en qué estado está.",
-        stats: [] },
-      { mod: "tareas", ic: "✅",
-        d: "Las tareas del equipo de marketing: quién hace qué, para cuándo y en qué estado está.",
-        stats: [] },
-      { mod: "acciones", ic: "🎯",
-        d: "Seguimiento de las acciones de marketing: propuestas, negociación, inversión y resultados.",
-        stats: [] },
-      { mod: "usuarios", ic: "👥",
-        d: "Quién entra a la plataforma y qué ve cada uno.",
-        stats: [] },
-    ].filter(m => MODULOS[m.mod] && puedeVer(m.mod));   // sólo los módulos del rol
+    const fecha = capi(new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" }));
+    const conBandeja = ["tareas", "acciones", "contenidos"].some(puedeVer);
 
-    const card = m => {
-      const M = MODULOS[m.mod];
-      return `<button class="home-mod" data-mod="${m.mod}">
-        <div class="home-mod-head"><span class="home-ic">${m.ic}</span>
-          <h3>${M.label}</h3><span class="home-arrow">→</span></div>
-        <p class="home-mod-d">${m.d}</p>
-        <div class="home-mod-stats">${m.stats.map(([n, l]) =>
-          `<div><b>${n}</b><span>${l}</span></div>`).join("")}</div>
-        <div class="home-mod-pages">${M.pages.filter(p => !p.gate || p.gate()).map(p => p.t).join(" · ")}</div>
-      </button>`;
-    };
-
-    cont.innerHTML = `
-      <div class="home-hero">
-        <img src="assets/logo-leuk-ilum.png?v=48" alt="Leuk Iluminación" class="home-logo">
-        <span class="brand-sub home-tag">Leuk Marketing</span>
-        <h1>Hola${nombre ? ", " + nombre : ""} 👋</h1>
-        <p>Esta es la <b>plataforma de marketing de Leuk</b>: tareas, acciones, contenidos, precios y fichas del equipo, todo en un solo lugar.</p>
-      </div>
-      <div class="home-mods">${mods.map(card).join("")}</div>
+    cont.innerHTML = `<div class="md">
+      <header class="md-head">
+        <p class="md-fecha">${fecha}</p>
+        <h1>Hola${nombre ? ", " + escH(nombre) : ""}</h1>
+        <p class="md-resumen" id="mdResumen">${conBandeja ? "Buscando tus pendientes…" : "Elegí una sección en el menú para arrancar."}</p>
+      </header>
+      ${conBandeja ? `<div class="md-tiles" id="mdTiles"></div><div id="mdBandeja"></div>` : ""}
       <p class="home-ayuda-tip">¿Cómo se usa cada sección? Tocá el botón <span class="ay-btn ay-mini" aria-hidden="true">?</span> de <b>Ayuda</b>, abajo a la derecha.</p>
-      </div>`;
-    // cada tarjeta entra al módulo (a su última página vista, o a la primera)
-    cont.querySelectorAll(".home-mod").forEach(b => b.onclick = () => {
-      const m = b.dataset.mod;
-      goToPage(ULTIMA_PAG[m] || MODULOS[m].pages[0].p);
+    </div>`;
+    if (conBandeja) pintarBandeja(++MD_SEQ);
+  }
+
+  async function pintarBandeja(seq) {
+    const pedir = f => typeof f === "function" ? Promise.resolve().then(f).catch(() => null) : Promise.resolve(null);
+    const [t, c, a] = await Promise.all([pedir(window.miDiaTareas), pedir(window.miDiaContenidos), pedir(window.miDiaAcciones)]);
+    if (seq !== MD_SEQ || $("#page-inicio").classList.contains("hidden")) return;
+
+    // Todo a una misma forma: {at: necesita atención ya, orden, dias, ic, tit, meta, tag:[texto, clase], ir}
+    const cuando = d => d < -1 ? `hace ${-d} días` : d === -1 ? "ayer" : d === 0 ? "hoy" : d === 1 ? "mañana" : `en ${d} días`;
+    const icCanal = k => k === "instagram" ? "photo_camera" : "chat";
+    const items = [];
+    (t || []).forEach(x => {
+      const ir = () => window.irATarea(x.id);
+      if (x.tipo === "mencion") return items.push({ at: true, orden: 2, ic: "alternate_email", tit: x.titulo, meta: "Tarea · te mencionaron", tag: ["Mención", "menc"], ir });
+      items.push({ at: x.dias <= 0, orden: x.dias < 0 ? 0 : 1, dias: x.dias, ic: "view_kanban", tit: (x.hito ? "★ " : "") + x.titulo,
+        meta: "Tu tarea" + (x.alta ? " · prioridad alta" : ""), ir,
+        tag: x.dias < 0 ? [`Venció ${cuando(x.dias)}`, "venc"] : x.dias === 0 ? ["Vence hoy", "hoy"] : [capi(cuando(x.dias)), "prox"] });
     });
+    (c || []).forEach(x => {
+      const ir = () => window.irAPieza(x.id, x.canal, x.mes);
+      if (x.tipo === "hilo") {
+        const q = [x.sugs ? `${x.sugs} sugerencia${x.sugs > 1 ? "s" : ""}` : "", x.coms ? `${x.coms} comentario${x.coms > 1 ? "s" : ""}` : ""].filter(Boolean).join(" y ");
+        return items.push({ at: true, orden: 3, ic: "rate_review", tit: x.titulo, meta: `${x.canalT} · ${q} sin resolver`, tag: ["Para revisar", "menc"], ir });
+      }
+      if (x.tipo === "decision") return items.push({ at: true, orden: 3, ic: x.aceptada ? "check_circle" : "cancel", tit: x.titulo,
+        meta: `${x.canalT} · tu sugerencia`, tag: [x.aceptada ? "Aceptada" : "Descartada", x.aceptada ? "ok" : "prox"], ir });
+      const meta = `${x.canalT} · ${x.estado}`;
+      if (x.dias < 0) return items.push({ at: true, orden: 0, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, tag: [`Era para ${cuando(x.dias)}`, "venc"], ir });
+      // "sin aprobar" sólo es un pendiente para quien puede aprobar; al resto se le informa y listo
+      if (x.dias === 0 && !x.ok && puedeEditarContenidos()) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy sin aprobar", "hoy"], ir });
+      items.push({ at: false, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, ir,
+        tag: x.dias === 0 ? ["Sale hoy", "ok"] : [`Sale ${cuando(x.dias)}`, "prox"] });
+    });
+    (a || []).forEach(x => {
+      const ir = () => window.irAAccion(x.id);
+      if (x.tipo === "mencion") return items.push({ at: true, orden: 2, ic: "alternate_email", tit: x.titulo, meta: "Acción · te mencionaron", tag: ["Mención", "menc"], ir });
+      items.push({ at: false, dias: x.dias, ic: "campaign", tit: x.titulo, meta: `Tu acción · ${x.estado}`, ir,
+        tag: [(x.tipo === "arranca" ? "Arranca " : "Termina ") + cuando(x.dias), "prox"] });
+    });
+    const ya = items.filter(x => x.at).sort((p, q) => (p.orden - q.orden) || ((p.dias || 0) - (q.dias || 0)));
+    const prox = items.filter(x => !x.at).sort((p, q) => p.dias - q.dias);
+
+    // Resumen + contadores de arriba (sólo los de los módulos que la persona ve)
+    $("#mdResumen").textContent = ya.length
+      ? `${ya.length} ${ya.length === 1 ? "cosa necesita" : "cosas necesitan"} tu atención.`
+      : "Nada urgente por hoy. Todo al día.";
+    const tiles = [];
+    if (t) tiles.push({ n: t.filter(x => x.tipo === "tarea" && x.dias <= 0).length, l: "Tus tareas para hoy o vencidas", p: "tareas" });
+    if (c && puedeEditarContenidos()) tiles.push({ n: c.filter(x => x.tipo === "pieza" && !x.ok).length, l: "Piezas por aprobar esta semana",
+      p: c.some(x => x.tipo === "pieza" && !x.ok && x.canal === "instagram") && !c.some(x => x.tipo === "pieza" && !x.ok && x.canal === "whatsapp") ? "contenidos-ig" : "contenidos" });
+    if (t || a) tiles.push({ n: [...(t || []), ...(a || [])].filter(x => x.tipo === "mencion").length, l: "Menciones nuevas", p: t ? "tareas" : "acciones" });
+    $("#mdTiles").innerHTML = tiles.map(x => `<button class="md-tile${x.n ? " con" : ""}" data-page="${x.p}"><b>${x.n}</b><span>${x.l}</span></button>`).join("");
+    $("#mdTiles").querySelectorAll("[data-page]").forEach(b => b.onclick = () => goToPage(b.dataset.page));
+
+    const fila = (x, i) => `<button class="md-it" data-i="${i}"><span class="ms">${x.ic}</span>
+        <span class="md-it-txt"><b>${escH(x.tit)}</b><small>${escH(x.meta)}</small></span>
+        <span class="md-tag ${x.tag[1]}">${x.tag[0]}</span></button>`;
+    const lista = (arr, base, abierta) => arr.map((x, i) => fila(x, base + i)).slice(0, abierta ? arr.length : MD_MAX).join("") +
+      (!abierta && arr.length > MD_MAX ? `<button class="md-mas" data-mas="${base}">Ver ${arr.length - MD_MAX} más</button>` : "");
+    const todos = [...ya, ...prox];
+    const pintar = abiertos => {
+      $("#mdBandeja").innerHTML = `
+        <section class="md-tramo">
+          <h2 class="md-h">Necesita tu atención</h2>
+          ${ya.length ? `<div class="md-lista">${lista(ya, 0, abiertos.has(0))}</div>`
+                      : `<p class="md-vacio"><span class="ms">check_circle</span> No tenés nada vencido ni pendiente de revisar.</p>`}
+        </section>
+        <section class="md-tramo">
+          <h2 class="md-h">Próximos 7 días</h2>
+          ${prox.length ? `<div class="md-lista">${lista(prox, ya.length, abiertos.has(ya.length))}</div>`
+                        : `<p class="md-vacio">No hay nada con fecha para esta semana.</p>`}
+        </section>`;
+      $("#mdBandeja").querySelectorAll(".md-it").forEach(b => b.onclick = () => todos[+b.dataset.i].ir());
+      $("#mdBandeja").querySelectorAll("[data-mas]").forEach(b => b.onclick = () => { abiertos.add(+b.dataset.mas); pintar(abiertos); });
+    };
+    pintar(new Set());
   }
 
   searchEl.addEventListener("input", () => renderCatalogo());

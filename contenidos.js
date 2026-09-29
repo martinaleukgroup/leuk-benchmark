@@ -386,8 +386,9 @@
       if (VISTA === "feed" && CANAL !== "instagram") VISTA = "fichas";
     }
     // ¿Venimos de un aviso de este canal? Abrir el mes y la pieza que lo disparó.
+    let otroMes = false;
     if (PENDIENTE && PENDIENTE.canal === CANAL) {
-      if (PENDIENTE.mes) MES = PENDIENTE.mes;
+      if (PENDIENTE.mes && PENDIENTE.mes !== MES) { MES = PENDIENTE.mes; otroMes = true; }
       VISTA = "fichas"; FOCO = PENDIENTE.id; ABIERTOS[PENDIENTE.id] = true;
       PENDIENTE = null;
     }
@@ -400,6 +401,8 @@
       await traerMeses();
       MES = MES || (MESES[0] && MESES[0].mes) || "";
       await Promise.all([traerMes(MES), traerAvisos()]);
+    } else if (otroMes) {
+      await traerMes(MES);                       // los meses ya estaban: falta el de la pieza
     }
     pintar();
     arrancarRefresco();
@@ -1594,6 +1597,48 @@
   // app.js llama a esto al terminar de arrancar, para que el contador aparezca
   // aunque la persona todavía no haya entrado al módulo.
   window.avisosContenidos = async function () { await traerAvisos(); pintarBadgeNav(); };
+
+  /* ---- Mi día (Inicio) ----
+     Para quien edita: lo que ya debería haber salido sin aprobar, lo que sale hoy, lo
+     que sale en los próximos 7 días sin aprobar, y las piezas con sugerencias o
+     comentarios abiertos (agrupados por pieza). Para quien sólo lee y comenta: qué
+     pasó con sus sugerencias en la última semana y lo que sale hoy.
+     Devuelve datos; el dibujo lo hace app.js. */
+  window.miDiaContenidos = async function () {
+    if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) return null;
+    await traerAvisos();
+    const ed = puedeEditar(), hoy = hoyISO();
+    const pieza = (m, extra) => Object.assign({ id: m.id, canal: m.canal, mes: m.mes, titulo: m.criterio || "Sin título",
+      canalT: (CANALES[m.canal] || {}).corto || m.canal, estado: (ESTADOS[m.estado] || {}).t || m.estado }, extra);
+    const out = [];
+    AVISOS.sale.forEach(m => out.push(pieza(m, { tipo: "pieza", dias: 0, ok: yaAprobado(m) })));
+    if (!ed) {
+      const semana = Date.now() - 7 * 864e5;
+      AVISOS.mias.filter(g => g._m && Date.parse(g.decidido_en || g.creado) > semana)
+        .forEach(g => out.push(pieza(g._m, { tipo: "decision", aceptada: g.decision === "aceptada" })));
+      return out;
+    }
+    AVISOS.tarde.forEach(m => out.push(pieza(m, { tipo: "pieza", dias: -Math.max(1, Math.round((aFecha(hoy) - aFecha(m.fecha)) / 864e5)), ok: false })));
+    try {
+      const d = new Date(); d.setDate(d.getDate() + 7);
+      const hasta = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const r = await fetch(url(`contenidos?fecha=gt.${hoy}&fecha=lte.${hasta}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() });
+      (r.ok ? await r.json() : []).filter(m => !yaAprobado(m)).forEach(m =>
+        out.push(pieza(m, { tipo: "pieza", dias: Math.round((aFecha(m.fecha) - aFecha(hoy)) / 864e5), ok: false })));
+    } catch (e) { }
+    const hilos = {};                            // sugerencias y comentarios abiertos, por pieza
+    [...AVISOS.sugs.map(x => [x, "sugs"]), ...AVISOS.coms.map(x => [x, "coms"])].forEach(([x, k]) => {
+      if (!x._m) return;
+      const h = hilos[x.contenido_id] = hilos[x.contenido_id] || pieza(x._m, { tipo: "hilo", sugs: 0, coms: 0 });
+      h[k]++;
+    });
+    return out.concat(Object.values(hilos));
+  };
+  window.irAPieza = (id, canal, mes) => {
+    if (!CANALES[canal] || !SES().irA) return;
+    PENDIENTE = { canal, id, mes };
+    SES().irA(CANALES[canal].pagina);
+  };
 
   function panelHTML() {
     const ed = puedeEditar(), v = vistoEn();

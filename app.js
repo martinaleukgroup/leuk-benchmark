@@ -284,9 +284,7 @@
         else { ROL = ""; SIN_PERFIL = true; }
       }
     } catch (e) { }
-    updatePreciosBtn();
   }
-  function updatePreciosBtn() { const b = $("#btnPrecios"); if (b) b.style.display = puedePrecios() ? "" : "none"; }
 
   // Los precios editados viven en la tabla `precios` (lectura pública, escritura sólo editores).
   async function sbPullPrices() {
@@ -1451,13 +1449,7 @@
   // Se llama SIEMPRE al arrancar (el logout no recarga la página, así que hay que
   // recalcular desde cero o quedan pegadas las restricciones del usuario anterior).
   function aplicarRol() {
-    $("#nav").querySelectorAll("button").forEach(b => {
-      const m = b.dataset.mod;
-      b.style.display = (m === "inicio" || puedeVer(m)) ? "" : "none";
-    });
-    const p = $("#btnPrecios"); if (p) p.style.display = puedePrecios() ? "" : "none";
-    const co = $("#btnCostos"); if (co) co.style.display = puedeCostos() ? "" : "none";
-    const ci = $("#btnComp"); if (ci) ci.style.display = puedeIntegrar() ? "" : "none";
+    renderNav();                                   // el menú lateral ya sale filtrado por rol
     const d = $("#btnDesc"); if (d) d.style.display = puedeVer("benchmark") ? "" : "none";
     document.body.classList.toggle("solo-fichas", !puedeVer("benchmark"));
   }
@@ -1488,7 +1480,6 @@
     await sbPull(); updateNavCount();
     await sbPullPrices();                          // llama applyPriceOverrides internamente
     await fetchCostos();                            // costos sólo para admin/líder (la RLS filtra el resto)
-    updatePreciosBtn();                             // el rol ya se resolvió al principio
     rerenderActive();
     avisarContenidos();
   }
@@ -2253,21 +2244,107 @@
   Object.entries(MODULOS).forEach(([m, o]) => o.pages.forEach(x => { MOD_DE[x.p] = m; }));
   const ULTIMA_PAG = {};                            // módulo -> última página visitada (para volver donde estabas)
 
-  function renderSubbar(mod, page) {
-    const bar = $("#subbar"); if (!bar) return;
-    const m = MODULOS[mod];
-    if (!m) { bar.classList.add("hidden"); return; }        // Inicio no tiene sub-barra
-    bar.classList.remove("hidden");
-    $("#sbLabel").textContent = m.label;
-    // OJO: sólo se re-dibuja la parte de páginas. Las herramientas (#sbTools) son nodos
-    // fijos con listeners enganchados al arrancar; si entraran acá se destruirían.
-    $("#sbPages").innerHTML = m.pages.filter(x => !x.gate || x.gate()).map(x =>
-      `<button class="sb-item ${x.p === page ? "on" : ""}" data-page="${x.p}">${x.t}` +
-      (x.count ? ` <span id="navCount" class="nav-count"></span>` : "") + `</button>`).join("");
-    // Precios/Descuentos son herramientas de Benchmark: no aplican a otros módulos.
-    $("#sbTools").classList.toggle("hidden", mod !== "benchmark");
+  // ---- MENÚ LATERAL ---------------------------------------------------------
+  // MODULOS (arriba) sigue siendo la unidad de PERMISOS: qué ve cada rol. GRUPOS es sólo
+  // cómo se ORDENA en pantalla, por tarea: una página puede estar en un grupo distinto al
+  // de su módulo (ej. Fichas técnicas es del módulo Diseño pero se muestra en Producto).
+  // Sumar una página al menú = una línea en PAG + ponerla en el grupo que corresponda.
+  const PAG = {
+    inicio:          { t: "Inicio",               ic: "home" },
+    tareas:          { t: "Tareas",               ic: "view_kanban",  badge: "tareas" },
+    acciones:        { t: "Acciones",             ic: "campaign",     badge: "acciones" },
+    eventos:         { t: "Eventos",              ic: "confirmation_number" },
+    contenidos:      { t: "Comunidad WhatsApp",   ic: "chat" },
+    "contenidos-ig": { t: "Instagram",            ic: "photo_camera" },
+    comparaciones:   { t: "Catálogo",             ic: "search" },
+    resultados:      { t: "Comparaciones",        ic: "compare_arrows", count: true },
+    decisiones:      { t: "Insights",             ic: "insights" },
+    fichas:          { t: "Fichas técnicas",      ic: "description" },
+    firmas:          { t: "Firmas de mail",       ic: "signature" },
+    stock:           { t: "Stock diario",         ic: "inventory_2" },
+    reingresos:      { t: "Reingresos",           ic: "assignment_return" },
+    integraciones:   { t: "Nuevas integraciones", ic: "move_to_inbox" },
+    manual:          { t: "Manual de carga",      ic: "menu_book" },
+    usuarios:        { t: "Usuarios",             ic: "group" },
+  };
+  // Acciones sueltas del menú (abren un modal, no son páginas). `ver` = quién la ve.
+  const ACT = {
+    precios: { t: "Subir precios",      ic: "upload",   ver: () => puedeVer("benchmark") && puedePrecios(), fn: () => openPrecios(),
+               title: "Actualizar precios desde una lista (Excel)" },
+    costos:  { t: "Subir costos",       ic: "payments", ver: () => puedeVer("benchmark") && puedeCostos(), fn: () => openCostos(),
+               title: "Actualizar costos desde una lista (Excel) — sólo Admin y Líder" },
+    lista:   { t: "Actualizar lista",   ic: "sync",     ver: () => puedeVer("benchmark") && puedeIntegrar(), fn: () => openActualizar(),
+               title: "Subir la lista de precios nueva de una marca ya cargada" },
+  };
+  // `badge` en el grupo: ahí pinta su contador el módulo (Contenidos cuenta sus dos canales juntos).
+  const GRUPOS = [
+    { items: ["inicio"] },
+    { g: "Planificación",      items: ["tareas", "acciones", "eventos"] },
+    { g: "Contenidos",         items: ["contenidos", "contenidos-ig"], badge: "contenidos" },
+    { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
+    { g: "Generadores",        items: ["firmas", "stock", "reingresos"] },
+    { g: "Administración",     items: ["integraciones", "manual", "usuarios", "@precios", "@costos", "@lista"], abajo: true },
+  ];
+  const GRUPO_DE = {};                              // página -> nombre del grupo (para la barra de página)
+  GRUPOS.forEach(g => g.items.forEach(i => { GRUPO_DE[i] = g.g || ""; }));
+  function puedeVerPagina(page) {
+    if (page === "inicio") return true;
+    const mod = MOD_DE[page];
+    if (!mod || !puedeVer(mod)) return false;
+    const pcfg = MODULOS[mod].pages.find(x => x.p === page);
+    return !(pcfg && pcfg.gate && !pcfg.gate());
+  }
+  function renderNav() {
+    const nav = $("#nav"); if (!nav) return;
+    const actual = (nav.querySelector(".nv-item.on") || {}).dataset;
+    const item = i => {
+      if (i[0] === "@") {
+        const a = ACT[i.slice(1)];
+        return a.ver() ? `<button class="nv-item nv-act" data-act="${i.slice(1)}" title="${a.title}">
+          <span class="ms">${a.ic}</span><span class="nv-t">${a.t}</span></button>` : "";
+      }
+      if (!puedeVerPagina(i)) return "";
+      const c = PAG[i];
+      return `<button class="nv-item" data-page="${i}"${c.badge ? ` data-mod="${c.badge}"` : ""}>` +
+        `<span class="ms">${c.ic}</span><span class="nv-t">${c.t}</span>` +
+        (c.count ? `<span id="navCount" class="nav-count"></span>` : "") + `</button>`;
+    };
+    nav.innerHTML = GRUPOS.map(g => {
+      const html = g.items.map(item).join("");
+      if (!html) return "";                         // grupo sin nada visible para este rol: no se muestra
+      // Administración se pliega: se usa poco y en una notebook no entra todo el menú.
+      if (g.abajo) return `<div class="nv-grupo abajo${adminAbierto() ? "" : " plegado"}">
+        <button class="nv-g nv-plegar" aria-expanded="${adminAbierto()}">${g.g}<span class="nv-flecha">▾</span></button>
+        <div class="nv-cuerpo">${html}</div></div>`;
+      return `<div class="nv-grupo">` +
+        (g.g ? `<div class="nv-g"${g.badge ? ` data-mod="${g.badge}"` : ""}>${g.g}</div>` : "") + html + `</div>`;
+    }).join("");
+    if (actual && actual.page) marcarNav(actual.page);
     updateNavCount();
   }
+  const adminAbierto = () => { try { return localStorage.getItem("nav_admin") === "1"; } catch (e) { return false; } };
+  function plegarAdmin(abierto) {
+    try { localStorage.setItem("nav_admin", abierto ? "1" : "0"); } catch (e) { }
+    const g = $("#nav .nv-grupo.abajo"); if (!g) return;
+    g.classList.toggle("plegado", !abierto);
+    g.querySelector(".nv-plegar").setAttribute("aria-expanded", abierto);
+  }
+  function marcarNav(page) {
+    $("#nav").querySelectorAll(".nv-item[data-page]").forEach(x => x.classList.toggle("on", x.dataset.page === page));
+    // si la página activa está en Administración, el grupo tiene que verse abierto
+    if (GRUPO_DE[page] === "Administración") plegarAdmin(true);
+    const t = $("#tbTitle"); if (t) t.textContent = (PAG[page] || {}).t || "";
+  }
+  // Barra de la página: sólo la llevan las páginas con herramientas propias (hoy, las de
+  // Benchmark: ⚙ Descuentos). El resto ya trae su propia barra (Contenidos, Tareas…).
+  function renderSubbar(mod, page) {
+    const bar = $("#subbar"); if (!bar) return;
+    if (mod !== "benchmark") { bar.classList.add("hidden"); return; }
+    bar.classList.remove("hidden");
+    $("#sbLabel").textContent = GRUPO_DE[page] || "";
+    $("#sbTitle").textContent = (PAG[page] || {}).t || "";
+  }
+  const abrirMenu = si => document.body.classList.toggle("nav-abierto", si);
 
   function goToPage(page) {
     if (!PAGES.includes(page)) page = "inicio";
@@ -2278,7 +2355,8 @@
     const pcfg = (MODULOS[mod] && MODULOS[mod].pages || []).find(x => x.p === page);
     if (pcfg && pcfg.gate && !pcfg.gate()) { page = "inicio"; mod = "inicio"; }
     if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
-    $("#nav").querySelectorAll("button").forEach(x => x.classList.toggle("active", x.dataset.mod === mod));
+    marcarNav(page);
+    abrirMenu(false);
     $("#metaLine").textContent = mod === "benchmark" ? META_BENCH : "";   // pie sólo en Benchmark
     renderSubbar(mod, page);
     PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== page); });
@@ -2310,17 +2388,18 @@
     if (page === "usuarios") renderUsuarios();
     window.scrollTo({ top: 0 });
   }
-  // nivel 1: click en módulo → su última página vista (o la primera)
+  // Menú lateral: páginas (data-page) y acciones sueltas que abren un modal (data-act).
   $("#nav").addEventListener("click", ev => {
-    const b = ev.target.closest("button"); if (!b) return;
-    const mod = b.dataset.mod;
-    if (mod === "inicio" || !MODULOS[mod]) return goToPage("inicio");
-    goToPage(ULTIMA_PAG[mod] || MODULOS[mod].pages[0].p);
+    if (ev.target.closest(".nv-plegar")) return plegarAdmin(!adminAbierto());
+    const b = ev.target.closest(".nv-item"); if (!b) return;
+    if (b.dataset.act) { abrirMenu(false); return ACT[b.dataset.act].fn(); }
+    goToPage(b.dataset.page);
   });
-  // nivel 2: click en página del módulo
-  $("#subbar").addEventListener("click", ev => {
-    const b = ev.target.closest(".sb-item"); if (b) goToPage(b.dataset.page);
-  });
+  // Cajón del menú en celular/tablet
+  $("#navOpen").addEventListener("click", () => abrirMenu(true));
+  $("#navClose").addEventListener("click", () => abrirMenu(false));
+  $("#sideScrim").addEventListener("click", () => abrirMenu(false));
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape") abrirMenu(false); });
 
   /* ===================== USUARIOS (panel, sólo admin) ===================== */
   // Los roles/nombres se editan directo contra la tabla `perfiles` (RLS: sólo admin escribe).
@@ -2569,9 +2648,6 @@
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
   $("#importFile").addEventListener("change", e => { if (e.target.files[0]) importJson(e.target.files[0]); });
   $("#btnDesc").addEventListener("click", openDescuentos);
-  $("#btnPrecios").addEventListener("click", openPrecios);
-  $("#btnCostos").addEventListener("click", openCostos);
-  $("#btnComp").addEventListener("click", openActualizar);
   $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.

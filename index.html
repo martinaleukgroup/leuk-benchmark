@@ -12,10 +12,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=240">
+<!-- íconos del menú (sólo los que se usan; la lista va en orden alfabético) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=assignment_return,campaign,chat,close,compare_arrows,confirmation_number,description,group,home,insights,inventory_2,menu,menu_book,move_to_inbox,payments,photo_camera,search,signature,sync,upload,view_kanban&display=block">
+<link rel="stylesheet" href="styles.css?v=243">
 <link rel="stylesheet" href="fichas.css?v=240">
 <link rel="stylesheet" href="fichas-panel.css?v=240">
-<link rel="stylesheet" href="contenidos.css?v=240">
+<link rel="stylesheet" href="contenidos.css?v=241">
 <link rel="stylesheet" href="tareas.css?v=3">
 <link rel="stylesheet" href="acciones.css?v=5">
 </head>
@@ -35,40 +37,39 @@
   </div>
 </div>
 
-<div class="topwrap">
-<header class="topbar">
-  <div class="brand">
+<!-- Estructura: menú lateral (grupos → páginas, lo arma renderNav en app.js) + contenido. -->
+<div class="shell">
+<aside id="side" class="side" aria-label="Menú principal">
+  <div class="side-brand">
     <img src="assets/isologo-uk.png?v=240" alt="Ukelele" class="logo">
-    <span class="brand-sub">Leuk Marketing</span>
+    <span class="side-name">Leuk Marketing</span>
+    <button id="navClose" class="side-close" aria-label="Cerrar menú"><span class="ms">close</span></button>
   </div>
-  <div class="top-right">
-    <!-- nivel 1: MÓDULOS de la plataforma -->
-    <nav class="mode-toggle" id="nav">
-      <button data-mod="inicio" class="active">Inicio</button>
-      <button data-mod="benchmark">Benchmark</button>
-      <button data-mod="diseno">Diseño</button>
-      <button data-mod="eventos">Eventos</button>
-      <button data-mod="contenidos">Contenidos</button>
-      <button data-mod="tareas">Tareas</button>
-      <button data-mod="acciones">Acciones</button>
-      <button data-mod="usuarios">Usuarios</button>
-    </nav>
-    <button id="btnAuth" class="btn-desc" title="Cerrar sesión">👤</button>
+  <nav id="nav" class="side-nav"></nav>
+  <div class="side-foot">
+    <button id="btnAuth" class="side-user" title="Tu cuenta">👤</button>
   </div>
+</aside>
+<div id="sideScrim" class="side-scrim"></div>
+
+<div class="content">
+<div class="topwrap">
+<!-- barra superior: sólo en celular/tablet (hamburguesa + dónde estás) -->
+<header class="topbar">
+  <button id="navOpen" class="tb-menu" aria-label="Abrir menú"><span class="ms">menu</span></button>
+  <img src="assets/isologo-uk.png?v=240" alt="" class="logo">
+  <span id="tbTitle" class="tb-title">Inicio</span>
 </header>
-<!-- nivel 2: páginas del módulo activo + sus herramientas (se arma en app.js) -->
-<div id="subbar" class="subbar hidden">
-  <span class="sb-lbl" id="sbLabel"></span>
-  <div class="sb-pages" id="sbPages"></div>
-  <!-- herramientas DEL MÓDULO: sólo aplican a Benchmark, por eso viven acá y no en el header -->
+<!-- barra de la página: título + herramientas propias (hoy sólo Benchmark: Descuentos) -->
+<div id="subbar" class="pagebar hidden">
+  <span class="pb-grp" id="sbLabel"></span>
+  <h2 class="pb-title" id="sbTitle"></h2>
   <div class="sb-tools" id="sbTools">
-    <button id="btnPrecios" class="btn-desc" title="Actualizar precios desde una lista (Excel)">⬆ Precios</button>
-    <button id="btnCostos" class="btn-desc" title="Actualizar costos desde una lista (Excel) — sólo Admin y Líder">⬆ Costos</button>
-    <button id="btnComp" class="btn-desc" title="Subir la lista de precios nueva de una marca ya cargada — Admin, Líder y Coordinación">↻ Actualizar lista</button>
     <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
   </div>
 </div>
 </div>
+
 
 <main>
   <!-- PÁGINA INICIO (home) -->
@@ -154,13 +155,15 @@
 
 <div id="detail" class="detail hidden"><div class="detail-inner" id="detailInner"></div></div>
 <footer class="foot"><span id="metaLine"></span></footer>
+</div><!-- /content -->
+</div><!-- /shell -->
 
 <script src="vendor/xlsx.full.min.js?v=240"></script>
 <!-- generación del ZIP con todas las fichas, desde el navegador -->
 <script src="vendor/html2canvas.min.js?v=240"></script>
 <script src="vendor/jspdf.umd.min.js?v=240"></script>
 <script src="vendor/jszip.min.js?v=240"></script>
-<script src="app.js?v=240"></script>
+<script src="app.js?v=242"></script>
 <script src="fichas-data.js?v=240"></script>
 <script src="fichas-ui.js?v=240"></script>
 <script src="fichas-panel.js?v=240"></script>

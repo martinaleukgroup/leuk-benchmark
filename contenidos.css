@@ -370,7 +370,7 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   padding:0 4px;margin-left:6px;background:var(--no);color:#fff;border-radius:999px;
   font-size:10px;font-weight:700;line-height:1;vertical-align:middle
 }
-.mode-toggle button.active .ct-navpunto{background:#fff;color:var(--olive)}
+
 
 .ct-panel{
   background:var(--card);border:1px solid var(--olive-soft);border-radius:var(--radius);

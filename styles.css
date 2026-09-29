@@ -795,3 +795,19 @@ body.locked .notis,body.ayuda-abierta .notis{display:none}
 .nt-x .ms{font-size:18px;width:18px}
 @media(max-width:640px){.notis{right:16px;left:16px;width:auto;bottom:66px}}
 @media (prefers-reduced-motion:reduce){.nt{animation:none}.nt.sale{transition:none}}
+
+/* ---- Avisos del sistema: invitación en Mi día y sección en Mi cuenta ---- */
+.md-push{display:flex;align-items:flex-start;gap:12px;background:var(--olive-pale);border:1px solid var(--olive-soft);
+  border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.md-push>.ms{color:var(--olive);font-size:24px;width:24px;margin-top:2px}
+.md-push>div:nth-child(2){flex:1;min-width:0}
+.md-push b{font-size:14.5px;color:var(--ink)}
+.md-push p{margin:3px 0 0;font-size:13px;color:var(--gray)}
+.md-push .md-push-err{color:var(--no)}
+.md-push .md-push-err:empty{display:none}
+.md-push-acc{display:flex;gap:8px;flex:none;align-self:center}
+.md-push.ok{background:#eef4ea;border-color:#c9dcc0}
+.md-push.ok>.ms{color:var(--ok)}
+.cu-push-txt{font-size:13.5px;color:var(--gray);margin:0 0 10px}
+.cu-push-acc{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:640px){.md-push{flex-wrap:wrap}.md-push-acc{width:100%;justify-content:flex-end}}

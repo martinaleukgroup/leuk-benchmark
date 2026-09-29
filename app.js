@@ -1388,7 +1388,14 @@
     const em = $("#gateEmail"); if (em) { em.value = ""; $("#gatePass").value = ""; $("#gateErr").textContent = ""; setTimeout(() => em.focus(), 60); }
   }
   function unlock() { document.body.classList.remove("locked"); updateAuthBtn(); }
-  function doLogout() { if (confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) { AUTHSES.logout(); lock(); } }
+  // Al cerrar sesión este dispositivo deja de recibir los avisos de esa persona (si no,
+  // en una compu compartida le llegarían a quien entre después).
+  async function doLogout() {
+    if (!confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) return;
+    clearInterval(NT_TIMER);
+    await desactivarPush().catch(() => { });
+    AUTHSES.logout(); lock();
+  }
 
   // Cambia la contraseña del usuario logueado (con su propio token, no hace falta admin).
   async function cambiarMiPassword(nueva) {
@@ -1414,6 +1421,10 @@
         <button class="btn-primary" id="cuSave">Guardar</button>
       </div>
       <div id="cuMsg" class="us-msg"></div>
+      <h3>Avisos en este dispositivo</h3>
+      <p class="cu-push-txt" id="cuPushTxt">…</p>
+      <div class="cu-push-acc" id="cuPushAcc"></div>
+      <div id="cuPushMsg" class="us-msg"></div>
       <div class="desc-actions"><button class="btn-ghost" id="cuOut">Cerrar sesión</button></div>
     </div>`;
     document.body.appendChild(ov);
@@ -1421,6 +1432,7 @@
     $("#cuClose").onclick = close;
     ov.addEventListener("click", e => { if (e.target === ov) close(); });
     $("#cuOut").onclick = () => { close(); doLogout(); };
+    pintarPushCuenta();
     $("#cuSave").onclick = async () => {
       const a = $("#cuPass1").value, b = $("#cuPass2").value, m = $("#cuMsg");
       const err = t => { m.textContent = t; m.className = "us-msg px-err"; };
@@ -1433,6 +1445,19 @@
         $("#cuPass1").value = $("#cuPass2").value = "";
       } catch (e) { err(e.message); } finally { $("#cuSave").disabled = false; }
     };
+  }
+  async function pintarPushCuenta() {
+    const txt = $("#cuPushTxt"), acc = $("#cuPushAcc"), msg = $("#cuPushMsg"); if (!txt) return;
+    const est = await pushEstado();
+    txt.textContent = PUSH_TXT[est];
+    acc.innerHTML = est === "inactivo" ? `<button class="btn-primary" id="cuPushOn">Activar avisos</button>`
+      : est === "activo" ? `<button class="btn-ghost" id="cuPushTest">Enviar un aviso de prueba</button><button class="btn-ghost" id="cuPushOff">Desactivar</button>` : "";
+    const ok = t => { msg.textContent = t; msg.className = "us-msg px-ok"; };
+    const err = e => { msg.textContent = e.message || String(e); msg.className = "us-msg px-err"; };
+    const on = $("#cuPushOn"), test = $("#cuPushTest"), off = $("#cuPushOff");
+    if (on) on.onclick = async () => { on.disabled = true; try { await activarPush(); ok("✓ Listo. Probá con “Enviar un aviso de prueba”."); } catch (e) { err(e); } pintarPushCuenta(); };
+    if (test) test.onclick = async () => { test.disabled = true; try { const n = await probarPush(); ok(n ? "✓ Enviado. Tendría que llegarte en unos segundos." : "No se encontró este dispositivo. Desactivá y volvé a activar."); } catch (e) { err(e); } test.disabled = false; };
+    if (off) off.onclick = async () => { off.disabled = true; await desactivarPush(); ok("Listo, este dispositivo ya no recibe avisos."); pintarPushCuenta(); };
   }
   // descarga los datos del benchmark desde el bucket privado de Supabase (requiere sesión)
   async function fetchData(retried) {
@@ -1514,7 +1539,7 @@
     const go = async () => {
       const err = $("#gateErr"); err.textContent = "";
       const btn = $("#gateGo"); btn.disabled = true; btn.textContent = "Ingresando…";
-      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); await bootApp(); unlock(); }
+      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); await bootApp(); unlock(); irDesdeLink(location.hash); }
       catch (e) { err.textContent = e.message || "No se pudo ingresar"; }
       btn.disabled = false; btn.textContent = "Ingresar";
     };
@@ -2636,6 +2661,92 @@
   }
 
   /* ===================== INICIO (home) ===================== */
+  /* ===================== AVISOS DEL SISTEMA (push web) =====================
+     Los que llegan aunque la plataforma esté cerrada. Cada dispositivo se activa por
+     separado (Mi cuenta, o la invitación de Mi día): el navegador arma una "suscripción"
+     y se guarda en `push_suscripciones`. Quien manda los avisos es la Edge Function `push`,
+     disparada por la base (ver supabase/sql/2026-09-29-notificaciones-push.sql).
+     La clave pública VAPID puede estar acá; la privada vive sólo en los secretos de Supabase.
+     En iPhone/iPad sólo funciona con la plataforma agregada a la pantalla de inicio. */
+  const VAPID_PUBLIC = "BCbgoVb9qDaZ0Q-wNEBJ06lKOyoZ0xOrO1ELhAamh1ZZKcvqj7bnebTb8g1qccLj2ofaccstTyhWkfqJ3itrD68";
+  const FN_PUSH = `${SB.url}/functions/v1/push`;
+  const esIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const instalada = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const pushSoportado = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const bytesVapid = s => { const b = atob((s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  async function suscripcionActual() {
+    if (!pushSoportado()) return null;
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg ? await reg.pushManager.getSubscription() : null;
+  }
+  // "activo" | "inactivo" | "bloqueado" | "ios" (iPhone sin instalar) | "no" (navegador sin soporte)
+  async function pushEstado() {
+    if (!pushSoportado()) return esIOS() && !instalada() ? "ios" : "no";
+    if (Notification.permission === "denied") return "bloqueado";
+    return (await suscripcionActual().catch(() => null)) ? "activo" : "inactivo";
+  }
+  async function guardarSuscripcion(sub) {
+    const j = sub.toJSON();
+    const r = await fetch(`${SB.url}/rest/v1/push_suscripciones?on_conflict=endpoint`, {
+      method: "POST", headers: Object.assign(AUTHSES.head(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+      body: JSON.stringify({ endpoint: j.endpoint, email: (AUTHSES.email() || "").toLowerCase(),
+        p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 200) }),
+    });
+    if (!r.ok) throw new Error(r.status === 404 ? "Falta correr el SQL de notificaciones en Supabase." : "No se pudo guardar este dispositivo.");
+  }
+  async function activarPush() {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") throw new Error(perm === "denied"
+      ? "El navegador bloqueó los avisos. Habilitalos desde el candado al lado de la dirección y volvé a probar."
+      : "No se activaron: hace falta aceptar el permiso del navegador.");
+    const reg = await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription())
+      || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytesVapid(VAPID_PUBLIC) });
+    await guardarSuscripcion(sub);
+  }
+  async function desactivarPush() {
+    const sub = await suscripcionActual().catch(() => null); if (!sub) return;
+    await fetch(`${SB.url}/rest/v1/push_suscripciones?endpoint=eq.${encodeURIComponent(sub.endpoint)}`,
+      { method: "DELETE", headers: AUTHSES.head() }).catch(() => { });
+    await sub.unsubscribe().catch(() => { });
+  }
+  async function probarPush() {
+    const r = await fetch(FN_PUSH, { method: "POST", headers: AUTHSES.head(), body: JSON.stringify({ accion: "prueba" }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(r.status === 404 ? "Falta desplegar la función 'push' en Supabase." : d.error || "No se pudo mandar la prueba.");
+    return d.enviados || 0;
+  }
+  // Si este dispositivo ya estaba activado, se re-guarda al entrar (por si la fila se perdió).
+  async function refrescarSuscripcion() {
+    const sub = await suscripcionActual().catch(() => null);
+    if (sub) guardarSuscripcion(sub).catch(() => { });
+  }
+  // Textos y botones según el estado (los usan Mi cuenta y la invitación de Mi día)
+  const PUSH_TXT = {
+    inactivo: "Recibí un aviso cuando te mencionan, te asignan una tarea o hay novedades en contenidos, aunque tengas la plataforma cerrada.",
+    activo: "✓ Los avisos están activados en este dispositivo.",
+    bloqueado: "El navegador tiene bloqueados los avisos de este sitio. Habilitalos desde el candado al lado de la dirección y volvé a entrar acá.",
+    ios: "En iPhone o iPad los avisos llegan sólo si agregás la plataforma a la pantalla de inicio: tocá Compartir → “Agregar a inicio”, abrila desde ese ícono y activalos en Mi cuenta.",
+    no: "Este navegador no permite avisos del sistema. Probá con Chrome, Edge o Safari actualizados.",
+  };
+  // Al tocar un aviso del sistema: la app se abre (o se trae al frente) con #tarea=… / #accion=… / #pieza=… / #hoy
+  async function irDesdeLink(hash) {
+    const m = String(hash || "").match(/^#(tarea|accion|pieza|hoy)(?:=([\w-]+))?$/); if (!m) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    if (m[1] === "hoy") return goToPage("inicio");
+    if (m[1] === "tarea" && puedeVer("tareas") && window.irATarea) return window.irATarea(m[2]);
+    if (m[1] === "accion" && puedeVer("acciones") && window.irAAccion) return window.irAAccion(m[2]);
+    if (m[1] === "pieza" && puedeVer("contenidos") && window.irAPieza) {
+      const r = await fetch(`${SB.url}/rest/v1/contenidos?id=eq.${encodeURIComponent(m[2])}&select=id,canal,mes`, { headers: AUTHSES.head() }).catch(() => null);
+      const [p] = r && r.ok ? await r.json() : [];
+      if (p) window.irAPieza(p.id, p.canal, p.mes);
+    }
+  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data && e.data.tipo === "ir") irDesdeLink(new URL(e.data.url).hash);
+  });
+
   /* ===================== NOTIFICACIONES (pop-ups dentro de la app) =====================
      Cada 45 s se le pregunta a cada módulo qué hay para avisar (window.notisTareas /
      notisAcciones / notisContenidos; cada uno filtra por permiso). Acá se decide qué es
@@ -2656,6 +2767,7 @@
     clearInterval(NT_TIMER);
     if (!["tareas", "acciones", "contenidos"].some(puedeVer)) return;
     setTimeout(revisarNotis, 1500);                  // el arranque termina de desbloquear la sesión después de esto
+    refrescarSuscripcion();
     NT_TIMER = setInterval(revisarNotis, NT_CADA);
   }
   async function revisarNotis() {
@@ -2741,10 +2853,28 @@
         <h1>Hola${nombre ? ", " + escH(nombre) : ""}</h1>
         <p class="md-resumen" id="mdResumen">${conBandeja ? "Buscando tus pendientes…" : "Elegí una sección en el menú para arrancar."}</p>
       </header>
-      ${conBandeja ? `<div class="md-tiles" id="mdTiles"></div><div id="mdBandeja"></div>` : ""}
+      ${conBandeja ? `<div id="mdPush"></div><div class="md-tiles" id="mdTiles"></div><div id="mdBandeja"></div>` : ""}
       <p class="home-ayuda-tip">¿Cómo se usa cada sección? Tocá el botón <span class="ay-btn ay-mini" aria-hidden="true">?</span> de <b>Ayuda</b>, abajo a la derecha.</p>
     </div>`;
-    if (conBandeja) pintarBandeja(++MD_SEQ);
+    if (conBandeja) { pintarBandeja(++MD_SEQ); pintarInvitacionPush(); }
+  }
+  const PUSH_NO = () => "push_invitacion_no:" + (AUTHSES.email() || "").toLowerCase();
+  async function pintarInvitacionPush() {
+    const caja = $("#mdPush"); if (!caja) return;
+    let no = false; try { no = localStorage.getItem(PUSH_NO()) === "1"; } catch (e) { }
+    const est = await pushEstado();
+    if (no || !["inactivo", "ios"].includes(est)) { caja.innerHTML = ""; return; }
+    caja.innerHTML = `<div class="md-push"><span class="ms">notifications</span>
+      <div><b>Enterate aunque no tengas la plataforma abierta</b><p>${est === "ios" ? PUSH_TXT.ios : "Te avisamos en este dispositivo cuando te mencionan, te asignan una tarea o hay novedades en contenidos."}</p><p class="md-push-err" id="mdPushErr"></p></div>
+      <div class="md-push-acc">${est === "inactivo" ? `<button class="btn-primary" id="mdPushOn">Activar avisos</button>` : ""}
+        <button class="btn-ghost" id="mdPushNo">${est === "ios" ? "Entendido" : "Ahora no"}</button></div></div>`;
+    $("#mdPushNo").onclick = () => { try { localStorage.setItem(PUSH_NO(), "1"); } catch (e) { } caja.innerHTML = ""; };
+    const on = $("#mdPushOn");
+    if (on) on.onclick = async () => {
+      on.disabled = true;
+      try { await activarPush(); caja.innerHTML = `<div class="md-push ok"><span class="ms">check_circle</span><div><b>Avisos activados en este dispositivo</b><p>Los podés apagar cuando quieras desde Mi cuenta (tu nombre, abajo del menú).</p></div></div>`; }
+      catch (e) { $("#mdPushErr").textContent = e.message; on.disabled = false; }
+    };
   }
 
   async function pintarBandeja(seq) {
@@ -2846,7 +2976,7 @@
       return;
     }
     if (AUTHSES.logged() && await AUTHSES.refresh()) {
-      try { await bootApp(); unlock(); } catch (e) { lock(); }
+      try { await bootApp(); unlock(); irDesdeLink(location.hash); } catch (e) { lock(); }
     } else { lock(); }
   })();
   setInterval(() => {

@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <!-- íconos del menú (sólo los que se usan; la lista va en orden alfabético) -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=alternate_email,assignment_return,campaign,cancel,chat,check_circle,close,compare_arrows,confirmation_number,description,group,home,insights,inventory_2,menu,menu_book,move_to_inbox,payments,photo_camera,rate_review,search,signature,sync,upload,view_kanban&display=block">
-<link rel="stylesheet" href="styles.css?v=248">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=alternate_email,assignment_ind,assignment_return,campaign,cancel,chat,check_circle,close,compare_arrows,confirmation_number,description,event_upcoming,group,home,insights,inventory_2,menu,menu_book,move_to_inbox,notifications,payments,photo_camera,rate_review,search,signature,sync,upload,view_kanban&display=block">
+<link rel="stylesheet" href="styles.css?v=249">
 <link rel="stylesheet" href="fichas.css?v=240">
 <link rel="stylesheet" href="fichas-panel.css?v=240">
 <link rel="stylesheet" href="contenidos.css?v=241">
@@ -153,6 +153,9 @@
   <section id="page-usuarios" class="page hidden"><div id="usuarios"></div></section>
 </main>
 
+<!-- NOTIFICACIONES: pop-ups dentro de la app, apilados arriba del botón de Ayuda (los arma app.js) -->
+<div id="notis" class="notis" aria-live="polite"></div>
+
 <!-- AYUDA: botón flotante abajo a la derecha + pop-up con cómo se usa cada sección
      (lo arma abrirAyuda en app.js). Va por debajo de los paneles de Tareas/fichas (z 39). -->
 <button id="ayudaFab" class="ay-fab js-ayuda" title="Ayuda: cómo se usa cada sección" aria-label="Ayuda" aria-expanded="false" aria-controls="ayuda">?</button>
@@ -175,13 +178,13 @@
 <script src="vendor/html2canvas.min.js?v=240"></script>
 <script src="vendor/jspdf.umd.min.js?v=240"></script>
 <script src="vendor/jszip.min.js?v=240"></script>
-<script src="app.js?v=248"></script>
+<script src="app.js?v=251"></script>
 <script src="fichas-data.js?v=240"></script>
 <script src="fichas-ui.js?v=240"></script>
 <script src="fichas-panel.js?v=240"></script>
-<script src="contenidos.js?v=241"></script>
-<script src="tareas.js?v=5"></script>
-<script src="acciones.js?v=6"></script>
+<script src="contenidos.js?v=242"></script>
+<script src="tareas.js?v=6"></script>
+<script src="acciones.js?v=7"></script>
 
 <!-- Mantiene --appbar-h igual al alto real de la barra (topbar + sub-barra),
      para que las mini-apps embebidas llenen exacto el alto de pantalla. -->

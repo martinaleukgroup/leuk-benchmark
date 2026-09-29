@@ -248,6 +248,19 @@
   };
   window.irAAccion = id => { IR_A = id; SES().irA("acciones"); };
 
+  /* ---- Notificaciones (pop-ups): menciones en comentarios y en la línea de tiempo.
+     Devuelve todo lo notificable; app.js decide qué es nuevo. */
+  window.notisAcciones = async function () {
+    if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) return null;
+    await traer();
+    if (ERROR) return null;
+    const quien = x => x.autor || (EQUIPO.find(p => low(p.email) === low(x.autor_email)) || {}).nombre || "Alguien";
+    const out = [];
+    ACC.forEach(a => escritos(a.id).filter(meNombra).forEach(x => out.push({ key: `ac-${x.id}`, ts: x.creado, ic: "alternate_email",
+      tit: `${quien(x)} te mencionó`, txt: a.titulo, ir: () => window.irAAccion(a.id) })));
+    return out;
+  };
+
   window.avisosAcciones = async function () {
     if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) return;
     if (!CARGADO) await traer();

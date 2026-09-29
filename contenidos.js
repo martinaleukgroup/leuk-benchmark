@@ -1634,6 +1634,22 @@
     });
     return out.concat(Object.values(hilos));
   };
+  /* ---- Notificaciones (pop-ups): para quien edita, sugerencias y comentarios nuevos
+     de otros; para quien sugiere, en qué terminó lo suyo. app.js decide qué es nuevo. */
+  window.notisContenidos = async function () {
+    if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) return null;
+    await traerAvisos(); pintarBadgeNav();
+    const donde = m => m ? `${m.criterio || "Sin título"} · ${(CANALES[m.canal] || {}).corto || m.canal}` : "";
+    const ir = m => () => m && window.irAPieza(m.id, m.canal, m.mes);
+    if (!puedeEditar()) return AVISOS.mias.filter(g => g._m).map(g => ({ key: `ct-d-${g.id}`, ts: g.decidido_en || g.creado,
+      ic: g.decision === "aceptada" ? "check_circle" : "cancel",
+      tit: g.decision === "aceptada" ? "Aceptaron tu sugerencia" : "Descartaron tu sugerencia", txt: donde(g._m), ir: ir(g._m) }));
+    const yo = (SES().email() || "").toLowerCase();
+    return [...AVISOS.sugs.filter(g => String(g.autor_email || "").toLowerCase() !== yo), ...AVISOS.coms]
+      .filter(x => x._m).map(x => ({ key: `ct-${x.id}`, ts: x.creado, ic: "rate_review",
+        tit: `${x.autor || "Alguien"} ${x.tipo === "sugerencia" ? "sugirió un cambio" : "comentó"}`, txt: donde(x._m), ir: ir(x._m) }));
+  };
+
   window.irAPieza = (id, canal, mes) => {
     if (!CANALES[canal] || !SES().irA) return;
     PENDIENTE = { canal, id, mes };

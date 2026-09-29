@@ -1489,6 +1489,7 @@
     if (puedeVer("contenidos") && window.avisosContenidos) window.avisosContenidos();
     if (puedeVer("tareas") && window.avisosTareas) window.avisosTareas();   // lo tuyo que vence hoy o ya venció
     if (puedeVer("acciones") && window.avisosAcciones) window.avisosAcciones();   // acciones donde te mencionaron
+    arrancarNotis();
   }
   // Arranque para roles SIN benchmark (ej. Diseño): no se descarga ese archivo.
   function bootSinBenchmark() {
@@ -2635,6 +2636,89 @@
   }
 
   /* ===================== INICIO (home) ===================== */
+  /* ===================== NOTIFICACIONES (pop-ups dentro de la app) =====================
+     Cada 45 s se le pregunta a cada módulo qué hay para avisar (window.notisTareas /
+     notisAcciones / notisContenidos; cada uno filtra por permiso). Acá se decide qué es
+     NUEVO: se guarda, por persona, qué claves ya se mostraron. La primera vez que corre en
+     una compu sólo se anota lo que ya existía, para no tirar decenas de avisos viejos.
+     Una vez por día, además, un resumen de vencimientos (lo mismo que cuenta Mi día).
+     Si la pestaña está en segundo plano, los avisos esperan a que vuelvas. */
+  const NT_CADA = 45000, NT_DIAS = 3, NT_MAX = 3, NT_DURA = 9000;
+  let NT_TIMER = null, NT_COLA = [], NT_CORRIENDO = false;
+  const ntKey = () => "notis_vistas_v1:" + (AUTHSES.email() || "").toLowerCase();
+  function ntLeer() { try { return JSON.parse(localStorage.getItem(ntKey())); } catch (e) { return null; } }
+  function ntGuardar(v) {
+    const corte = Date.now() - 20 * 864e5;           // se olvidan las claves viejas para que no crezca sin fin
+    Object.keys(v).forEach(k => { if (v[k] < corte) delete v[k]; });
+    try { localStorage.setItem(ntKey(), JSON.stringify(v)); } catch (e) { }
+  }
+  function arrancarNotis() {
+    clearInterval(NT_TIMER);
+    if (!["tareas", "acciones", "contenidos"].some(puedeVer)) return;
+    setTimeout(revisarNotis, 1500);                  // el arranque termina de desbloquear la sesión después de esto
+    NT_TIMER = setInterval(revisarNotis, NT_CADA);
+  }
+  async function revisarNotis() {
+    if (NT_CORRIENDO || document.body.classList.contains("locked") || !AUTHSES.logged()) return;
+    NT_CORRIENDO = true;
+    try {
+      const pedir = f => typeof f === "function" ? Promise.resolve().then(f).catch(() => null) : Promise.resolve(null);
+      const evs = (await Promise.all([window.notisTareas, window.notisAcciones, window.notisContenidos].map(pedir))).flat().filter(Boolean);
+      const hoy = new Date().toISOString().slice(0, 10);
+      const venc = await resumenVencimientos();
+      if (venc) evs.push({ key: "venc-" + hoy, ts: new Date().toISOString(), ic: "event_upcoming", tit: "Para hoy", txt: venc, ir: () => goToPage("inicio") });
+      let vistas = ntLeer();
+      const primera = !vistas; vistas = vistas || {};
+      const limite = Date.now() - NT_DIAS * 864e5;
+      const nuevos = evs.filter(e => !vistas[e.key] && (Date.parse(e.ts) || 0) > limite)
+        .sort((a, b) => (Date.parse(b.ts) || 0) - (Date.parse(a.ts) || 0));
+      evs.forEach(e => { if (!vistas[e.key]) vistas[e.key] = Date.now(); });
+      ntGuardar(vistas);
+      const mostrar = primera ? nuevos.filter(e => e.key.startsWith("venc-")) : nuevos;
+      if (!mostrar.length) return;
+      NT_COLA.push(...mostrar);
+      pintarNotis();
+      if (!$("#page-inicio").classList.contains("hidden")) renderInicio();   // Mi día al día
+    } finally { NT_CORRIENDO = false; }
+  }
+  // "2 tareas vencen hoy o vencieron · 1 pieza sale hoy sin aprobar" (null si no hay nada)
+  async function resumenVencimientos() {
+    const pedir = f => typeof f === "function" ? Promise.resolve().then(f).catch(() => null) : Promise.resolve(null);
+    const [t, c] = await Promise.all([pedir(window.miDiaTareas), puedeEditarContenidos() ? pedir(window.miDiaContenidos) : null]);
+    const nt = (t || []).filter(x => x.tipo === "tarea" && x.dias <= 0).length;
+    const nc = (c || []).filter(x => x.tipo === "pieza" && x.dias === 0 && !x.ok).length;
+    const partes = [nt ? `${nt} tarea${nt > 1 ? "s" : ""} tuya${nt > 1 ? "s" : ""} para hoy o vencida${nt > 1 ? "s" : ""}` : "",
+                    nc ? `${nc} pieza${nc > 1 ? "s" : ""} sale${nc > 1 ? "n" : ""} hoy sin aprobar` : ""].filter(Boolean);
+    return partes.length ? partes.join(" · ") : null;
+  }
+  // Muestra lo que está en cola. Con la pestaña oculta espera (ver visibilitychange).
+  function pintarNotis() {
+    if (document.hidden || !NT_COLA.length) return;
+    const caja = $("#notis"); if (!caja) return;
+    let lote = NT_COLA.splice(0);
+    if (lote.length > NT_MAX) {                        // una avalancha se resume en un solo aviso
+      const resto = lote.length - (NT_MAX - 1);
+      lote = [...lote.slice(0, NT_MAX - 1), { key: "resumen", ic: "notifications", tit: `Y ${resto} novedad${resto > 1 ? "es" : ""} más`,
+        txt: "Las tenés todas en Mi día.", ir: () => goToPage("inicio") }];
+    }
+    lote.reverse().forEach(e => {                    // se apilan con prepend: al revés, para que el más nuevo quede arriba
+      const n = document.createElement("div");
+      n.className = "nt"; n.setAttribute("role", "status");
+      n.innerHTML = `<span class="nt-ic"><span class="ms">${e.ic}</span></span>
+        <div class="nt-txt"><b>${escH(e.tit)}</b><span>${escH(e.txt || "")}</span></div>
+        <div class="nt-acc"><button class="nt-ver">Ver</button><button class="nt-x" aria-label="Cerrar aviso"><span class="ms">close</span></button></div>`;
+      const cerrar = () => { n.classList.add("sale"); setTimeout(() => n.remove(), 180); };
+      let t = setTimeout(cerrar, NT_DURA);
+      n.onmouseenter = () => clearTimeout(t);          // si lo estás leyendo, no se va
+      n.onmouseleave = () => { t = setTimeout(cerrar, NT_DURA / 2); };
+      n.querySelector(".nt-ver").onclick = () => { cerrar(); e.ir && e.ir(); };
+      n.querySelector(".nt-x").onclick = cerrar;
+      caja.prepend(n);
+    });
+    [...caja.children].slice(NT_MAX).forEach(x => x.remove());
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { pintarNotis(); revisarNotis(); } });
+
   /* ===================== MI DÍA (Inicio) =====================
      La entrada a la plataforma: qué te toca hoy, sin tener que recorrer cada sección.
      Cada módulo aporta sus datos (window.miDiaTareas / miDiaContenidos / miDiaAcciones,

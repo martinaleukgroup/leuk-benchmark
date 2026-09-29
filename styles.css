@@ -773,3 +773,25 @@ body.ayuda-abierta .ay-panel{transform:none;opacity:1;visibility:visible}
   .md-it-txt{flex-basis:calc(100% - 34px)}
   .md-tag{margin-left:32px}
 }
+
+/* ---- Notificaciones: pop-ups apilados arriba del botón de Ayuda ---- */
+.notis{position:fixed;right:20px;bottom:78px;z-index:47;width:min(360px,calc(100vw - 32px));
+  display:flex;flex-direction:column;gap:8px;pointer-events:none}
+body.locked .notis,body.ayuda-abierta .notis{display:none}
+.nt{pointer-events:auto;display:flex;align-items:flex-start;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px 10px 12px 12px;box-shadow:0 10px 30px rgba(40,42,34,.16);animation:nt-entra .2s ease}
+.nt.sale{opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s}
+@keyframes nt-entra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nt-ic{flex:none;width:32px;height:32px;border-radius:999px;background:var(--olive-pale);display:flex;align-items:center;justify-content:center}
+.nt-ic .ms{color:var(--olive);font-size:19px;width:19px}
+.nt-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.nt-txt b{font-size:13.5px;color:var(--ink)}
+.nt-txt span{font-size:12.5px;color:var(--gray-soft);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nt-acc{flex:none;display:flex;align-items:center;gap:2px}
+.nt-ver{border:1px solid var(--olive-soft);background:var(--card);color:var(--olive);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;font-family:var(--font-body)}
+.nt-ver:hover{background:var(--olive);border-color:var(--olive);color:#fff}
+.nt-x{border:0;background:transparent;color:var(--gray-soft);padding:4px;border-radius:8px;display:flex}
+.nt-x:hover{background:var(--olive-pale);color:var(--gray)}
+.nt-x .ms{font-size:18px;width:18px}
+@media(max-width:640px){.notis{right:16px;left:16px;width:auto;bottom:66px}}
+@media (prefers-reduced-motion:reduce){.nt{animation:none}.nt.sale{transition:none}}

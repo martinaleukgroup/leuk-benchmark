@@ -242,6 +242,36 @@
   };
   window.irATarea = id => { IR_A = id; SES().irA("tareas"); };
 
+  /* ---- Notificaciones (pop-ups) ----
+     Devuelve TODO lo notificable que hay hoy; app.js decide qué es nuevo (guarda qué claves
+     ya mostró) y lo muestra. Cada evento: {key, ts, ic, tit, txt, ir}.
+     "Te asignaron" no tiene fecha propia en la base: se detecta comparando contra las
+     tareas que ya eran tuyas la vez anterior (localStorage). La primera vez sólo se anota. */
+  window.notisTareas = async function () {
+    if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return null;
+    await traer();
+    if (ERROR) return null;
+    const quien = x => x.autor || (EQUIPO.find(p => low(p.email) === low(x.autor_email || x.mpor)) || {}).nombre || "Alguien";
+    const out = [];
+    TAREAS.forEach(t => {
+      (COMS[t.id] || []).filter(comMeMenciona).forEach(c => out.push({ key: `tk-c-${c.id}`, ts: c.creado, ic: "alternate_email",
+        tit: `${quien(c)} te mencionó`, txt: t.titulo, ir: () => window.irATarea(t.id) }));
+      t.checklist.filter(x => pasoMeMenciona(x) && x.mts && low(x.mpor) !== yo()).forEach(x => out.push({ key: `tk-p-${t.id}-${x.mts}`, ts: x.mts,
+        ic: "alternate_email", tit: `${quien({ autor_email: x.mpor })} te mencionó en un paso`, txt: t.titulo, ir: () => window.irATarea(t.id) }));
+    });
+    const mias = TAREAS.filter(t => abierta(t) && mia(t));
+    const MIAS_KEY = "notis_tareas_mias:" + yo();
+    let antes = null; try { antes = JSON.parse(leer(MIAS_KEY)); } catch (e) { }
+    if (Array.isArray(antes)) {
+      const ya = new Set(antes);
+      mias.filter(t => !ya.has(t.id) && low(t.autor_email) !== yo() && ABIERTA !== t.id).forEach(t => out.push({ key: `tk-a-${t.id}`,
+        ts: t.actualizado || t.creado, ic: "assignment_ind", tit: "Te asignaron una tarea",
+        txt: t.titulo + (t.fecha_limite ? ` · ${(vence(t) || {}).t || ""}` : ""), ir: () => window.irATarea(t.id) }));
+    }
+    escribir(MIAS_KEY, JSON.stringify(mias.map(t => t.id)));
+    return out;
+  };
+
   window.avisosTareas = async function () {
     if (!(SES().puedeVerTareas && SES().puedeVerTareas())) return marcarNav(null);
     if (!CARGADO) await traer();

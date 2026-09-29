@@ -811,3 +811,5 @@ body.locked .notis,body.ayuda-abierta .notis{display:none}
 .cu-push-txt{font-size:13.5px;color:var(--gray);margin:0 0 10px}
 .cu-push-acc{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:640px){.md-push{flex-wrap:wrap}.md-push-acc{width:100%;justify-content:flex-end}}
+.cu-sonido{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:13.5px;color:var(--gray);cursor:pointer}
+.cu-sonido input{width:16px;height:16px;accent-color:var(--olive)}

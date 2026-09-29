@@ -1425,6 +1425,7 @@
       <p class="cu-push-txt" id="cuPushTxt">…</p>
       <div class="cu-push-acc" id="cuPushAcc"></div>
       <div id="cuPushMsg" class="us-msg"></div>
+      <label class="cu-sonido"><input type="checkbox" id="cuSonido"> Sonido cuando llega un aviso con la plataforma abierta</label>
       <div class="desc-actions"><button class="btn-ghost" id="cuOut">Cerrar sesión</button></div>
     </div>`;
     document.body.appendChild(ov);
@@ -1433,6 +1434,11 @@
     ov.addEventListener("click", e => { if (e.target === ov) close(); });
     $("#cuOut").onclick = () => { close(); doLogout(); };
     pintarPushCuenta();
+    $("#cuSonido").checked = ntSonidoOn();
+    $("#cuSonido").onchange = e => {
+      try { localStorage.setItem("notis_sonido", e.target.checked ? "1" : "0"); } catch (err) { }
+      if (e.target.checked) { ntDestrabarAudio(); ntSonar(); }        // para escuchar cómo suena
+    };
     $("#cuSave").onclick = async () => {
       const a = $("#cuPass1").value, b = $("#cuPass2").value, m = $("#cuMsg");
       const err = t => { m.textContent = t; m.className = "us-msg px-err"; };
@@ -2763,6 +2769,33 @@
     Object.keys(v).forEach(k => { if (v[k] < corte) delete v[k]; });
     try { localStorage.setItem(ntKey(), JSON.stringify(v)); } catch (e) { }
   }
+  // Sonido propio de los avisos. Los del sistema en la Mac llegan mudos (Chrome y Safari ignoran
+  // el pedido de sonido), así que con la plataforma abierta suena éste — aunque la pestaña esté
+  // en segundo plano. Se genera acá (WebAudio, sin archivos). El navegador sólo deja sonar
+  // después de que la persona tocó algo en la página: el primer clic "destraba" el audio.
+  let NT_AUDIO = null;
+  const ntSonidoOn = () => { try { return localStorage.getItem("notis_sonido") !== "0"; } catch (e) { return true; } };
+  function ntDestrabarAudio() {
+    if (NT_AUDIO || !(window.AudioContext || window.webkitAudioContext)) return;
+    try { NT_AUDIO = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
+  }
+  ["pointerdown", "keydown"].forEach(t => document.addEventListener(t, ntDestrabarAudio, { once: true, capture: true }));
+  function ntSonar() {
+    if (!ntSonidoOn() || !NT_AUDIO) return;
+    try {
+      if (NT_AUDIO.state === "suspended") NT_AUDIO.resume();
+      const t0 = NT_AUDIO.currentTime;
+      [[880, 0], [1320, 0.12]].forEach(([f, d]) => {            // dos notas suaves: "din-don"
+        const o = NT_AUDIO.createOscillator(), g = NT_AUDIO.createGain();
+        o.type = "sine"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0 + d);
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + d + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.35);
+        o.connect(g).connect(NT_AUDIO.destination);
+        o.start(t0 + d); o.stop(t0 + d + 0.4);
+      });
+    } catch (e) { }
+  }
   function arrancarNotis() {
     clearInterval(NT_TIMER);
     if (!["tareas", "acciones", "contenidos"].some(puedeVer)) return;
@@ -2789,6 +2822,7 @@
       const mostrar = primera ? nuevos.filter(e => e.key.startsWith("venc-")) : nuevos;
       if (!mostrar.length) return;
       NT_COLA.push(...mostrar);
+      ntSonar();
       pintarNotis();
       if (!$("#page-inicio").classList.contains("hidden")) renderInicio();   // Mi día al día
     } finally { NT_CORRIENDO = false; }

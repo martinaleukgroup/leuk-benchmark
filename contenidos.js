@@ -471,6 +471,7 @@
               const n = cuentaAvisos(); return n ? `<span class="ct-punto">${n > 9 ? "9+" : n}</span>` : "";
             })()}</button>
             <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
+            ${SES().rol && SES().rol() === "admin" && RESP ? `<button class="btn-desc" data-acc="responsables" title="Quién hace y quién revisa este canal">👥 Responsables</button>` : ""}
             ${CANAL === "instagram" ? `<button class="btn-desc" data-acc="figma"
               title="Volver a pedirle las imágenes a Figma. Hace falta porque el plan no avisa solo cuando cambia un diseño.">◈ Piezas</button>` : ""}
             ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ ${cap(C().unidad)}</button>
@@ -488,7 +489,45 @@
           <div class="ct-filtros">${chips}</div>
         </div>` : ""}
       </div>
+      ${respHTML()}
       ${ed ? "" : `<div class="ct-solo-lectura">${C().lectura}</div>`}`;
+  }
+  // "Hace: Agustina · Revisa: Daiana" — a quién le toca mover las piezas de este canal
+  function respHTML() {
+    if (!RESP) return "";
+    const h = nombresDe(CANAL, "hace"), r = nombresDe(CANAL, "revisa");
+    if (!h.length && !r.length) return `<p class="ct-resp tenue">Este canal todavía no tiene responsables: los avisos no le llegan a nadie.</p>`;
+    return `<p class="ct-resp"><span>Hace: <b>${esc(h.join(", ") || "—")}</b></span><span>Revisa: <b>${esc(r.join(", ") || "—")}</b></span></p>`;
+  }
+  // Sólo admin: elegir quién hace y quién revisa el canal abierto
+  async function abrirResponsables() {
+    const r = await fetch(url("perfiles?select=email,nombre,rol&order=nombre"), { headers: head() });
+    const ROLES_VEN = ["admin", "lider", "coordinacion", "diseno", "representante", "editor", "fichas"];
+    const gente = (r.ok ? await r.json() : []).filter(p => ROLES_VEN.includes(p.rol));
+    const tiene = (email, papel) => (RESP || []).some(x => x.canal === CANAL && x.papel === papel && String(x.email).toLowerCase() === String(email).toLowerCase());
+    const col = papel => gente.map(p => `<label class="ct-resp-op"><input type="checkbox" data-papel="${papel}" value="${esc(p.email)}" data-nombre="${esc(p.nombre || "")}"
+        ${tiene(p.email, papel) ? "checked" : ""}> ${esc(p.nombre || p.email)}</label>`).join("");
+    const ov = document.createElement("div"); ov.className = "detail";
+    ov.innerHTML = `<div class="detail-inner ct-resp-modal">
+      <button class="detail-close" data-x>✕</button>
+      <h2>Responsables · ${esc(C().label)}</h2>
+      <p class="tenue">Los avisos de este canal van sólo a estas personas: a quien revisa cuando una pieza pasa a revisión; a quien hace cuando piden cambios, aprueban o comentan.</p>
+      <div class="ct-resp-cols"><div><h3>Hace</h3>${col("hace")}</div><div><h3>Revisa</h3>${col("revisa")}</div></div>
+      <p class="us-msg" data-msg></p>
+      <div class="desc-actions"><button class="btn-ghost" data-x>Cancelar</button><button class="btn-primary" data-guardar>Guardar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelectorAll("[data-x]").forEach(b => b.onclick = cerrar);
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+    ov.querySelector("[data-guardar]").onclick = async ev => {
+      ev.target.disabled = true;
+      const filas = [...ov.querySelectorAll("input:checked")].map(i => ({ canal: CANAL, email: i.value.toLowerCase(), papel: i.dataset.papel, nombre: i.dataset.nombre || null }));
+      const d = await fetch(url(`contenidos_responsables?canal=eq.${CANAL}`), { method: "DELETE", headers: head() });
+      const n = !d.ok ? d : filas.length ? await fetch(url("contenidos_responsables"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) }) : d;
+      if (!d.ok || !n.ok) { ov.querySelector("[data-msg]").textContent = "No se pudo guardar."; ov.querySelector("[data-msg]").className = "us-msg px-err"; ev.target.disabled = false; return; }
+      await traerResponsables(); cerrar(); pintar();
+    };
   }
 
   function cabeceraHTML(ed) {
@@ -1377,6 +1416,7 @@
 
   /* ---- Acciones de la barra ---- */
   async function accion(a) {
+    if (a === "responsables") return abrirResponsables();
     if (a === "refrescar") { await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]); pintar(); return; }
 
     // Sin webhooks (plan Starter) nadie avisa que un diseño cambió: se vuelve a pedir.
@@ -1528,6 +1568,21 @@
   const vistoEn = () => { try { return +localStorage.getItem(VISTO_KEY) || 0; } catch (e) { return 0; } };
   const marcarVisto = () => { try { localStorage.setItem(VISTO_KEY, String(Date.now())); } catch (e) { } };
   let AVISOS = { sale: [], tarde: [], sugs: [], coms: [], mias: [], cargado: false };
+  /* Responsables por canal (tabla contenidos_responsables): quién HACE y quién REVISA.
+     Deciden a quién le llegan los avisos y qué ve cada uno en Mi día. null = la tabla
+     todavía no existe (falta el SQL): en ese caso se sigue como antes, todo a quien edita. */
+  let RESP = null;
+  const yoC = () => (SES().email ? SES().email() : "").toLowerCase();
+  const papelesEn = canal => RESP ? RESP.filter(r => r.canal === canal && String(r.email).toLowerCase() === yoC()).map(r => r.papel)
+                                  : (puedeEditar() ? ["hace", "revisa"] : []);
+  const misCanales = () => Object.keys(CANALES).filter(c => papelesEn(c).length);
+  const nombresDe = (canal, papel) => (RESP || []).filter(r => r.canal === canal && r.papel === papel).map(r => r.nombre || r.email.split("@")[0]);
+  async function traerResponsables() {
+    try {
+      const r = await fetch(url("contenidos_responsables?select=canal,email,papel,nombre"), { headers: head() });
+      RESP = r.ok ? await r.json() : (r.status === 404 ? null : RESP);
+    } catch (e) { }
+  }
   let PANEL = false;
 
   async function traerAvisos() {
@@ -1536,12 +1591,14 @@
     const atras = new Date(); atras.setDate(atras.getDate() - 10);
     const desde = `${atras.getFullYear()}-${String(atras.getMonth() + 1).padStart(2, "0")}-${String(atras.getDate()).padStart(2, "0")}`;
     try {
+      const pResp = traerResponsables();
       const [rm, rs, rc] = await Promise.all([
         // La campanita NO se filtra por canal: es una sola y avisa de todos.
         fetch(url(`contenidos?fecha=gte.${desde}&fecha=lte.${hoy}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.sugerencia&select=*&order=creado.desc&limit=60"), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.comentario&resuelto=is.false&select=*&order=creado.desc&limit=40"), { headers: head() }),
       ]);
+      await pResp;
       const msgs = rm.ok ? await rm.json() : [];
       const sugs = rs.ok ? await rs.json() : [];
       const coms = rc.ok ? await rc.json() : [];
@@ -1598,56 +1655,91 @@
   // aunque la persona todavía no haya entrado al módulo.
   window.avisosContenidos = async function () { await traerAvisos(); pintarBadgeNav(); };
 
-  /* ---- Mi día (Inicio) ----
-     Para quien edita: lo que ya debería haber salido sin aprobar, lo que sale hoy, lo
-     que sale en los próximos 7 días sin aprobar, y las piezas con sugerencias o
-     comentarios abiertos (agrupados por pieza). Para quien sólo lee y comenta: qué
-     pasó con sus sugerencias en la última semana y lo que sale hoy.
-     Devuelve datos; el dibujo lo hace app.js. */
+  /* ---- Mi día (Inicio) y notificaciones: según tu PAPEL en cada canal ----
+     Quien HACE un canal ve lo que está atrasado o sale pronto sin aprobar y lo que le
+     pidieron corregir; quien lo REVISA, lo que le mandaron a revisar. Los dos, los
+     comentarios y sugerencias de la otra parte. Quien no es responsable de ningún canal
+     sólo se entera de qué pasó con sus propias sugerencias.
+     Devuelven datos; el dibujo lo hace app.js. */
+  const dias = f => Math.round((aFecha(f) - aFecha(hoyISO())) / 864e5);
+  const isoMas = n => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  // Las piezas "en curso" de mis canales: en revisión o con cambios pedidos, del último mes para acá.
+  async function piezasEnCurso(canales) {
+    if (!canales.length) return [];
+    try {
+      const r = await fetch(url(`contenidos?canal=in.(${canales.join(",")})&fecha=gte.${isoMas(-30)}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() });
+      return r.ok ? await r.json() : [];
+    } catch (e) { return []; }
+  }
   window.miDiaContenidos = async function () {
     if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) return null;
     await traerAvisos();
-    const ed = puedeEditar(), hoy = hoyISO();
+    const hoy = hoyISO(), canales = misCanales();
     const pieza = (m, extra) => Object.assign({ id: m.id, canal: m.canal, mes: m.mes, titulo: m.criterio || "Sin título",
       canalT: (CANALES[m.canal] || {}).corto || m.canal, estado: (ESTADOS[m.estado] || {}).t || m.estado }, extra);
     const out = [];
-    AVISOS.sale.forEach(m => out.push(pieza(m, { tipo: "pieza", dias: 0, ok: yaAprobado(m) })));
-    if (!ed) {
-      const semana = Date.now() - 7 * 864e5;
-      AVISOS.mias.filter(g => g._m && Date.parse(g.decidido_en || g.creado) > semana)
-        .forEach(g => out.push(pieza(g._m, { tipo: "decision", aceptada: g.decision === "aceptada" })));
-      return out;
-    }
-    AVISOS.tarde.forEach(m => out.push(pieza(m, { tipo: "pieza", dias: -Math.max(1, Math.round((aFecha(hoy) - aFecha(m.fecha)) / 864e5)), ok: false })));
-    try {
-      const d = new Date(); d.setDate(d.getDate() + 7);
-      const hasta = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const r = await fetch(url(`contenidos?fecha=gt.${hoy}&fecha=lte.${hasta}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() });
-      (r.ok ? await r.json() : []).filter(m => !yaAprobado(m)).forEach(m =>
-        out.push(pieza(m, { tipo: "pieza", dias: Math.round((aFecha(m.fecha) - aFecha(hoy)) / 864e5), ok: false })));
-    } catch (e) { }
-    const hilos = {};                            // sugerencias y comentarios abiertos, por pieza
+    out.papeles = [...new Set(canales.flatMap(papelesEn))];
+    // Tus sugerencias: en qué terminaron (última semana) — para cualquiera
+    const semana = Date.now() - 7 * 864e5;
+    AVISOS.mias.filter(g => g._m && Date.parse(g.decidido_en || g.creado) > semana)
+      .forEach(g => out.push(pieza(g._m, { tipo: "decision", aceptada: g.decision === "aceptada" })));
+    if (!canales.length) return out;
+
+    const todas = await piezasEnCurso(canales);
+    const tomadas = new Set();
+    todas.forEach(m => {
+      const p = papelesEn(m.canal);
+      if (m.estado === "revision" && p.includes("revisa")) { out.push(pieza(m, { tipo: "revisar", dias: dias(m.fecha) })); tomadas.add(m.id); }
+      else if (m.estado === "cambios" && p.includes("hace")) { out.push(pieza(m, { tipo: "corregir", dias: dias(m.fecha) })); tomadas.add(m.id); }
+    });
+    const enMis = m => canales.includes(m.canal) && !tomadas.has(m.id);
+    AVISOS.sale.filter(enMis).forEach(m => out.push(pieza(m, { tipo: "pieza", dias: 0, ok: yaAprobado(m) })));
+    AVISOS.tarde.filter(enMis).forEach(m => out.push(pieza(m, { tipo: "pieza", dias: Math.min(-1, dias(m.fecha)), ok: false })));
+    todas.filter(m => enMis(m) && m.fecha > hoy && m.fecha <= isoMas(7) && !yaAprobado(m) && papelesEn(m.canal).includes("hace"))
+      .forEach(m => out.push(pieza(m, { tipo: "pieza", dias: dias(m.fecha), ok: false })));
+
+    const hilos = {};                            // comentarios y sugerencias abiertos de OTROS, por pieza
     [...AVISOS.sugs.map(x => [x, "sugs"]), ...AVISOS.coms.map(x => [x, "coms"])].forEach(([x, k]) => {
-      if (!x._m) return;
+      if (!x._m || !canales.includes(x._m.canal) || String(x.autor_email || "").toLowerCase() === yoC()) return;
       const h = hilos[x.contenido_id] = hilos[x.contenido_id] || pieza(x._m, { tipo: "hilo", sugs: 0, coms: 0 });
       h[k]++;
     });
-    return out.concat(Object.values(hilos));
+    const res = out.concat(Object.values(hilos));
+    res.papeles = out.papeles;                   // concat no copia la propiedad: app.js la usa para los contadores
+    return res;
   };
-  /* ---- Notificaciones (pop-ups): para quien edita, sugerencias y comentarios nuevos
-     de otros; para quien sugiere, en qué terminó lo suyo. app.js decide qué es nuevo. */
+
+  /* Notificaciones: comentarios/sugerencias de otros en mis canales, respuestas a mis
+     sugerencias, y los cambios de estado que me tocan (a revisar si reviso; pidieron
+     cambios o aprobaron si hago). El estado no guarda cuándo cambió: se compara contra
+     el último visto (localStorage, por persona); la primera vez sólo se anota. */
   window.notisContenidos = async function () {
     if (!(SES().puedeVerContenidos && SES().puedeVerContenidos())) return null;
     await traerAvisos(); pintarBadgeNav();
     const donde = m => m ? `${m.criterio || "Sin título"} · ${(CANALES[m.canal] || {}).corto || m.canal}` : "";
     const ir = m => () => m && window.irAPieza(m.id, m.canal, m.mes);
-    if (!puedeEditar()) return AVISOS.mias.filter(g => g._m).map(g => ({ key: `ct-d-${g.id}`, ts: g.decidido_en || g.creado,
+    const out = AVISOS.mias.filter(g => g._m).map(g => ({ key: `ct-d-${g.id}`, ts: g.decidido_en || g.creado,
       ic: g.decision === "aceptada" ? "check_circle" : "cancel",
       tit: g.decision === "aceptada" ? "Aceptaron tu sugerencia" : "Descartaron tu sugerencia", txt: donde(g._m), ir: ir(g._m) }));
-    const yo = (SES().email() || "").toLowerCase();
-    return [...AVISOS.sugs.filter(g => String(g.autor_email || "").toLowerCase() !== yo), ...AVISOS.coms]
-      .filter(x => x._m).map(x => ({ key: `ct-${x.id}`, ts: x.creado, ic: "rate_review",
+    const canales = misCanales();
+    if (!canales.length) return out;
+    [...AVISOS.sugs, ...AVISOS.coms]
+      .filter(x => x._m && canales.includes(x._m.canal) && String(x.autor_email || "").toLowerCase() !== yoC())
+      .forEach(x => out.push({ key: `ct-${x.id}`, ts: x.creado, ic: "rate_review",
         tit: `${x.autor || "Alguien"} ${x.tipo === "sugerencia" ? "sugirió un cambio" : "comentó"}`, txt: donde(x._m), ir: ir(x._m) }));
+
+    const KEY = "notis_ct_estados:" + yoC();
+    let antes = null; try { antes = JSON.parse(localStorage.getItem(KEY)); } catch (e) { }
+    const ahora = {}, TXT = { revision: ["Te mandaron una pieza a revisar", "revisa"], cambios: ["Pidieron cambios en una pieza", "hace"], aprobado: ["Aprobaron una pieza", "hace"] };
+    (await piezasEnCurso(canales)).forEach(m => {
+      ahora[m.id] = m.estado;
+      const t = TXT[m.estado];
+      if (antes && antes[m.id] !== m.estado && t && papelesEn(m.canal).includes(t[1]))
+        out.push({ key: `ct-e-${m.id}-${m.estado}-${Date.now()}`, ts: new Date().toISOString(), ic: m.estado === "aprobado" ? "check_circle" : "rate_review",
+          tit: t[0], txt: donde(m), ir: ir(m) });
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(ahora)); } catch (e) { }
+    return out;
   };
 
   window.irAPieza = (id, canal, mes) => {

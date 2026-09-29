@@ -2830,7 +2830,7 @@
   // "2 tareas vencen hoy o vencieron · 1 pieza sale hoy sin aprobar" (null si no hay nada)
   async function resumenVencimientos() {
     const pedir = f => typeof f === "function" ? Promise.resolve().then(f).catch(() => null) : Promise.resolve(null);
-    const [t, c] = await Promise.all([pedir(window.miDiaTareas), puedeEditarContenidos() ? pedir(window.miDiaContenidos) : null]);
+    const [t, c] = await Promise.all([pedir(window.miDiaTareas), pedir(window.miDiaContenidos)]);
     const nt = (t || []).filter(x => x.tipo === "tarea" && x.dias <= 0).length;
     const nc = (c || []).filter(x => x.tipo === "pieza" && x.dias === 0 && !x.ok).length;
     const partes = [nt ? `${nt} tarea${nt > 1 ? "s" : ""} tuya${nt > 1 ? "s" : ""} para hoy o vencida${nt > 1 ? "s" : ""}` : "",
@@ -2931,14 +2931,18 @@
       const ir = () => window.irAPieza(x.id, x.canal, x.mes);
       if (x.tipo === "hilo") {
         const q = [x.sugs ? `${x.sugs} sugerencia${x.sugs > 1 ? "s" : ""}` : "", x.coms ? `${x.coms} comentario${x.coms > 1 ? "s" : ""}` : ""].filter(Boolean).join(" y ");
-        return items.push({ at: true, orden: 3, ic: "rate_review", tit: x.titulo, meta: `${x.canalT} · ${q} sin resolver`, tag: ["Para revisar", "menc"], ir });
+        return items.push({ at: true, orden: 3, ic: "rate_review", tit: x.titulo, meta: `${x.canalT} · ${q}`, tag: ["Sin resolver", "menc"], ir });
       }
       if (x.tipo === "decision") return items.push({ at: true, orden: 3, ic: x.aceptada ? "check_circle" : "cancel", tit: x.titulo,
         meta: `${x.canalT} · tu sugerencia`, tag: [x.aceptada ? "Aceptada" : "Descartada", x.aceptada ? "ok" : "prox"], ir });
       const meta = `${x.canalT} · ${x.estado}`;
+      if (x.tipo === "revisar") return items.push({ at: true, orden: 1, dias: x.dias, ic: "rate_review", tit: x.titulo, meta,
+        tag: [x.dias < 0 ? `Para revisar · era para ${cuando(x.dias)}` : `Para revisar · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
+      if (x.tipo === "corregir") return items.push({ at: true, orden: 1, dias: x.dias, ic: "edit", tit: x.titulo, meta,
+        tag: [x.dias < 0 ? `Para corregir · era para ${cuando(x.dias)}` : `Para corregir · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
       if (x.dias < 0) return items.push({ at: true, orden: 0, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, tag: [`Era para ${cuando(x.dias)}`, "venc"], ir });
-      // "sin aprobar" sólo es un pendiente para quien puede aprobar; al resto se le informa y listo
-      if (x.dias === 0 && !x.ok && puedeEditarContenidos()) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy sin aprobar", "hoy"], ir });
+      // "sin aprobar" (sólo le llega a los responsables del canal)
+      if (x.dias === 0 && !x.ok) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy sin aprobar", "hoy"], ir });
       items.push({ at: false, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, ir,
         tag: x.dias === 0 ? ["Sale hoy", "ok"] : [`Sale ${cuando(x.dias)}`, "prox"] });
     });
@@ -2957,8 +2961,10 @@
       : "Nada urgente por hoy. Todo al día.";
     const tiles = [];
     if (t) tiles.push({ n: t.filter(x => x.tipo === "tarea" && x.dias <= 0).length, l: "Tus tareas para hoy o vencidas", p: "tareas" });
-    if (c && puedeEditarContenidos()) tiles.push({ n: c.filter(x => x.tipo === "pieza" && !x.ok).length, l: "Piezas por aprobar esta semana",
-      p: c.some(x => x.tipo === "pieza" && !x.ok && x.canal === "instagram") && !c.some(x => x.tipo === "pieza" && !x.ok && x.canal === "whatsapp") ? "contenidos-ig" : "contenidos" });
+    // Contenidos según tu papel: quien revisa ve lo que le mandaron; quien hace, lo que tiene que corregir
+    const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && x.canal === "instagram" ? "contenidos-ig" : "contenidos"; };
+    if (c && (c.papeles || []).includes("revisa")) tiles.push({ n: c.filter(x => x.tipo === "revisar").length, l: "Piezas para revisar", p: irCanal("revisar") });
+    if (c && (c.papeles || []).includes("hace")) tiles.push({ n: c.filter(x => x.tipo === "corregir").length, l: "Piezas para corregir", p: irCanal("corregir") });
     if (t || a) tiles.push({ n: [...(t || []), ...(a || [])].filter(x => x.tipo === "mencion").length, l: "Menciones nuevas", p: t ? "tareas" : "acciones" });
     $("#mdTiles").innerHTML = tiles.map(x => `<button class="md-tile${x.n ? " con" : ""}" data-page="${x.p}"><b>${x.n}</b><span>${x.l}</span></button>`).join("");
     $("#mdTiles").querySelectorAll("[data-page]").forEach(b => b.onclick = () => goToPage(b.dataset.page));

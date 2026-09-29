@@ -553,3 +553,14 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   border-bottom:1px solid var(--olive-soft)}
 .ct-placa-figma a:hover{background:var(--olive-pale)}
 .ct-placa-figma .tenue,.ct-placa-figma.tenue{color:var(--gray-soft);font-weight:400}
+
+/* Responsables del canal: "Hace: … · Revisa: …" y el modal para elegirlos (sólo admin) */
+.ct-resp{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 2px 12px;font-size:13px;color:var(--gray-soft)}
+.ct-resp b{color:var(--ink);font-weight:600}
+.ct-resp-modal{max-width:560px}
+.ct-resp-modal>p.tenue{font-size:13px;color:var(--gray-soft);margin:0 0 14px}
+.ct-resp-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ct-resp-cols h3{font-size:15px;margin:0 0 6px}
+.ct-resp-op{display:flex;align-items:center;gap:8px;font-size:13.5px;padding:4px 0;cursor:pointer}
+.ct-resp-op input{accent-color:var(--olive)}
+@media(max-width:560px){.ct-resp-cols{grid-template-columns:1fr}}

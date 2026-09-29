@@ -68,8 +68,8 @@ button{font-family:var(--font-body);cursor:pointer}
 .nv-act{font-size:13px}
 /* contadores (Comparaciones, Tareas, Acciones, Contenidos) pegados a la derecha */
 .nv-item .nav-count,.nv-g .ct-navpunto,.nv-item .ct-navpunto{margin-left:auto}
-.side-foot{padding:10px;border-top:1px solid var(--line)}
-.side-user{width:100%;text-align:left;border:0;background:transparent;color:var(--gray);font-size:13px;
+.side-foot{padding:10px;border-top:1px solid var(--line);display:flex;align-items:center;gap:6px}
+.side-user{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:var(--gray);font-size:13px;
   padding:8px 10px;border-radius:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .side-user:hover{background:var(--olive-pale)}
 .side-scrim{display:none}
@@ -517,13 +517,9 @@ body:has(#page-eventos:not(.hidden)) .foot{display:none}
 .us-acc .btn-ghost{padding:5px 10px;margin-left:5px}
 @media(max-width:760px){ .us-form{grid-template-columns:1fr} .us-tabla{font-size:12.5px} }
 
-.home-help{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:20px}
-.home-help h2{font-size:18px;margin:0 0 12px}
-.home-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
-.home-help-grid h4{margin:0 0 9px;font-size:14.5px;font-family:var(--font-title)}
 .home-steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px}
 .home-steps li{font-size:14px;line-height:1.5;color:var(--ink)}
-.home-note{font-size:12.5px;color:var(--gray-soft);margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.home-ayuda-tip{text-align:center;font-size:13px;color:var(--gray-soft);margin:4px 0 20px}
 @media(max-width:640px){.home-hero h1{font-size:22px}.home-stat{min-width:44%}}
 /* ===== Sin competidor comparable (monopolio) ===== */
 .mono-box{display:flex;align-items:center;gap:14px;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
@@ -686,3 +682,47 @@ button.rm:hover{background:#f4e2df}
 @media(max-width:640px){.desc-row{flex-direction:column;align-items:stretch}}
 .sin-equiv{font-size:12.5px;color:var(--gray-soft);margin:10px 2px 0}
 .sin-equiv b{color:var(--gray);font-weight:600}
+
+/* ---- Ayuda: botón ? y panel lateral con un desplegable por sección ---- */
+.ay-btn{flex:none;width:30px;height:30px;border-radius:999px;border:1.5px solid var(--olive-soft);background:var(--card);
+  color:var(--olive);font-family:var(--font-title);font-weight:700;font-size:16px;line-height:1;padding:0;
+  display:inline-flex;align-items:center;justify-content:center}
+.ay-btn:hover{background:var(--olive);border-color:var(--olive);color:#fff}
+.ay-mini{width:20px;height:20px;font-size:12px;vertical-align:middle;border-width:1px}
+/* botón flotante: abajo a la derecha, por debajo de los paneles laterales (Tareas z41, fichas z50) */
+.ay-fab{position:fixed;right:20px;bottom:20px;z-index:39;width:46px;height:46px;border-radius:999px;border:0;
+  background:var(--olive);color:#fff;font-family:var(--font-title);font-weight:700;font-size:22px;line-height:1;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(40,42,34,.22);transition:transform .15s,background .15s}
+.ay-fab:hover{background:var(--olive-mid);transform:scale(1.05)}
+body.ayuda-abierta .ay-fab{z-index:46}
+body.locked .ay-fab{display:none}
+/* clic afuera cierra (sin oscurecer la pantalla: es un pop-up, no un modal) */
+.ay-velo{display:none}
+body.ayuda-abierta .ay-velo{display:block;position:fixed;inset:0;z-index:44}
+.ay-panel{position:fixed;right:20px;bottom:78px;z-index:45;width:min(400px,calc(100vw - 32px));
+  max-height:min(72vh,640px);background:var(--card);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 12px 40px rgba(40,42,34,.2);display:flex;flex-direction:column;overflow:hidden;
+  transform-origin:bottom right;transform:translateY(8px) scale(.96);opacity:0;visibility:hidden;
+  transition:transform .16s ease,opacity .16s ease,visibility .16s}
+body.ayuda-abierta .ay-panel{transform:none;opacity:1;visibility:visible}
+@media(max-width:640px){
+  .ay-fab{right:14px;bottom:14px;width:42px;height:42px;font-size:20px}
+  .ay-panel{right:16px;left:16px;width:auto;bottom:66px;max-height:calc(100dvh - 130px)}
+}
+.ay-head{display:flex;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.ay-head h2{margin:0;font-size:20px}
+.ay-head .side-close{display:flex}
+.ay-body{flex:1;overflow-y:auto;padding:10px 14px 24px}
+.ay-intro{font-size:13px;color:var(--gray-soft);margin:6px 4px 10px}
+.ay-sec{border-bottom:1px solid var(--line)}
+.ay-sec summary{display:flex;align-items:center;gap:10px;padding:12px 6px;cursor:pointer;list-style:none;
+  font-weight:600;font-size:14.5px;color:var(--ink);border-radius:8px}
+.ay-sec summary::-webkit-details-marker{display:none}
+.ay-sec summary::after{content:"▾";margin-left:8px;color:var(--gray-soft);transition:transform .15s}
+.ay-sec:not([open]) summary::after{transform:rotate(-90deg)}
+.ay-sec summary:hover{background:var(--olive-pale)}
+.ay-sec summary .ms{color:var(--olive-mid)}
+.ay-t{flex:1}
+.ay-aca{font-size:11px;font-weight:600;color:var(--olive);background:var(--olive-pale);border-radius:999px;padding:2px 8px}
+.ay-sec .home-steps{padding:2px 8px 16px 38px}
+@media (prefers-reduced-motion:reduce){.ay-panel,.ay-fab{transition:none}}

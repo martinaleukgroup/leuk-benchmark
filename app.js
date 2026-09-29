@@ -2346,6 +2346,94 @@
   }
   const abrirMenu = si => document.body.classList.toggle("nav-abierto", si);
 
+  // ---- AYUDA ---------------------------------------------------------------
+  // El "cómo se usa" de cada sección. Se abre desde el botón ? (abajo del menú / arriba en
+  // celular): un panel con un desplegable por sección, abierto en la página donde estás.
+  // Sólo se listan las secciones que la persona puede ver. Un paso con `ver` se muestra
+  // sólo si esa función da true (ej. subir costos = Admin y Líder).
+  const AYUDA = [
+    { t: "Catálogo, Comparaciones e Insights", ic: "search", pages: ["comparaciones", "resultados", "decisiones"], pasos: [
+      "<b>Buscá un producto</b> en <b>Catálogo</b> (por SKU, nombre o familia) y abrilo para ver sus equivalentes.",
+      "<b>Revisá el match:</b> cada equivalente muestra <b>cuántas de las 3 señales coinciden</b> (técnica, forma, imagen). Cuantas más, más confiable.",
+      "Los equivalentes <b>sin precio o marcados con ⚠</b> pueden ser de otra gama: revisalos antes de seleccionarlos.",
+      "<b>Seleccioná</b> las válidas con “＋ Seleccionar”: quedan <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>, donde las filtrás y las exportás a Excel.",
+      "En <b>Insights</b> ves la posición de precio y las oportunidades sobre lo seleccionado.",
+      "Con <b>⚙ Descuentos</b> (arriba a la derecha) simulás el precio neto con otros descuentos. Es sólo para vos: no cambia lo que ve el resto."] },
+    { t: "Carga de datos", ic: "upload", pages: ["integraciones", "manual"], pasos: [
+      ["<b>Subir precios</b> (en Administración): subís la lista de una marca en Excel, con una columna de código o SKU y una de precio.", () => puedePrecios()],
+      ["<b>Subir costos</b>: Excel con <b>SKU y Costo en US$</b>. Los ven sólo Admin y Líder y nunca quedan en un archivo público.", () => puedeCostos()],
+      ["<b>Actualizar lista</b>: subís la lista nueva de una marca que ya está cargada y se cruza sola con la anterior.", () => puedeIntegrar()],
+      ["En <b>Nuevas integraciones</b> revisás lo importado de un competidor nuevo y lo aprobás o descartás. Conviene aprobar los que tienen foto.", () => puedeIntegrar()],
+      "El <b>Manual de carga</b> tiene la receta de cada marca: moneda, IVA, dónde está el código y las particularidades de su lista."] },
+    { t: "Fichas técnicas", ic: "description", pages: ["fichas"], pasos: [
+      "<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
+      "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
+      "<b>Descargá el PDF</b>: si la línea tiene varias hojas, salen todas en un archivo."] },
+    { t: "Firmas de mail", ic: "signature", pages: ["firmas"], pasos: [
+      "Subí la base del equipo (.xlsx o .csv) con <b>Nombre y Apellido, Rol, Teléfono, Dirección y Link Web</b>.",
+      "Revisá la vista previa y <b>descargá las firmas en PDF</b>, una por persona, con el diseño oficial de Leuk."] },
+    { t: "Stock diario", ic: "inventory_2", pages: ["stock"], pasos: [
+      "Cargá el <b>Stock (.xlsx)</b>. Si cambiaron, actualizá también <b>Familias (.xlsx)</b> y <b>Fotos (.zip)</b>.",
+      "Elegí la <b>fecha</b>, revisá la vista previa y <b>descargá el PDF</b>.",
+      "En <b>Personalizar</b> cambiás logo y fuentes; queda guardado para la próxima."] },
+    { t: "Reingresos", ic: "assignment_return", pages: ["reingresos"], pasos: [
+      "Seguí los <b>pasos 1 a 5</b>: título y aviso → Excel/CSV con los reingresos (detecta SKU, nombre y color) → fotos en ZIP → ajuste de productos → descarga.",
+      "Las fotos se matchean solas por <b>SKU o nombre</b> del archivo (ej. “6832.jpg”).",
+      "Descargás la pieza en <b>PDF o JPG</b>.",
+      "En <b>Configurar una vez</b> guardás el estándar de marca (logo, portada, fuentes) para los próximos reingresos."] },
+    { t: "Eventos", ic: "confirmation_number", pages: ["eventos"], pasos: [
+      "<b>Marcá presente</b> a cada persona cuando llega: el estado se comparte en vivo con quien tenga la app abierta.",
+      "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
+      "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
+      "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
+    { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig"], pasos: [
+      "Elegí el canal en el menú (<b>Comunidad WhatsApp</b> o <b>Instagram</b>) y el <b>mes</b> arriba.",
+      "Miralo en <b>📅 Calendario</b> (el ritmo del mes) o en <b>🗂 Fichas</b> (el copy tal cual sale). En Instagram tenés además el <b>Feed</b>, como se va a ver la grilla.",
+      "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
+      "Dejá <b>comentarios</b> en 💬, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
+      "Cada pieza avanza <b>borrador → en revisión → aprobado</b>. Una pieza con sugerencias pendientes no se puede aprobar.",
+      "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
+    { t: "Tareas", ic: "view_kanban", pages: ["tareas"], pasos: [
+      "Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
+      "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
+      "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
+      "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",
+      "Escribí <b>@</b> en un comentario o en un paso del checklist para <b>mencionar</b> a alguien del equipo.",
+      "El número al lado de <b>Tareas</b> en el menú son las tuyas que vencen hoy o ya vencieron, más las menciones nuevas."] },
+    { t: "Acciones", ic: "campaign", pages: ["acciones"], pasos: [
+      "Creá una acción con <b>＋ Nueva acción</b>: tipo, socio, fechas y responsable.",
+      "Movela de estado a medida que avanza: <b>idea → evaluación → negociación → aprobada → en curso → finalizada</b>. Cada cambio queda en la línea de tiempo.",
+      "En la <b>línea de tiempo</b> sumá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
+      "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
+      "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
+    { t: "Usuarios", ic: "group", pages: ["usuarios"], pasos: [
+      "<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
+      "<b>Cambiá el rol</b> cuando cambie de equipo: se aplica la próxima vez que entre.",
+      "Tildá <b>Marketing</b> para que vea <b>Tareas</b> (es aparte del rol).",
+      "<b>Quitá el acceso</b> con ✕: se elimina su cuenta y su rol."] },
+  ];
+  function abrirAyuda() {
+    const actual = ($("#nav .nv-item.on") || { dataset: {} }).dataset.page;
+    const secs = AYUDA.filter(x => x.pages.some(puedeVerPagina)).map(x => {
+      const pasos = x.pasos.filter(p => typeof p === "string" || p[1]()).map(p => typeof p === "string" ? p : p[0]);
+      return pasos.length ? { ...x, pasos, aca: x.pages.includes(actual) } : null;
+    }).filter(Boolean);
+    secs.sort((a, b) => b.aca - a.aca);             // la sección donde estás, primero y abierta
+    $("#ayudaBody").innerHTML = (secs.some(x => x.aca) ? "" :
+      `<p class="ay-intro">Elegí una sección para ver cómo se usa.</p>`) +
+      secs.map(x => `<details class="ay-sec"${x.aca ? " open" : ""}>
+        <summary><span class="ms">${x.ic}</span><span class="ay-t">${x.t}</span>${x.aca ? `<span class="ay-aca">estás acá</span>` : ""}</summary>
+        <ol class="home-steps">${x.pasos.map(t => `<li>${t}</li>`).join("")}</ol></details>`).join("");
+    abrirMenu(false);
+    document.body.classList.add("ayuda-abierta");
+    $("#ayudaFab").setAttribute("aria-expanded", "true");
+    $("#ayudaCerrar").focus();
+  }
+  function cerrarAyuda() {
+    document.body.classList.remove("ayuda-abierta");
+    $("#ayudaFab").setAttribute("aria-expanded", "false");
+  }
+
   function goToPage(page) {
     if (!PAGES.includes(page)) page = "inicio";
     let mod = MOD_DE[page] || "inicio";
@@ -2399,7 +2487,11 @@
   $("#navOpen").addEventListener("click", () => abrirMenu(true));
   $("#navClose").addEventListener("click", () => abrirMenu(false));
   $("#sideScrim").addEventListener("click", () => abrirMenu(false));
-  document.addEventListener("keydown", ev => { if (ev.key === "Escape") abrirMenu(false); });
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape") { abrirMenu(false); cerrarAyuda(); } });
+  // el botón flotante abre y cierra (tocarlo de nuevo cierra el pop-up)
+  $("#ayudaFab").addEventListener("click", () => document.body.classList.contains("ayuda-abierta") ? cerrarAyuda() : abrirAyuda());
+  $("#ayudaCerrar").addEventListener("click", cerrarAyuda);
+  $("#ayudaVelo").addEventListener("click", cerrarAyuda);
 
   /* ===================== USUARIOS (panel, sólo admin) ===================== */
   // Los roles/nombres se editan directo contra la tabla `perfiles` (RLS: sólo admin escribe).
@@ -2555,56 +2647,25 @@
     const mods = [
       { mod: "benchmark", ic: "📊",
         d: "Compará precios y datos técnicos de tus productos contra el mercado.",
-        stats: [[nProd, "productos"], [conComp, "con comparación"], [nAuth, "seleccionadas"]],
-        ayuda: ["<b>Buscá un producto</b> en <b>Catálogo</b> (por SKU, nombre o familia) y abrilo para ver sus equivalentes.",
-                "<b>Revisá el match:</b> cada equivalente muestra <b>cuántas de las 3 señales coinciden</b> (técnica, forma, imagen). Cuantas más, más confiable.",
-                "<b>Seleccioná</b> las válidas con “＋ Seleccionar”: quedan <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>.",
-                "<b>Analizá</b> en <b>Insights</b> la posición de precio y las oportunidades.",
-                "Con <b>⬆ Precios</b> subís la lista (Excel) de una marca y con <b>⚙ Descuentos</b> simulás escenarios."] },
+        stats: [[nProd, "productos"], [conComp, "con comparación"], [nAuth, "seleccionadas"]] },
       { mod: "diseno", ic: "📄",
         d: "Fichas técnicas de producto, listas para descargar y compartir con clientes.",
-        stats: [[nFichas, "fichas"]],
-        ayuda: ["<b>Buscá la ficha</b> por nombre de línea, producto o SKU.",
-                "Revisá la vista previa: foto, dibujo técnico, especificaciones y curvas fotométricas.",
-                "<b>Descargá el PDF</b> — si la línea tiene varias hojas, salen todas en un archivo."] },
+        stats: [[nFichas, "fichas"]] },
       { mod: "eventos", ic: "🎟️",
         d: "Check-in de eventos y sorteo en vivo, compartido con todo el equipo.",
-        stats: [],
-        ayuda: ["<b>Marcá presente</b> a cada persona cuando llega (a mano) — el estado se comparte en vivo con quien tenga la app abierta.",
-                "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
-                "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
-                "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
+        stats: [] },
       { mod: "contenidos", ic: "🗓",
         d: "El cronograma mensual de la comunidad profesional de WhatsApp: qué se manda, cuándo y en qué estado está.",
-        stats: [],
-        ayuda: ["Elegí el <b>mes</b> arriba y miralo en <b>📅 Calendario</b> (el ritmo del mes) o en <b>🗂 Fichas</b> (el copy tal cual va a WhatsApp).",
-                "Cada mensaje trae su <b>copy, imagen, link, CTA y notas</b>; los de contenido adaptativo traen además sus <b>variantes</b>, una por resultado de encuesta.",
-                "Dejá <b>comentarios o sugerencias</b> en 💬 — quedan visibles para todo el equipo hasta que se marcan como resueltos.",
-                "Coordinación edita el copy en el lugar y lo va moviendo: <b>borrador → en revisión → aprobado</b>.",
-                "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
+        stats: [] },
       { mod: "tareas", ic: "✅",
         d: "Las tareas del equipo de marketing: quién hace qué, para cuándo y en qué estado está.",
-        stats: [],
-        ayuda: ["Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
-                "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
-                "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
-                "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",
-                "Escribí <b>@</b> en un comentario o en un paso del checklist para <b>mencionar</b> a alguien del equipo: le aparece marcado en su solapa Tareas.",
-                "El número en la solapa <b>Tareas</b> son las tuyas que vencen hoy o ya vencieron, más las menciones nuevas."] },
+        stats: [] },
       { mod: "acciones", ic: "🎯",
         d: "Seguimiento de las acciones de marketing: propuestas, negociación, inversión y resultados.",
-        stats: [],
-        ayuda: ["Creá una acción con <b>＋ Nueva acción</b>: tipo, socio, fechas y responsable.",
-                "Movela de estado a medida que avanza: <b>idea → evaluación → negociación → aprobada → en curso → finalizada</b>. Cada cambio queda en la línea de tiempo.",
-                "En la <b>línea de tiempo</b> tirá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
-                "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
-                "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
+        stats: [] },
       { mod: "usuarios", ic: "👥",
         d: "Quién entra a la plataforma y qué ve cada uno.",
-        stats: [],
-        ayuda: ["<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
-                "<b>Cambiá el rol</b> cuando cambie de equipo — se aplica la próxima vez que entre.",
-                "<b>Quitá el acceso</b> con ✕: se elimina su cuenta y su rol."] },
+        stats: [] },
     ].filter(m => MODULOS[m.mod] && puedeVer(m.mod));   // sólo los módulos del rol
 
     const card = m => {
@@ -2624,16 +2685,10 @@
         <img src="assets/logo-leuk-ilum.png?v=48" alt="Leuk Iluminación" class="home-logo">
         <span class="brand-sub home-tag">Leuk Marketing</span>
         <h1>Hola${nombre ? ", " + nombre : ""} 👋</h1>
-        <p>Esta es la <b>plataforma de marketing de Leuk</b>: compará tus productos contra el mercado y generá las fichas técnicas, todo en un solo lugar.</p>
+        <p>Esta es la <b>plataforma de marketing de Leuk</b>: tareas, acciones, contenidos, precios y fichas del equipo, todo en un solo lugar.</p>
       </div>
       <div class="home-mods">${mods.map(card).join("")}</div>
-      <div class="home-help">
-        <h2>¿Cómo se usa?</h2>
-        <div class="home-help-grid">
-          ${mods.map(m => `<div><h4>${m.ic} ${MODULOS[m.mod].label}</h4>
-            <ol class="home-steps">${m.ayuda.map(t => `<li>${t}</li>`).join("")}</ol></div>`).join("")}
-        </div>
-        <p class="home-note">En Benchmark, los equivalentes sin precio o marcados con ⚠ pueden ser de otra gama — conviene revisarlos antes de seleccionarlos.</p>
+      <p class="home-ayuda-tip">¿Cómo se usa cada sección? Tocá el botón <span class="ay-btn ay-mini" aria-hidden="true">?</span> de <b>Ayuda</b>, abajo a la derecha.</p>
       </div>`;
     // cada tarjeta entra al módulo (a su última página vista, o a la primera)
     cont.querySelectorAll(".home-mod").forEach(b => b.onclick = () => {

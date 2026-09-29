@@ -14,6 +14,9 @@ self.addEventListener("push", e => {
     icon: "assets/icon-192.png",
     badge: "assets/favicon-32.png",
     tag: d.tag || undefined,          // el mismo aviso no se duplica
+    // Explícito: sin esto el navegador decide, y en la Mac (Chrome y Safari) los mostraba sin sonido
+    silent: false,
+    renotify: !!d.tag,                // si reemplaza a uno con la misma etiqueta, que vuelva a avisar
     data: { url: d.url || "./" },
   }));
 });

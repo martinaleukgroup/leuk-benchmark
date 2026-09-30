@@ -2419,11 +2419,12 @@
       "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig"], pasos: [
-      "Elegí el canal en el menú (<b>Comunidad WhatsApp</b> o <b>Instagram</b>) y el <b>mes</b> arriba.",
-      "Miralo en <b>📅 Calendario</b> (el ritmo del mes) o en <b>🗂 Fichas</b> (el copy tal cual sale). En Instagram tenés además el <b>Feed</b>, como se va a ver la grilla.",
+      "Elegí el canal en el menú (<b>Comunidad WhatsApp</b> o <b>Instagram</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
+      "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
+      "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
       "Dejá <b>comentarios</b> en 💬, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
-      "Cada pieza avanza <b>borrador → en revisión → aprobado</b>. Una pieza con sugerencias pendientes no se puede aprobar.",
+      "Con sugerencias sin resolver no se puede marcar <b>Listo para publicar</b>. Los ajustes se van tildando como resueltos en los comentarios.",
       "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
     { t: "Tareas", ic: "view_kanban", pages: ["tareas"], pasos: [
       "Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
@@ -2834,7 +2835,7 @@
     const nt = (t || []).filter(x => x.tipo === "tarea" && x.dias <= 0).length;
     const nc = (c || []).filter(x => x.tipo === "pieza" && x.dias === 0 && !x.ok).length;
     const partes = [nt ? `${nt} tarea${nt > 1 ? "s" : ""} tuya${nt > 1 ? "s" : ""} para hoy o vencida${nt > 1 ? "s" : ""}` : "",
-                    nc ? `${nc} pieza${nc > 1 ? "s" : ""} sale${nc > 1 ? "n" : ""} hoy sin aprobar` : ""].filter(Boolean);
+                    nc ? `${nc} pieza${nc > 1 ? "s" : ""} sale${nc > 1 ? "n" : ""} hoy y no está${nc > 1 ? "n" : ""} lista${nc > 1 ? "s" : ""}` : ""].filter(Boolean);
     return partes.length ? partes.join(" · ") : null;
   }
   // Muestra lo que está en cola. Con la pestaña oculta espera (ver visibilitychange).
@@ -2937,12 +2938,12 @@
         meta: `${x.canalT} · tu sugerencia`, tag: [x.aceptada ? "Aceptada" : "Descartada", x.aceptada ? "ok" : "prox"], ir });
       const meta = `${x.canalT} · ${x.estado}`;
       if (x.tipo === "revisar") return items.push({ at: true, orden: 1, dias: x.dias, ic: "rate_review", tit: x.titulo, meta,
-        tag: [x.dias < 0 ? `Para revisar · era para ${cuando(x.dias)}` : `Para revisar · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
+        tag: [x.dias < 0 ? `Precisa tu feedback · era para ${cuando(x.dias)}` : `Precisa tu feedback · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
       if (x.tipo === "corregir") return items.push({ at: true, orden: 1, dias: x.dias, ic: "edit", tit: x.titulo, meta,
-        tag: [x.dias < 0 ? `Para corregir · era para ${cuando(x.dias)}` : `Para corregir · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
+        tag: [x.dias < 0 ? `Con ajustes · era para ${cuando(x.dias)}` : `Con ajustes · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
       if (x.dias < 0) return items.push({ at: true, orden: 0, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, tag: [`Era para ${cuando(x.dias)}`, "venc"], ir });
       // "sin aprobar" (sólo le llega a los responsables del canal)
-      if (x.dias === 0 && !x.ok) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy sin aprobar", "hoy"], ir });
+      if (x.dias === 0 && !x.ok) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy y no está lista", "hoy"], ir });
       items.push({ at: false, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, ir,
         tag: x.dias === 0 ? ["Sale hoy", "ok"] : [`Sale ${cuando(x.dias)}`, "prox"] });
     });
@@ -2963,8 +2964,8 @@
     if (t) tiles.push({ n: t.filter(x => x.tipo === "tarea" && x.dias <= 0).length, l: "Tus tareas para hoy o vencidas", p: "tareas" });
     // Contenidos según tu papel: quien revisa ve lo que le mandaron; quien hace, lo que tiene que corregir
     const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && x.canal === "instagram" ? "contenidos-ig" : "contenidos"; };
-    if (c && (c.papeles || []).includes("revisa")) tiles.push({ n: c.filter(x => x.tipo === "revisar").length, l: "Piezas para revisar", p: irCanal("revisar") });
-    if (c && (c.papeles || []).includes("hace")) tiles.push({ n: c.filter(x => x.tipo === "corregir").length, l: "Piezas para corregir", p: irCanal("corregir") });
+    if (c && (c.papeles || []).includes("revisa")) tiles.push({ n: c.filter(x => x.tipo === "revisar").length, l: "Piezas que precisan tu feedback", p: irCanal("revisar") });
+    if (c && (c.papeles || []).includes("hace")) tiles.push({ n: c.filter(x => x.tipo === "corregir").length, l: "Piezas con ajustes para hacer", p: irCanal("corregir") });
     if (t || a) tiles.push({ n: [...(t || []), ...(a || [])].filter(x => x.tipo === "mencion").length, l: "Menciones nuevas", p: t ? "tareas" : "acciones" });
     $("#mdTiles").innerHTML = tiles.map(x => `<button class="md-tile${x.n ? " con" : ""}" data-page="${x.p}"><b>${x.n}</b><span>${x.l}</span></button>`).join("");
     $("#mdTiles").querySelectorAll("[data-page]").forEach(b => b.onclick = () => goToPage(b.dataset.page));

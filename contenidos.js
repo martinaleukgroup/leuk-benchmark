@@ -35,14 +35,14 @@
       caja: "#contenidos", pagina: "contenidos",
       unidad: "mensaje", art: "un", unidadPl: "mensajes", nuevo: "Nuevo mensaje",
       eyebrow: m => `Comunidad profesional de WhatsApp · ${cap(mesLabel(m))}`,
-      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias en cada mensaje. La edición y la aprobación las hace Coordinación.",
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada mensaje con «Con ajustes» o «Listo para publicar».",
     },
     instagram: {
       label: "Instagram", corto: "Instagram", icono: "📸",
       caja: "#contenidos-ig", pagina: "contenidos-ig",
       unidad: "pieza", art: "una", unidadPl: "piezas", nuevo: "Pieza nueva",
       eyebrow: m => `Instagram · ${cap(mesLabel(m))}`,
-      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias en cada pieza. La edición y la aprobación las hace Coordinación.",
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
     },
   };
 
@@ -75,11 +75,12 @@
   // andando con los placeholders, no romperse ni reintentar en cada pintada.
   let FIGMA = { estado: "", msg: "", espera: 0 };  // "" | ok | sin-funcion | sin-token | error
 
+  // Los nombres los eligió el equipo (sep 2026). Las claves de la base no cambian.
   const ESTADOS = {
     borrador:  { t: "Borrador" },
-    revision:  { t: "En revisión" },
-    cambios:   { t: "Cambios pedidos" },
-    aprobado:  { t: "Aprobado" },
+    revision:  { t: "Precisa feedback" },
+    cambios:   { t: "Con ajustes" },
+    aprobado:  { t: "Listo para publicar" },
     publicado: { t: "Publicado" },
   };
   // "Publicado" es un paso más allá de "aprobado" (ya salió al canal), no una
@@ -88,12 +89,13 @@
   // Los recortes salen de los datos: nadie tiene que mantener una lista de pendientes.
   const FILTROS = [
     { k: "todos",     t: "Todo",             f: () => true },
-    { k: "abiertos",  t: "Sin aprobar",      f: m => !yaAprobado(m) },
-    { k: "revisar",   t: "Esperando visto",  f: m => m.estado === "revision" },
+    { k: "abiertos",  t: "Sin terminar",     f: m => !yaAprobado(m) },
+    { k: "revisar",   t: "Precisa feedback", f: m => m.estado === "revision" },
+    { k: "ajustes",   t: "Con ajustes",      f: m => m.estado === "cambios" },
     { k: "sugerido",  t: "Con sugerencias",  f: m => (COMS[m.id] || []).some(c => c.tipo === "sugerencia" && !c.decision) },
     { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => c.tipo !== "sugerencia" && !c.resuelto) },
     { k: "aviso",     t: "Con aviso",        f: m => !!m.flag },
-    { k: "aprobado",  t: "Aprobados",        f: m => yaAprobado(m) },
+    { k: "aprobado",  t: "Listos para publicar", f: m => m.estado === "aprobado" },
     { k: "publicado", t: "Publicados",       f: m => m.estado === "publicado" },
   ];
   const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
@@ -429,6 +431,10 @@
       enganchar(); return;
     }
 
+    if (FOCO && VISTA === "fichas") {
+      SEL[CANAL] = FOCO; VER_PANEL = true;
+      if (!MSGS.filter(filtroActivo()).some(m => m.id === FOCO)) FILTRO = "todos";
+    }
     cont.innerHTML = barraHTML(ed) + (PANEL ? panelHTML() : "") + cabeceraHTML(ed) +
       (VISTA === "calendario" ? calendarioHTML()
        : VISTA === "feed" ? feedHTML(ed)
@@ -482,9 +488,9 @@
           </div>
         </div>
         ${n ? `<div class="ct-bar-fila ct-fila-2">
-          <div class="ct-progreso" title="${aprobados} de ${n} ${C().unidadPl} aprobados">
+          <div class="ct-progreso" title="${aprobados} de ${n} ${C().unidadPl} listos para publicar o publicados">
             <div class="ct-barra"><span style="width:${pct}%"></span></div>
-            <span class="ct-progreso-t"><b>${aprobados}</b>/${n} aprobados</span>
+            <span class="ct-progreso-t"><b>${aprobados}</b>/${n} listos</span>
           </div>
           <div class="ct-filtros">${chips}</div>
         </div>` : ""}
@@ -676,11 +682,11 @@
         <div class="ct-grid">${grilla}</div>
         <div class="ct-feed-ley">
           <span><i class="borrador"></i>Borrador</span>
-          <span><i class="revision"></i>En revisión</span>
-          <span><i class="cambios"></i>Cambios pedidos</span>
-          <span><i class="aprobado"></i>Aprobado</span>
+          <span><i class="revision"></i>Precisa feedback</span>
+          <span><i class="cambios"></i>Con ajustes</span>
+          <span><i class="aprobado"></i>Listo para publicar</span>
           <span><i class="publicado"></i>Publicado</span>
-          <span class="ct-feed-ley-nota">El punto es el estado de la pieza. La barra de abajo tiene un tramo por placa: cada una se aprueba sola.</span>
+          <span class="ct-feed-ley-nota">El punto es el estado de la pieza.</span>
         </div>
       </div>`;
   }
@@ -795,19 +801,73 @@
   }
 
   /* ---- Vista fichas ---- */
+  /* Vista Fichas = LISTA + PANEL (sep 2026, a pedido del equipo: "están todas pegadas").
+     A la izquierda, una fila por pieza (fecha, título, estado y a quién le toca); a la
+     derecha, la pieza elegida completa — la misma ficha de siempre, con su edición,
+     placas, sugerencias y comentarios. En celular se ve una cosa por vez. */
+  const SEL = {};            // canal → id de la pieza abierta en el panel
+  let VER_PANEL = false;     // celular: true = se muestra el panel en vez de la lista
   function fichasHTML(ed) {
     if (!MSGS.length) {
-      return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene mensajes.</p>
-        ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar el primero</button>` : ""}</div>`;
+      return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene ${C().unidadPl}.</p>
+        ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar ${C().art === "una" ? "la primera" : "el primero"}</button>` : ""}</div>`;
     }
     const lista = MSGS.filter(filtroActivo());
     if (!lista.length) {
       const t = (FILTROS.find(x => x.k === FILTRO) || {}).t || "";
-      return `<div class="empty"><div class="big">✓</div><p>Ningún mensaje en «${esc(t)}».</p>
+      return `<div class="empty"><div class="big">✓</div><p>Nada en «${esc(t)}».</p>
         <button class="btn-mini" data-filtro="todos" style="margin-top:10px">Ver todo el mes</button></div>`;
     }
+    // La abierta: la que eligió la persona; si no está en el recorte, la primera que le toca mover; si no, la primera.
+    if (!lista.some(m => m.id === SEL[CANAL])) SEL[CANAL] = (lista.find(m => meToca(m)) || lista[0]).id;
+    const m = lista.find(x => x.id === SEL[CANAL]);
+    if (ABIERTOS[m.id] === undefined) ABIERTOS[m.id] = true;      // en el panel, el feedback se ve de entrada
     return (CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : "") +
-      lista.map(m => fichaHTML(m, ed)).join("") + NOTA_PIE;
+      `<div class="ct-split ${VER_PANEL ? "ver-panel" : ""}">
+        <div class="ct-lista" role="list">${lista.map(filaHTML).join("")}</div>
+        <div class="ct-panel-pieza">
+          <button class="ct-volver" data-volver="1">← ${C().art === "una" ? "Todas las" : "Todos los"} ${C().unidadPl}</button>
+          ${fichaHTML(m, ed)}
+        </div>
+      </div>` + NOTA_PIE;
+  }
+  function filaHTML(m) {
+    const f = aFecha(m.fecha);
+    const coms = COMS[m.id] || [];
+    const pend = coms.filter(c => c.tipo === "sugerencia" ? !c.decision : !c.resuelto).length;
+    const t = turno(m);
+    return `<button class="ct-fila ${m.id === SEL[CANAL] ? "on" : ""} ${meToca(m) ? "me-toca" : ""}" data-sel="${m.id}" role="listitem">
+      <span class="ct-fila-f"><b>${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}</b><small>${DIA_CORTO[f.getDay()].slice(0, 3)}</small></span>
+      <span class="ct-fila-t"><b>${esc(m.criterio || "Sin título")}</b>
+        <small>${t ? esc(t) : ""}${pend ? ` · 💬 ${pend}` : ""}</small></span>
+      <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
+    </button>`;
+  }
+
+  /* ---- A quién le toca: el turno de cada pieza según su estado y los responsables ---- */
+  // Mismo criterio que la función contenidos_pasar de la base: el papel manda; admin puede
+  // todo; si el canal no tiene a nadie en ese papel, lo puede hacer cualquiera que edite.
+  const esAdminC = () => !!(SES().rol && SES().rol() === "admin");
+  const puedoHacer = () => papelesEn(CANAL).includes("hace") || esAdminC()
+    || (puedeEditar() && !nombresDe(CANAL, "hace").length);
+  const puedoRevisar = () => papelesEn(CANAL).includes("revisa") || esAdminC()
+    || (puedeEditar() && !nombresDe(CANAL, "revisa").length);
+  function turno(m) {
+    const h = nombresDe(CANAL, "hace").join(", "), r = nombresDe(CANAL, "revisa").join(", ");
+    return ({
+      borrador: h ? `La arma ${h}` : "",
+      revision: r ? `Espera el feedback de ${r}` : "Espera feedback",
+      cambios: h ? `Ajustes para ${h}` : "Tiene ajustes para hacer",
+      aprobado: h ? `La publica ${h}` : "Lista para publicar",
+      publicado: "",
+    })[m.estado] || "";
+  }
+  // ¿La tengo que mover yo? (resalta la fila y elige qué abrir primero)
+  function meToca(m) {
+    const p = papelesEn(CANAL);
+    if (m.estado === "revision") return p.includes("revisa");
+    if (["borrador", "cambios", "aprobado"].includes(m.estado)) return p.includes("hace");
+    return false;
   }
 
   // Una sola vez al pie, en vez de repetir la aclaración en cada ficha.
@@ -873,7 +933,7 @@
 
     if (!pls.length) {
       return `<div class="ct-placas-blk vacio">
-        <p>Esta pieza todavía no tiene placas: mientras no las tenga, se aprueba entera como un mensaje.</p>
+        <p>Esta pieza todavía no tiene placas.</p>
         ${ed ? `<button class="btn-mini" data-addplaca="1">+ Agregar la primera placa</button>` : ""}
       </div>`;
     }
@@ -881,7 +941,6 @@
     const i = Math.min(PLACA[m.id] || 0, pls.length - 1);
     const act = pls[i] || {};
     const traba = comsPlaca(m, i + 1).length;
-    const trabaCopy = comsPlaca(m, null).length;
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const chip = est => `<span class="ct-est ${esc(est)}">${ESTADOS[est] ? ESTADOS[est].t : esc(est)}</span>`;
 
@@ -891,8 +950,7 @@
         ${ed ? `<select class="ct-tipo" data-tipo="${m.id}" title="Cómo se publica">
           ${Object.keys(TIPOS).map(k => `<option value="${k}" ${(m.tipo || "post") === k ? "selected" : ""}>${TIPOS[k]}</option>`).join("")}
         </select>` : `<span class="ct-pill">${TIPOS[m.tipo] || "Post"}</span>`}
-        <span class="ct-placas-res"><b>${placasListas(m)}</b>/${pls.length} ${pls.length > 1 ? "placas aprobadas" : "aprobada"}
-          · copy ${(((ESTADOS[m.copy_estado] || {}).t) || "borrador").toLowerCase()}</span>
+
       </div>
 
       <div class="ct-placas">
@@ -934,22 +992,8 @@
         : `<p class="ct-placa-figma tenue">Sin frame de Figma cargado: pegá el archivo y el nodo acá arriba y aparece el link.</p>`}
 
       ${ed ? `<div class="ct-placa-accs">
-        ${act.estado === "aprobado"
-          ? `<button class="btn-mini" data-placaest="${m.id}:${i}:revision">Reabrir esta placa</button>`
-          : traba
-            ? `<button class="btn-mini trabado" data-trabaplaca="${traba}">✓ Aprobar esta placa</button>`
-            : `<button class="btn-mini on" data-placaest="${m.id}:${i}:aprobado">✓ Aprobar esta placa</button>`}
-        ${act.estado === "cambios" ? "" : `<button class="btn-mini peligro" data-placaest="${m.id}:${i}:cambios">Pedir cambios acá</button>`}
-        <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕</button>
-        <span class="ct-placa-sep"></span>
-        ${(m.copy_estado || "borrador") === "aprobado"
-          ? `<button class="btn-mini" data-copyest="${m.id}:revision">Reabrir el copy</button>`
-          : trabaCopy
-            ? `<button class="btn-mini trabado" data-trabaplaca="${trabaCopy}">✓ Aprobar el copy</button>`
-            : `<button class="btn-mini on" data-copyest="${m.id}:aprobado">✓ Aprobar el copy</button>`}
-      </div>
-      ${traba || trabaCopy ? `<p class="ct-placa-nota">No se aprueba con comentarios abiertos. Resolvelos en el hilo de abajo y el botón se habilita.</p>` : ""}
-      <p class="ct-placa-nota tenue">El estado de la pieza sale de las placas y del copy: no se toca a mano.</p>` : ""}
+        <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕ Eliminar placa</button>
+      </div>` : ""}
     </div>`;
   }
 
@@ -981,26 +1025,34 @@
     </div>`;
   }
 
-  // El flujo: borrador → en revisión → aprobado → publicado, con "pedir cambios" como vuelta atrás.
+  /* El flujo (sep 2026): Borrador → Precisa feedback → Con ajustes ↺ / Listo para publicar → Publicado.
+     Cada botón llama a la función contenidos_pasar de la base, que valida el papel:
+     quien HACE pide feedback y publica; quien REVISA decide. A quien no le toca, se le dice a quién. */
   function accionesHTML(m, ed) {
-    if (!ed) return "";
-    // Con placas, el estado de la pieza lo deriva la base de sus partes: no hay
-    // botón que valga, se aprueba placa por placa arriba.
-    if (porPlacas(m)) return `<button class="btn-mini peligro" data-del="1" title="Eliminar la pieza">✕</button>`;
-    if (m.estado === "borrador" || m.estado === "cambios")
-      return `<button class="btn-mini" data-est="revision" title="Marcarlo listo para que lo revisen">Mandar a revisión</button>
-              <button class="btn-mini peligro" data-del="1" title="Eliminar el mensaje">✕</button>`;
-    if (m.estado === "revision") {
-      const p = sugsPendientes(m).length;
-      return `<button class="btn-mini peligro" data-est="cambios">Pedir cambios</button>` +
-        (p ? `<button class="btn-mini trabado" data-trabado="${p}"
-                title="Quedan ${p} sugerencias sin resolver">✓ Aprobar</button>`
-           : `<button class="btn-mini on" data-est="aprobado">✓ Aprobar</button>`);
-    }
+    const coms = COMS[m.id] || [];
+    const sugs = coms.filter(c => c.tipo === "sugerencia" && !c.decision).length;
+    const abiertos = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
+    const del = ed && ["borrador", "cambios"].includes(m.estado) ? `<button class="btn-mini peligro" data-del="1" title="Eliminar">✕</button>` : "";
+    const espera = t => `<span class="ct-espera">${esc(t)}</span>`;
+    if (m.estado === "borrador")
+      return puedoHacer() ? `${del}<button class="btn-mini on" data-paso="revision">Pedir feedback</button>` : espera(turno(m));
+    if (m.estado === "cambios")
+      return puedoHacer()
+        ? `${del}${abiertos ? `<span class="ct-espera">${abiertos} ajuste${abiertos > 1 ? "s" : ""} por resolver</span>` : ""}
+           <button class="btn-mini on" data-paso="revision">Pedir feedback de nuevo</button>`
+        : espera(turno(m));
+    if (m.estado === "revision")
+      return puedoRevisar()
+        ? `<button class="btn-mini peligro" data-paso="cambios">Con ajustes</button>` +
+          (sugs ? `<button class="btn-mini trabado" data-trabado="${sugs}" title="Quedan ${sugs} sugerencias sin resolver">✓ Listo para publicar</button>`
+                : `<button class="btn-mini on" data-paso="aprobado">✓ Listo para publicar</button>`)
+        : espera(turno(m));
     if (m.estado === "aprobado")
-      return `<button class="btn-mini on" data-est="publicado" title="Marcarlo como ya publicado en el canal">✓ Marcar publicado</button>
-              <button class="btn-mini" data-est="revision" title="Volver a abrirlo para editar">Reabrir</button>`;
-    return `<button class="btn-mini" data-est="revision" title="Volver a abrirlo para editar">Reabrir</button>`;
+      return puedoHacer()
+        ? `<button class="btn-mini" data-paso="borrador" title="Volver a editarla (pide feedback de nuevo)">Volver a editar</button>
+           <button class="btn-mini on" data-paso="publicado">✓ Marcar publicado</button>`
+        : espera(turno(m));
+    return puedoHacer() ? `<button class="btn-mini" data-paso="borrador" title="Volver a abrirla">Reabrir</button>` : "";
   }
 
   const dondeCampo = c => {
@@ -1054,7 +1106,7 @@
           <option value="">Toda la pieza</option>
           ${placasDe(m).map((p, n) => `<option value="${n + 1}" ${(PLACA[m.id] || 0) === n ? "selected" : ""}>Placa ${n + 1}${p.pie ? " · " + esc(p.pie.slice(0, 22)) : ""}</option>`).join("")}
         </select>` : ""}
-        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o una sugerencia…" rows="1"></textarea>
+        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o un ajuste…" rows="1"></textarea>
         <button class="btn-mini" data-enviar="${m.id}">Enviar</button>
       </div>
     </div>`;
@@ -1195,6 +1247,14 @@
 
       const cop = t.closest("[data-copiar]");
       if (cop) return copiar(id);
+
+      // Lista + panel: elegir una pieza / volver a la lista (celular)
+      const sel = t.closest("[data-sel]");
+      if (sel) { SEL[CANAL] = sel.dataset.sel; VER_PANEL = true; pintar(); return; }
+      if (t.closest("[data-volver]")) { VER_PANEL = false; pintar(); return; }
+      // Los pasos del flujo
+      const paso = t.closest("[data-paso]");
+      if (paso && id) { pasar(id, paso.dataset.paso, paso); return; }
 
       const est = t.closest("[data-est]");
       if (est) {
@@ -1377,6 +1437,51 @@
     } catch (e) {
       el.textContent = el.dataset.orig;
       avisar(id, "No se pudo guardar", false);
+    }
+  }
+
+  async function pasar(id, a, boton) {
+    const m = MSGS.find(x => x.id === id); if (!m) return;
+    const coms = COMS[id] || [];
+    const abiertos = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto);
+    if (a === "cambios" && !abiertos.length && !coms.some(c => c.tipo === "sugerencia" && !c.decision)) {
+      // "Con ajustes" sin decir qué ajustar no le sirve a nadie: se pide el texto
+      const txt = (prompt("¿Qué hay que ajustar? (queda como comentario en la pieza)") || "").trim();
+      if (!txt) return;
+      const r = await fetch(url("contenidos_comentarios"), { method: "POST", headers: head({ Prefer: "return=minimal" }),
+        body: JSON.stringify([{ contenido_id: id, texto: txt, variante: null, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }]) });
+      if (!r.ok) { alert("No se pudo guardar el comentario."); return; }
+    }
+    if (a === "aprobado" && abiertos.length &&
+        !confirm(`Quedan ${abiertos.length} comentario${abiertos.length > 1 ? "s" : ""} sin resolver. ¿La marcás lista para publicar igual?`)) return;
+    if (a === "borrador" && !confirm("¿Volver a editarla? Va a tener que pedir feedback de nuevo.")) return;
+    if (boton) boton.disabled = true;
+    const r = await fetch(url("rpc/contenidos_pasar"), { method: "POST", headers: head(), body: JSON.stringify({ p_id: id, p_a: a }) });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      alert(r.status === 404 ? "Falta correr el SQL del flujo de Contenidos en Supabase." : (d.message || "No se pudo cambiar el estado."));
+      if (boton) boton.disabled = false; return;
+    }
+    await traerMes(MES);
+    if (a === "aprobado") await congelarPiezas(MSGS.find(x => x.id === id));
+    pintar();
+    avisar(id, { revision: "Listo: se le avisó a quien revisa.", cambios: "Listo: se le avisó a quien la arma.",
+      aprobado: "Lista para publicar ✓", publicado: "Marcada como publicada ✓", borrador: "Volvió a borrador." }[a], true);
+  }
+  // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame, así que sin
+  // guardar el PNG lo aprobado cambiaría solo. Si falla, la pieza igual queda lista.
+  async function congelarPiezas(m) {
+    if (!m || !m.figma_file) return;
+    const pls = placasDe(m);
+    for (let n = 0; n < pls.length; n++) {
+      if (!pls[n].nodo || pls[n].png) continue;
+      const d = await fnFigma({ accion: "congelar", contenido_id: m.id, placa: n, file_key: m.figma_file, nodo: pls[n].nodo });
+      if (!d || !d.path) continue;
+      const act = MSGS.find(x => x.id === m.id) || m;
+      const con = placasDe(act).slice();
+      con[n] = Object.assign({}, con[n], { png: d.path, png_ts: new Date().toISOString() });
+      try { await guardarCampo(m.id, "placas", con); } catch (e) { }
+      if (d.url) CONGELADAS[d.path] = d.url;
     }
   }
 
@@ -1730,7 +1835,7 @@
 
     const KEY = "notis_ct_estados:" + yoC();
     let antes = null; try { antes = JSON.parse(localStorage.getItem(KEY)); } catch (e) { }
-    const ahora = {}, TXT = { revision: ["Te mandaron una pieza a revisar", "revisa"], cambios: ["Pidieron cambios en una pieza", "hace"], aprobado: ["Aprobaron una pieza", "hace"] };
+    const ahora = {}, TXT = { revision: ["Te piden feedback", "revisa"], cambios: ["Dejaron ajustes en una pieza", "hace"], aprobado: ["Una pieza quedó lista para publicar", "hace"] };
     (await piezasEnCurso(canales)).forEach(m => {
       ahora[m.id] = m.estado;
       const t = TXT[m.estado];

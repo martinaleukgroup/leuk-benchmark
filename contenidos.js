@@ -202,6 +202,29 @@
     const d = new Date(ts); return `${d.getDate()}/${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
   // "meta.imagen" / "variantes.2.copy" → escribe en una copia y devuelve la COLUMNA a guardar
+  /* Al vaciar del todo un cuadrante del brief (título y texto) o una fila de
+     obras, se saca del mes y los demás se reacomodan. Se toca el DOM en vez de
+     repintar para no perder el foco del campo al que saltaste.              */
+  async function compactarCab(col) {
+    if (col !== "brief" && col !== "obras") return;
+    const lista = Array.isArray(CAB[col]) ? CAB[col] : [];
+    if (!lista.some(vacia)) return;
+    const nuevoIdx = {}; let j = 0;
+    lista.forEach((o, i) => { if (!vacia(o)) nuevoIdx[i] = j++; });
+    if (!(await guardarCab(col, lista.filter(o => !vacia(o))))) return;
+    const cab = caja() && caja().querySelector(".ct-head"); if (!cab) return;
+    cab.querySelectorAll(`[data-cabi^="${col}."]`).forEach(bloque => {
+      const viejo = +bloque.dataset.cabi.split(".")[1];
+      if (!(viejo in nuevoIdx)) { bloque.remove(); return; }
+      bloque.dataset.cabi = `${col}.${nuevoIdx[viejo]}`;
+      bloque.querySelectorAll("[data-cabc]").forEach(c => {
+        const p = c.dataset.cabc.split("."); p[1] = nuevoIdx[viejo]; c.dataset.cabc = p.join(".");
+      });
+    });
+    if (col === "obras" && !cab.querySelector("[data-cabi^='obras.']")) { const t = cab.querySelector(".ct-obras"); if (t) t.closest(".ct-scroll").remove(); }
+    if (col === "brief" && !cab.querySelector("[data-cabi^='brief.']")) { const b = cab.querySelector(".ct-brief"); if (b) b.remove(); }
+  }
+
   function conCampo(fila, ruta, valor) {
     const partes = ruta.split(".");
     const col = partes[0];
@@ -546,6 +569,9 @@
     };
   }
 
+  // Un cuadrante del brief (o una fila de obras) sin ningún texto no se dibuja.
+  const vacia = o => !o || Object.values(o).every(v => !String(v == null ? "" : v).trim());
+
   function cabeceraHTML(ed) {
     if (!CAB) return "";
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
@@ -553,7 +579,7 @@
     const obras = Array.isArray(CAB.obras) ? CAB.obras : [];
     // El brief y las obras son material de consulta, no lo que venís a hacer: van
     // plegados para que los mensajes queden arriba de todo.
-    const hayDetalle = brief.length || obras.length;
+    const hayDetalle = brief.some(b => !vacia(b)) || obras.some(o => !vacia(o));
     return `
       <div class="ct-head">
         <p class="ct-eyebrow"${e} data-cabc="eyebrow">${esc(CAB.eyebrow || "")}</p>
@@ -561,12 +587,12 @@
         <p class="ct-dek"${e} data-cabc="dek">${esc(CAB.dek || "")}</p>
         ${hayDetalle ? `<details class="ct-detalle">
           <summary>Brief y obras del mes${obras.length ? ` · ${obras.length} obras asignadas` : ""}</summary>
-          ${brief.length ? `<div class="ct-brief">${brief.map((b, i) => `
-            <section><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
+          ${brief.length ? `<div class="ct-brief">${brief.map((b, i) => vacia(b) ? "" : `
+            <section data-cabi="brief.${i}"><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
                      <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`).join("")}</div>` : ""}
           ${obras.length ? `<div class="ct-scroll"><table class="ct-obras">
             <thead><tr><th>Tipología</th><th>Obra</th><th>Productos</th></tr></thead>
-            <tbody>${obras.map((o, i) => `<tr>
+            <tbody>${obras.map((o, i) => vacia(o) ? "" : `<tr data-cabi="obras.${i}">
               <td${e} data-cabc="obras.${i}.tipologia">${esc(o.tipologia || "")}</td>
               <td${e} data-cabc="obras.${i}.obra">${esc(o.obra || "")}</td>
               <td${e} data-cabc="obras.${i}.productos">${esc(o.productos || "")}</td></tr>`).join("")}</tbody>
@@ -1441,7 +1467,8 @@
     if (el.dataset.cabc) {
       const { col, val } = conCampo(CAB, el.dataset.cabc, nuevo);
       const ok = await guardarCab(col, val);
-      if (ok) el.dataset.orig = nuevo; else { el.textContent = el.dataset.orig; alert("No se pudo guardar."); }
+      if (ok) { el.dataset.orig = nuevo; CAB[col] = val; if (!nuevo.trim()) await compactarCab(col); }
+      else { el.textContent = el.dataset.orig; alert("No se pudo guardar."); }
       return;
     }
     const msg = el.closest(".ct-msg"); if (!msg) return;

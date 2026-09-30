@@ -57,7 +57,7 @@
   let CAB = null;        // fila de contenidos_meses del mes abierto
   let MSGS = [];         // filas de contenidos, ordenadas
   let COMS = {};         // contenido_id -> [comentarios]
-  let VISTA = "fichas";  // 'calendario' | 'fichas'
+  let VISTA = "fichas";  // 'calendario' | 'fichas' | 'feed' | 'resultados' (KPIs, en resultados.js)
   let ABIERTOS = {};     // contenido_id -> true si el hilo de comentarios está desplegado
   let FOCO = "";         // ficha a resaltar al venir desde el calendario
   let FILTRO = "todos";  // recorte activo — responde "¿qué me falta mirar?"
@@ -458,6 +458,20 @@
       SEL[CANAL] = FOCO; VER_PANEL = true;
       if (!MSGS.filter(filtroActivo()).some(m => m.id === FOCO)) FILTRO = "todos";
     }
+    // Resultados vive en resultados.js: acá sólo se le da el contenedor y lo que necesita saber.
+    if (VISTA === "resultados" && window.LeukResultados) {
+      cont.innerHTML = barraHTML(ed) + `<div class="rs-host"></div>`;
+      pintarBadgeNav();
+      enganchar();
+      window.LeukResultados.montar(cont.querySelector(".rs-host"), {
+        canal: CANAL, mes: MES, puedeCargar: puedoHacer(),
+        irAFicha: async (id, mes) => {
+          if (mes && mes !== MES) { MES = mes; await traerMes(MES); }
+          VISTA = "fichas"; FOCO = id; pintar();
+        },
+      });
+      return;
+    }
     cont.innerHTML = barraHTML(ed) + (PANEL ? panelHTML() : "") + cabeceraHTML(ed) +
       (VISTA === "calendario" ? calendarioHTML()
        : VISTA === "feed" ? feedHTML(ed)
@@ -524,10 +538,11 @@
             <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">☰ Fichas</button>
             ${CANAL === "instagram" ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
               title="Cómo va a quedar la grilla del perfil">▦ Feed</button>` : ""}
+            ${window.LeukResultados ? `<button data-vista="resultados" class="${VISTA === "resultados" ? "on" : ""}" title="KPIs del canal">📈 Resultados</button>` : ""}
           </div>
           ${VISTA === "fichas" && MSGS.length ? `<input class="ct-busca" type="search" placeholder="Buscar ${esc(C().unidad)}…" value="${esc(BUSCA)}" autocomplete="off" aria-label="Buscar">` : ""}
         </div>
-        ${MSGS.length ? `<div class="mh-chips ct-filtros">${chips}</div>` : ""}
+        ${MSGS.length && VISTA !== "resultados" ? `<div class="mh-chips ct-filtros">${chips}</div>` : ""}
       </div>
       ${ed ? "" : `<div class="ct-solo-lectura">${C().lectura}</div>`}`;
   }
@@ -1249,7 +1264,7 @@
       if (v) { VISTA = v.dataset.vista; MOVIENDO = ""; pintar(); return; }
 
       const fl = t.closest("[data-filtro]");
-      if (fl) { FILTRO = fl.dataset.filtro; pintar(); return; }
+      if (fl) { FILTRO = fl.dataset.filtro; if (VISTA === "resultados") VISTA = "fichas"; pintar(); return; }
 
       const ir = t.closest("[data-ir]");
       if (ir) { FOCO = ir.dataset.ir; VISTA = "fichas"; pintar(); return; }
@@ -1569,7 +1584,11 @@
   /* ---- Acciones de la barra ---- */
   async function accion(a) {
     if (a === "responsables") return abrirResponsables();
-    if (a === "refrescar") { await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]); pintar(); return; }
+    if (a === "refrescar") {
+      await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]);
+      if (VISTA === "resultados" && window.LeukResultados) await window.LeukResultados.refrescar();
+      pintar(); return;
+    }
 
     // Sin webhooks (plan Starter) nadie avisa que un diseño cambió: se vuelve a pedir.
     // Sólo se repiden las NO congeladas; lo aprobado no se toca, para eso se congeló.
@@ -2098,6 +2117,7 @@
       if (!sec || sec.classList.contains("hidden") || document.hidden) return;
       const foco = document.activeElement;
       if (foco && (foco.isContentEditable || foco.tagName === "TEXTAREA")) return;   // estás editando: no toco nada
+      if (VISTA === "resultados") return;   // ahí se cargan números: repintar borraría lo que estás tipeando
       await Promise.all([traerMes(MES), traerAvisos()]); pintar();
     }, 30000);
   }

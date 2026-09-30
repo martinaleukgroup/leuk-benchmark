@@ -267,3 +267,5 @@
 .ac-hilo .ac-com p{font-size:13.5px}
 .ac-hilo .ac-com-nuevo{font-size:13.5px;padding:6px 9px;margin-top:4px}
 .ac-hilo .ac-com-acc .btn-ghost{padding:4px 11px;font-size:13px}
+/* encabezado común: la inversión es un texto largo ("$ 1.200.000 + US$ 800") */
+.mh-kpi b.ac-stat-plata{font-size:20px;overflow-wrap:anywhere}

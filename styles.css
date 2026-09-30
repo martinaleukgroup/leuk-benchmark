@@ -813,3 +813,51 @@ body.locked .notis,body.ayuda-abierta .notis{display:none}
 @media(max-width:640px){.md-push{flex-wrap:wrap}.md-push-acc{width:100%;justify-content:flex-end}}
 .cu-sonido{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:13.5px;color:var(--gray);cursor:pointer}
 .cu-sonido input{width:16px;height:16px;accent-color:var(--olive)}
+
+/* ============================================================
+   ENCABEZADO COMÚN de los módulos (Tareas · Acciones · Contenidos), sep 2026.
+   Misma estructura en los tres, cada cosa siempre en el mismo lugar:
+     .mh        título + dato de contexto · a la derecha "⋯ Más" y el botón principal
+     .mh-kpis   contadores (tocan el filtro correspondiente)
+     barra fija (la de cada módulo, sticky) con .mh-bar (vista · buscador · filtros)
+                y .mh-chips (recortes en UNA fila; si no entran, se deslizan)
+   ============================================================ */
+.mh{padding:14px 0 4px}
+.mh-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.mh-tit{flex:1;min-width:200px}
+.mh-tit h1{margin:0;font-size:26px;line-height:1.1;color:var(--ink)}
+.mh-sub{margin:3px 0 0;font-size:13px;color:var(--gray-soft);display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.mh-sub b{color:var(--ink);font-weight:600}
+.mh-acc{display:flex;align-items:center;gap:8px;flex:none}
+.mh-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px}
+.mh-kpi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--card);
+  border-radius:12px;padding:10px 14px;font-family:var(--font-body);color:var(--gray-soft);min-width:0}
+button.mh-kpi{cursor:pointer}
+button.mh-kpi:hover{border-color:var(--olive-soft)}
+.mh-kpi.on{border-color:var(--olive);box-shadow:inset 0 0 0 1px var(--olive)}
+.mh-kpi b{font-family:var(--font-title);font-size:26px;line-height:1;color:var(--ink)}
+.mh-kpi b.cero{color:var(--olive-soft)}
+.mh-kpi b.no{color:var(--no)} .mh-kpi b.warn{color:var(--warn)} .mh-kpi b.ok{color:var(--ok)}
+.mh-kpi span{font-size:12px;line-height:1.3}
+.mh-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mh-bar input[type=search]{flex:1 1 200px;max-width:340px}
+div.mh-chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;min-width:0;scrollbar-width:thin;padding-bottom:2px}
+.mh-chips>*{flex:none}
+/* "⋯ Más": lo que se usa poco, fuera de la vista (es un <details>: sin JS para abrir) */
+.mh-mas{position:relative}
+.mh-mas>summary{list-style:none;cursor:pointer}
+.mh-mas>summary::-webkit-details-marker{display:none}
+.mh-mas-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:220px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;box-shadow:0 10px 30px rgba(40,42,34,.14);padding:6px;display:flex;flex-direction:column}
+.mh-mas-menu button{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--ink);font-family:var(--font-body);cursor:pointer}
+.mh-mas-menu button:hover{background:var(--olive-pale)}
+@media(max-width:640px){
+  .mh-tit h1{font-size:22px}
+  /* en el celular los contadores van en UNA fila que se desliza: así no empujan el contenido */
+  .mh-kpis{display:flex;overflow-x:auto;gap:8px;scrollbar-width:none;margin-right:-12px;padding-right:12px}
+  .mh-kpis::-webkit-scrollbar{display:none}
+  .mh-kpi{flex:0 0 118px;padding:8px 10px}
+  .mh-kpi b{font-size:21px}
+  .mh-kpi span{font-size:11.5px}
+  .mh-bar input[type=search]{max-width:none;flex-basis:100%}
+}

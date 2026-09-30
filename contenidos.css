@@ -594,3 +594,7 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   .ct-split.ver-panel .ct-panel-pieza{display:block}
   .ct-volver{display:inline-block}
 }
+/* encabezado común: separación entre barra y recortes; el selector de mes no se estira */
+.ct-bar .mh-chips{margin-top:10px}
+.ct-bar .mh-bar .ct-busca{font-family:var(--font-body);font-size:14px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);outline:none}
+.ct-bar .mh-bar .ct-busca:focus{border-color:var(--olive-mid)}

@@ -557,8 +557,24 @@
       (cerrada(x) - cerrada(y)) ||
       String(x.fecha_inicio || "9999").localeCompare(String(y.fecha_inicio || "9999")) ||
       tms(y.creado) - tms(x.creado));
+    const prom = cs.length ? cs.reduce((s, r) => s + r.prom, 0) / cs.length : null;
+    const kpi = (n, l, k, cls) => `<${k ? `button data-accion="filtro" data-k="${k}"` : "div"} class="mh-kpi ${k && FILTRO === k ? "on" : ""}">
+      <b class="${cls || ""}">${n}</b><span>${l}</span></${k ? "button" : "div"}>`;
+    // Encabezado común de los módulos (.mh en styles.css): título · contadores · barra · recortes
     w.innerHTML = `
-      <div class="ac-bar">
+      <header class="mh">
+        <div class="mh-top">
+          <div class="mh-tit"><h1>Acciones</h1><p class="mh-sub">Alianzas, eventos, sponsoreos y activaciones: de la idea al resultado</p></div>
+          <div class="mh-acc"><button class="btn-primary ac-nueva" data-accion="nueva">＋ Nueva acción</button></div>
+        </div>
+        <div class="mh-kpis">
+          ${kpi(b.filter(a => !cerrada(a)).length, "activas", "activas")}
+          ${kpi(delAnio.length, `finalizadas en ${anio}`, null)}
+          ${kpi(prom == null ? "—" : pct(prom), `cumplimiento promedio de métricas ${anio}`, null, tonoCumpl(prom))}
+          ${kpi(invTxt, `invertido en ${anio}`, null, "ac-stat-plata")}
+        </div>
+      </header>
+      <div class="ac-bar mh-bar">
         <input class="ac-busca" type="search" placeholder="Buscar acción, socio, distribuidor…" autocomplete="off" aria-label="Buscar acción" value="${esc(BUSCA)}">
         <select class="ac-sel" data-f="tipo" aria-label="Tipo">
           <option value="">Todos los tipos</option>${tiposEnUso().map(t => `<option ${TIPO === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
@@ -566,15 +582,8 @@
         ${distribuidores().length ? `<select class="ac-sel" data-f="distri" aria-label="Distribuidor">
           <option value="">Todos los distribuidores</option>${distribuidores().map(d => `<option value="${esc(low(d))}" ${DISTRI === low(d) ? "selected" : ""}>${esc(d)}</option>`).join("")}
         </select>` : ""}
-        <button class="btn-primary ac-nueva" data-accion="nueva">＋ Nueva acción</button>
       </div>
-      <div class="ac-stats">
-        <div><b>${b.filter(a => !cerrada(a)).length}</b><span>activas</span></div>
-        <div><b>${delAnio.length}</b><span>finalizadas en ${anio}</span></div>
-        <div><b class="${tonoCumpl(cs.length ? cs.reduce((s, r) => s + r.prom, 0) / cs.length : null)}">${cs.length ? pct(cs.reduce((s, r) => s + r.prom, 0) / cs.length) : "—"}</b><span>cumplimiento promedio de métricas ${anio}</span></div>
-        <div><b class="ac-stat-plata">${invTxt}</b><span>invertido en ${anio}</span></div>
-      </div>
-      <div class="ac-chips">
+      <div class="mh-chips ac-chips">
         ${FILTROS.map(f => { const n = b.filter(f.f).length;
           return `<button class="ac-chip ${f.k} ${FILTRO === f.k ? "on" : ""}" data-accion="filtro" data-k="${f.k}">${f.t} <span class="c">${n}</span></button>`; }).join("")}
         <span class="ac-nota" role="status"></span>

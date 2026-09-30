@@ -15,7 +15,7 @@
   border-radius:10px;background:var(--card);color:var(--ink);outline:none;min-width:0}
 .tk-busca{flex:1 1 180px;max-width:280px}
 .tk-busca:focus,.tk-sel:focus{border-color:var(--olive-mid)}
-.tk-nueva{margin-left:auto;white-space:nowrap}
+.tk-nueva{white-space:nowrap}
 .tk-chips{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
 .tk-chip{border:1px solid var(--line);background:var(--card);color:var(--gray);padding:5px 11px;
   border-radius:999px;font-size:12.5px;white-space:nowrap}
@@ -266,3 +266,6 @@
 .tk-check-menc .tk-avatar{width:20px;height:20px;font-size:9px}
 .tk-meta.tk-arrobado{font-weight:700;color:var(--olive)}
 .tk-meta.tk-arrobado.nueva{background:var(--olive);color:#fff;border-radius:999px;padding:0 7px}
+/* encabezado común: separación entre la barra de trabajo y los recortes */
+.tk-bar .mh-chips{margin-top:10px}
+.tk-bar .tk-nota:empty{display:none}

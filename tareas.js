@@ -442,9 +442,17 @@
 
   /* ---- Pintar ---- */
   function esqueleto() {
+    // Encabezado común de los módulos (.mh en styles.css): título · contadores · barra fija · recortes
     caja().innerHTML = `
+      <header class="mh">
+        <div class="mh-top">
+          <div class="mh-tit"><h1>Tareas</h1><p class="mh-sub">Equipo de marketing</p></div>
+          <div class="mh-acc"><button class="btn-primary tk-nueva" data-accion="nueva">＋ Nueva tarea</button></div>
+        </div>
+        <div class="mh-kpis tk-kpis"></div>
+      </header>
       <div class="tk-bar">
-        <div class="tk-bar-fila">
+        <div class="mh-bar">
           <div class="tk-vistas" role="tablist">
             ${[["tablero", "▦ Tablero"], ["lista", "☰ Lista"], ["calendario", "📅 Calendario"]].map(([k, t]) =>
               `<button data-accion="vista" data-k="${k}" role="tab">${t}</button>`).join("")}
@@ -452,12 +460,9 @@
           <input class="tk-busca" type="search" placeholder="Buscar tarea…" autocomplete="off" aria-label="Buscar tarea">
           <select class="tk-sel" data-f="persona" aria-label="Responsable"></select>
           <select class="tk-sel" data-f="area" aria-label="Área"></select>
-          <button class="btn-primary tk-nueva" data-accion="nueva">＋ Nueva tarea</button>
         </div>
-        <div class="tk-bar-fila tk-fila-2">
-          <div class="tk-chips"></div>
-          <span class="tk-nota" role="status"></span>
-        </div>
+        <div class="mh-chips tk-chips"></div>
+        <span class="tk-nota" role="status"></span>
       </div>
       <div class="tk-cuerpo"></div>
       <div class="tk-panel-wrap"></div>`;
@@ -482,6 +487,17 @@
     selA.innerHTML = `<option value="">Todas las áreas</option>` + ar.map(a => `<option>${esc(a)}</option>`).join("");
     selA.value = AREA;
     const b = base();
+    // Contadores: respetan persona y área elegidas; tocarlos aplica el recorte
+    const cuenta = k => b.filter(FILTROS.find(f => f.k === k).f).length;
+    const hace30 = Date.now() - 30 * 864e5;
+    const hechas = b.filter(t => !abierta(t) && Date.parse(t.completada || t.actualizado || 0) > hace30).length;
+    const kpi = (n, l, k, tono) => `<${k ? `button data-accion="filtro" data-k="${k}"` : "div"} class="mh-kpi ${k && FILTRO === k ? "on" : ""}">
+      <b class="${n ? tono || "" : "cero"}">${n}</b><span>${l}</span></${k ? "button" : "div"}>`;
+    c.querySelector(".tk-kpis").innerHTML =
+      kpi(b.filter(abierta).length, "abiertas", "todas") +
+      kpi(cuenta("vencidas"), "vencidas", "vencidas", "no") +
+      kpi(cuenta("semana"), "vencen en los próximos 7 días", "semana", "warn") +
+      kpi(hechas, "hechas en los últimos 30 días", null, "ok");
     c.querySelector(".tk-chips").innerHTML = FILTROS.map(f => {
       const n = f.k === "todas" ? b.filter(abierta).length : b.filter(f.f).length;
       return `<button class="tk-chip ${f.k} ${FILTRO === f.k ? "on" : ""}" data-accion="filtro" data-k="${f.k}">${f.t} <span class="c">${n}</span></button>`;

@@ -449,61 +449,71 @@
     }
   }
 
+  /* Encabezado común de los módulos (.mh en styles.css), igual que Tareas y Acciones:
+     título + a quién le toca · "⋯ Más" y el botón principal · contadores del mes (tocan el
+     recorte) · barra fija con mes, vista y buscador · recortes. Sin campanita (sep 2026):
+     lo que avisaba ahora está en Mi día y en las notificaciones. */
+  let BUSCA = "";
   function barraHTML(ed) {
-    const n = MSGS.length;
-    const aprobados = MSGS.filter(yaAprobado).length;
-    const pct = n ? Math.round((aprobados / n) * 100) : 0;
-
+    const cuenta = k => MSGS.filter(FILTROS.find(f => f.k === k).f).length;
+    const fem = C().art === "una";
     // Sólo se muestran los recortes que tienen algo adentro: una fila de ceros no ayuda.
     const chips = FILTROS.map(f => ({ f, n: MSGS.filter(f.f).length }))
       .filter(x => x.f.k === "todos" || x.n > 0 || x.f.k === FILTRO)
       .map(x => `<button class="ct-chipf ${x.f.k} ${x.f.k === FILTRO ? "on" : ""}" data-filtro="${x.f.k}">
                    ${x.f.t} <span class="c">${x.n}</span></button>`).join("");
+    const kpi = (n, l, k, tono) => `<button class="mh-kpi ${FILTRO === k ? "on" : ""}" data-filtro="${k}">
+      <b class="${n ? tono || "" : "cero"}">${n}</b><span>${l}</span></button>`;
+    const mas = [
+      `<button data-acc="refrescar">↻ Traer los últimos cambios</button>`,
+      CANAL === "instagram" ? `<button data-acc="figma">◈ Volver a traer las imágenes de Figma</button>` : "",
+      ed ? `<button data-acc="nuevo-mes">＋ Nuevo mes</button>
+            <button data-acc="importar">⬆ Importar un mes (.json)</button>
+            <button data-acc="exportar">⬇ Bajar este mes (.json)</button>` : "",
+      esAdminC() && RESP ? `<button data-acc="responsables">👥 Responsables del canal</button>` : "",
+    ].join("");
 
     return `
+      <header class="mh">
+        <div class="mh-top">
+          <div class="mh-tit"><h1>${esc(C().label)}</h1>${respHTML()}</div>
+          <div class="mh-acc">
+            <details class="mh-mas"><summary class="btn-desc">⋯ Más</summary><div class="mh-mas-menu">${mas}</div></details>
+            ${ed ? `<button class="btn-primary" data-acc="nuevo-msg">＋ ${esc(C().nuevo)}</button>
+                    <input type="file" class="ct-file" accept="application/json" hidden>` : ""}
+          </div>
+        </div>
+        ${MSGS.length ? `<div class="mh-kpis">
+          ${kpi(MSGS.length, `${C().unidadPl} en el mes`, "todos")}
+          ${kpi(cuenta("revisar"), "precisan feedback", "revisar", "warn")}
+          ${kpi(cuenta("ajustes"), "con ajustes", "ajustes", "no")}
+          ${kpi(cuenta("aprobado"), fem ? "listas para publicar" : "listos para publicar", "aprobado", "ok")}
+          ${kpi(cuenta("publicado"), fem ? "publicadas" : "publicados", "publicado")}
+        </div>` : ""}
+      </header>
       <div class="ct-bar">
-        <div class="ct-bar-fila">
+        <div class="mh-bar">
           <select class="ct-mes" title="Elegí el mes">
             ${MESES.map(m => `<option value="${esc(m.mes)}" ${m.mes === MES ? "selected" : ""}>${cap(mesLabel(m.mes))} — ${esc(m.titulo || "sin título")}</option>`).join("")}
           </select>
           <div class="ct-vistas">
-            <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">Calendario</button>
-            <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">Fichas</button>
+            <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">📅 Calendario</button>
+            <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">☰ Fichas</button>
             ${CANAL === "instagram" ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
-              title="Cómo va a quedar la grilla del perfil">Feed</button>` : ""}
+              title="Cómo va a quedar la grilla del perfil">▦ Feed</button>` : ""}
           </div>
-          <div class="ct-acc">
-            <button class="btn-desc ct-campana ${PANEL ? "on" : ""}" data-campana="1" title="Avisos">🔔${(() => {
-              const n = cuentaAvisos(); return n ? `<span class="ct-punto">${n > 9 ? "9+" : n}</span>` : "";
-            })()}</button>
-            <button class="btn-desc" data-acc="refrescar" title="Traer los últimos cambios y comentarios">↻</button>
-            ${SES().rol && SES().rol() === "admin" && RESP ? `<button class="btn-desc" data-acc="responsables" title="Quién hace y quién revisa este canal">👥 Responsables</button>` : ""}
-            ${CANAL === "instagram" ? `<button class="btn-desc" data-acc="figma"
-              title="Volver a pedirle las imágenes a Figma. Hace falta porque el plan no avisa solo cuando cambia un diseño.">◈ Piezas</button>` : ""}
-            ${ed ? `<button class="btn-desc" data-acc="nuevo-msg">+ ${cap(C().unidad)}</button>
-                    <button class="btn-desc" data-acc="nuevo-mes">+ Mes</button>
-                    <button class="btn-desc" data-acc="importar" title="Cargar un mes desde un .json">⬆</button>
-                    <button class="btn-desc" data-acc="exportar" title="Bajar este mes como .json">⬇</button>
-                    <input type="file" class="ct-file" accept="application/json" hidden>` : ""}
-          </div>
+          ${VISTA === "fichas" && MSGS.length ? `<input class="ct-busca" type="search" placeholder="Buscar ${esc(C().unidad)}…" value="${esc(BUSCA)}" autocomplete="off" aria-label="Buscar">` : ""}
         </div>
-        ${n ? `<div class="ct-bar-fila ct-fila-2">
-          <div class="ct-progreso" title="${aprobados} de ${n} ${C().unidadPl} listos para publicar o publicados">
-            <div class="ct-barra"><span style="width:${pct}%"></span></div>
-            <span class="ct-progreso-t"><b>${aprobados}</b>/${n} listos</span>
-          </div>
-          <div class="ct-filtros">${chips}</div>
-        </div>` : ""}
+        ${MSGS.length ? `<div class="mh-chips ct-filtros">${chips}</div>` : ""}
       </div>
-      ${respHTML()}
       ${ed ? "" : `<div class="ct-solo-lectura">${C().lectura}</div>`}`;
   }
   // "Hace: Agustina · Revisa: Daiana" — a quién le toca mover las piezas de este canal
   function respHTML() {
     if (!RESP) return "";
     const h = nombresDe(CANAL, "hace"), r = nombresDe(CANAL, "revisa");
-    if (!h.length && !r.length) return `<p class="ct-resp tenue">Este canal todavía no tiene responsables: los avisos no le llegan a nadie.</p>`;
-    return `<p class="ct-resp"><span>Hace: <b>${esc(h.join(", ") || "—")}</b></span><span>Revisa: <b>${esc(r.join(", ") || "—")}</b></span></p>`;
+    if (!h.length && !r.length) return `<p class="mh-sub">Este canal todavía no tiene responsables: los avisos no le llegan a nadie.</p>`;
+    return `<p class="mh-sub"><span>Hace: <b>${esc(h.join(", ") || "—")}</b></span><span>Revisa: <b>${esc(r.join(", ") || "—")}</b></span></p>`;
   }
   // Sólo admin: elegir quién hace y quién revisa el canal abierto
   async function abrirResponsables() {
@@ -812,11 +822,13 @@
       return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene ${C().unidadPl}.</p>
         ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar ${C().art === "una" ? "la primera" : "el primero"}</button>` : ""}</div>`;
     }
-    const lista = MSGS.filter(filtroActivo());
+    const norm = x => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const q = norm(BUSCA.trim());
+    const lista = MSGS.filter(filtroActivo()).filter(m => !q || norm(`${m.criterio} ${m.objetivo} ${m.flag} ${m.copy}`).includes(q));
     if (!lista.length) {
       const t = (FILTROS.find(x => x.k === FILTRO) || {}).t || "";
-      return `<div class="empty"><div class="big">✓</div><p>Nada en «${esc(t)}».</p>
-        <button class="btn-mini" data-filtro="todos" style="margin-top:10px">Ver todo el mes</button></div>`;
+      return `<div class="empty"><div class="big">✓</div><p>${q ? `Nada que coincida con «${esc(BUSCA)}».` : `Nada en «${esc(t)}».`}</p>
+        <button class="btn-mini" data-filtro="todos" data-limpiar="1" style="margin-top:10px">Ver todo el mes</button></div>`;
     }
     // La abierta: la que eligió la persona; si no está en el recorte, la primera que le toca mover; si no, la primera.
     if (!lista.some(m => m.id === SEL[CANAL])) SEL[CANAL] = (lista.find(m => meToca(m)) || lista[0]).id;
@@ -1121,6 +1133,14 @@
 
   function enganchar() {
     const cont = caja(); if (!cont) return;
+
+    // Buscador de Fichas: se re-dibuja al tipear y se devuelve el foco donde estaba
+    const bu = cont.querySelector(".ct-busca");
+    if (bu) bu.oninput = () => {
+      const pos = bu.selectionStart; BUSCA = bu.value; pintar();
+      const n = caja().querySelector(".ct-busca"); if (n) { n.focus(); n.setSelectionRange(pos, pos); }
+    };
+    if (cont.querySelector("[data-limpiar]")) cont.querySelector("[data-limpiar]").addEventListener("click", () => { BUSCA = ""; });
 
     const sel = cont.querySelector(".ct-mes");
     if (sel) sel.onchange = async () => { MES = sel.value; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); };
@@ -1719,6 +1739,10 @@
         mias:  sugs.filter(g => g.decision && String(g.autor_email || "").toLowerCase() === yo),
         cargado: true,
       };
+      // Para el número del menú: piezas que te toca mover (a revisar si revisás; con ajustes si hacés)
+      const enCurso = await piezasEnCurso(misCanales());
+      AVISOS.meToca = enCurso.filter(m => (m.estado === "revision" && papelesEn(m.canal).includes("revisa"))
+                                       || (m.estado === "cambios" && papelesEn(m.canal).includes("hace"))).length;
       // nombre del mensaje al que pertenece cada sugerencia/comentario
       const ids = [...new Set([...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x.contenido_id))];
       if (ids.length) {
@@ -1732,19 +1756,9 @@
   }
 
   // Cuántos avisos son NUEVOS desde la última vez que se abrió el panel.
-  function cuentaAvisos() {
-    const v = vistoEn(), ed = puedeEditar();
-    const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
-    let n = 0;
-    if (ed) {
-      n += AVISOS.sugs.filter(g => Date.parse(g.creado) > v).length;
-      n += AVISOS.coms.filter(c => Date.parse(c.creado) > v).length;
-      if (v < +hoy0) n += AVISOS.sale.length + AVISOS.tarde.length;   // el recordatorio del día, una vez por día
-    } else {
-      n += AVISOS.mias.filter(g => Date.parse(g.decidido_en || g.creado) > v).length;
-    }
-    return n;
-  }
+  // El número del menú: las piezas que te toca mover (lo mismo que cuenta Mi día)
+  function cuentaAvisos() { return AVISOS.meToca || 0; }
+
 
   // El contador también en la solapa del módulo, para verlo desde cualquier lado.
   function pintarBadgeNav() {

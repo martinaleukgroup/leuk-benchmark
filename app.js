@@ -2521,6 +2521,12 @@
   $("#navClose").addEventListener("click", () => abrirMenu(false));
   $("#sideScrim").addEventListener("click", () => abrirMenu(false));
   document.addEventListener("keydown", ev => { if (ev.key === "Escape") { abrirMenu(false); cerrarAyuda(); } });
+  // "⋯ Más" de los encabezados: se cierra al elegir algo o al tocar afuera
+  document.addEventListener("click", ev => {
+    document.querySelectorAll("details.mh-mas[open]").forEach(d => {
+      if (!d.contains(ev.target) || ev.target.closest(".mh-mas-menu button")) d.removeAttribute("open");
+    });
+  });
   // el botón flotante abre y cierra (tocarlo de nuevo cierra el pop-up)
   $("#ayudaFab").addEventListener("click", () => document.body.classList.contains("ayuda-abierta") ? cerrarAyuda() : abrirAyuda());
   $("#ayudaCerrar").addEventListener("click", cerrarAyuda);

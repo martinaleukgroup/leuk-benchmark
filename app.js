@@ -2227,7 +2227,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "tareas", "acciones", "usuarios"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "tareas", "acciones", "usuarios", "kpis"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2269,7 +2269,8 @@
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
-      pages: [{ p: "usuarios", t: "Equipo" }],
+      pages: [{ p: "usuarios", t: "Equipo" },
+              { p: "kpis", t: "KPIs por canal" }],        // qué se mide en Resultados (resultados.js)
     },
   };
   const MOD_DE = {};                                // página -> módulo al que pertenece
@@ -2298,6 +2299,7 @@
     integraciones:   { t: "Nuevas integraciones", ic: "move_to_inbox" },
     manual:          { t: "Manual de carga",      ic: "menu_book" },
     usuarios:        { t: "Usuarios",             ic: "group" },
+    kpis:            { t: "KPIs por canal",       ic: "monitoring" },
   };
   // Acciones sueltas del menú (abren un modal, no son páginas). `ver` = quién la ve.
   const ACT = {
@@ -2315,7 +2317,7 @@
     { g: "Contenidos",         items: ["contenidos", "contenidos-ig"], badge: "contenidos" },
     { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
     { g: "Generadores",        items: ["firmas", "stock", "reingresos"] },
-    { g: "Administración",     items: ["integraciones", "manual", "usuarios", "@precios", "@costos", "@lista"], abajo: true },
+    { g: "Administración",     items: ["integraciones", "manual", "usuarios", "kpis", "@precios", "@costos", "@lista"], abajo: true },
   ];
   const GRUPO_DE = {};                              // página -> nombre del grupo (para la barra de página)
   GRUPOS.forEach(g => g.items.forEach(i => { GRUPO_DE[i] = g.g || ""; }));
@@ -2425,7 +2427,8 @@
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
       "Dejá <b>comentarios</b> en 💬, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
       "Con sugerencias sin resolver no se puede marcar <b>Listo para publicar</b>. Los ajustes se van tildando como resueltos en los comentarios.",
-      "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual."] },
+      "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual.",
+      "En <b>📈 Resultados</b> ves el embudo, la evolución de cada KPI y el histórico del canal. Quien hace el canal carga los números crudos abajo (a las 48 h de cada pieza, y los del mes); los % y totales los calcula la plataforma."] },
     { t: "Tareas", ic: "view_kanban", pages: ["tareas"], pasos: [
       "Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
       "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
@@ -2444,6 +2447,12 @@
       "<b>Cambiá el rol</b> cuando cambie de equipo: se aplica la próxima vez que entre.",
       "Tildá <b>Marketing</b> para que vea <b>Tareas</b> (es aparte del rol).",
       "<b>Quitá el acceso</b> con ✕: se elimina su cuenta y su rol."] },
+    { t: "KPIs por canal", ic: "monitoring", pages: ["kpis"], pasos: [
+      "Elegí el canal arriba. En <b>El canal</b> está su función, el objetivo y el <b>trimestre base</b> contra el que se compara.",
+      "En <b>Datos que se cargan</b> definís los números crudos (por pieza o una vez por mes). Renombrar un dato no pierde lo cargado.",
+      "Cada <b>KPI</b> es una fórmula de la lista (total, suma, promedio, división, resta, último valor) sobre esos datos. La <b>vista previa</b> muestra cuánto da con los datos reales.",
+      "El <b>Embudo</b> se arma con 3 o 4 escalones, de alcance a acción.",
+      "Nada se aplica hasta tocar <b>Guardar cambios</b>."] },
   ];
   function abrirAyuda() {
     const actual = ($("#nav .nv-item.on") || { dataset: {} }).dataset.page;
@@ -2507,6 +2516,7 @@
     // Acciones de marketing: lista + ficha con línea de tiempo y métricas. Lo arma acciones.js.
     if (page === "acciones" && window.renderAcciones) window.renderAcciones();
     if (page === "usuarios") renderUsuarios();
+    if (page === "kpis" && window.renderKpisConfig) window.renderKpisConfig();
     window.scrollTo({ top: 0 });
   }
   // Menú lateral: páginas (data-page) y acciones sueltas que abren un modal (data-act).

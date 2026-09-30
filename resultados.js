@@ -547,4 +547,286 @@
       const sig = todos[todos.indexOf(i) + 1]; if (sig) sig.focus(); else i.blur();
     });
   }
+
+  /* ===================== EDITOR DE KPIs (Administración, sólo admin) =====================
+     Edita la fila de resultados_config de cada canal: la ficha estratégica, los datos
+     crudos que se cargan, los KPIs (con fórmulas de una lista corta) y el embudo.
+     Se trabaja sobre una copia (ED) y se guarda todo junto con «Guardar cambios».
+
+     Reglas para no romper lo cargado:
+       · la clave interna de un dato (k) se inventa al crearlo y NUNCA cambia: los valores
+         cargados cuelgan de ella. Renombrar un dato sólo cambia lo que se ve.
+       · un dato que usa un KPI o el embudo no se puede borrar (se dice cuál lo usa).
+       · borrar un dato con valores cargados no borra los valores: se dejan de mostrar.
+     Canales: los que tienen página en Contenidos. Sumar uno nuevo necesita su página.   */
+  const CANALES_ED = [{ k: "whatsapp", t: "WhatsApp Profesionales" }, { k: "instagram", t: "Instagram Leuk" }];
+  const FUNCIONES = ["Posicionar", "Considerar", "Fidelizar"];
+  const FORMULAS = [
+    { f: "suma",     t: "Total de un dato",         ej: "Clics = total de clics" },
+    { f: "sumas",    t: "Suma de varios datos",     ej: "Acciones = obras + descargas + consultas" },
+    { f: "promedio", t: "Promedio por pieza",       ej: "Leen = promedio de «leído por»" },
+    { f: "cociente", t: "División (A ÷ B)",         ej: "Engagement = interacciones ÷ alcance" },
+    { f: "resta",    t: "Resta (A − B)",            ej: "Neto = altas − bajas" },
+    { f: "ultimo",   t: "Último valor del período", ej: "Miembros al cierre" },
+  ];
+  const FORMATOS = [{ k: "", t: "Número" }, { k: "pct", t: "Porcentaje" }, { k: "signo", t: "Número con signo (+/−)" }];
+  let ED = null, ED_CANAL = "whatsapp", ED_ORIG = "", ED_MSG = "", ED_DATOS = null;   // ED_DATOS = {piezas, v} del canal, para la vista previa
+
+  const clon = o => JSON.parse(JSON.stringify(o));
+  const sucio = () => ED && JSON.stringify(ED) !== ED_ORIG;
+  const slug = t => String(t || "dato").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 30) || "dato";
+  const usosDe = k => [...(ED.kpis || []).filter(x => refs(x).includes(k)).map(x => `KPI «${x.t}»`),
+                       ...(ED.embudo || []).filter(x => refs(x).includes(k)).map(x => `embudo «${x.t}»`)];
+  const refs = x => [x.dato, x.num, x.den, x.a, x.b, ...(x.datos || [])].filter(Boolean);
+
+  window.renderKpisConfig = async function () {
+    const cont = document.querySelector("#kpis"); if (!cont) return;
+    if (!(SES().rol && SES().rol() === "admin")) { cont.innerHTML = `<div class="empty">Sólo un administrador puede ver esta sección.</div>`; return; }
+    if (!ED || !sucio()) await edCargar(ED_CANAL);
+    edPintar();
+  };
+
+  async function edCargar(canal) {
+    ED_CANAL = canal; ED_MSG = "";
+    const cont = document.querySelector("#kpis");
+    if (cont) cont.innerHTML = `<div class="empty-mini">Cargando…</div>`;
+    const [rc, rv, rp] = await Promise.all([
+      fetch(url(`resultados_config?canal=eq.${enc(canal)}&select=config`), { headers: head() }).catch(() => null),
+      fetch(url(`resultados_valores?canal=eq.${enc(canal)}&select=mes,pieza,dato,valor`), { headers: head() }).catch(() => null),
+      fetch(url(`contenidos?canal=in.(${enc(canal)})&select=id,mes,fecha,criterio,estado,encuesta&order=fecha.asc`), { headers: head() }).catch(() => null),
+    ]);
+    const fila = rc && rc.ok ? (await rc.json())[0] : null;
+    ED = clon((fila && fila.config) || DEFAULT[canal] || DEFAULT.whatsapp);
+    ["datos", "kpis", "embudo"].forEach(k => { if (!Array.isArray(ED[k])) ED[k] = []; });
+    ED_ORIG = JSON.stringify(ED);
+    const v = {};
+    if (rv && rv.ok) (await rv.json()).forEach(r => { if (r.valor != null) v[clave(r.mes, r.pieza, r.dato)] = +r.valor; });
+    ED_DATOS = { piezas: rp && rp.ok ? await rp.json() : [], v };
+  }
+
+  // La vista previa usa el MISMO motor que la pantalla de Resultados, con la config en edición.
+  function previa(f) {
+    if (!ED_DATOS) return "";
+    const guard = { CFG, PIEZAS, V };
+    CFG = ED; PIEZAS = ED_DATOS.piezas; V = ED_DATOS.v;
+    let txt = "";
+    try {
+      const ms = todosLosMeses().slice().reverse().find(m => calc(f, [m]) != null);
+      txt = ms ? `${fmt(f, calc(f, [ms]))} en ${mesLargo(ms).split(" ")[0]}` : "sin datos todavía";
+    } catch (e) { txt = "no se puede calcular"; }
+    CFG = guard.CFG; PIEZAS = guard.PIEZAS; V = guard.V;
+    CARGADO = "";   // la vista de Resultados vuelve a leer la config guardada
+    return txt;
+  }
+
+  function edPintar() {
+    const cont = document.querySelector("#kpis"); if (!cont || !ED) return;
+    const opDatos = (sel, filtro) => `<option value="">Elegí un dato…</option>` + ED.datos.filter(filtro || (() => true))
+      .map(d => `<option value="${esc(d.k)}" ${d.k === sel ? "selected" : ""}>${esc(d.t)}${d.nivel === "mes" ? " (del mes)" : ""}</option>`).join("");
+    const formula = (x, path, soloEmbudo) => {
+      const tipos = FORMULAS.filter(t => !soloEmbudo || ["suma", "sumas", "promedio", "ultimo"].includes(t.f));
+      const pieza = d => d.nivel !== "mes";
+      const mes = d => d.nivel === "mes";
+      let args = "";
+      if (x.f === "suma") args = `<select data-ed="${path}.dato">${opDatos(x.dato)}</select>`;
+      if (x.f === "promedio") args = `<select data-ed="${path}.dato">${opDatos(x.dato, pieza)}</select>`;
+      if (x.f === "ultimo") args = `<select data-ed="${path}.dato">${opDatos(x.dato, mes)}</select>`;
+      if (x.f === "cociente") args = `<select data-ed="${path}.num">${opDatos(x.num)}</select><span class="kc-op">÷</span><select data-ed="${path}.den">${opDatos(x.den)}</select>`;
+      if (x.f === "resta") args = `<select data-ed="${path}.a">${opDatos(x.a)}</select><span class="kc-op">−</span><select data-ed="${path}.b">${opDatos(x.b)}</select>`;
+      if (x.f === "sumas") args = `<span class="kc-chks">${ED.datos.map(d => `<label><input type="checkbox" data-edsumas="${path}" value="${esc(d.k)}" ${(x.datos || []).includes(d.k) ? "checked" : ""}> ${esc(d.t)}</label>`).join("")}</span>`;
+      return `<div class="kc-formula"><select data-ed="${path}.f" data-edre="1">${tipos.map(t => `<option value="${t.f}" ${t.f === x.f ? "selected" : ""}>${t.t}</option>`).join("")}</select>${args}</div>`;
+    };
+    const mover = (lista, i) => `<span class="kc-mover">
+      <button class="kc-ico" data-edmover="${lista}:${i}:-1" ${i === 0 ? "disabled" : ""} aria-label="Subir">↑</button>
+      <button class="kc-ico" data-edmover="${lista}:${i}:1" ${i === ED[lista].length - 1 ? "disabled" : ""} aria-label="Bajar">↓</button>
+      <button class="kc-ico peligro" data-edborrar="${lista}:${i}" aria-label="Eliminar">✕</button></span>`;
+    const trims = (() => { const a = new Date().getFullYear(); const r = []; for (let y = a - 1; y <= a + 1; y++) for (let q = 1; q <= 4; q++) r.push(`${y}-Q${q}`); return r; })();
+
+    cont.innerHTML = `
+      <header class="mh"><div class="mh-top"><div class="mh-tit"><h1>KPIs por canal</h1>
+        <p class="mh-sub">Qué se mide en cada canal y cómo se calcula. Lo que cambies acá se ve en la vista Resultados de ese canal.</p></div></div></header>
+      <div class="kc">
+        <div class="kc-canales" role="tablist">${CANALES_ED.map(c => `<button data-edcanal="${c.k}" class="${c.k === ED_CANAL ? "on" : ""}">${esc(c.t)}</button>`).join("")}</div>
+
+        <section class="kc-card">
+          <h3>El canal</h3>
+          <div class="kc-grid">
+            <label><span>Nombre</span><input data-ed="nombre" value="${esc(ED.nombre || "")}"></label>
+            <label><span>Función</span><select data-ed="funcion">${FUNCIONES.map(f => `<option ${f === ED.funcion ? "selected" : ""}>${f}</option>`).join("")}</select></label>
+            <label><span>Verbos</span><input data-ed="verbos" value="${esc(ED.verbos || "")}" placeholder="Inspirar · Educar · Posicionar"></label>
+            <label><span>Trimestre base</span><select data-ed="base">${trims.map(q => `<option value="${q}" ${q === ED.base ? "selected" : ""}>${q.replace("-", " ")}</option>`).join("")}</select></label>
+            <label class="kc-ancho"><span>Objetivo</span><input data-ed="objetivo" value="${esc(ED.objetivo || "")}"></label>
+          </div>
+        </section>
+
+        <section class="kc-card">
+          <h3>Datos que se cargan</h3>
+          <p class="rs-nota" style="margin-top:0">Los números crudos que carga quien hace el canal, tal cual los da la red. Los KPIs se arman con estos.</p>
+          <div class="kc-lista">${ED.datos.map((d, i) => {
+            const usos = usosDe(d.k);
+            return `<div class="kc-fila">
+              <input class="kc-nombre" data-ed="datos.${i}.t" value="${esc(d.t || "")}" placeholder="Nombre del dato" aria-label="Nombre del dato">
+              <select data-ed="datos.${i}.nivel" data-edre="1" aria-label="Se carga"><option value="pieza" ${d.nivel !== "mes" ? "selected" : ""}>Por pieza</option><option value="mes" ${d.nivel === "mes" ? "selected" : ""}>Una vez por mes</option></select>
+              ${d.nivel !== "mes" ? `<label class="kc-chk"><input type="checkbox" data-edchk="datos.${i}.solo" data-valor="encuesta" ${d.solo === "encuesta" ? "checked" : ""}> Sólo encuestas</label>` : ""}
+              <label class="kc-chk"><input type="checkbox" data-edchk="datos.${i}.opcional" ${d.opcional ? "checked" : ""}> Opcional</label>
+              <input class="kc-ayuda" data-ed="datos.${i}.ayuda" value="${esc(d.ayuda || "")}" placeholder="Dónde se saca (ayuda)">
+              ${mover("datos", i)}
+              ${usos.length ? `<span class="kc-uso">Lo usa: ${esc(usos.join(", "))}</span>` : ""}
+            </div>`; }).join("")}</div>
+          <button class="btn-mini" data-edagregar="datos">＋ Agregar dato</button>
+        </section>
+
+        <section class="kc-card">
+          <h3>KPIs</h3>
+          <p class="rs-nota" style="margin-top:0">Cada KPI es una cuenta sobre los datos. La plataforma la hace sola para el mes, el trimestre o el año.</p>
+          <div class="kc-lista">${ED.kpis.map((k, i) => `<div class="kc-fila kc-kpi">
+              <input class="kc-nombre" data-ed="kpis.${i}.t" value="${esc(k.t || "")}" placeholder="Nombre del KPI" aria-label="Nombre del KPI">
+              ${formula(k, `kpis.${i}`)}
+              <select data-ed="kpis.${i}.fmt" aria-label="Se muestra como">${FORMATOS.map(o => `<option value="${o.k}" ${(k.fmt || "") === o.k ? "selected" : ""}>${o.t}</option>`).join("")}</select>
+              ${mover("kpis", i)}
+              <span class="kc-prev">Vista previa: <b>${esc(previa(k))}</b></span>
+            </div>`).join("")}</div>
+          <button class="btn-mini" data-edagregar="kpis">＋ Agregar KPI</button>
+          <details class="kc-ayudaf"><summary>¿Qué hace cada fórmula?</summary>
+            <ul>${FORMULAS.map(f => `<li><b>${f.t}</b> — ${f.ej}</li>`).join("")}
+              <li>En la división, si A es por pieza y B es del mes (ej. leído por ÷ miembros), cada pieza se divide por el B de su mes y se promedia.</li></ul></details>
+        </section>
+
+        <section class="kc-card">
+          <h3>Embudo</h3>
+          <p class="rs-nota" style="margin-top:0">Los escalones, de arriba (alcance) a abajo (acción). Conviene que sean 3 o 4.</p>
+          <div class="kc-lista">${ED.embudo.map((x, i) => `<div class="kc-fila kc-kpi">
+              <span class="kc-num">${i + 1}</span>
+              <input class="kc-nombre" data-ed="embudo.${i}.t" value="${esc(x.t || "")}" placeholder="Nombre del escalón" aria-label="Nombre del escalón">
+              ${formula(x, `embudo.${i}`, true)}
+              <input class="kc-ayuda" data-ed="embudo.${i}.nota" value="${esc(x.nota || "")}" placeholder="Aclaración chica (opcional)">
+              ${mover("embudo", i)}
+              <span class="kc-prev">Vista previa: <b>${esc(previa(x))}</b></span>
+            </div>`).join("")}</div>
+          <button class="btn-mini" data-edagregar="embudo">＋ Agregar escalón</button>
+        </section>
+
+        <div class="kc-pie">
+          ${ED_MSG ? `<span class="kc-msg">${ED_MSG}</span>` : ""}
+          <button class="btn-ghost" data-eddescartar ${sucio() ? "" : "disabled"}>Descartar cambios</button>
+          <button class="btn-primary" data-edguardar>${sucio() ? "Guardar cambios" : "Sin cambios"}</button>
+        </div>
+      </div>`;
+    edEnganchar(cont);
+  }
+
+  function edSet(path, valor) {
+    const ps = path.split("."); let o = ED;
+    for (let i = 0; i < ps.length - 1; i++) o = o[ps[i]];
+    const k = ps[ps.length - 1];
+    if (valor === "" || valor == null || valor === false) delete o[k]; else o[k] = valor;
+  }
+  // Al cambiar el tipo de fórmula se borran los argumentos del tipo anterior.
+  function edTipo(path, f) {
+    const ps = path.split("."); const o = ED[ps[0]][+ps[1]];
+    ["dato", "datos", "num", "den", "a", "b"].forEach(x => delete o[x]);
+    o.f = f; if (f === "sumas") o.datos = [];
+  }
+  function edValidar() {
+    const err = [];
+    ED.datos.forEach(d => { if (!String(d.t || "").trim()) err.push("Hay un dato sin nombre."); });
+    [["kpis", "KPI"], ["embudo", "escalón"]].forEach(([l, n]) => ED[l].forEach(x => {
+      const nom = x.t && x.t.trim() ? `«${x.t}»` : `sin nombre`;
+      if (!String(x.t || "").trim()) err.push(`Hay un ${n} sin nombre.`);
+      const falta = { suma: !x.dato, promedio: !x.dato, ultimo: !x.dato, cociente: !x.num || !x.den, resta: !x.a || !x.b, sumas: !(x.datos || []).length }[x.f];
+      if (falta) err.push(`Al ${n} ${nom} le falta elegir los datos de la fórmula.`);
+      refs(x).forEach(r => { if (!ED.datos.some(d => d.k === r)) err.push(`El ${n} ${nom} usa un dato que ya no existe.`); });
+    }));
+    return [...new Set(err)];
+  }
+
+  function edEnganchar(cont) {
+    const refrescarPie = () => {
+      const g = cont.querySelector("[data-edguardar]"), d = cont.querySelector("[data-eddescartar]");
+      if (g) g.textContent = sucio() ? "Guardar cambios" : "Sin cambios";
+      if (d) d.disabled = !sucio();
+    };
+    cont.oninput = ev => {
+      const t = ev.target;
+      if (t.dataset.ed && t.tagName === "INPUT") { edSet(t.dataset.ed, t.value); refrescarPie(); }
+    };
+    cont.onchange = ev => {
+      const t = ev.target;
+      if (t.dataset.edre && t.dataset.ed.endsWith(".f")) { edTipo(t.dataset.ed.slice(0, -2), t.value); return edPintar(); }
+      if (t.dataset.ed && t.tagName === "SELECT") {
+        edSet(t.dataset.ed, t.value);
+        // Un dato que pasa a ser "del mes" no puede ser "sólo encuestas".
+        if (/^datos\.\d+\.nivel$/.test(t.dataset.ed) && t.value === "mes") delete ED.datos[+t.dataset.ed.split(".")[1]].solo;
+        return edPintar();
+      }
+      if (t.dataset.edchk) { edSet(t.dataset.edchk, t.checked ? (t.dataset.valor || true) : false); return edPintar(); }
+      if (t.dataset.edsumas) {
+        const ps = t.dataset.edsumas.split("."), o = ED[ps[0]][+ps[1]];
+        o.datos = [...cont.querySelectorAll(`[data-edsumas="${t.dataset.edsumas}"]:checked`)].map(c => c.value);
+        return edPintar();
+      }
+    };
+    // Los nombres se escriben sin repintar (no perder el foco); al salir se actualizan las listas que los muestran.
+    cont.addEventListener("focusout", ev => { if (ev.target.matches && ev.target.matches('input[data-ed^="datos."][data-ed$=".t"]')) edPintar(); });
+    cont.onclick = async ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      if (b.dataset.edcanal) {
+        if (b.dataset.edcanal === ED_CANAL) return;
+        if (sucio() && !confirm("Tenés cambios sin guardar en este canal. ¿Descartarlos?")) return;
+        await edCargar(b.dataset.edcanal); return edPintar();
+      }
+      if (b.dataset.edagregar) {
+        const l = b.dataset.edagregar;
+        if (l === "datos") {
+          let k = slug("dato nuevo"), n = 1; while (ED.datos.some(d => d.k === k)) k = `dato_nuevo_${++n}`;
+          ED.datos.push({ k, t: "", nivel: "pieza" });
+        } else {
+          const base = ED.datos[0] ? ED.datos[0].k : "";
+          ED[l].push(l === "kpis" ? { k: `kpi_${Date.now().toString(36)}`, t: "", f: "suma", dato: base } : { t: "", f: "suma", dato: base });
+        }
+        edPintar();
+        const ult = cont.querySelectorAll(`[data-ed^="${l}."][data-ed$=".t"]`); if (ult.length) ult[ult.length - 1].focus();
+        return;
+      }
+      if (b.dataset.edmover) {
+        const [l, i, d] = b.dataset.edmover.split(":"); const a = +i, z = a + +d;
+        [ED[l][a], ED[l][z]] = [ED[l][z], ED[l][a]]; return edPintar();
+      }
+      if (b.dataset.edborrar) {
+        const [l, i] = b.dataset.edborrar.split(":"); const x = ED[l][+i];
+        if (l === "datos") {
+          const usos = usosDe(x.k);
+          if (usos.length) { alert(`No se puede eliminar «${x.t}»: lo usa ${usos.join(", ")}.\n\nCambiá esas fórmulas primero.`); return; }
+          const cargados = Object.keys(ED_DATOS.v).filter(c => c.endsWith("|" + x.k)).length;
+          if (!confirm(`¿Eliminar el dato «${x.t || "sin nombre"}»?` + (cargados ? `\n\nTiene ${cargados} valores cargados: no se borran, pero se dejan de mostrar.` : ""))) return;
+        } else if (!confirm(`¿Eliminar «${x.t || "sin nombre"}»?`)) return;
+        ED[l].splice(+i, 1); return edPintar();
+      }
+      if (b.hasAttribute("data-eddescartar")) { ED = JSON.parse(ED_ORIG); ED_MSG = ""; return edPintar(); }
+      if (b.hasAttribute("data-edguardar")) {
+        if (!sucio()) return;
+        const err = edValidar();
+        if (err.length) { ED_MSG = `<span class="mal">${esc(err[0])}</span>${err.length > 1 ? ` <span class="tenue">(y ${err.length - 1} más)</span>` : ""}`; return edPintar(); }
+        // Las claves de los datos nuevos salen del nombre recién al guardar (quedan fijas desde ahí).
+        ED.datos.forEach(d => {
+          if (!/^dato_nuevo/.test(d.k)) return;
+          const viejo = d.k; let k = slug(d.t), n = 1; while (ED.datos.some(o => o !== d && o.k === k)) k = `${slug(d.t)}_${++n}`;
+          d.k = k;
+          ["kpis", "embudo"].forEach(l => ED[l].forEach(x => {
+            ["dato", "num", "den", "a", "b"].forEach(c => { if (x[c] === viejo) x[c] = k; });
+            if (x.datos) x.datos = x.datos.map(y => y === viejo ? k : y);
+          }));
+        });
+        b.disabled = true; b.textContent = "Guardando…";
+        const r = await fetch(url("resultados_config?on_conflict=canal"), {
+          method: "POST", headers: head({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+          body: JSON.stringify([{ canal: ED_CANAL, config: ED, actualizado: new Date().toISOString() }]),
+        }).catch(() => null);
+        if (!r || !r.ok) { ED_MSG = `<span class="mal">No se pudo guardar. Probá de nuevo.</span>`; return edPintar(); }
+        ED_ORIG = JSON.stringify(ED); CARGADO = "";
+        ED_MSG = `<span class="bien">✓ Guardado. Ya se ve en Resultados de ${esc((CANALES_ED.find(c => c.k === ED_CANAL) || {}).t || ED_CANAL)}.</span>`;
+        return edPintar();
+      }
+    };
+  }
 })();

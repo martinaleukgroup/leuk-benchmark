@@ -2031,14 +2031,14 @@
     TOOL.innerHTML = `
       <p class="ct-seltool-t">Cómo debería quedar</p>
       <div class="ct-seltool-orig"><del>${esc(original)}</del></div>
-      <textarea class="ct-seltool-ta" rows="2" spellcheck="false"></textarea>
-      <input class="ct-seltool-porque" placeholder="Por qué (opcional)">
+      <textarea class="ct-seltool-ta" rows="2" spellcheck="false" placeholder="Escribí cómo debería quedar"></textarea>
       <div class="ct-seltool-accs">
         <button class="btn-mini" data-cancelar="1">Cancelar</button>
         <button class="btn-mini on" data-enviar-sug="1">Sugerir</button>
       </div>`;
     const ta = TOOL.querySelector(".ct-seltool-ta");
-    ta.value = original; ta.focus({ preventScroll: true }); ta.select();
+    // Arranca vacío (pedido del equipo, oct 2026): el original ya se ve tachado arriba.
+    ta.focus({ preventScroll: true });
     TOOL.dataset.original = original;
     ta.addEventListener("keydown", ev => {
       if (ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); enviarSugerencia(); }
@@ -2054,13 +2054,13 @@
   async function enviarSugerencia() {
     const t = TOOL; if (!t) return;
     const propuesto = t.querySelector(".ct-seltool-ta").value;
-    const porque = t.querySelector(".ct-seltool-porque").value.trim();
     const original = t.dataset.original;
     if (propuesto === original) { alert("El texto propuesto es igual al original."); return; }
+    if (!propuesto.trim() && !confirm("El cuadro está vacío: ¿sugerís borrar este fragmento?")) return;
     const fila = {
       contenido_id: t.dataset.id, tipo: "sugerencia", campo: t.dataset.campo,
       desde: +t.dataset.desde, hasta: +t.dataset.hasta, original, propuesto,
-      texto: porque, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
+      texto: "", autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
     };
     const id = t.dataset.id;
     ocultarTool();

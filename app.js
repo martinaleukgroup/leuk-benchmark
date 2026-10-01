@@ -2137,6 +2137,7 @@
           <div><h3>${marca.replace(/[<>]/g, "")}</h3><span class="leuk-fam">${prods.length} productos · ${a} aprobados · ${d} descartados</span></div>
           <div class="intg-bulk">
             ${prods.some(p => !p.imagen) ? `<button class="btn-ghost" data-bulk="foto" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar los que tienen foto</button>` : ""}
+            ${prods.some(p => p.imagen && !tienePrecio(p)) ? `<button class="btn-ghost" data-bulk="fotoprecio" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar los que tienen foto y precio</button>` : ""}
             <button class="btn-ghost" data-bulk="ok" data-marca="${marca.replace(/"/g, "")}">✓ Aprobar todo</button>
             <button class="btn-ghost" data-bulk="no" data-marca="${marca.replace(/"/g, "")}">✕ Descartar todo</button>
           </div></div>
@@ -2145,6 +2146,8 @@
       </div>`;
     }).join("");
   }
+  // precio en 0 o vacío = sin precio (hay listas que traen US$ 0 cuando falta el dato)
+  const tienePrecio = p => Number(p.precio_usd) > 0;
   // acciones de aprobar/descartar (delegado, una sola vez)
   function abrirLightbox(src) {
     const ov = el("div", "intg-lb");
@@ -2213,15 +2216,21 @@
       // "foto": aprueba sólo los que tienen imagen. Un producto sin foto pierde DOS de las tres
       // señales (la visual y la etiqueta, que se saca mirando la foto), así que nunca llegaría a
       // una equivalencia confiable: mejor dejarlo sin revisar que aprobarlo a ciegas.
-      const n = modo === "foto" ? dela.filter(p => p.imagen).length : dela.length;
+      // "fotoprecio": además exige precio > 0 (sin precio no hay comparación de precios posible).
+      const entra = p => modo === "foto" ? !!p.imagen : modo === "fotoprecio" ? !!p.imagen && tienePrecio(p) : true;
+      const n = dela.filter(entra).length;
       const txt = modo === "foto"
         ? `¿Aprobar los ${n} productos de ${marca} que tienen foto? Los ${dela.length - n} sin foto quedan sin revisar.`
+        : modo === "fotoprecio"
+        ? `¿Aprobar los ${n} productos de ${marca} que tienen foto y precio? Los ${dela.length - n} restantes quedan sin revisar.`
         : `¿${val ? "Aprobar" : "Descartar"} TODO el portfolio de ${marca}? (${n} productos)`;
+      if (!n) { alert(`No hay productos de ${marca} que cumplan la condición.`); return; }
       if (!confirm(txt)) return;
-      const filtro = `marca=eq.${encodeURIComponent(marca)}` + (modo === "foto" ? "&imagen=not.is.null" : "");
+      const filtro = `marca=eq.${encodeURIComponent(marca)}` + (modo === "foto" ? "&imagen=not.is.null"
+        : modo === "fotoprecio" ? "&imagen=not.is.null&precio_usd=gt.0" : "");
       const ok = await guardarAprob(filtro, val);
       if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3?"); return; }
-      INTEG.forEach(p => { if (p.marca === marca && (modo !== "foto" || p.imagen)) p.aprobado = val; });
+      INTEG.forEach(p => { if (p.marca === marca && entra(p)) p.aprobado = val; });
       paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
     }
   });

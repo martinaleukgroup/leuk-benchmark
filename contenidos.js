@@ -949,6 +949,153 @@
     </select>`;
   }
 
+  /* ---- Mailing: el mail es un archivo ---------------------------------------
+     Casi siempre es un .html (hecho en Claude Design); a veces, varias imágenes apiladas.
+     El archivo va al bucket privado `mailing` (ver 2026-10-03-mailing-archivos.sql) y en la
+     fila queda sólo la referencia: meta.html = {path,nombre,tam,ts} · meta.imgs = [{…}] en orden.
+     La vista previa es un iframe SIN scripts: lo que suba el equipo se ve, no se ejecuta.   */
+  const BUCKET_MAIL = "mailing";
+  const sto = p => `${SES().sbUrl}/storage/v1/${p}`;
+  const MAIL_TXT = {};      // path -> texto del .html (vive lo que dure la pestaña)
+  const MAIL_IMG = {};      // path -> URL local de la imagen
+  const MAIL_VISTA = {};    // id -> "escritorio" | "celular"
+  const MAIL_MAX = 25 * 1024 * 1024;
+  const kb = n => n > 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  const nombreSeguro = n => String(n || "archivo").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.\-]+/g, "_").slice(-80);
+  const mailHtml = m => (m.meta || {}).html || null;
+  const mailImgs = m => Array.isArray((m.meta || {}).imgs) ? m.meta.imgs : [];
+
+  function mailHTML(m, ed) {
+    const meta = m.meta || {}, h = mailHtml(m), imgs = mailImgs(m);
+    const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
+    const vista = MAIL_VISTA[m.id] || "escritorio";
+    const hay = !!(h || imgs.length);
+    const fecha = r => r.ts ? ` · ${String(r.ts).slice(8, 10)}/${String(r.ts).slice(5, 7)}` : "";
+    return `<div class="ct-body ct-mail">
+      <dl class="ct-mail-datos">
+        <div><dt>Preheader</dt><dd${e} data-c="meta.preheader">${esc(meta.preheader || "")}</dd></div>
+        ${meta.notas || ed ? `<div><dt>Notas</dt><dd${e} data-c="meta.notas">${esc(meta.notas || "")}</dd></div>` : ""}
+      </dl>
+      <div class="ct-mail-blk">
+        <div class="ct-mail-cab">
+          <h5>El mail</h5>
+          ${hay ? `<span class="ct-mail-vista" role="group" aria-label="Cómo se ve">
+            <button data-mailvista="${m.id}:escritorio" class="${vista === "escritorio" ? "on" : ""}">🖥 Escritorio</button>
+            <button data-mailvista="${m.id}:celular" class="${vista === "celular" ? "on" : ""}">📱 Celular</button></span>` : ""}
+          ${h ? `<button class="btn-mini" data-mailcopiar="${m.id}" title="Copiar el código para pegarlo en Odoo">⧉ Copiar el HTML</button>` : ""}
+          ${ed ? `<label class="btn-mini on ct-mail-subir">⬆ ${hay ? "Subir otro archivo" : "Subir el mail"}
+            <input type="file" hidden multiple accept=".html,.htm,text/html,image/*" data-mailfile="${m.id}"></label>` : ""}
+          <span class="ct-mail-estado" data-mailestado="${m.id}"></span>
+        </div>
+        ${hay ? `<div class="ct-mail-lienzo ${vista}">
+          ${h ? `<iframe class="ct-mail-frame" title="Vista previa del mail" sandbox="allow-same-origin allow-popups" data-mailpath="${esc(h.path)}"></iframe>` : ""}
+          ${imgs.map((im, i) => `<div class="ct-mail-img">
+              <img alt="${esc(im.nombre)}" data-mailimg="${esc(im.path)}">
+              ${ed ? `<span class="ct-mail-imgacc"><button data-mailmover="${m.id}:${i}:-1" ${i === 0 ? "disabled" : ""} title="Subir un lugar">↑</button>
+                <button data-mailmover="${m.id}:${i}:1" ${i === imgs.length - 1 ? "disabled" : ""} title="Bajar un lugar">↓</button>
+                <button data-mailquitar="${m.id}:img:${i}" title="Quitar esta imagen">✕</button></span>` : ""}
+            </div>`).join("")}
+        </div>
+        <p class="ct-mail-pie">${h ? `<b>${esc(h.nombre)}</b> · ${kb(h.tam || 0)}${fecha(h)}${ed ? ` <button class="btn-mini peligro" data-mailquitar="${m.id}:html" title="Quitar el .html">✕ Quitar</button>` : ""} · ` : ""}La vista previa es aproximada: Gmail y Outlook pueden verlo distinto. Probalo con el envío de prueba de Odoo.</p>`
+        : `<p class="ct-mail-vacio">${ed ? "Todavía no está el mail. Subí el archivo <b>.html</b> (o las imágenes, en orden) y se ve acá." : "Todavía no subieron el mail."}</p>`}
+      </div>
+    </div>`;
+  }
+
+  // Después de cada pintada: trae los archivos y los muestra. Los .html van en un iframe sin scripts.
+  async function cargarMail() {
+    const cont = caja(); if (!cont) return;
+    for (const fr of cont.querySelectorAll("iframe[data-mailpath]")) {
+      const path = fr.dataset.mailpath;
+      try {
+        if (MAIL_TXT[path] == null) {
+          const r = await fetch(sto(`object/authenticated/${BUCKET_MAIL}/${encodeURI(path)}`), { headers: head() });
+          if (!r.ok) throw new Error("sin archivo");
+          MAIL_TXT[path] = await r.text();
+        }
+        const medir = () => { try { fr.style.height = Math.max(240, fr.contentDocument.documentElement.scrollHeight + 4) + "px"; } catch (e) { } };
+        fr.onload = () => { medir(); setTimeout(medir, 700); };
+        fr.srcdoc = `<base target="_blank">` + MAIL_TXT[path];
+      } catch (e) {
+        fr.insertAdjacentHTML("afterend", `<p class="ct-mail-vacio">No se pudo traer el archivo. Probá recargar la página.</p>`); fr.remove();
+      }
+    }
+    for (const im of cont.querySelectorAll("img[data-mailimg]")) {
+      const path = im.dataset.mailimg;
+      try {
+        if (!MAIL_IMG[path]) {
+          const r = await fetch(sto(`object/authenticated/${BUCKET_MAIL}/${encodeURI(path)}`), { headers: head() });
+          if (!r.ok) throw new Error("sin archivo");
+          MAIL_IMG[path] = URL.createObjectURL(await r.blob());
+        }
+        im.src = MAIL_IMG[path];
+      } catch (e) { im.alt = "No se pudo traer la imagen"; }
+    }
+  }
+
+  async function subirMail(id, files) {
+    const m = MSGS.find(x => x.id === id); if (!m) return;
+    const estado = caja().querySelector(`[data-mailestado="${id}"]`);
+    const dec = t => { if (estado) estado.textContent = t; };
+    const meta = JSON.parse(JSON.stringify(m.meta || {}));
+    const sobran = [];   // el .html anterior se reemplaza: se borra del bucket al final
+    let n = 0;
+    for (const f of files) {
+      const esHtml = /\.html?$/i.test(f.name) || f.type === "text/html";
+      const esImg = /^image\//.test(f.type);
+      if (!esHtml && !esImg) { dec(`«${f.name}» no es .html ni imagen: se salteó.`); continue; }
+      if (f.size > MAIL_MAX) { dec(`«${f.name}» pesa más de 25 MB: se salteó.`); continue; }
+      dec(`Subiendo ${f.name}…`);
+      const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${nombreSeguro(f.name)}`;
+      const r = await fetch(sto(`object/${BUCKET_MAIL}/${encodeURI(path)}`), {
+        method: "POST", headers: head({ "Content-Type": esHtml ? "text/html; charset=utf-8" : f.type, "x-upsert": "false" }), body: f });
+      if (!r.ok) { alert(`No se pudo subir «${f.name}».`); continue; }
+      const ref = { path, nombre: f.name, tam: f.size, ts: new Date().toISOString() };
+      if (esHtml) { if (meta.html) sobran.push(meta.html.path); meta.html = ref; }
+      else meta.imgs = (Array.isArray(meta.imgs) ? meta.imgs : []).concat([ref]);
+      n++;
+    }
+    if (n) {
+      try { await guardarCampos(id, { meta }); } catch (e) { alert("Se subió el archivo pero no se pudo guardar en la ficha."); }
+      borrarMail(sobran);
+    }
+    pintar();
+  }
+  async function borrarMail(paths) {
+    if (!paths.length) return;
+    try { await fetch(sto(`object/${BUCKET_MAIL}`), { method: "DELETE", headers: head(), body: JSON.stringify({ prefixes: paths }) }); }
+    catch (e) { /* queda huérfano en el bucket: no rompe nada */ }
+  }
+  async function quitarMail(id, cual, i) {
+    const m = MSGS.find(x => x.id === id); if (!m) return;
+    const meta = JSON.parse(JSON.stringify(m.meta || {}));
+    let ref;
+    if (cual === "html") { ref = meta.html; delete meta.html; }
+    else { ref = (meta.imgs || [])[i]; meta.imgs = (meta.imgs || []).filter((_, k) => k !== i); }
+    if (!ref || !confirm(`¿Quitar «${ref.nombre}» de este envío?`)) return;
+    try { await guardarCampos(id, { meta }); borrarMail([ref.path]); pintar(); }
+    catch (e) { alert("No se pudo quitar el archivo."); }
+  }
+  async function moverMail(id, i, d) {
+    const m = MSGS.find(x => x.id === id); if (!m) return;
+    const meta = JSON.parse(JSON.stringify(m.meta || {})), l = meta.imgs || [], j = i + d;
+    if (j < 0 || j >= l.length) return;
+    [l[i], l[j]] = [l[j], l[i]]; meta.imgs = l;
+    try { await guardarCampos(id, { meta }); pintar(); } catch (e) { alert("No se pudo reordenar."); }
+  }
+  async function copiarHtmlMail(id) {
+    const m = MSGS.find(x => x.id === id), h = m && mailHtml(m); if (!h) return;
+    try {
+      if (MAIL_TXT[h.path] == null) {
+        const r = await fetch(sto(`object/authenticated/${BUCKET_MAIL}/${encodeURI(h.path)}`), { headers: head() });
+        if (!r.ok) throw new Error("sin archivo");
+        MAIL_TXT[h.path] = await r.text();
+      }
+      await navigator.clipboard.writeText(MAIL_TXT[h.path]);
+      avisar(id, "HTML copiado ✓", true);
+    } catch (e) { avisar(id, "No se pudo copiar el HTML", false); }
+  }
+
   function fichaHTML(m, ed) {
     const f = aFecha(m.fecha);
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
@@ -970,7 +1117,7 @@
         <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
       </div>
 
-      ${vars.length ? "" : cuerpoHTML(m, "", ed, m)}
+      ${CANAL === "mailing" ? mailHTML(m, ed) : vars.length ? "" : cuerpoHTML(m, "", ed, m)}
 
       ${vars.length ? `<div class="ct-vars">
         <p class="ct-lead"${e} data-c="lead">${esc(m.lead || "")}</p>
@@ -989,7 +1136,7 @@
           ${pendSug ? `<span class="ct-badge sug">✎ ${pendSug}</span>` : ""}
           ${pendCom ? `<span class="ct-badge">💬 ${pendCom}</span>` : ""}
           ${!pendSug && !pendCom ? `💬 Comentarios${coms.length ? ` (${coms.length})` : ""}` : "sin resolver"}</button>
-        <button class="btn-mini" data-copiar="${m.id}" title="${CANAL === "mailing" ? "Copiar el texto del mail" : "Copiar el mensaje listo para pegar en WhatsApp"}">⧉ Copiar</button>
+        <button class="btn-mini" data-copiar="${m.id}" title="${CANAL === "mailing" ? "Copiar el asunto y el preheader" : "Copiar el mensaje listo para pegar en WhatsApp"}">⧉ ${CANAL === "mailing" ? "Copiar el asunto" : "Copiar"}</button>
         <span class="ct-guardado" data-guardado="${m.id}"></span>
         <div class="ct-acciones">${accionesHTML(m, ed)}</div>
       </div>
@@ -1198,6 +1345,10 @@
 
   function enganchar() {
     const cont = caja(); if (!cont) return;
+    cont.querySelectorAll("[data-mailfile]").forEach(inp => {
+      inp.onchange = () => { const fs = [...inp.files]; inp.value = ""; if (fs.length) subirMail(inp.dataset.mailfile, fs); };
+    });
+    if (CANAL === "mailing") cargarMail();
 
     // Buscador de Fichas: se re-dibuja al tipear y se devuelve el foco donde estaba
     const bu = cont.querySelector(".ct-busca");
@@ -1332,6 +1483,16 @@
 
       const cop = t.closest("[data-copiar]");
       if (cop) return copiar(id);
+
+      // Mailing: el mail es un archivo
+      const mailV = t.closest("[data-mailvista]");
+      if (mailV) { const [mid, v] = mailV.dataset.mailvista.split(":"); MAIL_VISTA[mid] = v; pintar(); return; }
+      const mailC = t.closest("[data-mailcopiar]");
+      if (mailC) return copiarHtmlMail(mailC.dataset.mailcopiar);
+      const mailQ = t.closest("[data-mailquitar]");
+      if (mailQ) { const [mid, cual, i] = mailQ.dataset.mailquitar.split(":"); return quitarMail(mid, cual, +i); }
+      const mailM = t.closest("[data-mailmover]");
+      if (mailM) { const [mid, i, d] = mailM.dataset.mailmover.split(":"); return moverMail(mid, +i, +d); }
 
       // Lista + panel: elegir una pieza / volver a la lista (celular)
       const sel = t.closest("[data-sel]");
@@ -1593,6 +1754,7 @@
     const m = MSGS.find(x => x.id === id); if (!m) return;
     const vs = m.variantes || [];
     let txt = m.copy || "";
+    if (CANAL === "mailing") txt = [m.criterio, (m.meta || {}).preheader].filter(Boolean).join("\n");
     if (vs.length) {
       // con variantes se copia la que está abierta; si hay varias, todas rotuladas
       const abiertas = Array.from(document.querySelectorAll(`.ct-msg[data-id="${id}"] details.ct-v`))

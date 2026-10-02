@@ -44,7 +44,18 @@
       eyebrow: m => `Instagram · ${cap(mesLabel(m))}`,
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
     },
+    mailing: {
+      label: "Mailing", corto: "Mailing", icono: "✉️",
+      caja: "#contenidos-mail", pagina: "contenidos-mail",
+      unidad: "envío", art: "un", unidadPl: "envíos", nuevo: "Nuevo envío",
+      eyebrow: m => `Mailing · ${cap(mesLabel(m))}`,
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada envío con «Con ajustes» o «Listo para publicar».",
+    },
   };
+  // A quién va cada mail (se guarda en la columna `tipo`). Cada destino tiene su propia conversión
+  // en Resultados. Un mail que sale a los dos públicos se carga como dos envíos.
+  const DESTINOS = { profesionales: "Profesionales", distribuidores: "Distribuidores" };
+  const destinoDe = m => DESTINOS[m && m.tipo] ? m.tipo : "";
 
   /* ---- Estado en memoria ---- */
   let CANAL = "whatsapp";  // canal abierto; lo fija app.js al entrar a la página
@@ -652,6 +663,7 @@
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
               ${CANAL === "instagram" ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
+              ${CANAL === "mailing" ? ` · ${DESTINOS[destinoDe(m)] || "Sin destino"}` : ""}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </div>`;
         }).join("")}</div>
@@ -882,7 +894,7 @@
           <button class="ct-volver" data-volver="1">← ${C().art === "una" ? "Todas las" : "Todos los"} ${C().unidadPl}</button>
           ${fichaHTML(m, ed)}
         </div>
-      </div>` + NOTA_PIE;
+      </div>` + notaPie();
   }
   function filaHTML(m) {
     const f = aFecha(m.fecha);
@@ -892,7 +904,7 @@
     return `<button class="ct-fila ${m.id === SEL[CANAL] ? "on" : ""} ${meToca(m) ? "me-toca" : ""}" data-sel="${m.id}" role="listitem">
       <span class="ct-fila-f"><b>${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}</b><small>${DIA_CORTO[f.getDay()].slice(0, 3)}</small></span>
       <span class="ct-fila-t"><b>${esc(m.criterio || "Sin título")}</b>
-        <small>${t ? esc(t) : ""}${pend ? ` · 💬 ${pend}` : ""}</small></span>
+        <small>${CANAL === "mailing" ? esc(DESTINOS[destinoDe(m)] || "Sin destino") + (t || pend ? " · " : "") : ""}${t ? esc(t) : ""}${pend ? `${t ? " · " : ""}💬 ${pend}` : ""}</small></span>
       <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
     </button>`;
   }
@@ -924,7 +936,18 @@
   }
 
   // Una sola vez al pie, en vez de repetir la aclaración en cada ficha.
+  const notaPie = () => CANAL === "mailing" ? "" : NOTA_PIE;
   const NOTA_PIE = `<p class="ct-nota">Los <b>*asteriscos*</b> son la negrita de WhatsApp: van tal cual en el mensaje y se copian con él.</p>`;
+
+  // Destino del mail: el único dato propio de Mailing en la ficha. Sin elegir, Resultados no sabe qué conversión pedir.
+  function destinoHTML(m, ed) {
+    const d = destinoDe(m);
+    if (!ed) return `<span class="ct-pill ${d ? "" : "sin-destino"}">${d ? DESTINOS[d] : "Sin destino"}</span>`;
+    return `<select class="ct-tipo ${d ? "" : "sin-destino"}" data-tipo="${m.id}" title="A qué público va este mail">
+      ${d ? "" : `<option value="" selected disabled>Elegí el destino</option>`}
+      ${Object.keys(DESTINOS).map(k => `<option value="${k}" ${d === k ? "selected" : ""}>${DESTINOS[k]}</option>`).join("")}
+    </select>`;
+  }
 
   function fichaHTML(m, ed) {
     const f = aFecha(m.fecha);
@@ -943,6 +966,7 @@
         <span class="ct-crit"${e} data-c="criterio">${esc(m.criterio || "")}</span>
         <span class="ct-obj"${e} data-c="objetivo">${esc(m.objetivo || "")}</span>
         ${m.flag ? `<span class="ct-flag"${e} data-c="flag">${esc(m.flag)}</span>` : ""}
+        ${CANAL === "mailing" ? destinoHTML(m, ed) : ""}
         <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
       </div>
 
@@ -965,7 +989,7 @@
           ${pendSug ? `<span class="ct-badge sug">✎ ${pendSug}</span>` : ""}
           ${pendCom ? `<span class="ct-badge">💬 ${pendCom}</span>` : ""}
           ${!pendSug && !pendCom ? `💬 Comentarios${coms.length ? ` (${coms.length})` : ""}` : "sin resolver"}</button>
-        <button class="btn-mini" data-copiar="${m.id}" title="Copiar el mensaje listo para pegar en WhatsApp">⧉ Copiar</button>
+        <button class="btn-mini" data-copiar="${m.id}" title="${CANAL === "mailing" ? "Copiar el texto del mail" : "Copiar el mensaje listo para pegar en WhatsApp"}">⧉ Copiar</button>
         <span class="ct-guardado" data-guardado="${m.id}"></span>
         <div class="ct-acciones">${accionesHTML(m, ed)}</div>
       </div>
@@ -1630,7 +1654,7 @@
 
     if (a === "nuevo-msg") {
       if (!MES) return;
-      const f = (prompt(`Fecha ${CANAL === "instagram" ? "de la pieza" : "del mensaje"} (AAAA-MM-DD):`, `${MES}-01`) || "").trim();
+      const f = (prompt(`Fecha ${C().art === "una" ? "de la" : "del"} ${C().unidad} (AAAA-MM-DD):`, `${MES}-01`) || "").trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) { if (f) alert("El formato tiene que ser AAAA-MM-DD."); return; }
       const r = await fetch(url("contenidos"), {
         method: "POST", headers: head({ Prefer: "return=representation" }),
@@ -1639,7 +1663,7 @@
           orden: MSGS.length, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
         }]),
       });
-      if (!r.ok) { alert(`No se pudo crear ${CANAL === "instagram" ? "la pieza" : "el mensaje"}.`); return; }
+      if (!r.ok) { alert(`No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
       VISTA = "fichas"; await traerMes(MES);
       FOCO = ((await r.json())[0] || {}).id || ""; pintar(); return;
     }

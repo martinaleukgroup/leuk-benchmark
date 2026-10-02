@@ -501,6 +501,7 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   border-radius:8px;background:var(--card);color:var(--ink)}
 .ct-pill{font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);
   background:var(--bg);color:var(--gray)}
+.ct-tipo.sin-destino,.ct-pill.sin-destino{border-color:var(--warn,#b4691f);color:var(--warn,#b4691f)}
 .ct-placas-res{margin-left:auto;font-size:12.5px;color:var(--gray-soft)}
 .ct-placas-res b{font-family:var(--font-title);color:var(--ink)}
 

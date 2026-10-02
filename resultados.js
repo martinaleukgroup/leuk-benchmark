@@ -98,12 +98,50 @@
     },
   };
 
+  /* Mailing: un envío = una pieza, y cada envío va a UN destino (columna `tipo` de contenidos).
+     Los números salen del reporte del envío en Odoo (Email Marketing). La conversión es distinta
+     según el destino (solo = destino al que se le pide): especificaciones para Profesionales,
+     pedidos para Distribuidores. `destinos` activa el selector de destino en la pantalla. */
+  DEFAULT.mailing = {
+    nombre: "Mailing", funcion: "Convertir", verbos: "Informar · Activar · Convertir",
+    objetivo: "Que cada envío llegue, se abra y termine en una especificación (Profesionales) o en un pedido (Distribuidores).", base: "2026-Q4",
+    fuente: "Odoo", unidad: "envío",
+    destinos: [{ k: "profesionales", t: "Profesionales" }, { k: "distribuidores", t: "Distribuidores" }],
+    datos: [
+      { k: "enviados", t: "Enviados", nivel: "pieza", ayuda: "Odoo → Email Marketing → el envío → Enviados" },
+      { k: "entregados", t: "Recibidos", nivel: "pieza", ayuda: "Odoo → Recibidos (enviados menos rebotados)" },
+      { k: "abiertos", t: "Abiertos", nivel: "pieza", ayuda: "Odoo → Abiertos" },
+      { k: "clics", t: "Clics", nivel: "pieza", ayuda: "Odoo → Clics" },
+      { k: "rebotados", t: "Rebotados", nivel: "pieza", ayuda: "Odoo → Rebotados" },
+      { k: "bajas", t: "Bajas", nivel: "pieza", ayuda: "Contactos que se dieron de baja a partir de este envío" },
+      { k: "conv_espec", t: "Especificaciones", nivel: "pieza", solo: "profesionales", ayuda: "Especificaciones que salieron de este envío (sólo Profesionales)" },
+      { k: "conv_pedidos", t: "Pedidos", nivel: "pieza", solo: "distribuidores", ayuda: "Pedidos que salieron de este envío (sólo Distribuidores)" },
+    ],
+    kpis: [
+      { k: "apertura", t: "Tasa de apertura", f: "cociente", num: "abiertos", den: "entregados", fmt: "pct", ayuda: "Abiertos ÷ recibidos" },
+      { k: "ctr", t: "CTR", f: "cociente", num: "clics", den: "entregados", fmt: "pct", ayuda: "Clics ÷ recibidos" },
+      { k: "ctor", t: "CTOR", f: "cociente", num: "clics", den: "abiertos", fmt: "pct", ayuda: "Clics ÷ abiertos: de los que abren, cuántos hacen clic" },
+      { k: "rebote", t: "Tasa de rebote", f: "cociente", num: "rebotados", den: "enviados", fmt: "pct", ayuda: "Rebotados ÷ enviados" },
+      { k: "bajas", t: "Bajas", f: "suma", dato: "bajas" },
+      { k: "espec", t: "Especificaciones", f: "suma", dato: "conv_espec", solo: "profesionales", ayuda: "Conversión de Profesionales" },
+      { k: "pedidos", t: "Pedidos", f: "suma", dato: "conv_pedidos", solo: "distribuidores", ayuda: "Conversión de Distribuidores" },
+    ],
+    embudo: [
+      { t: "Enviados", f: "suma", dato: "enviados" },
+      { t: "Recibidos", f: "suma", dato: "entregados" },
+      { t: "Abren", f: "suma", dato: "abiertos" },
+      { t: "Hacen clic", f: "suma", dato: "clics" },
+      { t: "Convierten", f: "sumas", datos: ["conv_espec", "conv_pedidos"], nota: "especificaciones + pedidos" },
+    ],
+  };
+
   /* ---- Estado ---- */
   let CTX = null;          // {canal, mes, puedeCargar, irAFicha}
   let CFG = null;          // config del canal
   let SIN_TABLA = false;   // falta correr el SQL: se ve, pero no se guarda
   let PIEZAS = [];         // [{id, mes, fecha, criterio, estado, encuesta}] del canal
   let V = {};              // "mes|pieza|dato" -> número
+  let DEST = "";           // destino elegido (Mailing): "" = todos
   let PERIODO = "trim";    // mes | trim | 12m | todo
   let DETALLE = "";        // mes abierto en el histórico
   let CARGADO = "";        // canal cuyos datos están en memoria
@@ -111,7 +149,11 @@
 
   const clave = (mes, pieza, dato) => `${mes}|${pieza || ""}|${dato}`;
   const datoDef = k => (CFG.datos || []).find(d => d.k === k) || { k, nivel: "pieza" };
-  const aplica = (d, p) => d.solo !== "encuesta" || !!(p.encuesta && p.encuesta.q);
+  // `solo`: "encuesta" (WhatsApp) o la clave de un destino (Mailing: el dato sólo se pide a ese destino).
+  const aplica = (d, p) => !d.solo || (d.solo === "encuesta" ? !!(p.encuesta && p.encuesta.q) : p.tipo === d.solo);
+  const U = () => CFG.unidad || (CTX.canal === "instagram" ? "pieza" : "mensaje");
+  const kpisVis = () => (CFG.kpis || []).filter(k => !DEST || !k.solo || k.solo === DEST);
+  const sinDestino = p => (CFG.destinos || []).length && !CFG.destinos.some(x => x.k === p.tipo);
   // Una pieza se mide cuando ya salió. "Publicado" no alcanza como regla: no siempre se marca.
   const medible = p => p.fecha <= hoyISO();
 
@@ -120,7 +162,7 @@
     const [rc, rv, rp] = await Promise.all([
       fetch(url(`resultados_config?canal=eq.${enc(c)}&select=config`), { headers: head() }).catch(() => null),
       fetch(url(`resultados_valores?canal=eq.${enc(c)}&select=mes,pieza,dato,valor`), { headers: head() }).catch(() => null),
-      fetch(url(`contenidos?canal=in.(${enc(c)})&select=id,mes,fecha,criterio,estado,encuesta&order=fecha.asc`), { headers: head() }).catch(() => null),
+      fetch(url(`contenidos?canal=in.(${enc(c)})&select=id,mes,fecha,criterio,estado,encuesta,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
     ]);
     SIN_TABLA = !rv || !rv.ok;
     const cfg = rc && rc.ok ? (await rc.json())[0] : null;
@@ -134,7 +176,8 @@
   /* ===================== CÁLCULO =====================
      Todo se calcula desde los crudos sobre un conjunto de meses: el mes, el
      trimestre o el año salen de la misma cuenta, nunca de promediar promedios. */
-  const piezasDe = meses => PIEZAS.filter(p => meses.includes(p.mes) && medible(p));
+  // `todas`: sin el filtro de destino (la carga y los pendientes siempre ven todos los envíos).
+  const piezasDe = (meses, todas) => PIEZAS.filter(p => meses.includes(p.mes) && medible(p) && (todas || !DEST || p.tipo === DEST));
   const vP = (p, k) => V[clave(p.mes, p.id, k)];
   const vM = (m, k) => V[clave(m, "", k)];
 
@@ -252,7 +295,7 @@
       // viene). Ese mes todavía no tiene resultados: se muestra el mes en curso y se avisa.
       const futuro = ctx.mes > mesActual();
       CTX = Object.assign({}, ctx, { el, mes: futuro ? mesActual() : ctx.mes, mesPedido: futuro ? ctx.mes : "" });
-      if (cambioCanal) DETALLE = "";
+      if (cambioCanal) { DETALLE = ""; DEST = ""; }
       if (CARGADO !== ctx.canal || cambioCanal) {
         el.innerHTML = `<div class="empty-mini">Cargando resultados…</div>`;
         await traer();
@@ -291,6 +334,9 @@
         <p class="rs-verbos">${esc(CFG.verbos || "")}</p>
         <p class="rs-obj">${esc(CFG.objetivo || "")}</p>
       </div>
+      ${(CFG.destinos || []).length ? `<div class="rs-per" role="group" aria-label="Destino">
+        ${[{ k: "", t: "Todos" }, ...CFG.destinos].map(x => `<button data-rs-dest="${x.k}" class="${DEST === x.k ? "on" : ""}">${esc(x.t)}</button>`).join("")}
+      </div>` : ""}
       <div class="rs-per" role="group" aria-label="Período">
         ${PERIODOS.map(p => `<button data-rs-per="${p.k}" class="${PERIODO === p.k ? "on" : ""}">${p.t}</button>`).join("")}
       </div>
@@ -324,7 +370,8 @@
     const falta = [];
     const limite = isoMas(-2);   // a las 48 h ya tendría que estar
     const ms = PERIODO === "mes" || PERIODO === "trim" ? mesesPeriodo() : [CTX.mes];
-    piezasDe(ms).filter(p => p.fecha <= limite).forEach(p => {
+    piezasDe(ms, true).filter(p => p.fecha <= limite).forEach(p => {
+      if (sinDestino(p)) falta.push({ p, d: { t: "Destino (se elige en la ficha del envío)" } });
       (CFG.datos || []).filter(d => d.nivel === "pieza" && !d.opcional && aplica(d, p) && vP(p, d.k) == null)
         .forEach(d => falta.push({ p, d }));
     });
@@ -388,7 +435,7 @@
     const ms = mesesGrafico();
     const base = CFG.base ? mesesDeTrim(CFG.base).filter(m => m <= mesActual()) : [];
     const ant = periodoAnterior();
-    return `<div class="rs-kpis">${(CFG.kpis || []).map(k => {
+    return `<div class="rs-kpis">${kpisVis().map(k => {
       const actual = calc(k, mesesPeriodo());
       const serie = ms.map(m => calc(k, [m]));
       const vBase = base.length ? calc(k, base) : null;
@@ -430,9 +477,9 @@
     const col = PERIODO === "mes" ? "" : `<th class="rs-tot">${esc(etiquetaPeriodo())}</th>`;
     return `<div class="rs-scroll"><table class="rs-hist">
       <thead><tr><th>KPI</th>${ms.map(m => `<th><button data-rs-mes="${m}" class="${DETALLE === m ? "on" : ""}" title="Ver el detalle por pieza">${mesCorto(m)}</button></th>`).join("")}${col}</tr></thead>
-      <tbody>${(CFG.kpis || []).map(k => `<tr><td>${esc(k.t)}</td>${ms.map(m => `<td>${fmt(k, calc(k, [m]))}</td>`).join("")}${PERIODO === "mes" ? "" : `<td class="rs-tot">${fmt(k, calc(k, mesesPeriodo()))}</td>`}</tr>`).join("")}</tbody>
+      <tbody>${kpisVis().map(k => `<tr><td>${esc(k.t)}</td>${ms.map(m => `<td>${fmt(k, calc(k, [m]))}</td>`).join("")}${PERIODO === "mes" ? "" : `<td class="rs-tot">${fmt(k, calc(k, mesesPeriodo()))}</td>`}</tr>`).join("")}</tbody>
     </table></div>
-    <p class="rs-nota">Tocá un mes para ver cada ${CTX.canal === "instagram" ? "pieza" : "mensaje"} con su resultado.</p>
+    <p class="rs-nota">Tocá un mes para ver cada ${U()} con su resultado.</p>
     ${DETALLE ? detalleHTML(DETALLE) : ""}`;
   }
   function detalleHTML(m) {
@@ -451,7 +498,7 @@
   /* ---- Carga de datos del mes elegido ---- */
   function cargaHTML() {
     const m = CTX.mes;
-    const ps = piezasDe([m]);
+    const ps = piezasDe([m], true);
     const dp = (CFG.datos || []).filter(d => d.nivel === "pieza");
     const dm = (CFG.datos || []).filter(d => d.nivel === "mes");
     const ed = CTX.puedeCargar && !SIN_TABLA;
@@ -465,11 +512,11 @@
     return `<details class="rs-card rs-carga" ${falta && CTX.puedeCargar ? "open" : ""} id="rs-carga-${CTX.canal}">
       <summary><h3>Cargar datos de ${mesLargo(m).split(" ")[0]}</h3>
         <span class="rs-carga-est" data-rs-pend-carga>${faltanTxt(falta)}</span></summary>
-      ${ed ? `<p class="rs-nota">Sólo números, tal cual los da ${CTX.canal === "instagram" ? "Instagram" : "WhatsApp"}. Se guarda solo al salir de cada casillero; los % los calcula la plataforma.</p>`
+      ${ed ? `<p class="rs-nota">Sólo números, tal cual los da ${CFG.fuente || (CTX.canal === "instagram" ? "Instagram" : "WhatsApp")}. Se guarda solo al salir de cada casillero; los % los calcula la plataforma.</p>`
            : `<p class="rs-nota">${SIN_TABLA ? "Se habilita cuando esté corrido el SQL." : "Los carga quien hace este canal."}</p>`}
       ${ps.length ? `<div class="rs-scroll"><table class="rs-cargat">
-        <thead><tr><th>${CTX.canal === "instagram" ? "Pieza" : "Mensaje"}</th>${dp.map(d => `<th title="${esc(d.ayuda || "")}">${esc(d.t)}${d.opcional ? " <small>(opcional)</small>" : ""}</th>`).join("")}</tr></thead>
-        <tbody>${ps.map(p => `<tr><td>${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 30))}</td>${dp.map(d => inp(m, p.id, d, p)).join("")}</tr>`).join("")}</tbody>
+        <thead><tr><th>${cap(U())}</th>${(CFG.destinos || []).length ? "<th>Destino</th>" : ""}${dp.map(d => `<th title="${esc(d.ayuda || "")}">${esc(d.t)}${d.opcional ? " <small>(opcional)</small>" : ""}</th>`).join("")}</tr></thead>
+        <tbody>${ps.map(p => `<tr><td>${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 30))}</td>${(CFG.destinos || []).length ? `<td>${esc(((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || "Sin destino")}</td>` : ""}${dp.map(d => inp(m, p.id, d, p)).join("")}</tr>`).join("")}</tbody>
       </table></div>` : `<p class="rs-nota">Todavía no salió ninguna pieza de este mes.</p>`}
       ${dm.length ? `<h4 class="rs-carga-mes">Datos del mes</h4>
         <div class="rs-carga-grid">${dm.map(d => `<label title="${esc(d.ayuda || "")}"><span>${esc(d.t)}</span>
@@ -514,8 +561,9 @@
     const kpis = [["KPI", ...ms.map(mesLargo)], ...(CFG.kpis || []).map(k => [k.t, ...ms.map(m => {
       const v = calc(k, [m]); return v == null ? "" : k.fmt === "pct" ? Math.round(v * 1000) / 10 : Math.round(v * 10) / 10; })])];
     const dp = (CFG.datos || []).filter(d => d.nivel === "pieza");
-    const piezas = [["Mes", "Fecha", "Pieza", ...dp.map(d => d.t)],
-      ...PIEZAS.filter(medible).map(p => [p.mes, p.fecha, p.criterio, ...dp.map(d => vP(p, d.k) ?? "")])];
+    const cd = (CFG.destinos || []).length;
+    const piezas = [["Mes", "Fecha", "Pieza", ...(cd ? ["Destino"] : []), ...dp.map(d => d.t)],
+      ...PIEZAS.filter(medible).map(p => [p.mes, p.fecha, p.criterio, ...(cd ? [((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || ""] : []), ...dp.map(d => vP(p, d.k) ?? "")])];
     const dm = (CFG.datos || []).filter(d => d.nivel === "mes");
     const mesesT = [["Mes", ...dm.map(d => d.t)], ...ms.map(m => [m, ...dm.map(d => vM(m, d.k) ?? "")])];
     const wb = XLSX.utils.book_new();
@@ -530,6 +578,7 @@
     el.__rs = true;   // el contenedor es el mismo mientras dure la vista: un solo juego de listeners
     el.addEventListener("click", ev => {
       const t = ev.target.closest("button"); if (!t || !el.contains(t)) return;
+      if (t.hasAttribute("data-rs-dest")) { DEST = t.dataset.rsDest; DETALLE = ""; pintar(); return; }
       if (t.dataset.rsPer) { PERIODO = t.dataset.rsPer; DETALLE = ""; pintar(); return; }
       if (t.dataset.rsMes) { DETALLE = DETALLE === t.dataset.rsMes ? "" : t.dataset.rsMes; repintarResultados(); return; }
       if (t.dataset.rsFicha) { CTX.irAFicha && CTX.irAFicha(t.dataset.rsFicha, t.dataset.rsFmes); return; }
@@ -559,7 +608,7 @@
        · un dato que usa un KPI o el embudo no se puede borrar (se dice cuál lo usa).
        · borrar un dato con valores cargados no borra los valores: se dejan de mostrar.
      Canales: los que tienen página en Contenidos. Sumar uno nuevo necesita su página.   */
-  const CANALES_ED = [{ k: "whatsapp", t: "WhatsApp Profesionales" }, { k: "instagram", t: "Instagram Leuk" }];
+  const CANALES_ED = [{ k: "whatsapp", t: "WhatsApp Profesionales" }, { k: "instagram", t: "Instagram Leuk" }, { k: "mailing", t: "Mailing" }];
   const FUNCIONES = ["Posicionar", "Considerar", "Fidelizar"];
   const FORMULAS = [
     { f: "suma",     t: "Total de un dato",         ej: "Clics = total de clics" },
@@ -593,7 +642,7 @@
     const [rc, rv, rp] = await Promise.all([
       fetch(url(`resultados_config?canal=eq.${enc(canal)}&select=config`), { headers: head() }).catch(() => null),
       fetch(url(`resultados_valores?canal=eq.${enc(canal)}&select=mes,pieza,dato,valor`), { headers: head() }).catch(() => null),
-      fetch(url(`contenidos?canal=in.(${enc(canal)})&select=id,mes,fecha,criterio,estado,encuesta&order=fecha.asc`), { headers: head() }).catch(() => null),
+      fetch(url(`contenidos?canal=in.(${enc(canal)})&select=id,mes,fecha,criterio,estado,encuesta,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
     ]);
     const fila = rc && rc.ok ? (await rc.json())[0] : null;
     ED = clon((fila && fila.config) || DEFAULT[canal] || DEFAULT.whatsapp);
@@ -667,7 +716,9 @@
             return `<div class="kc-fila">
               <input class="kc-nombre" data-ed="datos.${i}.t" value="${esc(d.t || "")}" placeholder="Nombre del dato" aria-label="Nombre del dato">
               <select data-ed="datos.${i}.nivel" data-edre="1" aria-label="Se carga"><option value="pieza" ${d.nivel !== "mes" ? "selected" : ""}>Por pieza</option><option value="mes" ${d.nivel === "mes" ? "selected" : ""}>Una vez por mes</option></select>
-              ${d.nivel !== "mes" ? `<label class="kc-chk"><input type="checkbox" data-edchk="datos.${i}.solo" data-valor="encuesta" ${d.solo === "encuesta" ? "checked" : ""}> Sólo encuestas</label>` : ""}
+              ${d.nivel === "mes" ? "" : (ED.destinos || []).length
+                ? `<select data-ed="datos.${i}.solo" aria-label="Se pide a"><option value="">Todos los destinos</option>${ED.destinos.map(x => `<option value="${esc(x.k)}" ${d.solo === x.k ? "selected" : ""}>Sólo ${esc(x.t)}</option>`).join("")}</select>`
+                : `<label class="kc-chk"><input type="checkbox" data-edchk="datos.${i}.solo" data-valor="encuesta" ${d.solo === "encuesta" ? "checked" : ""}> Sólo encuestas</label>`}
               <label class="kc-chk"><input type="checkbox" data-edchk="datos.${i}.opcional" ${d.opcional ? "checked" : ""}> Opcional</label>
               <input class="kc-ayuda" data-ed="datos.${i}.ayuda" value="${esc(d.ayuda || "")}" placeholder="Dónde se saca (ayuda)">
               ${mover("datos", i)}

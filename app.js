@@ -2236,7 +2236,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "tareas", "acciones", "usuarios", "kpis"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "usuarios", "kpis"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2264,7 +2264,8 @@
     contenidos: {
       label: "Contenidos",
       pages: [{ p: "contenidos", t: "💬 Comunidad de WhatsApp" },
-              { p: "contenidos-ig", t: "📸 Instagram" }],
+              { p: "contenidos-ig", t: "📸 Instagram" },
+              { p: "contenidos-mail", t: "✉️ Mailing" }],
     },
     // Sólo el equipo de marketing (ver esMarketing): no está en ROLES.mods a propósito.
     tareas: {
@@ -2298,6 +2299,7 @@
     eventos:         { t: "Eventos",              ic: "confirmation_number" },
     contenidos:      { t: "Comunidad WhatsApp",   ic: "chat" },
     "contenidos-ig": { t: "Instagram",            ic: "photo_camera" },
+    "contenidos-mail": { t: "Mailing",            ic: "mail" },
     comparaciones:   { t: "Catálogo",             ic: "search" },
     resultados:      { t: "Comparaciones",        ic: "compare_arrows", count: true },
     decisiones:      { t: "Insights",             ic: "insights" },
@@ -2323,7 +2325,7 @@
   const GRUPOS = [
     { items: ["inicio"] },
     { g: "Planificación",      items: ["tareas", "acciones", "eventos"] },
-    { g: "Contenidos",         items: ["contenidos", "contenidos-ig"], badge: "contenidos" },
+    { g: "Contenidos",         items: ["contenidos", "contenidos-ig", "contenidos-mail"], badge: "contenidos" },
     { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
     { g: "Generadores",        items: ["firmas", "stock", "reingresos"] },
     { g: "Administración",     items: ["integraciones", "manual", "usuarios", "kpis", "@precios", "@costos", "@lista"], abajo: true },
@@ -2429,8 +2431,8 @@
       "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
       "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
-    { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig"], pasos: [
-      "Elegí el canal en el menú (<b>Comunidad WhatsApp</b> o <b>Instagram</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
+    { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
+      "Elegí el canal en el menú (<b>Comunidad WhatsApp</b>, <b>Instagram</b> o <b>Mailing</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
       "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
       "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
@@ -2518,7 +2520,7 @@
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
     // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {
-      window.renderContenidos(page === "contenidos-ig" ? "instagram" : "whatsapp");
+      window.renderContenidos(page === "contenidos-ig" ? "instagram" : page === "contenidos-mail" ? "mailing" : "whatsapp");
     }
     // Tareas del equipo de marketing: tablero + lista + calendario. Lo arma tareas.js.
     if (page === "tareas" && window.renderTareas) window.renderTareas();
@@ -2944,7 +2946,7 @@
 
     // Todo a una misma forma: {at: necesita atención ya, orden, dias, ic, tit, meta, tag:[texto, clase], ir}
     const cuando = d => d < -1 ? `hace ${-d} días` : d === -1 ? "ayer" : d === 0 ? "hoy" : d === 1 ? "mañana" : `en ${d} días`;
-    const icCanal = k => k === "instagram" ? "photo_camera" : "chat";
+    const icCanal = k => k === "instagram" ? "photo_camera" : k === "mailing" ? "mail" : "chat";
     const items = [];
     (t || []).forEach(x => {
       const ir = () => window.irATarea(x.id);
@@ -2988,7 +2990,7 @@
     const tiles = [];
     if (t) tiles.push({ n: t.filter(x => x.tipo === "tarea" && x.dias <= 0).length, l: "Tus tareas para hoy o vencidas", p: "tareas" });
     // Contenidos según tu papel: quien revisa ve lo que le mandaron; quien hace, lo que tiene que corregir
-    const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && x.canal === "instagram" ? "contenidos-ig" : "contenidos"; };
+    const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && x.canal === "instagram" ? "contenidos-ig" : x && x.canal === "mailing" ? "contenidos-mail" : "contenidos"; };
     if (c && (c.papeles || []).includes("revisa")) tiles.push({ n: c.filter(x => x.tipo === "revisar").length, l: "Piezas que precisan tu feedback", p: irCanal("revisar") });
     if (c && (c.papeles || []).includes("hace")) tiles.push({ n: c.filter(x => x.tipo === "corregir").length, l: "Piezas con ajustes para hacer", p: irCanal("corregir") });
     if (t || a) tiles.push({ n: [...(t || []), ...(a || [])].filter(x => x.tipo === "mencion").length, l: "Menciones nuevas", p: t ? "tareas" : "acciones" });

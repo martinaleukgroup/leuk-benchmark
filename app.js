@@ -928,46 +928,74 @@
 
   /* ===================== PÁGINA RESULTADOS (autorizadas) ===================== */
   const uniq = (arr, f) => [...new Set(arr.map(f).filter(Boolean))].sort();
-  const state = { orden: "dif" };
+  const state = { orden: "dif", page: 0, sort: null, familia: "", rango: "", set: "" };
   // info de precio de una comparación autorizada
   // comparación NETA en vivo de una autorización (usa la config de descuentos vigente)
   const posInfo = a => cmp(a.precioLeukUsd, a.precioCompUsd, a.marca);
   const POS_LABEL = { barato: "Leuk más barato", caro: "Leuk más caro", similar: "Precio similar", sin: "Sin precio comp." };
   function buildFilters() {
     const box = $("#filters"); box.innerHTML = "";
+    // Sin etiquetas: la primera opción dice qué filtra. La posición de precio la filtran los contadores de arriba.
     const defs = [
       { key: "marca", label: "Competidor", opts: MARCAS },
-      { key: "posicion", label: "Posición de precio", opts: ["Leuk más barato", "Leuk más caro", "Precio similar", "Sin precio comp."] },
-      { key: "nivel", label: "Nivel", opts: ["Equivalente", "Comparable parcial"] },
+      { key: "nivel", label: "Nivel de equivalencia", opts: ["Equivalente", "Comparable parcial"] },
       { key: "vertical", label: "Vertical", opts: uniq(P, p => p.vertical) },
     ];
+    const q = el("input"); q.type = "search"; q.dataset.k = "q"; q.placeholder = "Buscar por SKU o nombre…"; q.setAttribute("aria-label", "Buscar");
+    box.appendChild(q);
     defs.forEach(f => {
-      const w = el("div");
-      w.innerHTML = `<label>${f.label}</label><select data-k="${f.key}"><option value="">Todos</option>${f.opts.map(o => `<option>${o}</option>`).join("")}</select>`;
+      const w = el("select"); w.dataset.k = f.key; w.setAttribute("aria-label", f.label);
+      w.innerHTML = `<option value="">${f.label}: todos</option>${f.opts.map(o => `<option>${o}</option>`).join("")}`;
       box.appendChild(w);
     });
-    const ord = el("div");
-    ord.innerHTML = `<label>Ordenar por</label><select data-k="orden">
-      <option value="dif">Mayor diferencia de precio</option>
-      <option value="caro">Leuk más caro primero</option>
-      <option value="barato">Leuk más barato primero</option>
-      <option value="reciente">Más recientes</option></select>`;
+    const ord = el("select"); ord.dataset.k = "orden"; ord.setAttribute("aria-label", "Ordenar por");
+    ord.innerHTML = `<option value="dif">Orden: mayor diferencia</option>
+      <option value="caro">Orden: Leuk más caro primero</option>
+      <option value="barato">Orden: Leuk más barato primero</option>
+      <option value="reciente">Orden: más recientes</option>`;
     box.appendChild(ord);
-    const w = el("div"); w.innerHTML = `<label>Buscar</label><input data-k="q" placeholder="SKU o nombre">`;
-    box.appendChild(w);
-    box.querySelectorAll("select,input").forEach(x => { if (x.dataset.k === "orden") x.value = state.orden; x.oninput = () => { state[x.dataset.k] = x.value; renderTabla(); }; });
+    box.querySelectorAll("select,input").forEach(x => { if (x.dataset.k === "orden") x.value = state.orden; x.oninput = () => { state[x.dataset.k] = x.value; state.page = 0; if (x.dataset.k === "orden") state.sort = null; renderTabla(); }; });
   }
   const vertOf = sku => { const p = P.find(x => x.sku === sku); return p ? p.vertical : null; };
-  function authList() {
-    let arr = Object.values(AUTH).filter(a => {
-      if (state.marca && a.marca !== state.marca) return false;
-      if (state.nivel && a.veredicto !== state.nivel) return false;
-      if (state.vertical && vertOf(a.leukSku) !== state.vertical) return false;
-      if (state.posicion) { const pi = posInfo(a); if ((state.posicion === "Sin precio comp." ? "Sin precio comp." : pi.texto) !== state.posicion) return false; }
-      if (state.q) { const q = norm(state.q); if (!norm(a.leukSku).includes(q) && !norm(a.leukNombre).includes(q) && !norm(a.equivNombre).includes(q)) return false; }
+  // Rangos de diferencia (misma regla que cmp(): ±3% es "similar"). Los usa la distribución del tablero.
+  const RANGOS = [
+    { k: "mcaro",   t: "Mucho más caro",   sub: "más de 50%",  f: d => d < -50,               tono: "no" },
+    { k: "caro",    t: "Más caro",         sub: "3% a 50%",    f: d => d >= -50 && d < -3,    tono: "no2" },
+    { k: "sim",     t: "Precio similar",   sub: "±3%",         f: d => d >= -3 && d <= 3,     tono: "sim" },
+    { k: "barato",  t: "Más barato",       sub: "3% a 50%",    f: d => d > 3 && d <= 50,      tono: "ok2" },
+    { k: "mbarato", t: "Mucho más barato", sub: "más de 50%",  f: d => d > 50,                tono: "ok" },
+  ];
+  const famDe = a => a.leukFamilia || "—";
+  // `skip`: filtros que NO se aplican (cada gráfico ignora el suyo para mostrar la selección entre las demás opciones)
+  function filtrar(skip) {
+    skip = skip || [];
+    const on = k => state[k] && !skip.includes(k);
+    return Object.values(AUTH).filter(a => {
+      if (on("marca") && a.marca !== state.marca) return false;
+      if (on("nivel") && a.veredicto !== state.nivel) return false;
+      if (on("vertical") && vertOf(a.leukSku) !== state.vertical) return false;
+      if (on("familia") && famDe(a) !== state.familia) return false;
+      if (on("set") && !state.set.keys.has(a.key)) return false;
+      if (on("posicion")) { const pi = posInfo(a); if ((state.posicion === "Sin precio comp." ? "Sin precio comp." : pi.texto) !== state.posicion) return false; }
+      if (on("rango")) { const pi = posInfo(a); const r = RANGOS.find(x => x.k === state.rango); if (!pi.has || !r.f(pi.diff)) return false; }
+      if (on("q")) { const q = norm(state.q); if (!norm(a.leukSku).includes(q) && !norm(a.leukNombre).includes(q) && !norm(a.equivNombre).includes(q)) return false; }
       return true;
     });
+  }
+  function authList() {
+    const arr = filtrar();
     const dOf = a => { const pi = posInfo(a); return pi.has ? pi.diff : null; };
+    const COL = {   // orden por columna de la tabla
+      sku: a => String(a.leukSku), marca: a => norm(a.marca), leuk: a => netLeuk(a.precioLeukUsd), comp: a => netComp(a.precioCompUsd, a.marca), dif: dOf,
+    };
+    if (state.sort && COL[state.sort.k]) {
+      const g = COL[state.sort.k], dir = state.sort.dir;
+      return arr.sort((x, y) => {
+        const vx = g(x), vy = g(y);
+        if (vx == null) return 1; if (vy == null) return -1;
+        return (typeof vx === "string" ? vx.localeCompare(vy, "es", { numeric: true }) : vx - vy) * dir;
+      });
+    }
     const sorters = {
       reciente: (x, y) => y.ts - x.ts,
       dif: (x, y) => (Math.abs(dOf(y) ?? -1) - Math.abs(dOf(x) ?? -1)),
@@ -976,69 +1004,204 @@
     };
     return arr.sort(sorters[state.orden] || sorters.dif);
   }
-  function resumenPrecios(f) {
-    const con = f.map(posInfo).filter(pi => pi.has);
-    const n = { barato: 0, caro: 0, similar: 0 };
-    con.forEach(pi => { n[pi.cls === "p-cheap" ? "barato" : pi.cls === "p-exp" ? "caro" : "similar"]++; });
+  // Contadores del encabezado: cuentan TODAS las seleccionadas (menos los filtros de arriba) y al tocarlos
+  // filtran por posición de precio. Es el único filtro de posición: ya no hay desplegable.
+  function resumenPrecios() {
+    const base = filtrar(["posicion"]);
+    const pis = base.map(posInfo), con = pis.filter(pi => pi.has);
+    const n = t => pis.filter(pi => pi.has && pi.texto === t).length;
     const prom = con.length ? Math.round(con.reduce((s, pi) => s + pi.diff, 0) / con.length) : null;
-    const sinPrecio = f.length - con.length;
-    return `<div class="res-resumen">
-      <div class="rz"><span class="rz-n p-cheap">${n.barato}</span> Leuk más barato</div>
-      <div class="rz"><span class="rz-n p-exp">${n.caro}</span> Leuk más caro</div>
-      <div class="rz"><span class="rz-n p-sim">${n.similar}</span> precio similar</div>
-      ${sinPrecio ? `<div class="rz"><span class="rz-n p-na">${sinPrecio}</span> sin precio comp.</div>` : ""}
-      ${prom != null ? `<div class="rz rz-prom">Dif. promedio <b class="${prom > 0 ? "diff pos" : "diff neg"}">${prom > 0 ? "+" : ""}${prom}%</b></div>` : ""}
-    </div>`;
+    const k = (num, lbl, pos, tono, tit) => `<${pos ? `button data-pos="${pos}"` : "div"} class="mh-kpi ${pos && (state.posicion || "") === (pos === "*" ? "" : pos) ? "on" : ""}"${tit ? ` title="${tit}"` : ""}>
+      <b class="${num === "—" || num === 0 ? "cero" : tono || ""}">${num}</b><span>${lbl}</span></${pos ? "button" : "div"}>`;
+    $("#resKpis").innerHTML =
+      k(base.length, "seleccionadas", "*") +
+      k(n("Leuk más barato"), "Leuk más barato", "Leuk más barato", "ok") +
+      k(n("Precio similar"), "precio similar", "Precio similar") +
+      k(n("Leuk más caro"), "Leuk más caro", "Leuk más caro", "no") +
+      (pis.length - con.length ? k(pis.length - con.length, "sin precio del competidor", "Sin precio comp.") : "") +
+      k(prom != null ? (prom > 0 ? "+" : "") + prom + "%" : "—", "diferencia promedio", null, prom > 0 ? "ok" : "no", "Relativa al precio del competidor: + = Leuk más barato");
+    $("#resKpis").querySelectorAll("[data-pos]").forEach(b => b.onclick = () => { state.posicion = b.dataset.pos === "*" ? "" : (state.posicion === b.dataset.pos ? "" : b.dataset.pos); state.page = 0; renderTabla(); });
+  }
+  /* ---- Tablero de Comparaciones: mapa familia×competidor, distribución, dispersión, casos a revisar y tabla ---- */
+  const PAGINA = 15, EXPANDIDAS = new Set();
+  const fmtN = n => (Math.round(n * 10) / 10).toLocaleString("es-AR");
+  const fmtDif = d => (d > 0 ? "+" : "") + (Math.round(d * 10) / 10).toLocaleString("es-AR") + "%";
+  const esc2 = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // Diverging: verde (Leuk más barato) ← gris neutro → rojo (Leuk más caro). La intensidad sigue a |dif|; el número siempre va escrito.
+  const tinteDif = d => d == null ? "transparent" : Math.abs(d) <= 3 ? "var(--line)" : `color-mix(in srgb, var(${d > 0 ? "--ok" : "--no"}) ${Math.round(18 + Math.min(Math.abs(d), 100) / 100 * 50)}%, var(--card))`;
+  const tonoVar = t => ({ no: "var(--no)", no2: "color-mix(in srgb, var(--no) 55%, var(--card))", sim: "#b9b4a6", ok2: "color-mix(in srgb, var(--ok) 55%, var(--card))", ok: "var(--ok)" }[t]);
+  // un solo tooltip para todo el tablero
+  function tip(html, ev) {
+    let t = document.getElementById("cdTip");
+    if (!t) { t = el("div", "cd-tip"); t.id = "cdTip"; document.body.appendChild(t); }
+    if (!html) { t.style.display = "none"; return; }
+    t.innerHTML = html; t.style.display = "block";
+    const w = t.offsetWidth, h = t.offsetHeight;
+    t.style.left = Math.max(8, Math.min(innerWidth - w - 8, ev.clientX + 14)) + "px";
+    t.style.top = Math.max(8, Math.min(innerHeight - h - 8, ev.clientY + 14)) + "px";
+  }
+  const cdCard = (tit, sub, body, cls) => { const c = el("section", "cd-card " + (cls || "")); c.innerHTML = `<header><h3>${tit}</h3>${sub ? `<p>${sub}</p>` : ""}</header>`; c.appendChild(body); return c; };
+  const setF = o => { Object.assign(state, o, { page: 0 }); buildFilters(); renderTabla(); };
+
+  function cardMapa() {
+    const base = filtrar(["familia", "marca"]).map(a => ({ f: famDe(a), m: a.marca, d: posInfo(a).diff })).filter(x => x.d != null);
+    const marcas = MARCAS.filter(m => base.some(x => x.m === m));
+    const fams = {}; base.forEach(x => { (fams[x.f] = fams[x.f] || []).push(x); });
+    const avg = xs => xs.length ? xs.reduce((s, x) => s + x.d, 0) / xs.length : null;
+    const filas = Object.entries(fams).map(([f, xs]) => ({ f, xs, prom: avg(xs) })).sort((a, b) => a.prom - b.prom);
+    const box = el("div", "cd-mapa");
+    box.style.setProperty("--cols", marcas.length);
+    if (!filas.length) { box.innerHTML = `<div class="empty-mini">Sin comparaciones con precio para armar el mapa.</div>`; return cdCard("Dónde estoy caro y dónde barato", "", box, "cd-ancho"); }
+    const celda = (xs, f, m, extra) => {
+      if (!xs.length) return `<span class="cd-cell vacio">—</span>`;
+      const d = avg(xs), sel = (state.familia === f && state.marca === m) ? " sel" : "";
+      return `<button class="cd-cell${sel}${extra || ""}" style="background:${tinteDif(d)}" data-f="${esc2(f)}" data-m="${esc2(m || "")}" data-tip="<b>${esc2(f)}</b>${m ? " · " + esc2(m) : ""}<br>${fmtDif(d)} promedio · ${xs.length} comparación${xs.length === 1 ? "" : "es"}<br><span>${d > 3 ? "Leuk más barato" : d < -3 ? "Leuk más caro" : "Precio similar"}</span>">${fmtDif(d)}<small>${xs.length}</small></button>`;
+    };
+    let h = `<div class="cd-h"></div>` + marcas.map(m => `<button class="cd-h cd-hm${state.marca === m ? " sel" : ""}" data-m="${esc2(m)}">${esc2(m)}</button>`).join("") + `<div class="cd-h cd-todas">Todas</div>`;
+    filas.forEach(r => {
+      h += `<button class="cd-h cd-hf${state.familia === r.f ? " sel" : ""}" data-f="${esc2(r.f)}">${esc2(r.f)} <small>${r.xs.length}</small></button>`;
+      h += marcas.map(m => celda(r.xs.filter(x => x.m === m), r.f, m)).join("");
+      h += celda(r.xs, r.f, "", " tot");
+    });
+    box.innerHTML = h;
+    box.style.gridTemplateColumns = `minmax(110px,1.1fr) repeat(${marcas.length + 1}, minmax(64px,1fr))`;
+    box.onclick = ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      const f = b.dataset.f, m = b.dataset.m;
+      if (b.classList.contains("cd-cell")) setF(state.familia === f && (state.marca || "") === m ? { familia: "", marca: "" } : { familia: f, marca: m });
+      else if (f !== undefined) setF({ familia: state.familia === f ? "" : f });
+      else setF({ marca: state.marca === m ? "" : m });
+    };
+    const leyenda = el("div", "cd-leyenda", `<span><i style="background:${tinteDif(60)}"></i>Leuk más barato</span><span><i style="background:var(--line)"></i>similar (±3%)</span><span><i style="background:${tinteDif(-60)}"></i>Leuk más caro</span><em>Diferencia promedio de precio neto · el número chico es la cantidad · tocá una celda para filtrar</em>`);
+    const w = el("div"); w.appendChild(box); w.appendChild(leyenda);
+    return cdCard("Dónde estoy caro y dónde barato", "Familia × competidor", w, "cd-ancho");
+  }
+
+  function cardDistribucion() {
+    const pis = filtrar(["rango"]).map(posInfo).filter(pi => pi.has);
+    const cnt = RANGOS.map(r => pis.filter(pi => r.f(pi.diff)).length), max = Math.max(1, ...cnt);
+    const box = el("div", "cd-dist");
+    box.innerHTML = RANGOS.map((r, i) => `<button class="cd-dr${state.rango === r.k ? " sel" : ""}" data-k="${r.k}" data-tip="<b>${r.t}</b> (${r.sub})<br>${cnt[i]} comparación${cnt[i] === 1 ? "" : "es"}">
+      <span class="cd-dl">${r.t}<small>${r.sub}</small></span>
+      <span class="cd-db"><i style="width:${cnt[i] / max * 100}%;background:${tonoVar(r.tono)}"></i></span><b>${cnt[i]}</b></button>`).join("");
+    box.onclick = ev => { const b = ev.target.closest(".cd-dr"); if (b) setF({ rango: state.rango === b.dataset.k ? "" : b.dataset.k }); };
+    return cdCard("Cuánto cambia el precio", "Cantidad de comparaciones por rango de diferencia", box);
+  }
+
+  function cardDispersion(f) {
+    const pts = f.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has && x.pi.leukNet > 0 && x.pi.compNet > 0);
+    const box = el("div", "cd-disp");
+    if (!pts.length) { box.innerHTML = `<div class="empty-mini">Sin datos de precio para graficar.</div>`; return cdCard("Leuk vs competidor", "", box); }
+    const W = 520, H = 330, L = 46, R = 14, T = 12, B = 38;
+    const vals = pts.flatMap(x => [x.pi.leukNet, x.pi.compNet]);
+    const lo = Math.min(...vals) * 0.8, hi = Math.max(...vals) * 1.25, ll = Math.log(lo), lh = Math.log(hi);
+    const X = v => L + (Math.log(v) - ll) / (lh - ll) * (W - L - R), Y = v => H - B - (Math.log(v) - ll) / (lh - ll) * (H - B - T);
+    const ticks = [1, 3, 10, 30, 100, 300, 1000, 3000].filter(t => t >= lo && t <= hi);
+    let g = ticks.map(t => `<line class="cd-gl" x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}"/><line class="cd-gl" y1="${T}" y2="${H - B}" x1="${X(t)}" x2="${X(t)}"/>
+      <text class="cd-ax" x="${L - 6}" y="${Y(t) + 4}" text-anchor="end">${t}</text><text class="cd-ax" x="${X(t)}" y="${H - B + 16}" text-anchor="middle">${t}</text>`).join("");
+    g += `<line class="cd-diag" x1="${X(lo)}" y1="${Y(lo)}" x2="${X(hi)}" y2="${Y(hi)}"/>
+      <text class="cd-zona" x="${L + 8}" y="${T + 14}">↑ Leuk más caro</text><text class="cd-zona" x="${W - R - 8}" y="${H - B - 8}" text-anchor="end">Leuk más barato ↓</text>
+      <text class="cd-ax cd-tit" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Precio neto del competidor (US$)</text>
+      <text class="cd-ax cd-tit" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">Precio neto Leuk (US$)</text>`;
+    const col = c => c === "p-cheap" ? "var(--ok)" : c === "p-exp" ? "var(--no)" : "#8a8c82";
+    g += pts.map((x, i) => `<g class="cd-pt" data-i="${i}"><circle r="11" cx="${X(x.pi.compNet)}" cy="${Y(x.pi.leukNet)}" fill="transparent"/><circle class="cd-dot" r="5" cx="${X(x.pi.compNet)}" cy="${Y(x.pi.leukNet)}" fill="${col(x.pi.cls)}"/></g>`).join("");
+    const n = c => pts.filter(x => x.pi.cls === c).length;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Precio neto de Leuk contra el del competidor, un punto por comparación">${g}</svg>
+      <div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato (${n("p-cheap")})</span><span><i style="background:#8a8c82"></i>similar (${n("p-sim")})</span><span><i style="background:var(--no)"></i>Leuk más caro (${n("p-exp")})</span><em>Escala logarítmica · lo que se aleja de la diagonal es lo más distinto</em></div>`;
+    const svg = box.querySelector("svg");
+    const ptDe = ev => { const gp = ev.target.closest(".cd-pt"); return gp ? pts[+gp.dataset.i] : null; };
+    svg.onmousemove = ev => { const x = ptDe(ev); if (!x) return tip(null); const a = x.a;
+      tip(`<b>${esc2(a.leukNombre)}</b> <span>${esc2(a.leukSku)}</span><br>vs ${esc2(a.marca)} ${esc2(a.equivNombre || "")}<br>Leuk US$ ${x.pi.leukNet.toLocaleString("es-AR")} · comp. US$ ${x.pi.compNet.toLocaleString("es-AR")}<br><b>${fmtDif(x.pi.diff)}</b> <span>${x.pi.texto}</span><br><span>Tocá para verlo en la tabla</span>`, ev); };
+    svg.onmouseleave = () => tip(null);
+    svg.onclick = ev => { const x = ptDe(ev); if (x) { tip(null); setF({ q: String(x.a.leukSku) }); } };
+    return cdCard("Leuk vs competidor", "Un punto por comparación, precio neto", box);
+  }
+
+  function cardAtipicos(f) {
+    const xs = f.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has && (x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO)).sort((x, y) => Math.abs(y.pi.diff) - Math.abs(x.pi.diff));
+    const box = el("div", "cd-atip");
+    if (!xs.length) box.innerHTML = `<div class="empty-mini">✓ Ninguna fuera de rango en lo que estás viendo.</div>`;
+    else box.innerHTML = xs.slice(0, 6).map((x, i) => `<button class="cd-at" data-i="${i}"><span class="cd-atn"><b>${esc2(x.a.leukNombre)}</b> <small>${esc2(x.a.leukSku)}</small><br><em>vs ${esc2(x.a.marca)} ${esc2(x.a.equivNombre || "")}</em></span>
+      <span class="cd-pill ${x.pi.diff > 0 ? "ok" : "no"}">${fmtDif(x.pi.diff)}</span></button>`).join("") + (xs.length > 6 ? `<div class="cd-mas">y ${xs.length - 6} más — ordená la tabla por diferencia para verlas</div>` : "");
+    box.onclick = ev => { const b = ev.target.closest(".cd-at"); if (b) setF({ q: String(xs[+b.dataset.i].a.leukSku) }); };
+    return cdCard(`Casos para revisar${xs.length ? ` <span class="leuk-fam">(${xs.length})</span>` : ""}`, `Más de ${PRICE_HI}% más barato o ${Math.abs(PRICE_LO)}% más caro: puede ser otra gama o un dato mal cargado`, box, "cd-ancho");
+  }
+
+  function chipsFiltros() {
+    const defs = [["set", "Selección"], ["familia", "Familia"], ["marca", "Competidor"], ["nivel", "Nivel"], ["vertical", "Vertical"], ["posicion", "Posición"], ["q", "Búsqueda"]];
+    const act = defs.filter(([k]) => state[k]).map(([k, l]) => `<button class="cd-chip" data-k="${k}">${l}: <b>${esc2(k === "set" ? state.set.label : state[k])}</b> ✕</button>`);
+    if (state.rango) act.push(`<button class="cd-chip" data-k="rango">Rango: <b>${RANGOS.find(r => r.k === state.rango).t}</b> ✕</button>`);
+    const box = el("div", "cd-chips" + (act.length ? "" : " hidden"));
+    box.innerHTML = act.join("") + (act.length > 1 ? `<button class="cd-chip limpiar" data-k="*">Quitar todos</button>` : "");
+    box.onclick = ev => { const b = ev.target.closest(".cd-chip"); if (!b) return;
+      setF(b.dataset.k === "*" ? { marca: "", nivel: "", vertical: "", familia: "", posicion: "", rango: "", q: "", set: "" } : { [b.dataset.k]: "" }); };
+    return box;
+  }
+
+  function tablaComparaciones(f) {
+    const box = el("section", "cd-card cd-tabla-card");
+    const npag = Math.max(1, Math.ceil(f.length / PAGINA));
+    state.page = Math.min(state.page || 0, npag - 1);
+    const ini = state.page * PAGINA, vis = f.slice(ini, ini + PAGINA);
+    const S = state.sort || {}, flecha = k => S.k === k ? (S.dir > 0 ? " ▲" : " ▼") : "";
+    const th = (k, t, cls) => `<button class="cd-th ${cls || ""}" data-k="${k}">${t}${flecha(k)}</button>`;
+    let h = `<header><h3>Detalle de comparaciones <span class="leuk-fam">(${f.length})</span></h3></header>
+      <div class="cd-tabla"><div class="cd-tr cd-head">${th("sku", "Producto Leuk")}${th("marca", "Competidor")}${th("leuk", "Leuk neto", "num")}${th("comp", "Comp. neto", "num")}${th("dif", "Diferencia", "num")}<span></span></div>`;
+    if (!vis.length) h += `<div class="empty-mini" style="padding:18px">Nada coincide con lo que filtraste.</div>`;
+    vis.forEach(a => {
+      const pi = posInfo(a), abierta = EXPANDIDAS.has(a.key);
+      h += `<div class="cd-fila" data-key="${esc2(a.key)}"><div class="cd-tr cd-dato">
+        <span class="cd-prod">${imgTag(a.leukImagen, "sm")}<span><b>${esc2(a.leukNombre || "")}</b><small>${esc2(a.leukSku)} · ${esc2(famDe(a))}</small></span></span>
+        <span class="cd-prod cd-comp"><span><b>${esc2(a.marca)}</b><small>${esc2(a.equivNombre || a.equivFamilia || "")}${a.manual ? " · sugerido" : ""}</small></span></span>
+        <span class="num"><span class="cd-m">Leuk </span>${pi.has ? fmtUsd(pi.leukNet) : "—"}</span>
+        <span class="num"><span class="cd-m">Comp. </span>${pi.has ? fmtUsd(pi.compNet) : "—"}</span>
+        <span class="num">${pi.has ? `<span class="cd-pill ${pi.cls === "p-cheap" ? "ok" : pi.cls === "p-exp" ? "no" : "sim"}" title="${diffLabel(pi.diff)} (base: precio del competidor)">${fmtDif(pi.diff)}${priceAlert(pi.diff)}</span>` : `<span class="cd-pill sim">s/ precio</span>`}</span>
+        <span class="cd-acc"><button class="cd-exp${abierta ? " abierto" : ""}" title="Ver detalle" aria-expanded="${abierta}">▾</button>${puedeBorrar(a) ? `<button class="cd-rm" title="Quitar">✕</button>` : ""}</span></div>
+        <div class="res-body${abierta ? "" : " hidden"}"></div></div>`;
+    });
+    h += `</div><div class="cd-pag"><span>${f.length ? `${ini + 1}–${ini + vis.length} de ${f.length}` : ""}</span>
+      <button class="btn-ghost" data-p="-1"${state.page === 0 ? " disabled" : ""}>‹ Anterior</button><b>${state.page + 1} / ${npag}</b><button class="btn-ghost" data-p="1"${state.page >= npag - 1 ? " disabled" : ""}>Siguiente ›</button></div>`;
+    box.innerHTML = h;
+    const llenar = fila => {   // el detalle se arma al abrir
+      const a = AUTH[fila.dataset.key], body = fila.querySelector(".res-body"); if (!a || body.dataset.ok) return;
+      const p = P.find(x => x.sku === a.leukSku) || { sku: a.leukSku, nombre: a.leukNombre, vertical: a.leukVertical, familia: a.leukFamilia, precio_usd: a.precioLeukUsd, imagen: a.leukImagen, ficha: {} };
+      body.innerHTML = detailBody(p, findProp(a.leukSku, a.marca, a.fslug) || a, { header: false }); body.dataset.ok = 1;
+    };
+    box.querySelectorAll(".cd-fila").forEach(fila => { if (EXPANDIDAS.has(fila.dataset.key)) llenar(fila); });
+    box.onclick = ev => {
+      const t = ev.target.closest(".cd-th");
+      if (t) { const k = t.dataset.k; state.sort = S.k === k ? { k, dir: -S.dir } : { k, dir: k === "dif" ? -1 : 1 }; state.page = 0; return renderTabla(); }
+      const pg = ev.target.closest("[data-p]"); if (pg) { state.page += +pg.dataset.p; return renderTabla(); }
+      const fila = ev.target.closest(".cd-fila"); if (!fila) return;
+      const key = fila.dataset.key;
+      if (ev.target.closest(".cd-rm")) { const a = AUTH[key]; if (a && puedeBorrar(a)) { delete AUTH[key]; EXPANDIDAS.delete(key); save(); sbDel(key); renderTabla(); } return; }
+      if (ev.target.closest(".res-body")) return;
+      const open = !EXPANDIDAS.has(key); open ? EXPANDIDAS.add(key) : EXPANDIDAS.delete(key);
+      fila.querySelector(".res-body").classList.toggle("hidden", !open); fila.querySelector(".cd-exp").classList.toggle("abierto", open);
+      if (open) llenar(fila);
+    };
+    return box;
+  }
+
+  function sincFiltros() {
+    $("#filters").querySelectorAll("select,input").forEach(x => { const v = state[x.dataset.k]; if (x.dataset.k !== "orden" && x.value !== (v || "")) x.value = v || ""; });
   }
   function renderTabla() {
     const f = authList();
-    $("#countLabel").textContent = `${f.length} comparación(es) seleccionada(s)`;
+    const total = Object.keys(AUTH).length;
+    $("#resSub").innerHTML = `<span>Comparación por <b>precio neto</b> · Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}% · ${f.length === total ? `${total} seleccionada${total === 1 ? "" : "s"}` : `mostrando ${f.length} de ${total}`}</span>`;
     const cont = $("#tabla"); cont.innerHTML = "";
-    if (!Object.keys(AUTH).length) {
+    sincFiltros(); resumenPrecios();
+    if (!total) {
       cont.innerHTML = `<div class="empty"><div class="big">✓</div>Todavía no seleccionaste ninguna comparación.<br>Andá a <b>Catálogo</b>, buscá un producto y tocá <b>＋ Seleccionar</b> en los equivalentes que sirvan.</div>`;
       return;
     }
-    cont.insertAdjacentHTML("beforeend", resumenPrecios(f));
-    const grid = el("div", "res-cards");
-    f.forEach(a => {
-      const p = P.find(x => x.sku === a.leukSku) || { sku: a.leukSku, nombre: a.leukNombre, vertical: a.leukVertical, familia: a.leukFamilia, precio_usd: a.precioLeukUsd, imagen: a.leukImagen, ficha: {} };
-      const pi = posInfo(a);
-      // El % de diferencia es el dato protagonista; el descriptor va abajo, chico.
-      const priceBlock = pi.has
-        ? `<div class="res-posicion ${pi.cls}" title="${diffLabel(pi.diff)} (base: precio del competidor)"><span class="rp-dif">${pi.diff > 0 ? "+" : ""}${pi.diff}%${priceAlert(pi.diff)}</span><span class="rp-text">${pi.texto} · Δ US$ ${Math.abs(pi.delta).toLocaleString("es-AR")}</span></div>`
-        : `<div class="res-posicion p-na"><span class="rp-dif">—</span><span class="rp-text">Sin precio comp.</span></div>`;
-      const card = el("div", "res-card");
-      card.innerHTML = `
-        <div class="res-head">
-          <div class="res-pair">
-            <div class="res-side">${imgTag(p.imagen || a.leukImagen, "sm")}<div class="res-txt"><span class="res-lbl">LEUK ${a.leukSku}</span><span class="res-nom">${a.leukNombre || ""}</span>${priceCell(a.precioLeukUsd, "LEUK")}</div></div>
-            <span class="res-arrow">vs</span>
-            <div class="res-side">${imgTag(a.equivImagen, "sm")}<div class="res-txt"><span class="res-lbl">${a.marca}${a.manual ? ' · <span class="tag-sug">sugerido</span>' : ""}</span><span class="res-nom">${a.equivNombre || a.equivFamilia}</span>${priceCell(a.precioCompUsd, a.marca)}</div></div>
-          </div>
-          <div class="res-meta">
-            <div class="res-meta-row">
-              ${priceBlock}
-              <div class="res-btns"><button class="res-exp" title="Ver detalle">▾</button>${puedeBorrar(a) ? `<button class="rm" title="Quitar">✕</button>` : ""}</div>
-            </div>
-            <div class="res-foot">${eqSignal(a)}${a.autor ? `<span class="sep">·</span><span class="who">Seleccionó <b>${String(a.autor).replace(/[<>]/g, "")}</b></span>` : ""}</div>
-          </div>
-        </div>
-        <div class="res-body hidden"></div>`;
-      const body = card.querySelector(".res-body");
-      const exp = card.querySelector(".res-exp");
-      let loaded = false;
-      const toggle = () => {
-        const open = body.classList.toggle("hidden");
-        exp.classList.toggle("abierto", !open);
-        if (!loaded && !body.classList.contains("hidden")) { body.innerHTML = detailBody(p, findProp(a.leukSku, a.marca, a.fslug) || a, { header: false }); loaded = true; }
-      };
-      exp.onclick = toggle;
-      card.querySelector(".res-head").onclick = ev => { if (!ev.target.closest(".rm") && !ev.target.closest(".res-exp")) toggle(); };
-      const rmBtn = card.querySelector(".rm");
-      if (rmBtn) rmBtn.onclick = () => { delete AUTH[a.key]; save(); sbDel(a.key); renderTabla(); };
-      grid.appendChild(card);
-    });
-    cont.appendChild(grid);
+    cont.appendChild(chipsFiltros());
+    const dash = el("div", "cd-dash");
+    [cardMapa(), cardDistribucion(), cardDispersion(f), cardAtipicos(f)].forEach(c => dash.appendChild(c));
+    cont.appendChild(dash);
+    cont.appendChild(tablaComparaciones(f));
+    cont.querySelectorAll("[data-tip]").forEach(n => { n.onmousemove = ev => tip(n.dataset.tip, ev); n.onmouseleave = () => tip(null); });
   }
   const csv = s => `"${(s || "").toString().replace(/"/g, '""')}"`;
   function exportCSV() {
@@ -1218,116 +1381,157 @@
         </div>`).join("")}</div>`;
     return sec;
   }
+  /* ---- Insights: hallazgos calculados sobre lo seleccionado, cada uno con su evidencia y un siguiente paso ---- */
+  const GAP_OBJ = { v: 10 };                              // ventaja que se deja al subir precio (% por debajo del competidor)
+  const medianaDe = arr => { const s = [...arr].sort((a, b) => a - b), n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
+  const promDe = arr => arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : null;
+  const pct0 = n => Math.round(n);
+  const keysDe = xs => new Set(xs.map(x => x.a.key));
+  // salta a Comparaciones con un recorte ya aplicado
+  function verEnComparaciones(f) {
+    Object.assign(state, { marca: "", nivel: "", vertical: "", familia: "", posicion: "", rango: "", q: "", set: "", page: 0, sort: null }, f);
+    goToPage("resultados");
+  }
+  const inBar = (lbl, frac, txt, tono) => `<div class="in-bar"><span class="in-bl">${esc2(lbl)}</span><span class="in-bt"><i style="width:${Math.max(frac * 100, frac > 0 ? 2 : 0)}%;background:${tonoVar(tono || "sim")}"></i></span><b>${txt}</b></div>`;
+  const inStack = (b, s, c, tit) => { const t = b + s + c || 1;
+    const seg = (n, col, l) => n ? `<i style="flex:${n};background:${col}" title="${l}: ${n}">${n / t > .12 ? n : ""}</i>` : "";
+    return `<div class="in-stack" title="${esc2(tit || "")}">${seg(c, "var(--no)", "Leuk más caro")}${seg(s, "#b9b4a6", "Similar")}${seg(b, "var(--ok)", "Leuk más barato")}</div>`; };
+
+  function calcularInsights(xs) {
+    const out = [], n = xs.length, U = UMBRAL;
+    const dif = xs.map(x => x.pi.diff);
+    const prom = promDe(dif), mediana = medianaDe(dif);
+
+    // 1. Margen sin explotar
+    const g = GAP_OBJ.v;
+    const extremos = xs.filter(x => x.pi.diff > PRICE_HI).length;   // >85% más baratos: casi seguro otra gama, no sirven para fijar precio
+    const subir = xs.filter(x => x.pi.diff >= U && x.pi.diff <= PRICE_HI).map(x => { const nuevo = x.pi.compNet * (1 - g / 100); return { x, nuevo, up: nuevo / x.pi.leukNet * 100 - 100 }; }).filter(r => r.nuevo > r.x.pi.leukNet);
+    if (subir.length >= 2) {
+      const exactos = subir.filter(r => r.x.a.veredicto === "Equivalente").length;
+      const top = [...subir].sort((a, b) => (b.x.a.veredicto === "Equivalente") - (a.x.a.veredicto === "Equivalente") || b.up - a.up).slice(0, 5);
+      out.push({ tono: "ok", ic: "💰", titulo: `Podés subir el precio de ${subir.length} productos sin perder ventaja`,
+        texto: `Hoy están ≥${U}% por debajo de su equivalente. Si quedan ${g}% abajo del competidor, el precio sube en promedio <b>+${pct0(promDe(subir.map(r => r.up)))}%</b> (US$ ${pct0(subir.reduce((s, r) => s + r.nuevo - r.x.pi.leukNet, 0)).toLocaleString("es-AR")} por unidad entre todos). ${exactos} son equivalentes exactos; los demás conviene confirmarlos antes.${extremos ? ` No cuento ${extremos} con diferencia mayor a ${PRICE_HI}%: parecen de otra gama.` : ""}`,
+        viz: `<div class="in-gap">Ventaja que querés mantener: ${[5, 10, 15].map(v => `<button class="in-chip${v === g ? " on" : ""}" data-gap="${v}">${v}%</button>`).join("")}</div>
+          <div class="in-t">${top.map(r => `<div class="in-tr"><span class="in-n"><b>${esc2(r.x.a.leukNombre)}</b><small>vs ${esc2(r.x.a.marca)}${r.x.a.veredicto === "Equivalente" ? "" : " · parcial"}</small></span><span>US$ ${fmtN(r.x.pi.leukNet)} → <b>${fmtN(r.nuevo)}</b></span><span class="cd-pill ok">+${pct0(r.up)}%</span></div>`).join("")}</div>`,
+        accion: { t: `Ver los ${subir.length} en Comparaciones`, f: { set: { label: `Margen sin explotar (${subir.length})`, keys: keysDe(subir.map(r => r.x)) } } } });
+    }
+
+    // 2. Dónde estás caro, y cuánto habría que bajar
+    const caros = xs.filter(x => x.pi.diff <= -U).map(x => ({ x, cut: (x.pi.leukNet - x.pi.compNet) / x.pi.leukNet * 100 }));
+    if (caros.length >= 2) {
+      const atiro = caros.filter(r => r.cut <= 15).length, fam = {};
+      caros.forEach(r => { const f = famDe(r.x.a); fam[f] = (fam[f] || 0) + 1; });
+      const famTop = Object.entries(fam).sort((a, b) => b[1] - a[1]).slice(0, 4), mx = famTop[0][1];
+      out.push({ tono: "no", ic: "⚠️", titulo: `Estás más caro en ${caros.length} productos${famTop[0][1] / caros.length >= .5 ? `, sobre todo en ${esc2(famTop[0][0])}` : ""}`,
+        texto: `Igualar al competidor te pide bajar en promedio <b>${pct0(promDe(caros.map(r => r.cut)))}%</b> (mediana ${pct0(medianaDe(caros.map(r => r.cut)))}%). ${atiro ? `<b>${atiro}</b> están a menos de 15% de igualarse: son los más fáciles de corregir.` : "Ninguno está cerca de igualarse: probablemente compitan en otra gama."}`,
+        viz: famTop.map(([f, c]) => inBar(f, c / mx, c, "no")).join(""),
+        accion: { t: `Ver los ${caros.length} en Comparaciones`, f: { set: { label: `Más caros (${caros.length})`, keys: keysDe(caros.map(r => r.x)) } } } });
+    }
+
+    // 3. Contra quién ganás y contra quién perdés
+    const porM = {}; xs.forEach(x => { (porM[x.a.marca] = porM[x.a.marca] || []).push(x.pi.diff); });
+    const ms = Object.entries(porM).filter(([, d]) => d.length >= 3).map(([m, d]) => ({ m, n: d.length, b: d.filter(v => v > 3).length, s: d.filter(v => v >= -3 && v <= 3).length, c: d.filter(v => v < -3).length, med: medianaDe(d) }));
+    if (ms.length >= 2) {
+      const peor = [...ms].sort((a, b) => b.c / b.n - a.c / a.n)[0], mejor = [...ms].sort((a, b) => b.b / b.n - a.b / a.n)[0];
+      if (peor.m !== mejor.m) out.push({ tono: "info", ic: "⚔️", titulo: `Contra ${esc2(mejor.m)} ganás; contra ${esc2(peor.m)} te cuesta`,
+        texto: `Contra ${esc2(mejor.m)} sos más barato en <b>${pct0(mejor.b / mejor.n * 100)}%</b> de los casos (${mejor.b} de ${mejor.n}). Contra ${esc2(peor.m)}, más caro en <b>${pct0(peor.c / peor.n * 100)}%</b> (${peor.c} de ${peor.n}). El argumento de venta no es el mismo según con quién te comparen el cliente.`,
+        viz: ms.sort((a, b) => b.b / b.n - a.b / a.n).map(r => `<div class="in-bar"><span class="in-bl">${esc2(r.m)}</span>${inStack(r.b, r.s, r.c, `${r.n} comparaciones`)}<b>${r.n}</b></div>`).join("") + `<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato</span><span><i style="background:#b9b4a6"></i>similar</span><span><i style="background:var(--no)"></i>Leuk más caro</span></div>`,
+        accion: { t: `Ver ${esc2(peor.m)} en Comparaciones`, f: { marca: peor.m } } });
+    }
+
+    // 4. Familia sin criterio de precio: mezcla de muy baratos y muy caros
+    const porF = {}; xs.forEach(x => { (porF[famDe(x.a)] = porF[famDe(x.a)] || []).push(x.pi.diff); });
+    const partidas = Object.entries(porF).filter(([, d]) => d.length >= 4).map(([f, d]) => ({ f, d, c: d.filter(v => v < -U).length, b: d.filter(v => v > U).length })).filter(r => r.c >= 2 && r.b >= 2).sort((a, b) => Math.min(b.c, b.b) - Math.min(a.c, a.b));
+    if (partidas.length) {
+      const r = partidas[0];
+      out.push({ tono: "warn", ic: "🧩", titulo: `${esc2(r.f)}: parte de la línea está cara y parte barata`,
+        texto: `De ${r.d.length} productos, <b>${r.c}</b> están más de ${U}% más caros que su equivalente y <b>${r.b}</b> más de ${U}% más baratos. Eso sugiere que los precios de la línea no siguen un mismo criterio: hay margen para subir en unos y riesgo en otros.`,
+        viz: `<div class="in-strip"><div class="in-track"><u></u>${r.d.map(v => `<i style="left:${(Math.max(-100, Math.min(100, v)) + 100) / 2}%;background:${v > 3 ? "var(--ok)" : v < -3 ? "var(--no)" : "#8a8c82"}" title="${fmtDif(v)}"></i>`).join("")}</div><div class="in-ends"><span>← Leuk más caro</span><span>Leuk más barato →</span></div></div>`,
+        accion: { t: `Ver ${esc2(r.f)} en Comparaciones`, f: { familia: r.f } } });
+    }
+
+    // 5. El promedio engaña
+    const raros = xs.filter(x => x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO), sinRaros = xs.filter(x => !(x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO)).map(x => x.pi.diff);
+    if (n >= 5 && Math.abs(prom - mediana) >= 5) {
+      out.push({ tono: "info", ic: "📊", titulo: `El promedio dice ${fmtDif(pct0(prom))}, pero el caso típico es ${fmtDif(pct0(mediana))}`,
+        texto: `Unas pocas diferencias extremas (${raros.length ? `${raros.length} fuera de rango: otra gama o dato mal cargado` : "productos muy distintos"}) mueven el promedio. Para decidir, mirá la <b>mediana</b>: en el caso típico Leuk está ${mediana >= 0 ? "más barato" : "más caro"} que el competidor${sinRaros.length && raros.length ? `; sin los fuera de rango, el promedio queda en ${fmtDif(pct0(promDe(sinRaros)))}` : ""}.`,
+        viz: `<div class="in-nums"><div><b>${fmtDif(pct0(prom))}</b><small>promedio</small></div><div><b>${fmtDif(pct0(mediana))}</b><small>mediana (caso típico)</small></div>${sinRaros.length && raros.length ? `<div><b>${fmtDif(pct0(promDe(sinRaros)))}</b><small>promedio sin fuera de rango</small></div>` : ""}</div>`,
+        accion: raros.length ? { t: `Ver los ${raros.length} fuera de rango`, f: { set: { label: `Fuera de rango (${raros.length})`, keys: keysDe(raros) } } } : null });
+    }
+
+    // 6. Descuento: cuánta ventaja sobrevive a un precio Cliente
+    const clas = disc => { let b = 0, s = 0, c = 0; xs.forEach(x => { const d = (x.pi.compNet - x.pi.leukList * (1 - disc / 100)) / x.pi.compNet * 100; d > 3 ? b++ : d < -3 ? c++ : s++; }); return { b, s, c }; };
+    const P1 = clas(CFG.leukPartner), P2 = clas(CFG.leukCliente);
+    if (P1.b - P2.b >= 2 || P2.c - P1.c >= 2) {
+      out.push({ tono: "warn", ic: "🏷️", titulo: P1.b - P2.b >= 2 ? `Tu ventaja depende del descuento: con precio Cliente perdés ${P1.b - P2.b} de ${P1.b} ventajas` : `Con precio Cliente pasás de ${P1.c} a ${P2.c} productos más caros`,
+        texto: `Con precio Partner (−${CFG.leukPartner}%) sos más barato en ${P1.b} productos. Con precio Cliente (−${CFG.leukCliente}%) quedan ${P2.b}, y pasás de ${P1.c} a <b>${P2.c}</b> productos más caros. Si el cliente final compra a precio Cliente, el argumento de precio se achica bastante.`,
+        viz: `<div class="in-bar"><span class="in-bl">Partner −${CFG.leukPartner}%</span>${inStack(P1.b, P1.s, P1.c)}</div><div class="in-bar"><span class="in-bl">Cliente −${CFG.leukCliente}%</span>${inStack(P2.b, P2.s, P2.c)}</div>`, accion: null });
+    }
+
+    // 7. Calidad del match
+    const ex = xs.filter(x => x.a.veredicto === "Equivalente"), pa = xs.filter(x => x.a.veredicto !== "Equivalente");
+    if (n >= 5 && pa.length / n >= .4 && ex.length >= 2) {
+      const me = medianaDe(ex.map(x => x.pi.diff)), mp = medianaDe(pa.map(x => x.pi.diff));
+      out.push({ tono: "info", ic: "🔎", titulo: `${pct0(pa.length / n * 100)}% de tus comparaciones son parciales: el panorama es menos firme de lo que parece`,
+        texto: `Con equivalentes exactos la diferencia típica es <b>${fmtDif(pct0(me))}</b> (${ex.length} casos); con parciales, <b>${fmtDif(pct0(mp))}</b> (${pa.length}). ${Math.abs(me - mp) >= 15 ? "La diferencia es grande: confirmá a mano los parciales antes de mover precios." : "Por suerte las dos lecturas van en la misma dirección."}`,
+        viz: inBar("Exactos", ex.length / n, ex.length, "ok") + inBar("Parciales", pa.length / n, pa.length, "sim"),
+        accion: { t: "Ver los parciales", f: { nivel: "Comparable parcial" } } });
+    }
+
+    // 8. Cobertura del catálogo
+    const conComp = new Set(Object.values(AUTH).map(a => a.leukSku)), vs = {};
+    P.forEach(p => { const v = p.vertical || "—"; vs[v] = vs[v] || { t: 0, c: 0 }; vs[v].t++; if (conComp.has(p.sku)) vs[v].c++; });
+    const tot = P.length, cub = P.filter(p => conComp.has(p.sku)).length;
+    if (tot && cub / tot < .6) {
+      const vl = Object.entries(vs).map(([v, o]) => ({ v, ...o })).sort((a, b) => a.c / a.t - b.c / b.t);
+      out.push({ tono: "info", ic: "🧭", titulo: `Sólo ${pct0(cub / tot * 100)}% de tu catálogo tiene comparación`,
+        texto: `${cub} de ${tot} productos. Lo que ves acá describe esa parte; ${vl[0].c === 0 ? `<b>${esc2(vl[0].v)}</b> no tiene ninguna comparación` : `<b>${esc2(vl[0].v)}</b> es el más flojo (${vl[0].c} de ${vl[0].t})`}. Los productos sin competencia marcados (${Object.keys(MONO).length}) cuentan aparte.`,
+        viz: vl.map(o => inBar(o.v, o.c / o.t, `${o.c}/${o.t}`, "ok")).join(""),
+        accion: { t: "Ir al Catálogo", ir: "comparaciones" } });
+    }
+    return { out, prom, mediana };
+  }
+
   function renderDecisiones() {
     const dash = $("#dash"); dash.innerHTML = "";
-    const A = Object.values(AUTH);
-    const monos = Object.values(MONO);
-    if (monos.length) dash.appendChild(monoSection(monos));
-    const secDesc = descartesSection();
-    if (secDesc) dash.appendChild(secDesc);
-    if (!A.length) {
-      if (!monos.length && !secDesc) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
-      return;
+    const A = Object.values(AUTH), monos = Object.values(MONO);
+    const secMono = monos.length ? monoSection(monos) : null, secDesc = descartesSection();
+    const alFinal = () => { if (secMono) dash.appendChild(secMono); if (secDesc) dash.appendChild(secDesc); };
+    const head = (sub, kpis) => { $("#dashHead").innerHTML = `<div class="mh-top"><div class="mh-tit"><h1>Insights</h1><p class="mh-sub"><span>${sub}</span></p></div></div>${kpis ? `<div class="mh-kpis">${kpis}</div>` : ""}`; };
+    const xs = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);
+    if (!xs.length) {
+      head("Se calculan a partir de tus comparaciones <b>seleccionadas</b>.");
+      if (!secMono && !secDesc) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
+      alFinal(); return;
     }
-    const withP = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);
-
-    // KPIs de la config activa (una sola cifra grande) + comparador de escenarios
-    const kpiActivo = el("div", "kpis");
-    const nB0 = withP.filter(x => x.pi.cls === "p-cheap").length, nC0 = withP.filter(x => x.pi.cls === "p-exp").length, nS0 = withP.filter(x => x.pi.cls === "p-sim").length;
-    const prom0 = withP.length ? Math.round(withP.reduce((s, x) => s + x.pi.diff, 0) / withP.length) : null;
-    kpiActivo.innerHTML = `
-      <div class="kpi"><div class="kpi-n">${A.length}</div><div class="kpi-l">seleccionadas</div></div>
-      <div class="kpi"><div class="kpi-n p-cheap-t">${nB0}</div><div class="kpi-l">Leuk más barato</div></div>
-      <div class="kpi"><div class="kpi-n p-exp-t">${nC0}</div><div class="kpi-l">Leuk más caro</div></div>
-      <div class="kpi"><div class="kpi-n">${nS0}</div><div class="kpi-l">precio similar</div></div>
-      <div class="kpi"><div class="kpi-n ${prom0 > 0 ? "p-cheap-t" : "p-exp-t"}">${prom0 != null ? (prom0 > 0 ? "+" : "") + prom0 + "%" : "—"}</div><div class="kpi-l">dif. promedio</div></div>`;
-    dash.appendChild(kpiActivo);
-
-    // Comparador de escenarios: Partner vs Cliente
-    const kpisFor = leukDisc => {
-      const ds = A.map(a => {
-        if (a.precioLeukUsd == null || a.precioCompUsd == null) return null;
-        const ln = a.precioLeukUsd * (1 - leukDisc / 100), cn = a.precioCompUsd * (1 - descComp(a.marca) / 100);
-        return (cn - ln) / ln * 100;
-      }).filter(x => x != null);
-      const nB = ds.filter(d => d > 3).length, nC = ds.filter(d => d < -3).length;
-      return { n: ds.length, nB, nC, nS: ds.length - nB - nC, prom: ds.length ? Math.round(ds.reduce((a, b) => a + b, 0) / ds.length) : null };
-    };
-    const activo = CFG.leukTier === "cliente" ? "cliente" : "partner";
-    const escs = [{ tier: "partner", label: "Partner", d: CFG.leukPartner }, { tier: "cliente", label: "Cliente", d: CFG.leukCliente }];
-    const secEsc = el("div", "dash-sec");
-    secEsc.innerHTML = `<h3>Escenario de precio Leuk — Partner vs Cliente</h3>
-      <div class="fam-hint">Cómo cambia tu posición según con qué precio de Leuk compares (competencia con los descuentos actuales). Tocá una columna para usarla en el resto del tablero.</div>
-      <div class="esc-grid">${escs.map(s => { const k = kpisFor(s.d); return `
-        <div class="esc-col ${s.tier === activo ? "activa" : ""}" data-tier="${s.tier}">
-          <div class="esc-h">${s.label} <span class="leuk-fam">−${s.d}%</span>${s.tier === activo ? '<span class="esc-badge">activo</span>' : ""}</div>
-          <div class="esc-prom ${k.prom > 0 ? "p-cheap-t" : "p-exp-t"}">${k.prom != null ? (k.prom > 0 ? "+" : "") + k.prom + "%" : "—"}</div>
-          <div class="esc-l">diferencia promedio</div>
-          <div class="esc-mini"><b class="p-cheap-t">${k.nB}</b> más barato · <b class="p-exp-t">${k.nC}</b> más caro · ${k.nS} similar</div>
-        </div>`; }).join("")}</div>`;
-    secEsc.querySelectorAll(".esc-col").forEach(c => c.onclick = () => { CFG.leukTier = c.dataset.tier; saveCfg(); rerenderActive(); });
-    dash.appendChild(secEsc);
-
-    // Posicionamiento por familia
-    const fam = {};
-    withP.forEach(x => { const f = x.a.leukFamilia || "—"; (fam[f] = fam[f] || []).push(x.pi.diff); });
-    const famRows = Object.entries(fam).map(([f, ds]) => ({ f, n: ds.length, prom: Math.round(ds.reduce((a, b) => a + b, 0) / ds.length) })).sort((a, b) => a.prom - b.prom);
-    const maxAbs = Math.max(30, ...famRows.map(r => Math.abs(r.prom)));
-    const secFam = el("div", "dash-sec");
-    secFam.innerHTML = `<h3>Posicionamiento por familia</h3><div class="fam-hint">Diferencia de precio promedio de Leuk vs. el equivalente autorizado. Verde = Leuk más barato · Rojo = más caro.</div>`;
-    const famList = el("div", "fam-list");
-    famRows.forEach(r => {
-      const pct = Math.abs(r.prom) / maxAbs * 50;
-      const row = el("div", "fam-row");
-      row.innerHTML = `<div class="fam-name">${r.f} <span class="leuk-fam">(${r.n})</span></div>
-        <div class="fam-bar"><div class="fam-zero"></div>
-          <div class="fam-fill ${r.prom >= 0 ? "pos" : "neg"}" style="width:${pct}%;${r.prom >= 0 ? "left:50%" : "right:50%"}"></div></div>
-        <div class="fam-val ${r.prom >= 0 ? "diff pos" : "diff neg"}">${r.prom > 0 ? "+" : ""}${r.prom}%</div>`;
-      famList.appendChild(row);
+    const { out, mediana } = calcularInsights(xs);
+    const kp = (num, l, t) => `<div class="mh-kpi"><b class="${num === 0 ? "cero" : t || ""}">${num}</b><span>${l}</span></div>`;
+    const nB = xs.filter(x => x.pi.cls === "p-cheap").length, nC = xs.filter(x => x.pi.cls === "p-exp").length;
+    head(`${out.length} hallazgo${out.length === 1 ? "" : "s"} sobre <b>${xs.length}</b> comparaciones · precio neto · Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`,
+      kp(fmtDif(pct0(mediana)), "caso típico (mediana)", mediana > 0 ? "ok" : "no") + kp(nB, "Leuk más barato", "ok") + kp(nC, "Leuk más caro", "no") + kp(xs.length - nB - nC, "precio similar"));
+    if (xs.length < 8) { const w = el("div", "res-intro", `Tenés <b>${xs.length}</b> comparaciones con precio: los hallazgos mejoran a medida que seleccionás más (con 10 o más ya son confiables).`); dash.appendChild(w); }
+    const grid = el("div", "in-grid");
+    out.forEach(it => {
+      const c = el("article", `in-card in-${it.tono}`);
+      c.innerHTML = `<div class="in-ic">${it.ic}</div><div class="in-body"><h3>${it.titulo}</h3><p>${it.texto}</p><div class="in-viz">${it.viz}</div>${it.accion ? `<button class="btn-ghost in-go">${it.accion.t} →</button>` : ""}</div>`;
+      const go = c.querySelector(".in-go"); if (go) go.onclick = () => it.accion.ir ? goToPage(it.accion.ir) : verEnComparaciones(it.accion.f);
+      c.querySelectorAll("[data-gap]").forEach(b => b.onclick = () => { GAP_OBJ.v = +b.dataset.gap; renderDecisiones(); });
+      grid.appendChild(c);
     });
-    secFam.appendChild(famList); dash.appendChild(secFam);
+    dash.appendChild(grid);
+    if (!out.length) grid.innerHTML = `<div class="empty-mini" style="padding:16px">Con lo seleccionado hoy no aparece nada que sobresalga. Sumá más comparaciones para encontrar patrones.</div>`;
 
-    // Oportunidades
-    const subir = withP.filter(x => x.pi.diff >= UMBRAL).sort((a, b) => b.pi.diff - a.pi.diff);
-    const bajar = withP.filter(x => x.pi.diff <= -UMBRAL).sort((a, b) => a.pi.diff - b.pi.diff);
-    const grid = el("div", "opp-grid");
-    const colS = el("div", "dash-sec");
-    colS.innerHTML = `<h3>💰 Oportunidad de subir precio / margen <span class="leuk-fam">(${subir.length})</span></h3>
-      <div class="fam-hint">Leuk ≥${UMBRAL}% más barato que un equivalente. Hay lugar para acercar precio y ganar margen.</div>`;
-    const lS = el("div", "opp-list"); subir.slice(0, 30).forEach(x => lS.appendChild(oppRow(x, "subir")));
-    if (!subir.length) lS.innerHTML = `<div class="empty-mini" style="padding:10px">Nada por ahora.</div>`;
-    colS.appendChild(lS);
-    const colB = el("div", "dash-sec");
-    colB.innerHTML = `<h3>⚠ Revisar — estás caro <span class="leuk-fam">(${bajar.length})</span></h3>
-      <div class="fam-hint">Leuk ≥${UMBRAL}% más caro que un equivalente. Riesgo de perder venta por precio.</div>`;
-    const lB = el("div", "opp-list"); bajar.slice(0, 30).forEach(x => lB.appendChild(oppRow(x, "bajar")));
-    if (!bajar.length) lB.innerHTML = `<div class="empty-mini" style="padding:10px">Nada por ahora.</div>`;
-    colB.appendChild(lB);
-    grid.appendChild(colS); grid.appendChild(colB); dash.appendChild(grid);
-
-    // Argumentos de venta: Leuk más barato (precio) + Leuk más caro (cómo defender el precio)
-    const gana = withP.filter(x => x.pi.diff >= 10).sort((a, b) => b.pi.diff - a.pi.diff);
-    const pierde = withP.filter(x => x.pi.diff <= -10).sort((a, b) => a.pi.diff - b.pi.diff);
-    const secArg = el("div", "dash-sec");
-    secArg.innerHTML = `<h3>🗣️ Argumentos de venta <span class="leuk-fam">(${gana.length + pierde.length})</span> <button class="btn-ghost" id="argExport" style="float:right">⬇ Exportar</button></h3>`;
-    if (!gana.length && !pierde.length) {
-      secArg.innerHTML += `<div class="empty-mini" style="padding:10px">Seleccioná comparaciones y acá aparecen los argumentos: dónde Leuk es más barato y cómo defender el precio cuando es más caro.</div>`;
-    } else {
-      secArg.innerHTML += `<div class="fam-hint">✅ Leuk equivale y es <b>más barato</b> — argumento directo de precio.</div>`;
-      const al = el("div", "arg-list");
-      if (gana.length) gana.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumento(x.a, x.pi); al.appendChild(d); });
-      else al.innerHTML = `<div class="empty-mini" style="padding:8px">Sin casos por ahora.</div>`;
-      secArg.appendChild(al);
-      const h2 = el("div", "fam-hint", "💬 Leuk es <b>más caro</b> — diferencias técnicas vs el competidor para defender el precio.");
-      h2.style.marginTop = "18px"; secArg.appendChild(h2);
-      const al2 = el("div", "arg-list");
-      if (pierde.length) pierde.slice(0, 40).forEach(x => { const d = el("div", "arg-item"); d.textContent = argumentoCaro(x.a, x.pi); al2.appendChild(d); });
-      else al2.innerHTML = `<div class="empty-mini" style="padding:8px">Sin casos por ahora.</div>`;
-      secArg.appendChild(al2);
+    // Argumentos de venta (material para el equipo comercial), plegado
+    const gana = xs.filter(x => x.pi.diff >= 10).sort((a, b) => b.pi.diff - a.pi.diff), pierde = xs.filter(x => x.pi.diff <= -10).sort((a, b) => a.pi.diff - b.pi.diff);
+    if (gana.length || pierde.length) {
+      const d = el("details", "dash-sec in-args");
+      d.innerHTML = `<summary><h3>🗣️ Argumentos de venta <span class="leuk-fam">(${gana.length + pierde.length})</span></h3><button class="btn-ghost" id="argExport">⬇ Exportar</button></summary>
+        <div class="fam-hint">✅ Leuk equivale y es <b>más barato</b> — argumento directo de precio.</div><div class="arg-list">${gana.slice(0, 40).map(x => `<div class="arg-item">${esc2(argumento(x.a, x.pi))}</div>`).join("") || `<div class="empty-mini">Sin casos por ahora.</div>`}</div>
+        <div class="fam-hint" style="margin-top:18px">💬 Leuk es <b>más caro</b> — diferencias técnicas para defender el precio.</div><div class="arg-list">${pierde.slice(0, 40).map(x => `<div class="arg-item">${esc2(argumentoCaro(x.a, x.pi))}</div>`).join("") || `<div class="empty-mini">Sin casos por ahora.</div>`}</div>`;
+      d.querySelector("#argExport").onclick = ev => { ev.preventDefault(); dl(new Blob(["﻿LEUK MÁS BARATO (argumento de precio)\n" + gana.map(x => argumento(x.a, x.pi)).join("\n") + "\n\nLEUK MÁS CARO (defensa del precio)\n" + pierde.map(x => argumentoCaro(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt"); };
+      dash.appendChild(d);
     }
-    dash.appendChild(secArg);
-    const be = secArg.querySelector("#argExport");
-    if (be) be.onclick = () => dl(new Blob(["﻿LEUK MÁS BARATO (argumento de precio)\n" + gana.map(x => argumento(x.a, x.pi)).join("\n") + "\n\nLEUK MÁS CARO (defensa del precio)\n" + pierde.map(x => argumentoCaro(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt");
+    alFinal();
   }
 
   /* ===================== DESCUENTOS (modal editable) ===================== */

@@ -1397,99 +1397,170 @@
     const seg = (n, col, l) => n ? `<i style="flex:${n};background:${col}" title="${l}: ${n}">${n / t > .12 ? n : ""}</i>` : "";
     return `<div class="in-stack" title="${esc2(tit || "")}">${seg(c, "var(--no)", "Leuk más caro")}${seg(s, "#b9b4a6", "Similar")}${seg(b, "var(--ok)", "Leuk más barato")}</div>`; };
 
-  function calcularInsights(xs) {
-    const out = [], n = xs.length, U = UMBRAL;
-    const dif = xs.map(x => x.pi.diff);
-    const prom = promDe(dif), mediana = medianaDe(dif);
+  /* ---- Insights v2: tablero visual. Cada tarjeta tiene su propio gráfico y un número protagonista ---- */
+  const cuantil = (arr, q) => { const s = [...arr].sort((a, b) => a - b); if (!s.length) return null; const p = (s.length - 1) * q, i = Math.floor(p); return s[i] + (s[Math.min(i + 1, s.length - 1)] - s[i]) * (p - i); };
+  const clampD = v => Math.max(-100, Math.min(100, v));
+  const bigNum = (n, l, tono) => `<div class="in-big ${tono || ""}"><b>${n}</b><span>${l}</span></div>`;
+  function inCard(cls, ic, tit, sub) {
+    const c = el("article", "in-card " + cls);
+    c.innerHTML = `<header><span class="in-ic">${ic}</span><div><h3>${tit}</h3>${sub ? `<p>${sub}</p>` : ""}</div></header><div class="in-cb"></div>`;
+    return c;
+  }
+  const cbDe = c => c.querySelector(".in-cb");
+  const donut = (frac, tono, centro, sub) => { const C = 2 * Math.PI * 40;
+    return `<div class="in-donut"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#f2f0ea" stroke-width="13"/><circle cx="50" cy="50" r="40" fill="none" stroke="${tonoVar(tono)}" stroke-width="13" stroke-dasharray="${frac * C} ${C}" transform="rotate(-90 50 50)" stroke-linecap="butt"/></svg><div><b>${centro}</b><small>${sub}</small></div></div>`; };
 
-    // 1. Margen sin explotar
-    const g = GAP_OBJ.v;
-    const extremos = xs.filter(x => x.pi.diff > PRICE_HI).length;   // >85% más baratos: casi seguro otra gama, no sirven para fijar precio
-    const subir = xs.filter(x => x.pi.diff >= U && x.pi.diff <= PRICE_HI).map(x => { const nuevo = x.pi.compNet * (1 - g / 100); return { x, nuevo, up: nuevo / x.pi.leukNet * 100 - 100 }; }).filter(r => r.nuevo > r.x.pi.leukNet);
-    if (subir.length >= 2) {
-      const exactos = subir.filter(r => r.x.a.veredicto === "Equivalente").length;
-      const top = [...subir].sort((a, b) => (b.x.a.veredicto === "Equivalente") - (a.x.a.veredicto === "Equivalente") || b.up - a.up).slice(0, 5);
-      out.push({ tono: "ok", ic: "💰", titulo: `Podés subir el precio de ${subir.length} productos sin perder ventaja`,
-        texto: `Hoy están ≥${U}% por debajo de su equivalente. Si quedan ${g}% abajo del competidor, el precio sube en promedio <b>+${pct0(promDe(subir.map(r => r.up)))}%</b> (US$ ${pct0(subir.reduce((s, r) => s + r.nuevo - r.x.pi.leukNet, 0)).toLocaleString("es-AR")} por unidad entre todos). ${exactos} son equivalentes exactos; los demás conviene confirmarlos antes.${extremos ? ` No cuento ${extremos} con diferencia mayor a ${PRICE_HI}%: parecen de otra gama.` : ""}`,
-        viz: `<div class="in-gap">Ventaja que querés mantener: ${[5, 10, 15].map(v => `<button class="in-chip${v === g ? " on" : ""}" data-gap="${v}">${v}%</button>`).join("")}</div>
-          <div class="in-t">${top.map(r => `<div class="in-tr"><span class="in-n"><b>${esc2(r.x.a.leukNombre)}</b><small>vs ${esc2(r.x.a.marca)}${r.x.a.veredicto === "Equivalente" ? "" : " · parcial"}</small></span><span>US$ ${fmtN(r.x.pi.leukNet)} → <b>${fmtN(r.nuevo)}</b></span><span class="cd-pill ok">+${pct0(r.up)}%</span></div>`).join("")}</div>`,
-        accion: { t: `Ver los ${subir.length} en Comparaciones`, f: { set: { label: `Margen sin explotar (${subir.length})`, keys: keysDe(subir.map(r => r.x)) } } } });
-    }
+  // 0. Lectura general: veredicto + histograma de la diferencia de precio
+  function cardHero(xs) {
+    const dif = xs.map(x => x.pi.diff), med = medianaDe(dif), prom = promDe(dif);
+    const nB = xs.filter(x => x.pi.cls === "p-cheap").length, nC = xs.filter(x => x.pi.cls === "p-exp").length, nS = xs.length - nB - nC;
+    const raros = xs.filter(x => x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO).length;
+    const c = inCard("in-full in-hero " + (med > 3 ? "in-ok" : med < -3 ? "in-no" : ""), "", "", "");
+    const frase = Math.abs(med) <= 3 ? "Leuk está al mismo precio que su equivalente" : `Leuk está <b>${pct0(Math.abs(med))}% ${med > 0 ? "por debajo" : "por encima"}</b> del precio de su equivalente`;
+    // histograma, bins de 10 puntos entre −100 y +100 (los extremos juntan todo lo que se pasa)
+    const W = 620, H = 210, L = 8, R = 8, T = 22, B = 30, NB = 20, bw = (W - L - R) / NB;
+    const bins = Array.from({ length: NB }, () => []);
+    xs.forEach(x => { bins[Math.min(NB - 1, Math.floor((clampD(x.pi.diff) + 100) / 10))].push(x); });
+    const mx = Math.max(1, ...bins.map(b => b.length)), X = v => L + (clampD(v) + 100) / 200 * (W - L - R);
+    let g = `<rect x="${X(-3)}" y="${H - B}" width="${X(3) - X(-3)}" height="5" rx="2" fill="#b9b4a6"><title>Precio similar (±3%)</title></rect>`;
+    g += bins.map((b, i) => { const h = b.length / mx * (H - T - B), lo = -100 + i * 10, hi = lo + 10, mid = lo + 5;
+      return `<g class="in-bin" data-b="${i}"><rect x="${L + i * bw}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/><rect x="${L + i * bw + 1}" y="${H - B - h}" width="${bw - 2}" height="${h}" rx="3" fill="${Math.abs(mid) <= 3 ? "#b9b4a6" : mid > 0 ? "var(--ok)" : "var(--no)"}" opacity="${b.length ? 1 : 0}"/>${b.length ? `<text class="cd-ax" x="${L + i * bw + bw / 2}" y="${H - B - h - 4}" text-anchor="middle">${b.length}</text>` : ""}</g>`; }).join("");
+    g += [-100, -50, 0, 50, 100].map(v => `<text class="cd-ax" x="${X(v)}" y="${H - B + 14}" text-anchor="${v === -100 ? "start" : v === 100 ? "end" : "middle"}">${v === -100 ? "≤ −100%" : v === 100 ? "≥ +100%" : (v > 0 ? "+" : "") + v + "%"}</text>`).join("");
+    g += `<line x1="${X(med)}" x2="${X(med)}" y1="${T - 6}" y2="${H - B}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 3"/><text class="in-med" x="${X(med)}" y="${T - 9}" text-anchor="middle">mediana ${fmtDif(pct0(med))}</text>`;
+    g += `<text class="cd-zona" x="${L}" y="${H - 2}">← Leuk más caro</text><text class="cd-zona" x="${W - R}" y="${H - 2}" text-anchor="end">Leuk más barato →</text>`;
+    cbDe(c).innerHTML = `<div class="in-hero-g">
+      <div class="in-hero-l"><span class="in-kick">Lectura general</span><div class="in-hero-n ${med > 3 ? "ok" : med < -3 ? "no" : ""}">${fmtDif(pct0(med))}</div><p>${frase}.</p>
+        ${inStack(nB, nS, nC)}<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>${nB} más baratos</span><span><i style="background:#b9b4a6"></i>${nS} similar</span><span><i style="background:var(--no)"></i>${nC} más caros</span></div>
+        <small class="in-nota">El promedio es ${fmtDif(pct0(prom))}${raros ? `: lo mueven ${raros} comparaciones extremas (otra gama o dato mal cargado). Por eso uso la mediana.` : "."}</small></div>
+      <div class="in-hero-r"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribución de la diferencia de precio">${g}</svg><small class="in-nota">Cada barra: cuántas comparaciones caen en ese rango de diferencia. Tocá una barra para verlas.</small></div></div>`;
+    const svg = c.querySelector("svg"), binDe = ev => { const gb = ev.target.closest(".in-bin"); return gb ? +gb.dataset.b : null; };
+    svg.onmousemove = ev => { const i = binDe(ev); if (i == null) return tip(null); const lo = -100 + i * 10; tip(`<b>${bins[i].length} comparación${bins[i].length === 1 ? "" : "es"}</b><br>${i === 0 ? "más de 100% más caro" : i === NB - 1 ? "más de 100% más barato" : `entre ${fmtDif(lo)} y ${fmtDif(lo + 10)}`}`, ev); };
+    svg.onmouseleave = () => tip(null);
+    svg.onclick = ev => { const i = binDe(ev); if (i != null && bins[i].length) { tip(null); verEnComparaciones({ set: { label: `Diferencia ${i === 0 ? "< −100" : i === NB - 1 ? "> +100" : fmtDif(-100 + i * 10) + " a " + fmtDif(-90 + i * 10)} (${bins[i].length})`, keys: keysDe(bins[i]) } }); } };
+    return c;
+  }
 
-    // 2. Dónde estás caro, y cuánto habría que bajar
-    const caros = xs.filter(x => x.pi.diff <= -U).map(x => ({ x, cut: (x.pi.leukNet - x.pi.compNet) / x.pi.leukNet * 100 }));
-    if (caros.length >= 2) {
-      const atiro = caros.filter(r => r.cut <= 15).length, fam = {};
-      caros.forEach(r => { const f = famDe(r.x.a); fam[f] = (fam[f] || 0) + 1; });
-      const famTop = Object.entries(fam).sort((a, b) => b[1] - a[1]).slice(0, 4), mx = famTop[0][1];
-      out.push({ tono: "no", ic: "⚠️", titulo: `Estás más caro en ${caros.length} productos${famTop[0][1] / caros.length >= .5 ? `, sobre todo en ${esc2(famTop[0][0])}` : ""}`,
-        texto: `Igualar al competidor te pide bajar en promedio <b>${pct0(promDe(caros.map(r => r.cut)))}%</b> (mediana ${pct0(medianaDe(caros.map(r => r.cut)))}%). ${atiro ? `<b>${atiro}</b> están a menos de 15% de igualarse: son los más fáciles de corregir.` : "Ninguno está cerca de igualarse: probablemente compitan en otra gama."}`,
-        viz: famTop.map(([f, c]) => inBar(f, c / mx, c, "no")).join(""),
-        accion: { t: `Ver los ${caros.length} en Comparaciones`, f: { set: { label: `Más caros (${caros.length})`, keys: keysDe(caros.map(r => r.x)) } } } });
-    }
+  // 1. Mapa de acción por familia: ventaja típica (x) vs qué tan pareja es la línea (y)
+  function cardMapaAccion(xs) {
+    const porF = {}; xs.forEach(x => { (porF[famDe(x.a)] = porF[famDe(x.a)] || []).push(x); });
+    const fs = Object.entries(porF).filter(([, v]) => v.length >= 3).map(([f, v]) => { const d = v.map(x => x.pi.diff); return { f, n: v.length, med: medianaDe(d), iqr: cuantil(d, .75) - cuantil(d, .25) }; });
+    if (fs.length < 2) return null;
+    const CORTE = 40, ymax = Math.max(80, ...fs.map(r => r.iqr)) * 1.1;
+    const subir = fs.filter(r => r.med > UMBRAL && r.iqr <= CORTE), bajar = fs.filter(r => r.med < -UMBRAL && r.iqr <= CORTE), partida = fs.filter(r => r.iqr > CORTE);
+    const lista = a => a.map(r => esc2(r.f)).join(", ");
+    const c = inCard("", "🗺️", "Mapa de acción por familia", `${subir.length ? `<b>Subir precio:</b> ${lista(subir)}. ` : ""}${bajar.length ? `<b>Bajar o justificar:</b> ${lista(bajar)}. ` : ""}${partida.length ? `<b>Revisar de a uno:</b> ${lista(partida)}.` : ""}` || "Cada burbuja es una familia; el tamaño es la cantidad de comparaciones.");
+    const W = 520, H = 330, L = 14, R = 14, T = 14, B = 34, X = v => L + (clampD(v) + 100) / 200 * (W - L - R), Y = v => H - B - v / ymax * (H - B - T);
+    let g = `<rect x="${X(UMBRAL)}" y="${Y(CORTE)}" width="${X(100) - X(UMBRAL)}" height="${H - B - Y(CORTE)}" fill="color-mix(in srgb, var(--ok) 9%, var(--card))"/><rect x="${X(-100)}" y="${Y(CORTE)}" width="${X(-UMBRAL) - X(-100)}" height="${H - B - Y(CORTE)}" fill="color-mix(in srgb, var(--no) 9%, var(--card))"/>`;
+    g += `<line class="cd-gl" x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${H - B}"/><line class="cd-diag" x1="${L}" x2="${W - R}" y1="${Y(CORTE)}" y2="${Y(CORTE)}"/>`;
+    g += `<text class="cd-zona" x="${W - R - 4}" y="${H - B - 8}" text-anchor="end">SUBIR PRECIO</text><text class="cd-zona" x="${L + 4}" y="${H - B - 8}">BAJAR / JUSTIFICAR</text><text class="cd-zona" x="${L + 4}" y="${Y(CORTE) - 7}">↑ LÍNEA PARTIDA: REVISAR DE A UNO</text>`;
+    g += [-100, -50, 0, 50, 100].map(v => `<text class="cd-ax" x="${X(v)}" y="${H - B + 14}" text-anchor="${v === -100 ? "start" : v === 100 ? "end" : "middle"}">${v > 0 ? "+" : ""}${v}%</text>`).join("");
+    g += `<text class="cd-ax cd-tit" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Diferencia típica (mediana) · ← más caro · más barato →</text>`;
+    const rad = n => Math.min(30, 9 + Math.sqrt(n) * 3.2);
+    g += [...fs].sort((a, b) => b.n - a.n).map((r, i) => { const cx = X(r.med), cy = Y(r.iqr), col = r.med > 3 ? "var(--ok)" : r.med < -3 ? "var(--no)" : "#8a8c82";
+      return `<g class="in-bub" data-i="${fs.indexOf(r)}"><circle cx="${cx}" cy="${cy}" r="${rad(r.n)}" fill="${col}" fill-opacity=".78" stroke="var(--card)" stroke-width="2"/><text class="in-bl2" x="${cx}" y="${cy + rad(r.n) + 12}" text-anchor="middle">${esc2(r.f)}</text></g>`; }).join("");
+    cbDe(c).innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de acción por familia">${g}</svg><div class="cd-leyenda"><em>Altura: qué tan dispareja es la línea (rango entre cuartiles). Tamaño: cantidad de comparaciones. Tocá una burbuja para ver la familia.</em></div>`;
+    const svg = cbDe(c).querySelector("svg"), bDe = ev => { const gb = ev.target.closest(".in-bub"); return gb ? fs[+gb.dataset.i] : null; };
+    svg.onmousemove = ev => { const r = bDe(ev); if (!r) return tip(null); tip(`<b>${esc2(r.f)}</b> · ${r.n} comparaciones<br>Típico: ${fmtDif(pct0(r.med))}<br>Dispersión: ${pct0(r.iqr)} puntos<br><span>${r.iqr > CORTE ? "Línea partida: revisá de a uno" : r.med > UMBRAL ? "Ventaja pareja: margen para subir" : r.med < -UMBRAL ? "Caro parejo: bajar o justificar" : "Cerca del mercado"}</span>`, ev); };
+    svg.onmouseleave = () => tip(null);
+    svg.onclick = ev => { const r = bDe(ev); if (r) { tip(null); verEnComparaciones({ familia: r.f === "—" ? "—" : r.f }); } };
+    return c;
+  }
 
-    // 3. Contra quién ganás y contra quién perdés
+  // 2. Curva del descuento: cuántas ventajas sostenés según el descuento que le des a tu precio de lista
+  function cardCurvaDescuento(xs) {
+    const cnt = d => { let b = 0, c = 0; xs.forEach(x => { const v = (x.pi.compNet - x.pi.leukList * (1 - d / 100)) / x.pi.compNet * 100; if (v > 3) b++; else if (v < -3) c++; }); return { b, c }; };
+    const pts = Array.from({ length: 51 }, (_, d) => ({ d, ...cnt(d) })), n = xs.length;
+    const P = pts[CFG.leukPartner] || cnt(CFG.leukPartner), Cl = pts[CFG.leukCliente] || cnt(CFG.leukCliente);
+    const dP = CFG.leukPartner, dC = CFG.leukCliente, por5 = dP !== dC ? (P.b - Cl.b) / (dP - dC) * 5 : 0;
+    const c = inCard("", "🏷️", por5 >= 0.5 ? `Cada 5 puntos de descuento valen ~${fmtN(por5)} ventajas` : "Tu ventaja casi no depende del descuento", `Con precio Partner (−${dP}%) sos más barato en <b>${P.b}</b> productos; con precio Cliente (−${dC}%), en <b>${Cl.b}</b>.`);
+    const W = 520, H = 300, L = 36, R = 16, T = 16, B = 36, X = d => L + d / 50 * (W - L - R), Y = v => H - B - v / (n || 1) * (H - B - T);
+    const line = k => pts.map((p, i) => `${i ? "L" : "M"}${X(p.d).toFixed(1)} ${Y(p[k]).toFixed(1)}`).join(" ");
+    let g = [0, .25, .5, .75, 1].map(f => `<line class="cd-gl" x1="${L}" x2="${W - R}" y1="${Y(n * f)}" y2="${Y(n * f)}"/><text class="cd-ax" x="${L - 6}" y="${Y(n * f) + 4}" text-anchor="end">${Math.round(n * f)}</text>`).join("");
+    g += [0, 10, 20, 30, 40, 50].map(d => `<text class="cd-ax" x="${X(d)}" y="${H - B + 15}" text-anchor="middle">−${d}%</text>`).join("");
+    g += `<path d="${line("b")}" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linejoin="round"/><path d="${line("c")}" fill="none" stroke="var(--no)" stroke-width="3" stroke-linejoin="round"/>`;
+    g += [[dP, "Partner", P], [dC, "Cliente", Cl]].map(([d, l, v]) => `<line x1="${X(d)}" x2="${X(d)}" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-dasharray="4 3" opacity=".55"/><circle cx="${X(d)}" cy="${Y(v.b)}" r="5.5" fill="var(--ok)" stroke="var(--card)" stroke-width="2"/><circle cx="${X(d)}" cy="${Y(v.c)}" r="5.5" fill="var(--no)" stroke="var(--card)" stroke-width="2"/><text class="in-med" x="${X(d)}" y="${T - 3}" text-anchor="middle">${l}</text>`).join("");
+    g += `<text class="cd-ax cd-tit" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Descuento sobre tu precio de lista</text><line id="cdCur" y1="${T}" y2="${H - B}" stroke="var(--olive)" stroke-width="1.5" style="display:none"/>`;
+    cbDe(c).innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Productos más baratos y más caros según el descuento">${g}</svg><div class="cd-leyenda"><span><i style="background:var(--ok)"></i>productos donde Leuk es más barato</span><span><i style="background:var(--no)"></i>donde es más caro</span></div>`;
+    const svg = cbDe(c).querySelector("svg"), cur = svg.querySelector("#cdCur");
+    svg.onmousemove = ev => { const r = svg.getBoundingClientRect(), d = Math.max(0, Math.min(50, Math.round(((ev.clientX - r.left) / r.width * W - L) / (W - L - R) * 50))), p = pts[d];
+      cur.style.display = ""; cur.setAttribute("x1", X(d)); cur.setAttribute("x2", X(d)); tip(`<b>Descuento −${d}%</b><br>${p.b} más baratos · ${p.c} más caros · ${n - p.b - p.c} similares`, ev); };
+    svg.onmouseleave = () => { cur.style.display = "none"; tip(null); };
+    return c;
+  }
+
+  // 3. Margen sin explotar: gráfico de mancuernas (hoy → posible) con control de ventaja
+  function cardMargen(xs) {
+    const U = UMBRAL, base = xs.filter(x => x.pi.diff >= U && x.pi.diff <= PRICE_HI), extremos = xs.filter(x => x.pi.diff > PRICE_HI).length;
+    if (base.length < 2) return null;
+    const c = inCard("in-full in-ok", "💰", "Margen sin explotar", `Productos ≥${U}% por debajo de su equivalente. Movés la ventaja que querés mantener y ves hasta dónde podría subir cada precio.${extremos ? ` (No cuento ${extremos} con más de ${PRICE_HI}% de diferencia: parecen de otra gama.)` : ""}`);
+    cbDe(c).innerHTML = `<div class="in-marg"><div class="in-marg-l"><label>Ventaja que querés mantener<b id="mgV"></b></label><input type="range" id="mgR" min="0" max="25" step="1" value="${GAP_OBJ.v}"><small>0% = igualar al competidor · 25% = quedar muy por debajo</small><div class="in-bigs" id="mgBig"></div><button class="btn-ghost in-go" id="mgGo"></button></div><div class="in-marg-r"><div class="in-mg-head"><span>hoy → posible</span><span>precio de Leuk como % del competidor</span></div><div id="mgRows"></div><div class="cd-leyenda"><span><i style="background:var(--card);border:2.5px solid var(--olive);border-radius:50%"></i>hoy</span><span><i style="background:var(--ok);border-radius:50%"></i>posible</span><span><i style="width:2px;height:12px;background:var(--ink);opacity:.6"></i>precio del competidor</span></div></div></div>`;
+    const pintar = () => {
+      const g = GAP_OBJ.v, meta = 100 - g;
+      const r = base.map(x => ({ x, hoy: x.pi.leukNet / x.pi.compNet * 100, nuevo: x.pi.compNet * (1 - g / 100) })).map(o => ({ ...o, up: o.nuevo / o.x.pi.leukNet * 100 - 100 })).filter(o => o.up > 0);
+      const exactos = r.filter(o => o.x.a.veredicto === "Equivalente").length;
+      c.querySelector("#mgV").textContent = ` ${g}%`;
+      c.querySelector("#mgBig").innerHTML = r.length ? bigNum("+" + pct0(promDe(r.map(o => o.up))) + "%", "suba promedio de precio", "ok") + bigNum(r.length, `productos (${exactos} exactos)`) + bigNum("US$ " + pct0(r.reduce((s, o) => s + o.nuevo - o.x.pi.leukNet, 0)).toLocaleString("es-AR"), "más por unidad, entre todos") : `<p>Con esa ventaja no hay margen para subir: ya estás en ese nivel o más cerca.</p>`;
+      const top = [...r].sort((a, b) => (b.x.a.veredicto === "Equivalente") - (a.x.a.veredicto === "Equivalente") || b.up - a.up).slice(0, 8), pos = v => Math.max(0, Math.min(100, (v - 20) / 90 * 100));
+      c.querySelector("#mgRows").innerHTML = top.map(o => `<div class="in-mg"><span class="in-n"><b>${esc2(o.x.a.leukNombre)}</b><small>vs ${esc2(o.x.a.marca)}${o.x.a.veredicto === "Equivalente" ? "" : " · parcial"} · US$ ${fmtN(o.x.pi.leukNet)} → ${fmtN(o.nuevo)}</small></span>
+        <span class="in-mg-t"><u style="left:${pos(100)}%"></u><s style="left:${pos(o.hoy)}%;width:${pos(meta) - pos(o.hoy)}%"></s><i class="hoy" style="left:${pos(o.hoy)}%" title="Hoy: ${pct0(o.hoy)}% del competidor"></i><i class="meta" style="left:${pos(meta)}%" title="Posible: ${pct0(meta)}%"></i></span><span class="cd-pill ok">+${pct0(o.up)}%</span></div>`).join("") || "";
+      const go = c.querySelector("#mgGo"); go.textContent = `Ver los ${r.length} en Comparaciones →`; go.style.display = r.length ? "" : "none";
+      go.onclick = () => verEnComparaciones({ set: { label: `Margen sin explotar (${r.length})`, keys: keysDe(r.map(o => o.x)) } });
+    };
+    c.querySelector("#mgR").oninput = ev => { GAP_OBJ.v = +ev.target.value; pintar(); };
+    pintar();
+    return c;
+  }
+
+  // 4. Contra quién ganás y contra quién perdés
+  function cardCompetidores(xs) {
     const porM = {}; xs.forEach(x => { (porM[x.a.marca] = porM[x.a.marca] || []).push(x.pi.diff); });
-    const ms = Object.entries(porM).filter(([, d]) => d.length >= 3).map(([m, d]) => ({ m, n: d.length, b: d.filter(v => v > 3).length, s: d.filter(v => v >= -3 && v <= 3).length, c: d.filter(v => v < -3).length, med: medianaDe(d) }));
-    if (ms.length >= 2) {
-      const peor = [...ms].sort((a, b) => b.c / b.n - a.c / a.n)[0], mejor = [...ms].sort((a, b) => b.b / b.n - a.b / a.n)[0];
-      if (peor.m !== mejor.m) out.push({ tono: "info", ic: "⚔️", titulo: `Contra ${esc2(mejor.m)} ganás; contra ${esc2(peor.m)} te cuesta`,
-        texto: `Contra ${esc2(mejor.m)} sos más barato en <b>${pct0(mejor.b / mejor.n * 100)}%</b> de los casos (${mejor.b} de ${mejor.n}). Contra ${esc2(peor.m)}, más caro en <b>${pct0(peor.c / peor.n * 100)}%</b> (${peor.c} de ${peor.n}). El argumento de venta no es el mismo según con quién te comparen el cliente.`,
-        viz: ms.sort((a, b) => b.b / b.n - a.b / a.n).map(r => `<div class="in-bar"><span class="in-bl">${esc2(r.m)}</span>${inStack(r.b, r.s, r.c, `${r.n} comparaciones`)}<b>${r.n}</b></div>`).join("") + `<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato</span><span><i style="background:#b9b4a6"></i>similar</span><span><i style="background:var(--no)"></i>Leuk más caro</span></div>`,
-        accion: { t: `Ver ${esc2(peor.m)} en Comparaciones`, f: { marca: peor.m } } });
-    }
+    const ms = Object.entries(porM).filter(([, d]) => d.length >= 3).map(([m, d]) => ({ m, n: d.length, b: d.filter(v => v > 3).length, s: d.filter(v => v >= -3 && v <= 3).length, c: d.filter(v => v < -3).length }));
+    if (ms.length < 2) return null;
+    ms.sort((a, b) => b.b / b.n - a.b / a.n);
+    const mejor = ms[0], peor = [...ms].sort((a, b) => b.c / b.n - a.c / a.n)[0];
+    const c = inCard("", "⚔️", `Contra ${esc2(mejor.m)} ganás; contra ${esc2(peor.m)} te cuesta`, "El argumento de precio cambia según con quién te compare el cliente.");
+    cbDe(c).innerHTML = `<div class="in-bigs">${bigNum(pct0(mejor.b / mejor.n * 100) + "%", `más barato vs ${esc2(mejor.m)}`, "ok")}${bigNum(pct0(peor.c / peor.n * 100) + "%", `más caro vs ${esc2(peor.m)}`, "no")}</div>` +
+      ms.map(r => `<button class="in-mrow" data-m="${esc2(r.m)}"><span class="in-bl">${esc2(r.m)}</span>${inStack(r.b, r.s, r.c, `${r.n} comparaciones`)}<b>${r.n}</b></button>`).join("") +
+      `<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato</span><span><i style="background:#b9b4a6"></i>similar</span><span><i style="background:var(--no)"></i>Leuk más caro</span></div>`;
+    c.querySelectorAll(".in-mrow").forEach(b => b.onclick = () => verEnComparaciones({ marca: b.dataset.m }));
+    return c;
+  }
 
-    // 4. Familia sin criterio de precio: mezcla de muy baratos y muy caros
-    const porF = {}; xs.forEach(x => { (porF[famDe(x.a)] = porF[famDe(x.a)] || []).push(x.pi.diff); });
-    const partidas = Object.entries(porF).filter(([, d]) => d.length >= 4).map(([f, d]) => ({ f, d, c: d.filter(v => v < -U).length, b: d.filter(v => v > U).length })).filter(r => r.c >= 2 && r.b >= 2).sort((a, b) => Math.min(b.c, b.b) - Math.min(a.c, a.b));
-    if (partidas.length) {
-      const r = partidas[0];
-      out.push({ tono: "warn", ic: "🧩", titulo: `${esc2(r.f)}: parte de la línea está cara y parte barata`,
-        texto: `De ${r.d.length} productos, <b>${r.c}</b> están más de ${U}% más caros que su equivalente y <b>${r.b}</b> más de ${U}% más baratos. Eso sugiere que los precios de la línea no siguen un mismo criterio: hay margen para subir en unos y riesgo en otros.`,
-        viz: `<div class="in-strip"><div class="in-track"><u></u>${r.d.map(v => `<i style="left:${(Math.max(-100, Math.min(100, v)) + 100) / 2}%;background:${v > 3 ? "var(--ok)" : v < -3 ? "var(--no)" : "#8a8c82"}" title="${fmtDif(v)}"></i>`).join("")}</div><div class="in-ends"><span>← Leuk más caro</span><span>Leuk más barato →</span></div></div>`,
-        accion: { t: `Ver ${esc2(r.f)} en Comparaciones`, f: { familia: r.f } } });
-    }
+  // 5. Dónde bajar: cuánto falta para igualar
+  function cardCaros(xs) {
+    const caros = xs.filter(x => x.pi.diff <= -UMBRAL).map(x => ({ x, cut: (x.pi.leukNet - x.pi.compNet) / x.pi.leukNet * 100 }));
+    if (caros.length < 2) return null;
+    const atiro = caros.filter(r => r.cut <= 15), cerca = [...caros].sort((a, b) => a.cut - b.cut).slice(0, 5);
+    const c = inCard("in-no", "⚠️", `Estás más caro en ${caros.length} productos`, `Igualar te pide bajar ${pct0(medianaDe(caros.map(r => r.cut)))}% en el caso típico. ${atiro.length ? "Los que están a tiro son los más fáciles de corregir." : "Ninguno está cerca: probablemente compitan en otra gama."}`);
+    cbDe(c).innerHTML = `<div class="in-bigs">${bigNum(atiro.length, "a menos de 15% de igualarse", atiro.length ? "ok" : "")}${bigNum(caros.length - atiro.length, "lejos del competidor", "no")}</div>
+      <div class="in-t">${cerca.map(r => `<div class="in-tr"><span class="in-n"><b>${esc2(r.x.a.leukNombre)}</b><small>vs ${esc2(r.x.a.marca)}</small></span><span>US$ ${fmtN(r.x.pi.leukNet)} → ${fmtN(r.x.pi.compNet)}</span><span class="cd-pill ${r.cut <= 15 ? "sim" : "no"}">−${pct0(r.cut)}%</span></div>`).join("")}</div>
+      <button class="btn-ghost in-go">Ver los ${caros.length} en Comparaciones →</button>`;
+    cbDe(c).querySelector(".in-go").onclick = () => verEnComparaciones({ set: { label: `Más caros (${caros.length})`, keys: keysDe(caros.map(r => r.x)) } });
+    return c;
+  }
 
-    // 5. El promedio engaña
-    const raros = xs.filter(x => x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO), sinRaros = xs.filter(x => !(x.pi.diff > PRICE_HI || x.pi.diff < PRICE_LO)).map(x => x.pi.diff);
-    if (n >= 5 && Math.abs(prom - mediana) >= 5) {
-      out.push({ tono: "info", ic: "📊", titulo: `El promedio dice ${fmtDif(pct0(prom))}, pero el caso típico es ${fmtDif(pct0(mediana))}`,
-        texto: `Unas pocas diferencias extremas (${raros.length ? `${raros.length} fuera de rango: otra gama o dato mal cargado` : "productos muy distintos"}) mueven el promedio. Para decidir, mirá la <b>mediana</b>: en el caso típico Leuk está ${mediana >= 0 ? "más barato" : "más caro"} que el competidor${sinRaros.length && raros.length ? `; sin los fuera de rango, el promedio queda en ${fmtDif(pct0(promDe(sinRaros)))}` : ""}.`,
-        viz: `<div class="in-nums"><div><b>${fmtDif(pct0(prom))}</b><small>promedio</small></div><div><b>${fmtDif(pct0(mediana))}</b><small>mediana (caso típico)</small></div>${sinRaros.length && raros.length ? `<div><b>${fmtDif(pct0(promDe(sinRaros)))}</b><small>promedio sin fuera de rango</small></div>` : ""}</div>`,
-        accion: raros.length ? { t: `Ver los ${raros.length} fuera de rango`, f: { set: { label: `Fuera de rango (${raros.length})`, keys: keysDe(raros) } } } : null });
-    }
-
-    // 6. Descuento: cuánta ventaja sobrevive a un precio Cliente
-    const clas = disc => { let b = 0, s = 0, c = 0; xs.forEach(x => { const d = (x.pi.compNet - x.pi.leukList * (1 - disc / 100)) / x.pi.compNet * 100; d > 3 ? b++ : d < -3 ? c++ : s++; }); return { b, s, c }; };
-    const P1 = clas(CFG.leukPartner), P2 = clas(CFG.leukCliente);
-    if (P1.b - P2.b >= 2 || P2.c - P1.c >= 2) {
-      out.push({ tono: "warn", ic: "🏷️", titulo: P1.b - P2.b >= 2 ? `Tu ventaja depende del descuento: con precio Cliente perdés ${P1.b - P2.b} de ${P1.b} ventajas` : `Con precio Cliente pasás de ${P1.c} a ${P2.c} productos más caros`,
-        texto: `Con precio Partner (−${CFG.leukPartner}%) sos más barato en ${P1.b} productos. Con precio Cliente (−${CFG.leukCliente}%) quedan ${P2.b}, y pasás de ${P1.c} a <b>${P2.c}</b> productos más caros. Si el cliente final compra a precio Cliente, el argumento de precio se achica bastante.`,
-        viz: `<div class="in-bar"><span class="in-bl">Partner −${CFG.leukPartner}%</span>${inStack(P1.b, P1.s, P1.c)}</div><div class="in-bar"><span class="in-bl">Cliente −${CFG.leukCliente}%</span>${inStack(P2.b, P2.s, P2.c)}</div>`, accion: null });
-    }
-
-    // 7. Calidad del match
+  // 6. Qué tan firme es el panorama (calidad del match)
+  function cardMatch(xs) {
     const ex = xs.filter(x => x.a.veredicto === "Equivalente"), pa = xs.filter(x => x.a.veredicto !== "Equivalente");
-    if (n >= 5 && pa.length / n >= .4 && ex.length >= 2) {
-      const me = medianaDe(ex.map(x => x.pi.diff)), mp = medianaDe(pa.map(x => x.pi.diff));
-      out.push({ tono: "info", ic: "🔎", titulo: `${pct0(pa.length / n * 100)}% de tus comparaciones son parciales: el panorama es menos firme de lo que parece`,
-        texto: `Con equivalentes exactos la diferencia típica es <b>${fmtDif(pct0(me))}</b> (${ex.length} casos); con parciales, <b>${fmtDif(pct0(mp))}</b> (${pa.length}). ${Math.abs(me - mp) >= 15 ? "La diferencia es grande: confirmá a mano los parciales antes de mover precios." : "Por suerte las dos lecturas van en la misma dirección."}`,
-        viz: inBar("Exactos", ex.length / n, ex.length, "ok") + inBar("Parciales", pa.length / n, pa.length, "sim"),
-        accion: { t: "Ver los parciales", f: { nivel: "Comparable parcial" } } });
-    }
+    if (xs.length < 5 || !ex.length || !pa.length) return null;
+    const me = medianaDe(ex.map(x => x.pi.diff)), mp = medianaDe(pa.map(x => x.pi.diff)), dist = Math.abs(me - mp) >= 15;
+    const c = inCard(dist ? "in-warn" : "", "🔎", `${pct0(pa.length / xs.length * 100)}% de las comparaciones son parciales`, dist ? "Y cambian la conclusión: confirmá a mano los parciales antes de mover precios." : "Las dos lecturas van en la misma dirección.");
+    cbDe(c).innerHTML = `<div class="in-two">${donut(ex.length / xs.length, "ok", ex.length, "exactos")}<div class="in-cmp"><div><small>Típico con exactos</small><b class="${me > 3 ? "ok" : me < -3 ? "no" : ""}">${fmtDif(pct0(me))}</b></div><div><small>Típico con parciales</small><b class="${mp > 3 ? "ok" : mp < -3 ? "no" : ""}">${fmtDif(pct0(mp))}</b></div></div></div><button class="btn-ghost in-go">Ver los parciales →</button>`;
+    cbDe(c).querySelector(".in-go").onclick = () => verEnComparaciones({ nivel: "Comparable parcial" });
+    return c;
+  }
 
-    // 8. Cobertura del catálogo
+  // 7. Cobertura del catálogo
+  function cardCobertura() {
     const conComp = new Set(Object.values(AUTH).map(a => a.leukSku)), vs = {};
     P.forEach(p => { const v = p.vertical || "—"; vs[v] = vs[v] || { t: 0, c: 0 }; vs[v].t++; if (conComp.has(p.sku)) vs[v].c++; });
     const tot = P.length, cub = P.filter(p => conComp.has(p.sku)).length;
-    if (tot && cub / tot < .6) {
-      const vl = Object.entries(vs).map(([v, o]) => ({ v, ...o })).sort((a, b) => a.c / a.t - b.c / b.t);
-      out.push({ tono: "info", ic: "🧭", titulo: `Sólo ${pct0(cub / tot * 100)}% de tu catálogo tiene comparación`,
-        texto: `${cub} de ${tot} productos. Lo que ves acá describe esa parte; ${vl[0].c === 0 ? `<b>${esc2(vl[0].v)}</b> no tiene ninguna comparación` : `<b>${esc2(vl[0].v)}</b> es el más flojo (${vl[0].c} de ${vl[0].t})`}. Los productos sin competencia marcados (${Object.keys(MONO).length}) cuentan aparte.`,
-        viz: vl.map(o => inBar(o.v, o.c / o.t, `${o.c}/${o.t}`, "ok")).join(""),
-        accion: { t: "Ir al Catálogo", ir: "comparaciones" } });
-    }
-    return { out, prom, mediana };
+    if (!tot || cub / tot >= .6) return null;
+    const vl = Object.entries(vs).map(([v, o]) => ({ v, ...o })).filter(o => o.v !== "—" || o.c).sort((a, b) => a.c / a.t - b.c / b.t);
+    const c = inCard("", "🧭", `Sólo ${pct0(cub / tot * 100)}% del catálogo está comparado`, `Lo que ves describe esa parte. ${Object.keys(MONO).length ? `Además hay ${Object.keys(MONO).length} productos marcados sin competencia.` : ""}`);
+    cbDe(c).innerHTML = `<div class="in-two">${donut(cub / tot, "ok", pct0(cub / tot * 100) + "%", `${cub} de ${tot}`)}<div class="in-cmp">${vl.slice(0, 3).map(o => inBar(o.v, o.c / o.t, `${o.c}/${o.t}`, "ok")).join("")}</div></div><button class="btn-ghost in-go">Ir al Catálogo →</button>`;
+    cbDe(c).querySelector(".in-go").onclick = () => goToPage("comparaciones");
+    return c;
   }
 
   function renderDecisiones() {
@@ -1497,29 +1568,18 @@
     const A = Object.values(AUTH), monos = Object.values(MONO);
     const secMono = monos.length ? monoSection(monos) : null, secDesc = descartesSection();
     const alFinal = () => { if (secMono) dash.appendChild(secMono); if (secDesc) dash.appendChild(secDesc); };
-    const head = (sub, kpis) => { $("#dashHead").innerHTML = `<div class="mh-top"><div class="mh-tit"><h1>Insights</h1><p class="mh-sub"><span>${sub}</span></p></div></div>${kpis ? `<div class="mh-kpis">${kpis}</div>` : ""}`; };
+    const head = sub => { $("#dashHead").innerHTML = `<div class="mh-top"><div class="mh-tit"><h1>Insights</h1><p class="mh-sub"><span>${sub}</span></p></div></div>`; };
     const xs = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);
     if (!xs.length) {
       head("Se calculan a partir de tus comparaciones <b>seleccionadas</b>.");
       if (!secMono && !secDesc) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
       alFinal(); return;
     }
-    const { out, mediana } = calcularInsights(xs);
-    const kp = (num, l, t) => `<div class="mh-kpi"><b class="${num === 0 ? "cero" : t || ""}">${num}</b><span>${l}</span></div>`;
-    const nB = xs.filter(x => x.pi.cls === "p-cheap").length, nC = xs.filter(x => x.pi.cls === "p-exp").length;
-    head(`${out.length} hallazgo${out.length === 1 ? "" : "s"} sobre <b>${xs.length}</b> comparaciones · precio neto · Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`,
-      kp(fmtDif(pct0(mediana)), "caso típico (mediana)", mediana > 0 ? "ok" : "no") + kp(nB, "Leuk más barato", "ok") + kp(nC, "Leuk más caro", "no") + kp(xs.length - nB - nC, "precio similar"));
-    if (xs.length < 8) { const w = el("div", "res-intro", `Tenés <b>${xs.length}</b> comparaciones con precio: los hallazgos mejoran a medida que seleccionás más (con 10 o más ya son confiables).`); dash.appendChild(w); }
+    head(`Calculado sobre <b>${xs.length}</b> comparaciones seleccionadas · precio neto · Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`);
+    if (xs.length < 8) dash.appendChild(el("div", "res-intro", `Tenés <b>${xs.length}</b> comparaciones con precio: los hallazgos mejoran a medida que seleccionás más (con 10 o más ya son confiables).`));
     const grid = el("div", "in-grid");
-    out.forEach(it => {
-      const c = el("article", `in-card in-${it.tono}`);
-      c.innerHTML = `<div class="in-ic">${it.ic}</div><div class="in-body"><h3>${it.titulo}</h3><p>${it.texto}</p><div class="in-viz">${it.viz}</div>${it.accion ? `<button class="btn-ghost in-go">${it.accion.t} →</button>` : ""}</div>`;
-      const go = c.querySelector(".in-go"); if (go) go.onclick = () => it.accion.ir ? goToPage(it.accion.ir) : verEnComparaciones(it.accion.f);
-      c.querySelectorAll("[data-gap]").forEach(b => b.onclick = () => { GAP_OBJ.v = +b.dataset.gap; renderDecisiones(); });
-      grid.appendChild(c);
-    });
+    [cardHero(xs), cardMapaAccion(xs), cardCurvaDescuento(xs), cardMargen(xs), cardCompetidores(xs), cardCaros(xs), cardMatch(xs), cardCobertura()].filter(Boolean).forEach(c => grid.appendChild(c));
     dash.appendChild(grid);
-    if (!out.length) grid.innerHTML = `<div class="empty-mini" style="padding:16px">Con lo seleccionado hoy no aparece nada que sobresalga. Sumá más comparaciones para encontrar patrones.</div>`;
 
     // Argumentos de venta (material para el equipo comercial), plegado
     const gana = xs.filter(x => x.pi.diff >= 10).sort((a, b) => b.pi.diff - a.pi.diff), pierde = xs.filter(x => x.pi.diff <= -10).sort((a, b) => a.pi.diff - b.pi.diff);

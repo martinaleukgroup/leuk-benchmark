@@ -1,0 +1,278 @@
+{
+ "lamparas-de-filamento-led": {
+  "nombre": "Lamparas de Filamento LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/LE278WG125TRANSP.png"
+ },
+ "abuya": {
+  "nombre": "ABUYA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ABUYAS.png"
+ },
+ "akaki": {
+  "nombre": "AKAKI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/AKAKIL.png"
+ },
+ "arcila": {
+  "nombre": "ARCILA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ARCILAS.png"
+ },
+ "boquero": {
+  "nombre": "BOQUERO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/BOQUEROL.png"
+ },
+ "cancun": {
+  "nombre": "CANCUN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/CANCUN3.png"
+ },
+ "caracas": {
+  "nombre": "CARACAS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/CARACAS.png"
+ },
+ "catalina": {
+  "nombre": "CATALINA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/CATALINAL.png"
+ },
+ "coban": {
+  "nombre": "COBAN",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/COBAN.png"
+ },
+ "dakar": {
+  "nombre": "DAKAR",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/DAKARCL.png"
+ },
+ "dallas": {
+  "nombre": "DALLAS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/DALLAS.png"
+ },
+ "denver": {
+  "nombre": "DENVER",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/DENVER5.png"
+ },
+ "embu": {
+  "nombre": "EMBU",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/EMBU12.png"
+ },
+ "espejos": {
+  "nombre": "ESPEJOS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ESPEJO8.png"
+ },
+ "flam": {
+  "nombre": "FLAM",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/FLAML.png"
+ },
+ "florida": {
+  "nombre": "FLORIDA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/FLORIDA.png"
+ },
+ "francisco": {
+  "nombre": "FRANCISCO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/FRANCISCO.png"
+ },
+ "gaza": {
+  "nombre": "GAZA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/GAZAS.png"
+ },
+ "hayes": {
+  "nombre": "HAYES",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/HAYESCX1.png"
+ },
+ "hilo": {
+  "nombre": "HILO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/HILO1.png"
+ },
+ "icanti": {
+  "nombre": "ICANTI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ICANTIS.png"
+ },
+ "jaco": {
+  "nombre": "JACO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/JACO.png"
+ },
+ "lamparas-t-led": {
+  "nombre": "Lamparas T LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/LE27T40WF.png"
+ },
+ "lod": {
+  "nombre": "LOD",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/LOD3.png"
+ },
+ "mekele": {
+  "nombre": "MEKELE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MEKELEL.png"
+ },
+ "merida": {
+  "nombre": "MERIDA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MERIDA.png"
+ },
+ "miami": {
+  "nombre": "MIAMI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MIAMI.png"
+ },
+ "misuri": {
+  "nombre": "MISURI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MISURI.png"
+ },
+ "montana": {
+  "nombre": "MONTANA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MONTANA.png"
+ },
+ "morti": {
+  "nombre": "MORTI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MORTI.png"
+ },
+ "natal": {
+  "nombre": "NATAL",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/NATALM.png"
+ },
+ "nevada": {
+  "nombre": "NEVADA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/NEVADA.png"
+ },
+ "olimpo": {
+  "nombre": "OLIMPO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/OLIMPO2.png"
+ },
+ "orbita": {
+  "nombre": "ORBITA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ORBITAL.png"
+ },
+ "oregon": {
+  "nombre": "OREGON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/OREGON.png"
+ },
+ "oslo": {
+  "nombre": "OSLO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/OSLOM.png"
+ },
+ "paneles-de-aplicar-cuadrados": {
+  "nombre": "Paneles de aplicar cuadrados",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/P12WFAPLICUADBLANCO.png"
+ },
+ "paneles-de-embutir-cuadrados-rectangulares": {
+  "nombre": "Paneles de embutir cuadrados-rectangulares",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/P12WFEMBCUADBLANCO.png"
+ },
+ "paneles-de-embutir-redondos": {
+  "nombre": "Paneles de embutir redondos",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/P12WFEMBREDBLANCO.png"
+ },
+ "palencia": {
+  "nombre": "PALENCIA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/PALENCIACM.png"
+ },
+ "paris": {
+  "nombre": "PARIS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/PARIS3.png"
+ },
+ "paston": {
+  "nombre": "PASTON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/PASTONL.png"
+ },
+ "quesada": {
+  "nombre": "QUESADA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/QUESADA.png"
+ },
+ "reflectores-led": {
+  "nombre": "Reflectores LED",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/RAF0520W6500K.png"
+ },
+ "ramla": {
+  "nombre": "RAMLA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/RAMLAL.png"
+ },
+ "recife": {
+  "nombre": "RECIFE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/RECIFE.png"
+ },
+ "rio": {
+  "nombre": "RIO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/RIO.png"
+ },
+ "salo": {
+  "nombre": "SALO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/SALOXL.png"
+ },
+ "semi": {
+  "nombre": "SEMI",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/SEMI2.png"
+ },
+ "sevilla": {
+  "nombre": "SEVILLA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/SEVILLA1.png"
+ },
+ "sidney": {
+  "nombre": "SIDNEY",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/SIDNEYL.png"
+ },
+ "tambor": {
+  "nombre": "TAMBOR",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TAMBORL.png"
+ },
+ "chicago": {
+  "nombre": "CHICAGO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/CHICAGO.png"
+ },
+ "texas": {
+  "nombre": "TEXAS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TEXAS.png"
+ },
+ "toledo": {
+  "nombre": "TOLEDO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TOLEDO2.png"
+ },
+ "toluca": {
+  "nombre": "TOLUCA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TOLUCAL.png"
+ },
+ "toronto": {
+  "nombre": "TORONTO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TORONTO1.png"
+ },
+ "zumo": {
+  "nombre": "ZUMO",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ZUMOPL.png"
+ },
+ "atenas": {
+  "nombre": "ATENAS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ATENAS.png"
+ },
+ "altos": {
+  "nombre": "ALTOS",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/ALTOSAPX2.png"
+ },
+ "bahia": {
+  "nombre": "BAHIA",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/BAHIA.png"
+ },
+ "boise": {
+  "nombre": "BOISE",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/BOISE.png"
+ },
+ "honolulu": {
+  "nombre": "HONOLULU",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/HONOLULU.png"
+ },
+ "madison": {
+  "nombre": "MADISON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/MADISON.png"
+ },
+ "paneles-de-aplicar-redondos": {
+  "nombre": "Paneles de aplicar redondos",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/P12WFAPLIREDBLANCO.png"
+ },
+ "tepic": {
+  "nombre": "TEPIC",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TEPIC.png"
+ },
+ "tucson": {
+  "nombre": "TUCSON",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/TUCSON.png"
+ },
+ "vancouver": {
+  "nombre": "VANCOUVER",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/VANCOUVER1.png"
+ },
+ "york": {
+  "nombre": "YORK",
+  "img": "https://cswqoretlhppxkelysny.supabase.co/storage/v1/object/public/catalogo-img/dabor/YORK.png"
+ }
+}

@@ -36,8 +36,7 @@ def log(m):
     LOG.append(m); print(m)
 
 TC_BLUE = 1435.0  # tipo de cambio para pasar ARS→USD (se refresca desde la DB)
-MARCAS = ["Vonderk", "Artelum", "World Leds Go", "Lucciola", "Dabor"]
-APP_MARCAS = {"Lucciola": "lucciola", "Dabor": "dabor"}   # marcas que entran por aprobación en la app
+MARCAS = ["Vonderk", "Artelum", "World Leds Go", "Lucciola"]
 DESC = {}          # marca -> % descuento (desc_total), para calcular precio NETO
 LEUK_DESC = 0.0    # descuento de Leuk (de la tabla descuentos_competidores)
 
@@ -143,14 +142,13 @@ def cargar_fichas():
     fichas = {}
     # Lucciola entró por el circuito nuevo: sus fichas las arma lucciola_build.py desde
     # los productos APROBADOS en la app, no desde un Excel.
-    for _m, _pre in APP_MARCAS.items():
-        _p = P.ROOT / f"pipeline/{_pre}_fichas.json"
-        if _p.exists():
-            fichas[_m] = pd.DataFrame(json.loads(_p.read_text())).fillna("")
-            log(f"Fichas {_m}: {len(fichas[_m])} filas (aprobadas en la app)")
-        else:
-            fichas[_m] = pd.DataFrame()
-            log(f"Fichas {_m}: sin datos — correr {_pre}_build.py")
+    luc = P.ROOT / "pipeline/lucciola_fichas.json"
+    if luc.exists():
+        fichas["Lucciola"] = pd.DataFrame(json.loads(luc.read_text())).fillna("")
+        log(f"Fichas Lucciola: {len(fichas['Lucciola'])} filas (aprobadas en la app)")
+    else:
+        fichas["Lucciola"] = pd.DataFrame()
+        log("Fichas Lucciola: sin datos — correr lucciola_build.py")
     for marca, ruta in P.FICHAS.items():
         if not ruta.exists():
             fichas[marca] = pd.DataFrame(); continue
@@ -233,17 +231,14 @@ def cargar_artefactos_leuk():
     # existen para TODAS las familias importadas, así que hay que filtrarlos por las aprobadas
     # (lucciola_families.json, que arma lucciola_build.py). Si no, una familia sin aprobar
     # entraría igual por la señal de forma + visual, sin specs ni precio.
-    app_ok = {}
-    for _m, _pre in APP_MARCAS.items():
-        _fp = P.ROOT / f"pipeline/{_pre}_families.json"
-        app_ok[_pre] = set(json.loads(_fp.read_text())) if _fp.exists() else set()
-    for extra in ("pipeline/wlg_vecs.npz", "pipeline/artelum_vecs.npz") + tuple(f"pipeline/{p_}_vecs.npz" for p_ in APP_MARCAS.values()):
+    luc_fam_p = P.ROOT / "pipeline/lucciola_families.json"
+    luc_ok = set(json.loads(luc_fam_p.read_text())) if luc_fam_p.exists() else set()
+    for extra in ("pipeline/wlg_vecs.npz", "pipeline/artelum_vecs.npz", "pipeline/lucciola_vecs.npz"):
         p = P.ROOT / extra
         if p.exists():
             z = np.load(p, allow_pickle=True)
-            pre_ = p.name[:-len("_vecs.npz")]
             for s, v in zip(z["slugs"], z["vecs"]):
-                if pre_ in app_ok and str(s) not in app_ok[pre_]:
+                if "lucciola" in extra and str(s) not in luc_ok:
                     continue
                 comp_vecs[str(s)] = v
     log(f"Artefactos Leuk · imágenes={len(manifest)} · etiquetas={len(tags)} · "
@@ -347,7 +342,7 @@ def producto_desde_ficha(marca, row, etiqueta):
 
 
 def precio_usd(marca, row):
-    if marca in ("Vonderk", "Lucciola", "Dabor"):
+    if marca in ("Vonderk", "Lucciola"):
         return parse_number(row.get("Precio"))   # ya vienen en USD
     v = parse_number(row.get("Precio ($)"))  # Artelum / WLG en ARS
     return round(v / TC_BLUE, 2) if v else None
@@ -716,16 +711,16 @@ def main():
     # Lucciola: etiquetas de forma generadas con Claude visión sobre la foto de cada familia
     # (lucciola_tag.py). Es la 2ª señal — sin ella queda sólo la técnica y la regla de acuerdo,
     # que exige dos, manda todo a "posible".
-    for _m, _pre in APP_MARCAS.items():
-        _ep, _fp = P.ROOT / f"pipeline/{_pre}_etiquetas.json", P.ROOT / f"pipeline/{_pre}_families.json"
-        _etq = json.loads(_ep.read_text()) if _ep.exists() else {}
-        _ok = set(json.loads(_fp.read_text())) if _fp.exists() else set()
-        etiquetas.setdefault(_m, {})
-        n_etq = 0
-        for s_, e in _etq.items():
-            if s_ in _ok:                       # sólo familias APROBADAS en la app
-                etiquetas[_m][s_] = e; n_etq += 1
-        log(f"{_m}: {n_etq} familias etiquetadas y aprobadas (de {len(_etq)} etiquetadas)")
+    luc_etq_p = P.ROOT / "pipeline/lucciola_etiquetas.json"
+    luc_etq = json.loads(luc_etq_p.read_text()) if luc_etq_p.exists() else {}
+    luc_fam_p0 = P.ROOT / "pipeline/lucciola_families.json"
+    luc_ok0 = set(json.loads(luc_fam_p0.read_text())) if luc_fam_p0.exists() else set()
+    etiquetas.setdefault("Lucciola", {})
+    n_etq = 0
+    for s_, e in luc_etq.items():
+        if s_ in luc_ok0:                       # sólo familias APROBADAS en la app
+            etiquetas["Lucciola"][s_] = e; n_etq += 1
+    log(f"Lucciola: {n_etq} familias etiquetadas y aprobadas (de {len(luc_etq)} etiquetadas)")
 
     indices = cargar_indices()
     manifest, leuk_tags, leuk_emb, comp_vecs = cargar_artefactos_leuk()
@@ -741,17 +736,16 @@ def main():
             if info.get("img"): ent["img"] = info["img"]
     # Lucciola: la foto de cada familia sale del bucket público catalogo-img (la URL ya está
     # en la columna `imagen` de competencia_extra; lucciola_build.py la bajó por familia).
-    for _m, _pre in APP_MARCAS.items():
-        _fp = P.ROOT / f"pipeline/{_pre}_families.json"
-        _fam = json.loads(_fp.read_text()) if _fp.exists() else {}
-        _hit = 0
-        for s_, info in _fam.items():
-            ent = universo[_m].get(s_)
-            if ent:
-                if info.get("nombre"): ent["familia"] = info["nombre"]
-                if info.get("img"): ent["img"] = info["img"]; _hit += 1
-        if _fam:
-            log(f"{_m}: {_hit}/{len(_fam)} familias con foto")
+    luc_fam_p = P.ROOT / "pipeline/lucciola_families.json"
+    luc_fam = json.loads(luc_fam_p.read_text()) if luc_fam_p.exists() else {}
+    luc_hit = 0
+    for s_, info in luc_fam.items():
+        ent = universo["Lucciola"].get(s_)
+        if ent:
+            if info.get("nombre"): ent["familia"] = info["nombre"]
+            if info.get("img"): ent["img"] = info["img"]; luc_hit += 1
+    if luc_fam:
+        log(f"Lucciola: {luc_hit}/{len(luc_fam)} familias con foto")
 
     # Artelum: fotos de producto locales bundleadas (las URLs del índice son intranet y no cargan)
     art_fam_p = P.ROOT / "pipeline/artelum_families.json"

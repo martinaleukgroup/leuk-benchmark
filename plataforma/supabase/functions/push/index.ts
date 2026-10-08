@@ -105,7 +105,7 @@ const plural = (n: number, s: string, p: string) => (n === 1 ? s : p);
 type Resp = { canal: string; email: string; papel: string };
 const respDe = (lista: Resp[], canal: string, papel: string) =>
   lista.filter((r) => r.canal === canal && r.papel === papel).map((r) => low(r.email));
-const CANAL_T: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", mailing: "Mailing" };
+const CANAL_T: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram Leuk", instagram_laftdren: "Instagram Laftdren", mailing: "Mailing" };
 
 // ---- Qué avisar según lo que pasó ----
 async function evento(ev: Fila, perfiles: Perfil[]) {

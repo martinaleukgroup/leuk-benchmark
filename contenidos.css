@@ -19,6 +19,8 @@
 .ct-mes:focus{border-color:var(--olive-mid)}
 .ct-vistas{display:flex;background:var(--olive-pale);border-radius:999px;padding:3px}
 .ct-vistas button{border:0;background:transparent;color:var(--gray);padding:7px 16px;border-radius:999px;font-size:13px}
+.ct-perfiles{display:inline-flex;margin:6px 0 2px}
+.ct-perfiles button{cursor:pointer}
 .ct-vistas button.on{background:var(--card);color:var(--olive);font-weight:600;box-shadow:var(--shadow)}
 .ct-acc{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
 

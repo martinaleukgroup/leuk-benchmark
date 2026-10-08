@@ -44,6 +44,13 @@
       eyebrow: m => `Instagram · ${cap(mesLabel(m))}`,
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
     },
+    instagram_laftdren: {
+      label: "Instagram", corto: "Instagram Laftdren", icono: "📸",
+      caja: "#contenidos-ig", pagina: "contenidos-ig",
+      unidad: "pieza", art: "una", unidadPl: "piezas", nuevo: "Pieza nueva",
+      eyebrow: m => `Instagram Laftdren · ${cap(mesLabel(m))}`,
+      lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
+    },
     mailing: {
       label: "Mailing", corto: "Mailing", icono: "✉️",
       caja: "#contenidos-mail", pagina: "contenidos-mail",
@@ -52,6 +59,10 @@
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada envío con «Con ajustes» o «Listo para publicar».",
     },
   };
+  // Instagram tiene dos perfiles, cada uno un canal propio (sus meses, piezas, KPIs y responsables) pero
+  // en UNA sola página: un selector arriba cambia de perfil. Sumar otro perfil = una entrada acá y en PERFILES.
+  const PERFILES = [{ k: "instagram", t: "Leuk" }, { k: "instagram_laftdren", t: "Laftdren" }];
+  const esIG = c => PERFILES.some(p => p.k === c);
   // A quién va cada mail (se guarda en la columna `tipo`). Cada destino tiene su propia conversión
   // en Resultados. Un mail que sale a los dos públicos se carga como dos envíos.
   const DESTINOS = { profesionales: "Profesionales", distribuidores: "Distribuidores" };
@@ -283,7 +294,7 @@
     ? `https://www.figma.com/design/${encodeURIComponent(m.figma_file)}/?node-id=${encodeURIComponent(String(p.nodo).replace(/:/g, "-"))}`
     : "";
   // Las placas mandan sólo cuando existen: una pieza sin placas sigue el flujo viejo.
-  const porPlacas = m => CANAL === "instagram" && placasDe(m).length > 0;
+  const porPlacas = m => esIG(CANAL) && placasDe(m).length > 0;
 
   /* ========================= DATOS ========================= */
   async function traerMeses() {
@@ -330,7 +341,7 @@
   // en el vacío no dice nada. Nueve alcanzan para ver tres filas de contexto.
   async function traerPrevias() {
     PREV = [];
-    if (CANAL !== "instagram" || !MES) return;
+    if (!esIG(CANAL) || !MES) return;
     const r = await fetch(url(`contenidos?canal=eq.${CANAL}&mes=lt.${enc(MES)}` +
       `&select=id,mes,fecha,criterio,tipo,placas,meta,estado&order=fecha.desc&limit=9`), { headers: head() });
     if (r.ok) PREV = await r.json();
@@ -361,7 +372,7 @@
      sin cuota con ~30 imágenes por minuto. Lo congelado gana sobre lo renderizado:
      una placa aprobada tiene que mostrar lo que se aprobó, no lo que hay hoy. */
   async function traerImagenes(forzar) {
-    if (CANAL !== "instagram") return false;
+    if (!esIG(CANAL)) return false;
     if (!forzar && FIGMA.espera && Date.now() < FIGMA.espera) return false;
     const porArchivo = {}, paths = [];
     const juntar = m => (m.placas || []).forEach(p => {
@@ -412,14 +423,20 @@
   /* ========================= RENDER ========================= */
   // app.js pasa el canal de la página en la que se entró. Cambiar de canal es
   // vaciar lo que hay en memoria: cada uno trae sus meses, sus piezas y sus hilos.
-  window.renderContenidos = async function (canal) {
+  window.renderContenidos = async function (canal, exacto) {
+    // La página de Instagram entra como "instagram" (`exacto` = lo eligió el selector, se respeta): si venimos de un aviso de Laftdren, o ya
+    // estábamos en ese perfil, se queda ahí.
+    if (canal === "instagram" && !exacto) {
+      if (PENDIENTE && esIG(PENDIENTE.canal)) canal = PENDIENTE.canal;
+      else if (esIG(CANAL)) canal = CANAL;
+    }
     if (canal && CANALES[canal] && canal !== CANAL) {
       CANAL = canal;
       MESES = []; CAB = null; MSGS = []; COMS = {}; ABIERTOS = {};
       MES = ULTIMO[CANAL] || "";
       PANEL = false; FILTRO = "todos"; FOCO = ""; PREV = []; FEEDNOTA = ""; CALNOTA = ""; MOVIENDO = "";
       // El feed es de Instagram: volviendo a WhatsApp esa vista no existe.
-      if (VISTA === "feed" && CANAL !== "instagram") VISTA = "fichas";
+      if (VISTA === "feed" && !esIG(CANAL)) VISTA = "fichas";
     }
     // ¿Venimos de un aviso de este canal? Abrir el mes y la pieza que lo disparó.
     let otroMes = false;
@@ -514,7 +531,7 @@
       <b class="${n ? tono || "" : "cero"}">${n}</b><span>${l}</span></button>`;
     const mas = [
       `<button data-acc="refrescar">↻ Traer los últimos cambios</button>`,
-      CANAL === "instagram" ? `<button data-acc="figma">◈ Volver a traer las imágenes de Figma</button>` : "",
+      esIG(CANAL) ? `<button data-acc="figma">◈ Volver a traer las imágenes de Figma</button>` : "",
       ed ? `<button data-acc="nuevo-mes">＋ Nuevo mes</button>
             <button data-acc="importar">⬆ Importar un mes (.json)</button>
             <button data-acc="exportar">⬇ Bajar este mes (.json)</button>` : "",
@@ -524,7 +541,7 @@
     return `
       <header class="mh">
         <div class="mh-top">
-          <div class="mh-tit"><h1>${esc(C().label)}</h1>${respHTML()}</div>
+          <div class="mh-tit"><h1>${esc(C().label)}</h1>${perfilesHTML()}${respHTML()}</div>
           <div class="mh-acc">
             <details class="mh-mas"><summary class="btn-desc">⋯ Más</summary><div class="mh-mas-menu">${mas}</div></details>
             ${ed ? `<button class="btn-primary" data-acc="nuevo-msg">＋ ${esc(C().nuevo)}</button>
@@ -547,7 +564,7 @@
           <div class="ct-vistas">
             <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">📅 Calendario</button>
             <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">☰ Fichas</button>
-            ${CANAL === "instagram" ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
+            ${esIG(CANAL) ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
               title="Cómo va a quedar la grilla del perfil">▦ Feed</button>` : ""}
             ${window.LeukResultados ? `<button data-vista="resultados" class="${VISTA === "resultados" ? "on" : ""}" title="KPIs del canal">📈 Resultados</button>` : ""}
           </div>
@@ -556,6 +573,12 @@
         ${MSGS.length && VISTA !== "resultados" ? `<div class="mh-chips ct-filtros">${chips}</div>` : ""}
       </div>
       ${ed ? "" : `<div class="ct-solo-lectura">${C().lectura}</div>`}`;
+  }
+  // Selector de perfil de Instagram (Leuk | Laftdren). En los demás canales no se dibuja.
+  function perfilesHTML() {
+    if (!esIG(CANAL)) return "";
+    return `<div class="ct-vistas ct-perfiles" role="group" aria-label="Perfil de Instagram">${PERFILES.map(p =>
+      `<button data-perfil="${p.k}" class="${p.k === CANAL ? "on" : ""}">${esc(p.t)}</button>`).join("")}</div>`;
   }
   // "Hace: Agustina · Revisa: Daiana" — a quién le toca mover las piezas de este canal
   function respHTML() {
@@ -662,7 +685,7 @@
             <b>${esc(m.criterio || "Mensaje")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
-              ${CANAL === "instagram" ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
+              ${esIG(CANAL) ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
               ${CANAL === "mailing" ? ` · ${DESTINOS[destinoDe(m)] || "Sin destino"}` : ""}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </div>`;
@@ -1151,7 +1174,7 @@
      Regla heredada de WhatsApp: con comentarios sin resolver no se aprueba —
      pero acá traban SÓLO su placa, no la pieza entera.                       */
   function placasHTML(m, ed) {
-    if (CANAL !== "instagram") return "";
+    if (!esIG(CANAL)) return "";
     const pls = placasDe(m);
     const TIPOS = { post: "Post", carrusel: "Carrusel", reel: "Reel", historia: "Historia" };
 
@@ -1435,6 +1458,8 @@
         if (d) { await moverFecha(MOVIENDO, d.dataset.dia); return; }
       }
 
+      const pf = t.closest("[data-perfil]");
+      if (pf) { if (pf.dataset.perfil !== CANAL) { MOVIENDO = ""; window.renderContenidos(pf.dataset.perfil, true); } return; }
       const v = t.closest("[data-vista]");
       if (v) { VISTA = v.dataset.vista; MOVIENDO = ""; pintar(); return; }
 

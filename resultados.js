@@ -97,6 +97,10 @@
       ],
     },
   };
+  // Instagram Laftdren se mide igual que el de Leuk (mismos datos y KPIs); sólo cambia el nombre.
+  DEFAULT.instagram_laftdren = Object.assign(JSON.parse(JSON.stringify(DEFAULT.instagram)), {
+    nombre: "Instagram Laftdren", objetivo: "Fortalecer el posicionamiento y la consideración de Laftdren.",
+  });
 
   /* Mailing: un envío = una pieza, y cada envío va a UN destino (columna `tipo` de contenidos).
      Los números salen del reporte del envío en Odoo (Email Marketing). La conversión es distinta
@@ -151,7 +155,7 @@
   const datoDef = k => (CFG.datos || []).find(d => d.k === k) || { k, nivel: "pieza" };
   // `solo`: "encuesta" (WhatsApp) o la clave de un destino (Mailing: el dato sólo se pide a ese destino).
   const aplica = (d, p) => !d.solo || (d.solo === "encuesta" ? !!(p.encuesta && p.encuesta.q) : p.tipo === d.solo);
-  const U = () => CFG.unidad || (CTX.canal === "instagram" ? "pieza" : "mensaje");
+  const U = () => CFG.unidad || (/^instagram/.test(CTX.canal) ? "pieza" : "mensaje");
   const kpisVis = () => (CFG.kpis || []).filter(k => !DEST || !k.solo || k.solo === DEST);
   const sinDestino = p => (CFG.destinos || []).length && !CFG.destinos.some(x => x.k === p.tipo);
   // Una pieza se mide cuando ya salió. "Publicado" no alcanza como regla: no siempre se marca.
@@ -512,7 +516,7 @@
     return `<details class="rs-card rs-carga" ${falta && CTX.puedeCargar ? "open" : ""} id="rs-carga-${CTX.canal}">
       <summary><h3>Cargar datos de ${mesLargo(m).split(" ")[0]}</h3>
         <span class="rs-carga-est" data-rs-pend-carga>${faltanTxt(falta)}</span></summary>
-      ${ed ? `<p class="rs-nota">Sólo números, tal cual los da ${CFG.fuente || (CTX.canal === "instagram" ? "Instagram" : "WhatsApp")}. Se guarda solo al salir de cada casillero; los % los calcula la plataforma.</p>`
+      ${ed ? `<p class="rs-nota">Sólo números, tal cual los da ${CFG.fuente || (/^instagram/.test(CTX.canal) ? "Instagram" : "WhatsApp")}. Se guarda solo al salir de cada casillero; los % los calcula la plataforma.</p>`
            : `<p class="rs-nota">${SIN_TABLA ? "Se habilita cuando esté corrido el SQL." : "Los carga quien hace este canal."}</p>`}
       ${ps.length ? `<div class="rs-scroll"><table class="rs-cargat">
         <thead><tr><th>${cap(U())}</th>${(CFG.destinos || []).length ? "<th>Destino</th>" : ""}${dp.map(d => `<th title="${esc(d.ayuda || "")}">${esc(d.t)}${d.opcional ? " <small>(opcional)</small>" : ""}</th>`).join("")}</tr></thead>
@@ -608,7 +612,7 @@
        · un dato que usa un KPI o el embudo no se puede borrar (se dice cuál lo usa).
        · borrar un dato con valores cargados no borra los valores: se dejan de mostrar.
      Canales: los que tienen página en Contenidos. Sumar uno nuevo necesita su página.   */
-  const CANALES_ED = [{ k: "whatsapp", t: "WhatsApp Profesionales" }, { k: "instagram", t: "Instagram Leuk" }, { k: "mailing", t: "Mailing" }];
+  const CANALES_ED = [{ k: "whatsapp", t: "WhatsApp Profesionales" }, { k: "instagram", t: "Instagram Leuk" }, { k: "instagram_laftdren", t: "Instagram Laftdren" }, { k: "mailing", t: "Mailing" }];
   const FUNCIONES = ["Posicionar", "Considerar", "Fidelizar"];
   const FORMULAS = [
     { f: "suma",     t: "Total de un dato",         ej: "Clics = total de clics" },

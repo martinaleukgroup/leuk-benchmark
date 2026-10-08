@@ -2697,6 +2697,7 @@
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
       "Elegí el canal en el menú (<b>Comunidad WhatsApp</b>, <b>Instagram</b> o <b>Mailing</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
+      "En <b>Instagram</b> elegís el perfil arriba (<b>Leuk</b> o <b>Laftdren</b>): cada uno tiene su propio cronograma, feed, Resultados y avisos.",
       "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
       "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
@@ -3211,7 +3212,7 @@
 
     // Todo a una misma forma: {at: necesita atención ya, orden, dias, ic, tit, meta, tag:[texto, clase], ir}
     const cuando = d => d < -1 ? `hace ${-d} días` : d === -1 ? "ayer" : d === 0 ? "hoy" : d === 1 ? "mañana" : `en ${d} días`;
-    const icCanal = k => k === "instagram" ? "photo_camera" : k === "mailing" ? "mail" : "chat";
+    const icCanal = k => /^instagram/.test(k) ? "photo_camera" : k === "mailing" ? "mail" : "chat";
     const items = [];
     (t || []).forEach(x => {
       const ir = () => window.irATarea(x.id);
@@ -3255,7 +3256,7 @@
     const tiles = [];
     if (t) tiles.push({ n: t.filter(x => x.tipo === "tarea" && x.dias <= 0).length, l: "Tus tareas para hoy o vencidas", p: "tareas" });
     // Contenidos según tu papel: quien revisa ve lo que le mandaron; quien hace, lo que tiene que corregir
-    const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && x.canal === "instagram" ? "contenidos-ig" : x && x.canal === "mailing" ? "contenidos-mail" : "contenidos"; };
+    const irCanal = tipo => { const x = (c || []).find(y => y.tipo === tipo); return x && /^instagram/.test(x.canal || "") ? "contenidos-ig" : x && x.canal === "mailing" ? "contenidos-mail" : "contenidos"; };
     if (c && (c.papeles || []).includes("revisa")) tiles.push({ n: c.filter(x => x.tipo === "revisar").length, l: "Piezas que precisan tu feedback", p: irCanal("revisar") });
     if (c && (c.papeles || []).includes("hace")) tiles.push({ n: c.filter(x => x.tipo === "corregir").length, l: "Piezas con ajustes para hacer", p: irCanal("corregir") });
     if (t || a) tiles.push({ n: [...(t || []), ...(a || [])].filter(x => x.tipo === "mencion").length, l: "Menciones nuevas", p: t ? "tareas" : "acciones" });

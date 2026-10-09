@@ -4,7 +4,8 @@
 # ============================================================
 # Hace, en orden:
 #   1. Re-indexa los archivos de Drive (dibujos, curvas, LDT, CAD, manuales)
-#   2. Regenera app/fichas-data.js leyendo la planilla BASE ÚNICA
+#   2. Regenera app/fichas-data.js leyendo la planilla (Hub de marketing)
+#   2a. Trae las fotos PNG nuevas/cambiadas de la carpeta de Drive de diseño
 #   3. Publica a GitHub Pages, SÓLO si algo cambió
 #
 # Se puede correr a mano en cualquier momento:
@@ -50,6 +51,24 @@ elif [ "$CODIGO" -ne 0 ]; then
 fi
 log "✓ fichas regeneradas"
 
+# 2a) fotos PNG desde la carpeta de Drive de diseño (única fuente). Va DESPUÉS del build
+# porque necesita saber qué SKU hay; si trajo fotos nuevas, se rearman las fichas para que
+# las tomen. Si falla, se sigue con las fotos que ya había (no frena la publicación).
+cd "$HOME/leuk-benchmark/pipeline" || exit 1
+if python3 ficha_fotos.py >>"$LOG" 2>&1; then
+  if [ -n "$(git -C "$HOME/leuk-benchmark/app" status --porcelain -- assets/ficha/fotos)" ]; then
+    log "✓ fotos nuevas o actualizadas; se rearman las fichas"
+    if ! python3 fichas_build.py >>"$LOG" 2>&1; then
+      log "⛔ fichas_build.py falló al rearmar con las fotos nuevas. No se publica."
+      exit 1
+    fi
+  else
+    log "· fotos sin cambios"
+  fi
+else
+  log "⚠ no pude traer las fotos de Drive; se usan las que ya estaban"
+fi
+
 # 2b) freno de caída brusca.
 # El 21/08/2026 se borraron 25 filas de BASE ÚNICA por accidente y este proceso
 # las publicó a los minutos, porque nadie estaba mirando. Una baja de producto
@@ -71,7 +90,7 @@ if [ "$ANTES" -gt 0 ] && [ "$AHORA" -gt 0 ]; then
 fi
 
 # 3) publicar sólo si cambió algo
-if git diff --quiet -- fichas-data.js; then
+if git diff --quiet -- fichas-data.js && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
   log "· sin cambios en las fichas. No se publica."
   log "──────── listo ────────"
   exit 0

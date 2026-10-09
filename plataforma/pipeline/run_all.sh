@@ -28,8 +28,9 @@ python3 ficha_assets_manifest.py
 echo "▶ 8/8  Fichas técnicas → app/fichas-data.js (desde BASE ÚNICA)…"
 python3 fichas_build.py
 
-# Las fotos PNG por SKU (app/assets/ficha/fotos/) son assets fijos ya commiteados; NO se
-# regeneran acá. Cuando diseño actualice el ZIP de fotos, correr:  python3 ficha_fotos.py
+# Fotos PNG por SKU desde la carpeta de Drive de diseño (incremental) y rearmado de fichas
+# para que tomen las nuevas.
+python3 ficha_fotos.py && python3 fichas_build.py
 
 # El ZIP con todas las fichas ya NO se genera acá: lo arma la app en el navegador con el
 # botón "Descargar todas (ZIP)". Si alguna vez hace falta la versión vectorial (texto

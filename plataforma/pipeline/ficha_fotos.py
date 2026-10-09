@@ -64,15 +64,17 @@ def main():
         # elegir un archivo por SKU (preferir el que termina en "…Producto0")
         for name in z.namelist():
             base = name.rsplit("/", 1)[-1]
-            m = re.match(r"(\d+)", base)
+            # Un archivo puede llevar varias SKU ("6742-6743-7303-7304FotoProducto0.png"):
+            # la foto vale para todas, no sólo para la primera.
+            m = re.match(r"(\d+(?:-\d+)*)", base)
             if not m:
                 continue
-            sku = m.group(1)
-            if sku not in skus:
-                continue
-            pref = "producto0" in base.lower() or base.lower() == sku + ".png"
-            if sku not in seen or (pref and "producto0" not in seen[sku].lower()):
-                seen[sku] = name
+            for sku in m.group(1).split("-"):
+                if sku not in skus:
+                    continue
+                pref = "producto0" in base.lower() or base.lower() == sku + ".png"
+                if sku not in seen or (pref and "producto0" not in seen[sku].lower()):
+                    seen[sku] = name
         for sku, name in seen.items():
             try:
                 with z.open(name) as fh:

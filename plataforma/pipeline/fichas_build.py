@@ -858,7 +858,11 @@ def main():
         if sku in FOTO_OVERRIDE:
             return FOTO_OVERRIDE[sku]
         # PNG curado: probar la SKU representativa y luego cualquier variante de color
-        for s in [sku] + [str(x) for x in (f.get("skus") or [])]:
+        # y por último las SKU que comparten el archivo de "Imagen destacada" (ej. CHILL 2200K
+        # usa "6742-6743-6744-6745-7303-7304FotoProducto0.png": misma foto que la 6742).
+        m = re.match(r"(\d+(?:-\d+)*)", (f.get("assets") or {}).get("foto") or "")
+        comparten = m.group(1).split("-") if m else []
+        for s in [sku] + [str(x) for x in (f.get("skus") or [])] + comparten:
             if (FOTOS_DIR / f"{s}.png").exists():   # PNG curado > foto del benchmark
                 return f"assets/ficha/fotos/{s}.png"
         return photo.get(sku)

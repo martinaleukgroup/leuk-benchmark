@@ -20,12 +20,12 @@ import openpyxl
 
 import paths as P
 
-# Fuente: Google Sheet maestro de BASE ÚNICA (siempre al día). Se baja por link (export xlsx).
-SHEET_ID = "148rh_v3Bcb8cPHYJSMRiAUi5xTNyPyZi6jrKUDN-s0E"
+# Fuente: Google Sheet "Hub de marketing" (pestaña Base + Referencia; desde 09/10/2026). Se baja por link (export xlsx).
+SHEET_ID = "1r38Tdw8MlNbxQcgiI-dM79yOMINohAwEYKcTAsQnBBg"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx"
 CACHE = P.ROOT / "pipeline" / "base_unica.xlsx"
 LOCAL_FALLBACK = P.WORK.parent / "Generador de fichas técnicas" / "Maestro_Marketing.xlsx"
-HOJA = "BASE ÚNICA"
+HOJA = "Base"
 OUT = P.ROOT / "app" / "fichas-data.js"
 
 
@@ -105,6 +105,9 @@ TECH_COLS = [
 ]
 TECH = [(h, h) for h in TECH_COLS]
 EXCLUDE = {"Tolerancia Cromática"}
+ALIAS_HUB = {"Material": "Materialidad", "Índice de deslumbramiento unificado (UGR)": "UGR", "Situación": "Estado"}
+# De la hoja "Referencia" (cruce por SKU): columna BD = Nombre Ficha Técnica, D = EAN, H = Marca Driver.
+REF_HUB = {"Agrupación de fichas técnicas": "Nombre Ficha Técnica", "EAN": "EAN", "Marca Driver": "Marca Driver"}
 # Columnas técnicas ("azules"). El export de Google Sheets NO conserva el color, así que
 # se usan como config; si el archivo trae el color azul (theme 4), ese detecta y manda.
 BLUE_COLS = {"Medida", "Fuente Lumínica", "Marca LED", "Marca Driver", "Control", "Alimentación", "Frecuencia",
@@ -680,9 +683,23 @@ def main():
         "7253": "7252",   # LAIVA II NG 3000K → familia LAIVA II 3000K (con 7252)
     }
 
+    REF = {}
+    _wr = wb["Referencia"]
+    _hr = {str(c.value).strip(): c.column for c in _wr[1] if c.value}
+    for _r in _wr.iter_rows(min_row=2, values_only=True):
+        _sku = fmt(_r[_hr["SKU"] - 1])
+        if _sku:
+            REF[_sku] = {k: _r[_hr[v] - 1] for k, v in REF_HUB.items()}
+
     rows = []
     for row in ws.iter_rows(min_row=2):
         obj = {headers[c.column]: c.value for c in row if c.column in headers}
+        for _n, _v in ALIAS_HUB.items():
+            if _v in obj and _n not in obj:
+                obj[_n] = obj[_v]
+        for _k, _v in REF.get(fmt(obj.get("SKU")), {}).items():
+            if not EMPTY(_v):
+                obj[_k] = _v
         # descartar filas con SKU inválido/sin asignar (#N/D, #N/A, vacío): generan fichas fantasma
         if EMPTY(obj.get("SKU")):
             continue

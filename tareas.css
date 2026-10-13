@@ -33,6 +33,7 @@
 .tk-dot.e-curso{background:var(--warn)}
 .tk-dot.e-revision{background:var(--olive-mid)}
 .tk-dot.e-hecha{background:var(--ok)}
+.tk-dot.e-pospuesta{background:transparent;box-shadow:inset 0 0 0 2px var(--gray-soft)}
 .tk-avatar{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
   background:var(--olive-pale);color:var(--olive);font-size:10.5px;font-weight:700;letter-spacing:.02em;flex:none}
 .tk-avatar.yo{background:var(--olive);color:#fff}
@@ -52,7 +53,7 @@
 .tk-ver-hechas{border:0;background:transparent;color:var(--olive);font-size:12.5px;padding:8px 4px;text-decoration:underline;text-underline-offset:3px}
 
 /* ---- Tablero ---- */
-.tk-tablero{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px;align-items:start;
+.tk-tablero{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;align-items:start;
   overflow-x:auto;padding:6px 0 18px}
 .tk-col{background:var(--olive-pale);border-radius:var(--radius);padding:10px;min-width:0}
 .tk-col-h{display:flex;align-items:center;gap:8px;padding:2px 4px 10px;font-family:var(--font-title);
@@ -73,6 +74,9 @@
 .tk-card.abierta{box-shadow:0 0 0 2px var(--olive)}
 .tk-card.arrastrando,.tk-cal-chip.arrastrando{opacity:.4}
 .tk-card.hecha{border-left-color:var(--ok)}
+.tk-card.pospuesta,.tk-fila.pospuesta,.tk-cal-chip.pospuesta{opacity:.65;border-left-color:var(--gray-soft)}
+.tk-p-estados button.on.e-pospuesta{background:var(--gray-soft);border-color:var(--gray-soft)}
+.tk-p-estados button.on.e-pospuesta .tk-dot{box-shadow:inset 0 0 0 2px #fff}
 .tk-card.hecha .tk-card-t{color:var(--gray-soft);text-decoration:line-through;text-decoration-color:var(--olive-soft)}
 .tk-card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
 .tk-card-t{margin:0;font-family:var(--font-body);font-size:14.5px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
@@ -237,7 +241,7 @@
 
 /* ---- Celular ---- */
 @media (max-width:900px){
-  .tk-tablero{grid-template-columns:repeat(4,minmax(260px,82vw));scroll-snap-type:x mandatory}
+  .tk-tablero{grid-template-columns:repeat(5,minmax(260px,82vw));scroll-snap-type:x mandatory}
   .tk-col{scroll-snap-align:start}
   .tk-fila{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"ok t t" ". estado vence" ". resp prio";row-gap:6px}
   .tk-fila-ok{grid-area:ok}

@@ -51,6 +51,7 @@
     { k: "curso",     t: "En curso" },
     { k: "revision",  t: "En revisión" },
     { k: "hecha",     t: "Hecha" },
+    { k: "pospuesta", t: "Pospuesta" },
   ];
   const estadoT = k => (ESTADOS.find(e => e.k === k) || ESTADOS[0]).t;
   const PRIORIDADES = [{ k: "alta", t: "Alta" }, { k: "media", t: "Media" }, { k: "baja", t: "Baja" }];
@@ -87,12 +88,14 @@
 
   /* ---- Lecturas derivadas ---- */
   const abierta = t => t.estado !== "hecha";
+  // Pospuesta: sigue sin hacerse, pero está en pausa — no cuenta como vencida ni avisa.
+  const activa = t => abierta(t) && t.estado !== "pospuesta";
   const mia = t => low(t.responsable_email) === yo();
   const FILTROS = [
     { k: "todas",    t: "Todas",            f: () => true },
     { k: "mias",     t: "Mías",             f: t => abierta(t) && mia(t) },
-    { k: "vencidas", t: "Vencidas",         f: t => abierta(t) && !!t.fecha_limite && diasHasta(t.fecha_limite) < 0 },
-    { k: "semana",   t: "Próximos 7 días",  f: t => abierta(t) && !!t.fecha_limite && diasHasta(t.fecha_limite) >= 0 && diasHasta(t.fecha_limite) <= 7 },
+    { k: "vencidas", t: "Vencidas",         f: t => activa(t) && !!t.fecha_limite && diasHasta(t.fecha_limite) < 0 },
+    { k: "semana",   t: "Próximos 7 días",  f: t => activa(t) && !!t.fecha_limite && diasHasta(t.fecha_limite) >= 0 && diasHasta(t.fecha_limite) <= 7 },
     { k: "alta",     t: "Prioridad alta",   f: t => abierta(t) && t.prioridad === "alta" },
     { k: "sin",      t: "Sin responsable",  f: t => abierta(t) && !t.responsable_email },
     { k: "hitos",    t: "★ Hitos",          f: t => abierta(t) && !!t.hito },
@@ -176,7 +179,7 @@
     if (!t.fecha_limite) return null;
     const d = aFecha(t.fecha_limite);
     const corta = `${d.getDate()} ${MES_CORTO[d.getMonth()]}`;
-    if (!abierta(t)) return { t: corta, c: "" };
+    if (!activa(t)) return { t: corta, c: "" };
     const n = diasHasta(t.fecha_limite);
     if (n < -1) return { t: `vencida hace ${-n} días`, c: "vencida" };
     if (n === -1) return { t: "venció ayer", c: "vencida" };
@@ -190,7 +193,7 @@
     if (!x.f) return null;
     const d = aFecha(x.f);
     const corta = `${d.getDate()} ${MES_CORTO[d.getMonth()]}`;
-    if (x.ok || !abierta(t)) return { t: corta, c: "", l: corta };
+    if (x.ok || !activa(t)) return { t: corta, c: "", l: corta };
     const n = diasHasta(x.f);
     if (n < 0) return { t: corta, c: "vencida", l: n === -1 ? "venció ayer" : `vencido hace ${-n} días` };
     if (n === 0) return { t: "hoy", c: "hoy", l: "vence hoy" };
@@ -222,7 +225,7 @@
   // Contador en la solapa Tareas: lo tuyo que vence hoy o ya venció, más las tareas
   // donde te mencionaron y todavía no abriste.
   function avisos() {
-    const vencen = TAREAS.filter(t => abierta(t) && mia(t) && t.fecha_limite && diasHasta(t.fecha_limite) <= 0);
+    const vencen = TAREAS.filter(t => activa(t) && mia(t) && t.fecha_limite && diasHasta(t.fecha_limite) <= 0);
     const menc = TAREAS.filter(t => abierta(t) && mencionNueva(t));
     return { n: new Set([...vencen, ...menc].map(t => t.id)).size, vencen: vencen.length, menc: menc.length };
   }
@@ -247,7 +250,7 @@
     const out = [];
     TAREAS.filter(abierta).forEach(t => {
       const n = t.fecha_limite ? diasHasta(t.fecha_limite) : null;
-      if (mia(t) && n != null && n <= 7) out.push({ tipo: "tarea", id: t.id, titulo: t.titulo, dias: n, alta: t.prioridad === "alta", hito: !!t.hito });
+      if (activa(t) && mia(t) && n != null && n <= 7) out.push({ tipo: "tarea", id: t.id, titulo: t.titulo, dias: n, alta: t.prioridad === "alta", hito: !!t.hito });
       if (mencionNueva(t)) out.push({ tipo: "mencion", id: t.id, titulo: t.titulo });
     });
     return out;
@@ -506,7 +509,7 @@
     const kpi = (n, l, k, tono) => `<${k ? `button data-accion="filtro" data-k="${k}"` : "div"} class="mh-kpi ${k && FILTRO === k ? "on" : ""}">
       <b class="${n ? tono || "" : "cero"}">${n}</b><span>${l}</span></${k ? "button" : "div"}>`;
     c.querySelector(".tk-kpis").innerHTML =
-      kpi(b.filter(abierta).length, "abiertas", "todas") +
+      kpi(b.filter(activa).length, "abiertas", "todas") +
       kpi(cuenta("vencidas"), "vencidas", "vencidas", "no") +
       kpi(cuenta("semana"), "vencen en los próximos 7 días", "semana", "warn") +
       kpi(hechas, "hechas en los últimos 30 días", null, "ok");
@@ -548,7 +551,7 @@
     const n = t.checklist.length, ok = t.checklist.filter(x => x.ok).length;
     const nc = (COMS[t.id] || []).length;
     const tags = (t.prioridad === "alta" && abierta(t) ? `<span class="tk-prio alta">Alta</span>` : "") + areaHTML(t.area);
-    return `<article class="tk-card p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.hito ? "hito" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
+    return `<article class="tk-card p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.estado === "pospuesta" ? "pospuesta" : ""} ${t.hito ? "hito" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
         draggable="true" data-drag="${t.id}" data-abrir="${t.id}" tabindex="0">
       ${tags ? `<div class="tk-card-tags">${tags}</div>` : ""}
       <h4 class="tk-card-t">${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</h4>
@@ -585,7 +588,7 @@
           ${e.k !== "hecha" ? `<button class="tk-col-mas" data-accion="nueva" data-estado="${e.k}" title="Nueva tarea en ${e.t}" aria-label="Nueva tarea en ${e.t}">＋</button>` : ""}
         </header>
         <div class="tk-col-cuerpo" data-zona-estado="${e.k}">
-          ${col.map(tarjetaHTML).join("") || `<div class="tk-col-vacia">${e.k === "hecha" ? "Arrastrá acá lo terminado" : "Nada por acá"}</div>`}
+          ${col.map(tarjetaHTML).join("") || `<div class="tk-col-vacia">${e.k === "hecha" ? "Arrastrá acá lo terminado" : e.k === "pospuesta" ? "Arrastrá acá lo que queda en pausa" : "Nada por acá"}</div>`}
         </div>
         ${verMas}
       </section>`;
@@ -596,11 +599,12 @@
     if (!ts.length) return TAREAS.length ? sinResultados() : "";
     const d = t => diasHasta(t.fecha_limite);
     const GRUPOS = [
-      { k: "vencidas", t: "Vencidas",        f: t => abierta(t) && t.fecha_limite && d(t) < 0 },
-      { k: "hoy",      t: "Hoy",             f: t => abierta(t) && t.fecha_limite && d(t) === 0 },
-      { k: "semana",   t: "Próximos 7 días", f: t => abierta(t) && t.fecha_limite && d(t) > 0 && d(t) <= 7 },
-      { k: "despues",  t: "Más adelante",    f: t => abierta(t) && t.fecha_limite && d(t) > 7 },
-      { k: "sinfecha", t: "Sin fecha",       f: t => abierta(t) && !t.fecha_limite },
+      { k: "vencidas", t: "Vencidas",        f: t => activa(t) && t.fecha_limite && d(t) < 0 },
+      { k: "hoy",      t: "Hoy",             f: t => activa(t) && t.fecha_limite && d(t) === 0 },
+      { k: "semana",   t: "Próximos 7 días", f: t => activa(t) && t.fecha_limite && d(t) > 0 && d(t) <= 7 },
+      { k: "despues",  t: "Más adelante",    f: t => activa(t) && t.fecha_limite && d(t) > 7 },
+      { k: "sinfecha", t: "Sin fecha",       f: t => activa(t) && !t.fecha_limite },
+      { k: "pospuestas", t: "Pospuestas",    f: t => t.estado === "pospuesta" },
       { k: "hechas",   t: "Hechas",          f: t => !abierta(t) },
     ];
     const orden = (a, b) => String(a.fecha_limite || "").localeCompare(String(b.fecha_limite || "")) ||
@@ -623,7 +627,7 @@
     const n = t.checklist.length, ok = t.checklist.filter(x => x.ok).length;
     const nc = (COMS[t.id] || []).length;
     const prio = PRIORIDADES.find(p => p.k === t.prioridad) || PRIORIDADES[1];
-    return `<div class="tk-fila p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${ABIERTA === t.id ? "abierta" : ""}" data-abrir="${t.id}" tabindex="0">
+    return `<div class="tk-fila p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.estado === "pospuesta" ? "pospuesta" : ""} ${ABIERTA === t.id ? "abierta" : ""}" data-abrir="${t.id}" tabindex="0">
       <input type="checkbox" class="tk-fila-ok" data-accion="hecha" data-id="${t.id}" ${abierta(t) ? "" : "checked"}
         title="${abierta(t) ? "Marcar como hecha" : "Volver a abrir"}" aria-label="Marcar como hecha">
       <div class="tk-fila-t">
@@ -651,21 +655,21 @@
     const hoy = hoyISO();
     const porDia = {};
     ts.forEach(t => { if (t.fecha_limite) (porDia[t.fecha_limite] = porDia[t.fecha_limite] || []).push(t); });
-    const chip = t => `<div class="tk-cal-chip p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.hito ? "hito" : ""} ${abierta(t) && t.fecha_limite && diasHasta(t.fecha_limite) < 0 ? "vencida" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
+    const chip = t => `<div class="tk-cal-chip p-${esc(t.prioridad)} ${abierta(t) ? "" : "hecha"} ${t.estado === "pospuesta" ? "pospuesta" : ""} ${t.hito ? "hito" : ""} ${activa(t) && t.fecha_limite && diasHasta(t.fecha_limite) < 0 ? "vencida" : ""} ${ABIERTA === t.id ? "abierta" : ""}"
         draggable="true" data-drag="${t.id}" data-abrir="${t.id}" tabindex="0" title="${esc(t.titulo)} · ${esc(nombreDe(t.responsable_email) || "sin responsable")}">
         ${avatarHTML(t.responsable_email)}${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}<span>${esc(t.titulo) || "Sin título"}</span></div>`;
     let grilla = "";
     for (let i = 0; i < celdas; i++) {
       const d = new Date(y, m - 1, 1 - offset + i);
       const iso = isoDe(d);
-      const lista = (porDia[iso] || []).sort((a, b) => (abierta(b) - abierta(a)) || (PRIO_PESO[a.prioridad] - PRIO_PESO[b.prioridad]));
+      const lista = (porDia[iso] || []).sort((a, b) => (activa(b) - activa(a)) || (PRIO_PESO[a.prioridad] - PRIO_PESO[b.prioridad]));
       grilla += `<div class="tk-dia ${d.getMonth() !== m - 1 ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}" data-zona-dia="${iso}">
         <div class="tk-dia-h"><span class="n">${d.getDate()}</span><span class="dow">${DOW[i % 7]} · ${MES_CORTO[d.getMonth()]}</span>
           <button class="tk-dia-mas" data-accion="nueva" data-fecha="${iso}" title="Nueva tarea para el ${d.getDate()}/${d.getMonth() + 1}" aria-label="Nueva tarea para este día">＋</button></div>
         ${lista.map(chip).join("")}
       </div>`;
     }
-    const sinFecha = ts.filter(t => !t.fecha_limite && abierta(t)).sort(porOrden);
+    const sinFecha = ts.filter(t => !t.fecha_limite && activa(t)).sort(porOrden);
     const delMes = ts.filter(t => t.fecha_limite && t.fecha_limite.slice(0, 7) === CALMES);
     return `<div class="tk-cal">
       <div class="tk-cal-nav">

@@ -185,6 +185,18 @@
     if (n <= 7) return { t: `en ${n} días · ${corta}`, c: "pronto" };
     return { t: corta, c: "" };
   }
+  // Cada paso del checklist puede tener su propia fecha (x.f), aparte del "Vence" de la tarea.
+  function fechaPaso(x, t) {
+    if (!x.f) return null;
+    const d = aFecha(x.f);
+    const corta = `${d.getDate()} ${MES_CORTO[d.getMonth()]}`;
+    if (x.ok || !abierta(t)) return { t: corta, c: "", l: corta };
+    const n = diasHasta(x.f);
+    if (n < 0) return { t: corta, c: "vencida", l: n === -1 ? "venció ayer" : `vencido hace ${-n} días` };
+    if (n === 0) return { t: "hoy", c: "hoy", l: "vence hoy" };
+    if (n === 1) return { t: "mañana", c: "pronto", l: "vence mañana" };
+    return { t: corta, c: n <= 7 ? "pronto" : "", l: `vence el ${corta}` };
+  }
   function hace(ts) {
     if (!ts) return "";
     const s = (Date.now() - Date.parse(ts)) / 1000;
@@ -723,11 +735,16 @@
         <div class="tk-p-sec">
           <div class="tk-p-sec-h"><span>Checklist</span>
             ${n ? `<span class="c">${ok}/${n}</span><span class="tk-barra"><span style="width:${Math.round(ok / n * 100)}%"></span></span>` : ""}</div>
-          <ul class="tk-check">${t.checklist.map((x, i) => `<li class="${x.ok ? "ok" : ""}">
+          <ul class="tk-check">${t.checklist.map((x, i) => { const fp = fechaPaso(x, t); return `<li class="${x.ok ? "ok" : ""}">
             <input type="checkbox" data-accion="check-toggle" data-i="${i}" ${x.ok ? "checked" : ""} aria-label="Hecho">
             <input class="tk-check-t" data-check-i="${i}" value="${esc(x.t)}" aria-label="Paso">
             ${mencionesEn(x.t).length ? `<span class="tk-check-menc">${mencionesEn(x.t).map(avatarHTML).join("")}</span>` : ""}
-            <button class="tk-mini" data-accion="check-del" data-i="${i}" title="Quitar paso" aria-label="Quitar paso">✕</button></li>`).join("")}</ul>
+            <span class="tk-check-f ${fp ? "con " + fp.c : ""}" title="${fp ? `Fecha del paso: ${esc(fp.l)}` : "Ponerle fecha a este paso"}">
+              <span aria-hidden="true">${fp ? esc(fp.t) : "📅"}</span>
+              <input type="date" data-check-f="${i}" value="${esc(x.f || "")}" aria-label="Fecha del paso">
+              ${fp ? `<button class="tk-check-fx" data-accion="check-f-del" data-i="${i}" title="Quitar la fecha" aria-label="Quitar la fecha del paso">✕</button>` : ""}
+            </span>
+            <button class="tk-mini" data-accion="check-del" data-i="${i}" title="Quitar paso" aria-label="Quitar paso">✕</button></li>`; }).join("")}</ul>
           <input class="tk-check-nuevo" placeholder="＋ Agregar un paso y Enter · con @ lo asignás a alguien" autocomplete="off">
         </div>
 
@@ -796,6 +813,7 @@
     "cal-hoy": () => { CALMES = hoyISO().slice(0, 7); pintarCuerpo(); },
     "check-toggle": a => cambiarChecklist(l => { const x = l[+a.dataset.i]; if (x) x.ok = !x.ok; }),
     "check-del": a => cambiarChecklist(l => l.splice(+a.dataset.i, 1)),
+    "check-f-del": a => cambiarChecklist(l => { const x = l[+a.dataset.i]; if (x) delete x.f; }),
     comentar: () => comentar(ABIERTA),
     "com-del": a => borrarComentario(ABIERTA, a.dataset.id),
   };
@@ -857,6 +875,8 @@
     c.addEventListener("click", ev => {
       const a = ev.target.closest("[data-accion]");
       if (a && c.contains(a)) { const fn = ACCIONES[a.dataset.accion]; if (fn) fn(a, ev); return; }
+      // La fecha del paso es un input invisible sobre la etiqueta: abrir el calendario al tocarla.
+      if (ev.target.dataset.checkF != null && ev.target.showPicker) { try { ev.target.showPicker(); } catch (e) { } return; }
       const card = ev.target.closest("[data-abrir]");
       if (card) abrir(card.dataset.abrir);
     });
@@ -868,6 +888,11 @@
       if (el.dataset.checkI != null) {
         const i = +el.dataset.checkI, texto = el.value.trim();
         cambiarChecklist(l => { if (!l[i]) return; if (texto) l[i].t = texto; else l.splice(i, 1); });
+        return;
+      }
+      if (el.dataset.checkF != null) {
+        const i = +el.dataset.checkF, f = el.value;
+        cambiarChecklist(l => { if (!l[i]) return; if (f) l[i].f = f; else delete l[i].f; });
         return;
       }
       const campo = el.dataset.campo; if (!campo) return;

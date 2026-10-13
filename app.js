@@ -2710,7 +2710,7 @@
       "Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
       "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
       "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
-      "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo.",
+      "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo. Cada paso puede tener <b>su propia fecha</b> (el 📅 al lado), aparte del vencimiento de la tarea.",
       "Escribí <b>@</b> en un comentario o en un paso del checklist para <b>mencionar</b> a alguien del equipo.",
       "El número al lado de <b>Tareas</b> en el menú son las tuyas que vencen hoy o ya vencieron, más las menciones nuevas."] },
     { t: "Acciones", ic: "campaign", pages: ["acciones"], pasos: [

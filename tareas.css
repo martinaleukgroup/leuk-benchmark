@@ -203,6 +203,21 @@
 .tk-check-t:hover{border-color:var(--line)}
 .tk-check-t:focus{border-color:var(--olive-mid);background:var(--bg)}
 .tk-check li.ok .tk-check-t{color:var(--gray-soft);text-decoration:line-through}
+.tk-check-f{position:relative;flex:none;display:inline-flex;align-items:center;min-width:26px;height:24px;justify-content:center;
+  padding:0 7px;border-radius:6px;font-size:12px;color:var(--gray);white-space:nowrap;cursor:pointer}
+.tk-check-f:not(.con){padding:0;filter:grayscale(1);opacity:.4}
+.tk-check-f:hover,.tk-check-f:focus-within{background:var(--olive-pale);opacity:1}
+.tk-check-f.con{background:var(--bg);border:1px solid var(--line)}
+.tk-check-f.pronto{color:var(--warn);font-weight:600}
+.tk-check-f.hoy{color:var(--no);font-weight:600}
+.tk-check-f.vencida{color:#fff;background:var(--no);border-color:var(--no);font-weight:600}
+.tk-check li.ok .tk-check-f{color:var(--gray-soft)}
+.tk-check-f input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+.tk-check-f input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;margin:0;padding:0;cursor:pointer}
+.tk-check-fx{display:none;position:absolute;top:-7px;right:-7px;z-index:1;width:16px;height:16px;padding:0;border:0;border-radius:50%;
+  background:var(--gray);color:#fff;font-size:9px;line-height:16px;cursor:pointer}
+.tk-check-fx:hover{background:var(--no)}
+@media (hover:hover){.tk-check-f:hover .tk-check-fx{display:block}}
 .tk-mini{border:0;background:transparent;color:var(--gray-soft);font-size:12px;width:26px;height:26px;border-radius:6px;flex:none}
 .tk-mini:hover{background:#f6e7e4;color:var(--no)}
 .tk-coms{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}

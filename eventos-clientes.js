@@ -197,7 +197,15 @@
     if (!lista.length) { out.falta = "Sumá el distribuidor con el que se hizo el evento para medir sus compras."; return veredicto(out); }
     if (!RANGO) { out.falta = "Todavía no hay ventas cargadas. Subí el reporte de ventas desde el tablero (⋯ Más → Actualizar ventas)."; return veredicto(out); }
     out.dias = Math.min(N, difDias(ev.fecha, RANGO.hasta) + 1);
-    if (out.dias <= 0) { out.falta = `Las ventas cargadas llegan hasta el ${fechaLarga(RANGO.hasta)}: todavía no hay compras posteriores al evento.`; return veredicto(out); }
+    if (out.dias <= 0) {
+      // Todavía no hay ventas posteriores: igual se muestra lo que el distribuidor venía comprando.
+      const h = RANGO.hasta < ev.fecha ? RANGO.hasta : sumarDias(ev.fecha, -1);
+      out.previo = { desde: sumarDias(h, -(N - 1)), hasta: h };
+      out.previo.usd = lista.reduce((s, x) => s + sumaCliente(x.cuit, out.previo.desde, out.previo.hasta).usd, 0);
+      out.falta = `El evento es del ${fechaLarga(ev.fecha)} y las ventas cargadas llegan hasta el ${fechaLarga(RANGO.hasta)}. ` +
+        `Para saber si sirvió, subí un reporte de ventas más nuevo (⋯ Más → Actualizar ventas en el tablero) cuando haya pasado un tiempo desde el evento.`;
+      return veredicto(out);
+    }
     out.antes = [sumarDias(ev.fecha, -out.dias), sumarDias(ev.fecha, -1)];
     out.despues = [ev.fecha, sumarDias(ev.fecha, out.dias - 1)];
     const ly = r => r.map(f => sumarDias(f, -364));           // mismo día de la semana, un año antes
@@ -264,7 +272,7 @@
     const total = (d, dy) => {
       const desde = isoDe(new Date(d.getFullYear() - dy, d.getMonth(), 1)), hasta = isoDe(new Date(d.getFullYear() - dy, d.getMonth() + 1, 0));
       if (RANGO && desde > RANGO.hasta) return null;
-      return k.dists.reduce((s, r) => s + sumaCliente(r.x.cuit, desde, hasta).usd, 0);
+      return k.lista.reduce((s, x) => s + sumaCliente(x.cuit, desde, hasta).usd, 0);
     };
     return {
       labels: meses.map(({ i, d }) => i === 0 ? "evento" : `${MES_CORTO[d.getMonth()]}${d.getMonth() === 0 ? " " + String(d.getFullYear()).slice(2) : ""}`),
@@ -555,7 +563,17 @@
         ${kpi(k.costoProf != null ? usd(k.costoProf) : "—", "costo por profesional", "inversión ÷ asistentes")}
         ${k.antes && k.base && k.extraProf != null ? kpi(signo(k.extraProf), "compras extra por profesional", "que asistió", tono(k.extraProf)) : ""}
       </div>`;
-    if (!k.antes) { w.innerHTML = encab + ver + kpis; return; }
+    if (!k.antes) {
+      if (!k.previo) { w.innerHTML = encab + ver + kpis; return; }
+      const e0 = evolucion(k);
+      w.innerHTML = encab + ver + kpis.replace('<div class="mh-kpis">', `<div class="mh-kpis">
+          ${kpi(usd(k.previo.usd), `compras del distribuidor en los ${VENTANA} días previos`, `${fechaLarga(k.previo.desde)} → ${fechaLarga(k.previo.hasta)}`)}`) + `<div class="ec-grid">
+          ${tarjeta("Compras mes a mes", `${esc(k.nombres || "Distribuidor")} · hasta el último mes con ventas cargadas`,
+            leyenda([["Este período", COL.main], ["Mismos meses, año anterior", COL.gris, true]]) +
+            lineas(e0.labels, [{ c: COL.gris, vals: e0.anterior, dash: true }, { c: COL.main, vals: e0.este }], usdCorto, 6))}
+        </div>`;
+      return;
+    }
     const e2 = evolucion(k);
     const fams = Object.entries(k.fam).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const crec = [["Distribuidor del evento", k.crec, COL.main], ["Resto de los clientes", k.base ? k.base.crec : null, COL.gris],

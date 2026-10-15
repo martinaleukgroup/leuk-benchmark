@@ -110,9 +110,11 @@ function doGet(e) {
     if (accion === 'fichas')     return _apiJson(_apiListarFichas());
     if (accion === 'ficha')      return _apiUnaFicha(normTexto(p.agrupacion));
     if (accion === 'ping')       return _apiJson({ ok: true, servicio: 'fichas', generado: new Date().toISOString() });
+    // Fotos de producto para el Generador de Liquidación (07_Fotos.gs)
+    if (accion === 'fotosIndice' || accion === 'foto' || accion === 'fotosReindexar') return _fotosGet(accion, p);
 
     return _apiError('ACCION_DESCONOCIDA',
-      'Acciones válidas en GET: fichas · ficha · ping.', 400);
+      'Acciones válidas en GET: fichas · ficha · ping · fotosIndice · foto · fotosReindexar.', 400);
   } catch (err) {
     return _apiFallaInesperada('GET', err);
   }

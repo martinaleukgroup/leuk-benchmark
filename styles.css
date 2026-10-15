@@ -468,7 +468,7 @@ body.locked .shell{display:none}
   border:0;border-radius:0;background:var(--card);display:block}
 
 /* estas páginas no llevan padding propio */
-#page-firmas,#page-stock,#page-reingresos,#page-eventos{padding:0}
+#page-firmas,#page-stock,#page-reingresos,#page-liquidacion,#page-eventos{padding:0}
 
 /* cuando una mini-app embebida es la página activa, main rompe la columna
    centrada de 1100px y va de borde a borde; se oculta el pie para que no
@@ -476,10 +476,12 @@ body.locked .shell{display:none}
 body:has(#page-firmas:not(.hidden)) main,
 body:has(#page-stock:not(.hidden)) main,
 body:has(#page-reingresos:not(.hidden)) main,
+body:has(#page-liquidacion:not(.hidden)) main,
 body:has(#page-eventos:not(.hidden)) main{max-width:none;margin:0;padding:0}
 body:has(#page-firmas:not(.hidden)) .foot,
 body:has(#page-stock:not(.hidden)) .foot,
 body:has(#page-reingresos:not(.hidden)) .foot,
+body:has(#page-liquidacion:not(.hidden)) .foot,
 body:has(#page-eventos:not(.hidden)) .foot{display:none}
 
 /* ---- Login: link de recuperación ---- */

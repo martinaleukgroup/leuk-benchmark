@@ -2723,10 +2723,10 @@
       "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
     { t: "Eventos con clientes", ic: "handshake", pages: ["eventos-clientes"], pasos: [
       "Subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Reemplaza sólo el período que trae el archivo, así que lo podés volver a subir cada mes.",
-      "Creá el evento con <b>＋ Nuevo evento</b>: fecha, formato y, si querés, la <b>acción</b> de donde sale la inversión (o cargala en US$).",
-      "Sumá a los <b>distribuidores invitados</b> buscándolos por nombre, razón social o CUIT (o con <b>Pegar lista</b>) y marcá quién se <b>inscribió</b> y quién <b>asistió</b>.",
-      "Elegí la ventana (<b>30, 60, 90 o 180 días</b>): ves cuánto compró cada cliente antes y después, comparado con los que no vinieron y con el resto de los clientes.",
-      "Descargá todo en <b>Excel</b> (resumen, clientes, familias y evolución) o en <b>PDF</b> desde la impresión del navegador."] },
+      "Creá el evento con <b>＋ Nuevo evento</b>: fecha, formato, <b>profesionales inscriptos y que fueron</b>, y la inversión (en US$ o desde la <b>acción</b> vinculada).",
+      "Elegí el <b>distribuidor</b> con el que se hizo el evento (buscalo por nombre, razón social o CUIT).",
+      "Arriba ves si <b>sirvió</b>: cuánto compró el distribuidor después contra lo que <b>esperábamos</b> sin el evento (lo que compraba antes, ajustado por cómo se movió el resto de los clientes). La diferencia son las <b>compras extra</b>.",
+      "Elegí la ventana (<b>30, 60, 90 o 180 días</b>) y descargá todo en <b>Excel</b> o en <b>PDF</b>."] },
     { t: "Usuarios", ic: "group", pages: ["usuarios"], pasos: [
       "<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
       "<b>Cambiá el rol</b> cuando cambie de equipo: se aplica la próxima vez que entre.",

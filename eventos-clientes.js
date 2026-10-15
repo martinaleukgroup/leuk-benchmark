@@ -1,19 +1,23 @@
 /* ============================================================================
    EVENTOS CON CLIENTES — sección de Acciones.
-   Qué distribuidores invitamos a cada evento, quiénes vinieron y cuánto
-   compraron (USD) antes y después, comparado con los que no vinieron y con el
-   resto de los clientes.
+   El evento se hace JUNTO a un distribuidor (nuestro cliente); los invitados son
+   profesionales del rubro (clientes del distribuidor). La pregunta es: ¿sirvió?
+     · Profesionales: cuántos se inscribieron y cuántos fueron (se cargan los números).
+     · Ventas: cuánto nos compró el distribuidor después del evento, contra lo que
+       ESPERÁBAMOS que compre sin el evento (lo que compraba antes, ajustado por cómo
+       se movió el resto de los clientes en las mismas fechas). La diferencia son las
+       "compras extra", y sobre eso se calcula el retorno de la inversión.
 
    Dos pantallas:
-     · TABLERO → todos los eventos: métricas del año, gráficos, tabla de eventos
-                 y ranking de clientes. Descarga a Excel y PDF.
-     · EVENTO  → datos del evento, sus clientes (inscripto / asistió / personas)
-                 y el análisis de compras en la ventana elegida (30/60/90/180 días).
+     · TABLERO → todos los eventos: métricas, gráficos, tabla y resumen por distribuidor.
+     · EVENTO  → datos, profesionales, distribuidor(es), veredicto y gráficos.
+   Descarga a Excel y PDF en las dos.
 
    Las ventas salen del "Reporte de ventas" del sistema (CSV por línea de
    factura). Se sube desde acá: se agrupa en el navegador por cliente y día y se
    guarda en Supabase (ventas_diarias). Nunca queda en un archivo del repo.
-   SQL: supabase/sql/2026-10-15-eventos-clientes.sql. Quién entra: Admin y Líder.
+   SQL: supabase/sql/2026-10-15-eventos-clientes.sql y …-profesionales.sql.
+   Quién entra: Admin y Líder.
    ========================================================================== */
 (function () {
   "use strict";
@@ -45,23 +49,23 @@
     return a >= 1e6 ? `${s}${(a / 1e6).toFixed(1).replace(".", ",")} M` : a >= 1e3 ? `${s}${Math.round(a / 1e3)} k` : `${s}${Math.round(a)}`; };
   const pct = x => x == null || !isFinite(x) ? "—" : `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(Math.round(x * 100))} %`;
   const pctN = x => x == null || !isFinite(x) ? "—" : `${Math.round(x * 100)} %`;
-  const veces = x => x == null || !isFinite(x) ? "—" : `${x < 0 ? "−" : ""}${Math.abs(x).toFixed(1).replace(".", ",")}×`;
+  const veces = x => x == null || !isFinite(x) ? "—" : `${x < 0 ? "−" : ""}US$ ${Math.abs(x).toFixed(1).replace(".", ",")}`;
   const signo = v => v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${usd(Math.abs(v))}`;
   const plural = (n, s, p) => `${n} ${n === 1 ? s : (p || s + "s")}`;
 
   /* ---- Vocabulario ---- */
-  const FORMATOS = ["Showroom", "Capacitación", "Lanzamiento", "Visita a fábrica", "After office", "Feria / exposición",
-                    "Evento del distribuidor", "Otro"];
+  const FORMATOS = ["Showroom", "Capacitación", "Lanzamiento", "After office", "Charla / workshop", "Visita a obra",
+                    "Feria / exposición", "Otro"];
   const VENTANAS = [30, 60, 90, 180];
 
   /* ---- Estado ---- */
   let EVS = [];             // eventos_clientes
-  let INV = {};             // evento_id -> [clientes del evento]
+  let INV = {};             // evento_id -> [distribuidores del evento] (tabla eventos_clientes_inv)
   let CLI = new Map();      // cuit -> ventas_clientes
   let ACCS = [];            // acciones (para vincular inversión)
   let RANGO = null;         // {desde, hasta, clientes} de las ventas cargadas
   const VENTAS = new Map(); // cuit -> [{fecha, usd, facturas, familias}] ordenado por fecha
-  const BASE = {};          // caché de ventas_base
+  const BASE = {};          // caché de ventas_base (resto de los clientes)
   const TCS = {};           // fecha -> tipo de cambio promedio cercano
   let CARGADO = false, ERROR = "";
   let ABIERTO = null;       // id de evento | "nuevo" | null
@@ -69,8 +73,7 @@
   let VENTANA = 90;
   let ANIO = String(new Date().getFullYear());
   let FORMATO = "";
-  let CFILTRO = "todos";    // filtro de la tabla de clientes del evento
-  let BUSCA_CLI = "";       // buscador para sumar clientes
+  let BUSCA_CLI = "";       // buscador para sumar el distribuidor
   let IMPORTANDO = false;
   let NOTA = "", NOTA_ERR = false, NOTA_T = null;
 
@@ -111,7 +114,7 @@
         todo("eventos_clientes_inv?select=*&order=creado.asc"),
         todo("ventas_clientes?select=*&order=cuit"),
         rpc("ventas_rango").catch(() => []),
-        todo("acciones?select=id,titulo,tipo,estado,moneda,inversion_real,inversion_estimada,fecha_inicio&order=fecha_inicio.desc.nullslast").catch(() => []),
+        todo("acciones?select=id,titulo,tipo,estado,moneda,inversion_real,inversion_estimada,fecha_inicio,distribuidor&order=fecha_inicio.desc.nullslast").catch(() => []),
       ]);
       EVS = evs; INV = {};
       inv.forEach(x => { (INV[x.evento_id] = INV[x.evento_id] || []).push(x); });
@@ -160,6 +163,7 @@
 
   /* ---- Inversión del evento en US$ ---- */
   const accionDe = ev => ev && ev.accion_id ? ACCS.find(a => a.id === ev.accion_id) : null;
+  const necesitaTC = ev => ev.fecha && num(ev.inversion_usd) == null && accionDe(ev) && (accionDe(ev).moneda || "ARS") !== "USD";
   function inversion(ev) {
     if (num(ev.inversion_usd) != null) return { usd: num(ev.inversion_usd), origen: "cargada" };
     const a = accionDe(ev); if (!a) return { usd: null, origen: "" };
@@ -174,51 +178,70 @@
   /* ---- Cálculo de un evento ----------------------------------------------
      Ventana de N días: ANTES = los N días previos al evento; DESPUÉS = el día del
      evento y los N-1 siguientes. Si todavía no pasaron N días (o las ventas
-     cargadas no llegan), se acortan LAS DOS ventanas a lo que haya, para comparar
-     lo mismo con lo mismo. */
+     cargadas no llegan), se acortan LAS DOS ventanas a lo que haya.
+
+     ESPERADO = lo que el distribuidor compró ANTES × (1 + crecimiento del resto de
+     los clientes entre esas mismas dos ventanas). Así no se le atribuye al evento
+     una suba (o baja) que tuvo todo el mercado. COMPRAS EXTRA = DESPUÉS − ESPERADO.
+     Además se muestra cómo se movió el mismo distribuidor en esas fechas el año
+     anterior (estacionalidad propia), como contexto. */
   function calcular(ev, N) {
     const lista = INV[ev.id] || [];
-    const out = { ev, lista, filas: [], dias: 0, falta: "" };
-    if (!ev.fecha) { out.falta = "Cargá la fecha del evento para medir las compras."; return out; }
-    if (!RANGO) { out.falta = "Todavía no hay ventas cargadas. Subí el reporte de ventas desde el tablero (⋯ Más → Actualizar ventas)."; return out; }
-    const disp = difDias(ev.fecha, RANGO.hasta) + 1;
-    out.dias = Math.min(N, disp);
-    if (out.dias <= 0) { out.falta = `Las ventas cargadas llegan hasta el ${fechaLarga(RANGO.hasta)}: todavía no hay compras posteriores al evento.`; return out; }
+    const out = { ev, lista, dists: [], dias: 0, falta: "",
+                  inscr: num(ev.prof_inscriptos), asis: num(ev.prof_asistentes) };
+    out.asistencia = out.inscr && out.asis != null ? out.asis / out.inscr : null;
+    out.inv = inversion(ev);
+    out.costoProf = out.inv.usd && out.asis ? out.inv.usd / out.asis : null;
+    out.nombres = lista.map(x => x.nombre || (CLI.get(x.cuit) || {}).nombre || x.razon_social || "").filter(Boolean).join(" + ");
+    if (!ev.fecha) { out.falta = "Cargá la fecha del evento para medir las compras."; return veredicto(out); }
+    if (!lista.length) { out.falta = "Sumá el distribuidor con el que se hizo el evento para medir sus compras."; return veredicto(out); }
+    if (!RANGO) { out.falta = "Todavía no hay ventas cargadas. Subí el reporte de ventas desde el tablero (⋯ Más → Actualizar ventas)."; return veredicto(out); }
+    out.dias = Math.min(N, difDias(ev.fecha, RANGO.hasta) + 1);
+    if (out.dias <= 0) { out.falta = `Las ventas cargadas llegan hasta el ${fechaLarga(RANGO.hasta)}: todavía no hay compras posteriores al evento.`; return veredicto(out); }
     out.antes = [sumarDias(ev.fecha, -out.dias), sumarDias(ev.fecha, -1)];
     out.despues = [ev.fecha, sumarDias(ev.fecha, out.dias - 1)];
-    out.famAsist = {};
-    out.filas = lista.map(x => {
+    const ly = r => r.map(f => sumarDias(f, -364));           // mismo día de la semana, un año antes
+    out.base = BASE[claveBase(ev, out)] || null;
+    const g = out.base && out.base.crec != null ? out.base.crec : null;
+    out.fam = {}; out.famAntes = {};
+    out.dists = lista.map(x => {
       const c = CLI.get(x.cuit) || {};
-      const a = x.cuit ? sumaCliente(x.cuit, out.antes[0], out.antes[1]) : { usd: 0, facturas: 0 };
-      const d = x.cuit ? sumaCliente(x.cuit, out.despues[0], out.despues[1], x.asistio ? out.famAsist : null) : { usd: 0, facturas: 0 };
-      const anio = x.cuit ? sumaCliente(x.cuit, sumarDias(ev.fecha, -365), sumarDias(ev.fecha, -1)).usd : 0;
-      let tipo = "";
-      if (d.usd > 0) {
-        if (!c.primera_compra || c.primera_compra >= ev.fecha) tipo = "nuevo";
-        else if (anio <= 0) tipo = "reactivado";
-      }
+      const a = sumaCliente(x.cuit, out.antes[0], out.antes[1], out.famAntes);
+      const d = sumaCliente(x.cuit, out.despues[0], out.despues[1], out.fam);
+      const al = sumaCliente(x.cuit, ...ly(out.antes)).usd, dl = sumaCliente(x.cuit, ...ly(out.despues)).usd;
+      const esperado = g != null ? a.usd * (1 + g) : a.usd;
       return { x, c, nombre: x.nombre || c.nombre || x.razon_social || c.razon_social || "(sin nombre)",
                razon: x.razon_social || c.razon_social || "", vendedor: c.vendedor || "",
-               antes: a.usd, despues: d.usd, dif: d.usd - a.usd, facturas: d.facturas, tipo };
+               antes: a.usd, despues: d.usd, facturas: d.facturas, esperado, extra: d.usd - esperado,
+               crec: a.usd > 0 ? (d.usd - a.usd) / a.usd : null, antesLy: al, despuesLy: dl };
     });
-    const grupo = f => {
-      const fs = out.filas.filter(f);
-      const A = fs.reduce((s, r) => s + r.antes, 0), D = fs.reduce((s, r) => s + r.despues, 0);
-      const fact = fs.reduce((s, r) => s + r.facturas, 0);
-      return { n: fs.length, antes: A, despues: D, dif: D - A, crec: A > 0 ? (D - A) / A : null,
-               compraron: fs.filter(r => r.despues > 0).length, facturas: fact };
-    };
-    out.asist = grupo(r => r.x.asistio);
-    out.noAsist = grupo(r => !r.x.asistio);
-    out.inscriptos = lista.filter(x => x.inscripto).length;
-    out.personas = lista.filter(x => x.asistio).reduce((s, x) => s + (num(x.personas) || 1), 0);
-    out.nuevos = out.filas.filter(r => r.x.asistio && r.tipo).length;
-    out.inv = inversion(ev);
-    out.retorno = out.inv.usd ? out.asist.dif / out.inv.usd : null;
-    out.base = BASE[claveBase(ev, out)] || null;
-    return out;
+    const S = k => out.dists.reduce((s, r) => s + r[k], 0);
+    Object.assign(out, { A: S("antes"), P: S("despues"), E: S("esperado"), X: S("extra"), facturas: S("facturas"),
+                         Aly: S("antesLy"), Ply: S("despuesLy") });
+    out.crec = out.A > 0 ? (out.P - out.A) / out.A : null;
+    out.crecLy = out.Aly > 0 ? (out.Ply - out.Aly) / out.Aly : null;
+    out.puntos = out.crec != null && g != null ? out.crec - g : null;
+    out.retorno = out.inv.usd ? out.X / out.inv.usd : null;
+    out.extraProf = out.asis ? out.X / out.asis : null;
+    return veredicto(out);
   }
-  const claveBase = (ev, k) => `${ev.id}|${k.antes && k.antes[0]}|${k.despues && k.despues[1]}|${(INV[ev.id] || []).length}`;
+  function veredicto(k) {
+    if (!k.antes) k.ver = { c: "", t: "Todavía no se puede medir", txt: k.falta };
+    else if (!k.base) k.ver = { c: "", t: "Calculando…", txt: "Trayendo cómo se movió el resto de los clientes en las mismas fechas." };
+    else if (k.X > 0 && (k.retorno == null || k.retorno >= 1)) k.ver = { c: "ok", t: "Sirvió" };
+    else if (k.X > 0) k.ver = { c: "warn", t: "Sirvió, pero no cubrió la inversión" };
+    else k.ver = { c: "no", t: "No se ve efecto en las compras" };
+    if (k.antes && k.base) {
+      const quien = k.nombres || "El distribuidor";
+      k.ver.txt = `${esc(quien)} nos compró <b>${usd(k.P)}</b> en los ${k.dias} días posteriores al evento. ` +
+        `Antes compraba ${usd(k.A)} y el resto de los clientes ${k.base.crec >= 0 ? "creció" : "bajó"} ${pct(k.base.crec).replace(/^[+−]/, "")}, ` +
+        `así que sin el evento esperábamos unos <b>${usd(k.E)}</b>: compró <b>${usd(Math.abs(k.X))} ${k.X >= 0 ? "más" : "menos"}</b> de lo esperado.` +
+        (k.retorno == null ? " Cargá la inversión para ver el retorno." : k.X > 0 ? ` Cada US$ 1 invertido trajo <b>${veces(k.retorno)}</b> de compras extra.` : ` La inversión fue de ${usd(k.inv.usd)}.`) +
+        (k.dias < 30 ? ` <i>Ojo: sólo hay ${k.dias} días de datos después del evento.</i>` : "");
+    }
+    return k;
+  }
+  const claveBase = (ev, k) => `${ev.id}|${k.antes && k.antes[0]}|${k.despues && k.despues[1]}|${(INV[ev.id] || []).map(x => x.cuit).join(",")}`;
   async function traerBase(ev, k) {
     if (!k.antes) return;
     const key = claveBase(ev, k); if (BASE[key]) return;
@@ -229,31 +252,28 @@
         rpc("ventas_base", { p_desde: k.despues[0], p_hasta: k.despues[1], p_excluir: excl }),
       ]);
       const A = Number(a[0] && a[0].usd) || 0, D = Number(d[0] && d[0].usd) || 0;
-      BASE[key] = { antes: A, despues: D, crec: A > 0 ? (D - A) / A : null, clientes: (d[0] && d[0].clientes) || 0 };
-    } catch (e) { /* sin base: el resto del análisis igual se muestra */ }
+      BASE[key] = { antes: A, despues: D, crec: A > 0 ? (D - A) / A : null };
+    } catch (e) { /* sin base: el veredicto queda en "calculando" y se reintenta al volver */ }
   }
 
-  // Promedio mensual por cliente, de 6 meses antes a 6 después del mes del evento.
+  // Compras mensuales del/los distribuidor(es): 6 meses antes y 6 después del mes del evento,
+  // y los mismos meses del año anterior.
   function evolucion(k) {
-    const f0 = aFecha(k.ev.fecha);
-    const meses = [];
-    for (let i = -6; i <= 6; i++) { const d = new Date(f0.getFullYear(), f0.getMonth() + i, 1); meses.push({ i, d }); }
-    const serie = filtro => {
-      const fs = k.filas.filter(filtro); if (!fs.length) return null;
-      return meses.map(({ d }) => {
-        const desde = isoDe(d), hasta = isoDe(new Date(d.getFullYear(), d.getMonth() + 1, 0));
-        if (RANGO && desde > RANGO.hasta) return null;
-        return fs.reduce((s, r) => s + (r.x.cuit ? sumaCliente(r.x.cuit, desde, hasta).usd : 0), 0) / fs.length;
-      });
+    const f0 = aFecha(k.ev.fecha), meses = [];
+    for (let i = -6; i <= 6; i++) meses.push({ i, d: new Date(f0.getFullYear(), f0.getMonth() + i, 1) });
+    const total = (d, dy) => {
+      const desde = isoDe(new Date(d.getFullYear() - dy, d.getMonth(), 1)), hasta = isoDe(new Date(d.getFullYear() - dy, d.getMonth() + 1, 0));
+      if (RANGO && desde > RANGO.hasta) return null;
+      return k.dists.reduce((s, r) => s + sumaCliente(r.x.cuit, desde, hasta).usd, 0);
     };
     return {
       labels: meses.map(({ i, d }) => i === 0 ? "evento" : `${MES_CORTO[d.getMonth()]}${d.getMonth() === 0 ? " " + String(d.getFullYear()).slice(2) : ""}`),
-      asist: serie(r => r.x.asistio), noAsist: serie(r => !r.x.asistio),
+      este: meses.map(({ d }) => total(d, 0)), anterior: meses.map(({ d }) => total(d, 1)),
     };
   }
 
   /* ---- Gráficos (SVG propio, mismo criterio que Resultados) ---- */
-  const COL = { main: "var(--olive)", soft: "var(--olive-soft)", gris: "#b9b8ad", warn: "var(--warn)" };
+  const COL = { main: "var(--olive)", soft: "var(--olive-soft)", gris: "#b9b8ad", warn: "var(--warn)", neg: "#c98f84" };
   const corta = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
   function leyenda(items) {
     return `<div class="ec-ley">${items.map(([t, c, dash]) => `<span><i style="background:${c}${dash ? ";height:2px;border-top:2px dashed " + c + ";background:none" : ""}"></i>${esc(t)}</span>`).join("")}</div>`;
@@ -261,7 +281,7 @@
   // Barras horizontales: [{l, v, g}] (g = barra fantasma detrás, p. ej. "antes").
   function barrasH(items, fmt) {
     if (!items.length) return `<div class="ec-graf-vacio">Sin datos</div>`;
-    const W = 560, L = 170, R = 70, h = 26, H = items.length * h + 6;
+    const W = 560, L = 170, R = 96, h = 26, H = items.length * h + 6;
     const max = Math.max(1, ...items.map(x => Math.max(x.v, x.g || 0)));
     const ancho = v => Math.max(0, (W - L - R) * v / max);
     return `<svg viewBox="0 0 ${W} ${H}" class="ec-svg" role="img">${items.map((x, i) => {
@@ -275,13 +295,13 @@
   // Barras que salen de un eje central (positivo a la derecha, negativo a la izquierda): [{l, v, c}].
   function divergente(items, fmt) {
     if (!items.length) return `<div class="ec-graf-vacio">Sin datos</div>`;
-    const W = 560, L = 160, R = 16, h = 34, H = items.length * h + 8;
+    const W = 560, L = 190, R = 16, h = 34, H = items.length * h + 8;
     const max = Math.max(0.01, ...items.map(x => Math.abs(x.v)));
     const mitad = (W - L - R) / 2, cx = L + mitad, esc2 = v => (mitad - 54) * Math.abs(v) / max;
     return `<svg viewBox="0 0 ${W} ${H}" class="ec-svg" role="img">
       <line x1="${cx}" x2="${cx}" y1="0" y2="${H}" class="ec-base"/>
       ${items.map((x, i) => { const y = i * h + 6, w = esc2(x.v), x0 = x.v < 0 ? cx - w : cx;
-        return `<text x="${L - 8}" y="${y + 15}" text-anchor="end" class="ec-t">${esc(x.l)}</text>
+        return `<text x="${L - 8}" y="${y + 15}" text-anchor="end" class="ec-t">${esc(corta(x.l, 30))}</text>
           <rect x="${x0}" y="${y + 4}" width="${Math.max(1, w)}" height="14" rx="3" style="fill:${x.c}"/>
           <text x="${x.v < 0 ? x0 - 6 : x0 + w + 6}" y="${y + 15}" text-anchor="${x.v < 0 ? "end" : "start"}" class="ec-t ec-v">${esc(fmt(x.v))}</text>`; }).join("")}
     </svg>`;
@@ -304,7 +324,7 @@
         const x0 = L + 4 + i * gw + (gw - bw * series.length) / 2;
         return series.map((s, j) => { const v = s.vals[i]; if (v == null) return "";
           const y1 = Math.min(y(v), y(0)), hh = Math.max(1, Math.abs(y(v) - y(0)));
-          return `<rect x="${x0 + j * bw}" y="${y1}" width="${bw - 3}" height="${hh}" rx="3" style="fill:${s.c}"><title>${esc(c)}: ${esc(fmt(v))}</title></rect>`; }).join("") +
+          return `<rect x="${x0 + j * bw}" y="${y1}" width="${bw - 3}" height="${hh}" rx="3" style="fill:${v < 0 && s.cNeg ? s.cNeg : s.c}"><title>${esc(c)}: ${esc(fmt(v))}</title></rect>`; }).join("") +
           `<text x="${L + 4 + i * gw + gw / 2}" y="${H - B + 16}" text-anchor="middle" class="ec-t ec-eje">${esc(corta(c, Math.max(6, Math.floor(gw / 6.5))))}</text>`;
       }).join("")}</svg>`;
   }
@@ -313,10 +333,10 @@
     const vals = series.flatMap(s => s.vals || []).filter(v => v != null);
     if (!vals.length) return `<div class="ec-graf-vacio">Sin datos</div>`;
     const W = 560, H = 200, L = 56, B = 30, T = 12;
-    const max = Math.max(1, ...vals);
+    const max = Math.max(1, ...vals), min = Math.min(0, ...vals);
     const x = i => L + 6 + (W - L - 16) * i / Math.max(1, labels.length - 1);
-    const y = v => T + (H - T - B) * (1 - v / max);
-    const ticks = [0, 1, 2, 3].map(i => max * i / 3);
+    const y = v => T + (H - T - B) * (max - v) / ((max - min) || 1);
+    const ticks = [0, 1, 2, 3].map(i => min + (max - min) * i / 3);
     return `<svg viewBox="0 0 ${W} ${H}" class="ec-svg" role="img">
       ${ticks.map(t => `<line x1="${L}" x2="${W - 4}" y1="${y(t)}" y2="${y(t)}" class="ec-gl"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end" class="ec-t ec-eje">${esc(fmt(t))}</text>`).join("")}
       ${marca != null ? `<line x1="${x(marca)}" x2="${x(marca)}" y1="${T - 4}" y2="${H - B}" class="ec-marca"/>` : ""}
@@ -333,6 +353,7 @@
   const tarjeta = (tit, sub, cuerpo) => `<section class="ec-card"><h3>${esc(tit)}</h3>${sub ? `<p class="ec-card-sub">${sub}</p>` : ""}${cuerpo}</section>`;
   const kpi = (v, l, sub, cls) => `<div class="mh-kpi"><b class="${cls || ""}">${v}</b><span>${l}</span>${sub ? `<small>${sub}</small>` : ""}</div>`;
   const tono = x => x == null ? "" : x > 0 ? "ok" : x < 0 ? "no" : "";
+  const chipVer = k => `<span class="ec-ver ${k.ver.c}">${esc(k.ver.t)}</span>`;
 
   /* ======================= PINTAR ======================= */
   function pintar() {
@@ -351,7 +372,7 @@
   const ventanaChips = () => `<div class="ec-ventana" role="group" aria-label="Ventana de medición">
     <span>Compras a</span>${VENTANAS.map(n => `<button class="${VENTANA === n ? "on" : ""}" data-ec="ventana" data-n="${n}">${n} días</button>`).join("")}</div>`;
   const lineaVentas = () => RANGO
-    ? `Ventas cargadas del ${fechaLarga(RANGO.desde)} al <b>${fechaLarga(RANGO.hasta)}</b> · ${plural(RANGO.clientes || CLI.size, "cliente")}`
+    ? `Ventas cargadas del ${fechaLarga(RANGO.desde)} al <b>${fechaLarga(RANGO.hasta)}</b>`
     : `<b class="ec-falta">Sin ventas cargadas</b>`;
 
   /* ---------- TABLERO ---------- */
@@ -363,19 +384,18 @@
     const evs = delFiltro();
     const ks = evs.map(e => calcular(e, VENTANA));
     // En los gráficos los eventos van en orden cronológico; en la tabla, el más nuevo arriba.
-    const conDatos = ks.filter(k => k.antes).sort((a, b) => a.ev.fecha.localeCompare(b.ev.fecha));
-    const S = f => ks.reduce((s, k) => s + (f(k) || 0), 0);
-    const inv = S(k => k.lista.length), asis = S(k => k.asist.n);
-    const comp = S(k => k.asist.compraron), D = S(k => k.asist.despues), A = S(k => k.asist.antes);
-    const invUsd = conDatos.reduce((s, k) => s + (k.inv.usd || 0), 0);
-    const incr = conDatos.reduce((s, k) => s + k.asist.dif, 0);
-    const nA = S(k => k.noAsist.antes), nD = S(k => k.noAsist.despues);
+    const med = ks.filter(k => k.antes && k.base).sort((a, b) => a.ev.fecha.localeCompare(b.ev.fecha));
+    const S = (arr, f) => arr.reduce((s, k) => s + (f(k) || 0), 0);
+    const inscr = S(ks, k => k.inscr), asis = S(ks, k => k.asis);
+    const X = S(med, k => k.X), invMed = S(med, k => k.inv.usd), invTot = S(ks, k => k.inv.usd);
+    const sirvieron = med.filter(k => k.X > 0).length;
     const formatos = [...new Set([...FORMATOS, ...EVS.map(e => e.formato).filter(Boolean)])];
+    const porDist = resumenDistribuidores(ks);
 
     w.innerHTML = `
       <header class="mh">
         <div class="mh-top">
-          <div class="mh-tit"><h1>Eventos con clientes</h1><p class="mh-sub"><span>Qué distribuidores vinieron y cuánto compraron después</span><span>${lineaVentas()}</span></p></div>
+          <div class="mh-tit"><h1>Eventos con clientes</h1><p class="mh-sub"><span>Eventos con distribuidores para profesionales: ¿cuánto movieron las compras?</span><span>${lineaVentas()}</span></p></div>
           <div class="mh-acc ec-no-print">
             <details class="mh-mas"><summary class="btn-ghost">⋯ Más</summary><div class="mh-mas-menu">
               <button data-ec="importar">⬆ Actualizar ventas (CSV del sistema)</button>
@@ -388,13 +408,12 @@
         </div>
         <input type="file" class="ec-csv" accept=".csv,text/csv" hidden>
         ${evs.length ? `<div class="mh-kpis">
-          ${kpi(evs.length, plural(evs.length, "evento").replace(/^\d+ /, ""), ANIO ? `en ${ANIO}` : "en total")}
-          ${kpi(`${asis}<small>/${inv}</small>`, "clientes asistieron", inv ? `${pctN(asis / inv)} de los invitados` : "")}
-          ${kpi(comp, "compraron después", asis ? `${pctN(comp / asis)} de los que vinieron` : "")}
-          ${kpi(usd(D), `compras a ${VENTANA} días`, "de los que vinieron")}
-          ${kpi(signo(incr), "incremental", A ? `${pct((D - A) / A)} vs. antes · no vinieron ${nA ? pct((nD - nA) / nA) : "—"}` : "", tono(incr))}
-          ${kpi(invUsd ? veces(incr / invUsd) : "—", "retorno", invUsd ? `sobre ${usd(invUsd)} invertidos` : "cargá la inversión", tono(incr))}
-          ${kpi(S(k => k.nuevos), "nuevos o reactivados", "clientes que volvieron a comprar")}
+          ${kpi(evs.length, evs.length === 1 ? "evento" : "eventos", med.length ? `${sirvieron} de ${med.length} con compras extra` : (ANIO ? `en ${ANIO}` : "en total"))}
+          ${kpi(`${asis}<small>/${inscr}</small>`, "profesionales asistieron", inscr ? `${pctN(asis / inscr)} de los inscriptos` : "cargá los inscriptos")}
+          ${kpi(signo(X), "compras extra", `a ${VENTANA} días, sobre lo esperado`, tono(X))}
+          ${kpi(invMed && X > 0 ? veces(X / invMed) : "—", "por cada US$ 1 invertido", invTot ? `${usd(invTot)} invertidos` : "cargá la inversión", tono(X))}
+          ${kpi(invTot && asis ? usd(invTot / asis) : "—", "costo por profesional", "inversión ÷ asistentes")}
+          ${kpi(asis && med.length ? signo(X / S(med, k => k.asis)) : "—", "compras extra por profesional", "que asistió")}
         </div>` : ""}
       </header>
       <div class="mh-bar ec-bar ec-no-print">
@@ -404,56 +423,60 @@
         <span class="ec-nota" role="status"></span>
       </div>
       ${!RANGO ? `<div class="res-intro">Para medir las compras, subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Se puede volver a subir cuando quieras: reemplaza el período que trae el archivo.</div>` : ""}
-      ${!EVS.length ? `<div class="res-intro">Todavía no hay eventos. Creá el primero con <b>＋ Nuevo evento</b>, sumale los clientes invitados y marcá quiénes vinieron.</div>` : ""}
+      ${!EVS.length ? `<div class="res-intro">Todavía no hay eventos. Creá el primero con <b>＋ Nuevo evento</b>: cargá cuántos profesionales se inscribieron y cuántos fueron, y elegí el <b>distribuidor</b> con el que lo hiciste.</div>` : ""}
       ${evs.length ? `<div class="ec-grid">
-        ${tarjeta("Embudo", `De invitados a compradores · ${VENTANA} días`, barrasH([
-          { l: "Invitados", v: inv, c: COL.gris }, { l: "Inscriptos", v: S(k => k.inscriptos), c: COL.soft },
-          { l: "Asistieron", v: asis, c: COL.soft }, { l: "Compraron después", v: comp }], v => String(Math.round(v))))}
-        ${tarjeta("Compras antes y después, por evento", `US$ · ${VENTANA} días antes vs. ${VENTANA} días después, clientes que vinieron`,
-          leyenda([["Antes", COL.gris], ["Después", COL.main]]) +
-          columnas(conDatos.map(k => k.ev.titulo || "Sin nombre"), [{ c: COL.gris, vals: conDatos.map(k => k.asist.antes) }, { c: COL.main, vals: conDatos.map(k => k.asist.despues) }], usd))}
-        ${tarjeta("Incremental vs. inversión", "US$ por evento",
-          leyenda([["Inversión", COL.gris], ["Incremental", COL.main]]) +
-          columnas(conDatos.map(k => k.ev.titulo || "Sin nombre"), [{ c: COL.gris, vals: conDatos.map(k => k.inv.usd) }, { c: COL.main, vals: conDatos.map(k => k.asist.dif) }], usd))}
-        ${tarjeta("Clientes que más compraron después de un evento", `US$ a ${VENTANA} días · suma de todos los eventos a los que fueron`,
-          barrasH(ranking(ks).slice(0, 10).map(r => ({ l: r.nombre, v: r.despues, g: r.antes })), usd) + leyenda([["Antes (fondo)", COL.gris], ["Después", COL.main]]))}
+        ${tarjeta("Compras extra vs. inversión", `US$ por evento · ${VENTANA} días`,
+          leyenda([["Inversión", COL.gris], ["Compras extra", COL.main]]) +
+          columnas(med.map(k => k.ev.titulo || "Sin nombre"), [{ c: COL.gris, vals: med.map(k => k.inv.usd) }, { c: COL.main, cNeg: COL.neg, vals: med.map(k => k.X) }], usd))}
+        ${tarjeta("Profesionales por evento", "Asistieron (y de fondo, inscriptos)",
+          barrasH(ks.filter(k => k.inscr || k.asis).slice().reverse().map(k => ({ l: k.ev.titulo || "Sin nombre", v: k.asis || 0, g: k.inscr || 0 })), v => String(Math.round(v))) +
+          leyenda([["Inscriptos (fondo)", COL.gris], ["Asistieron", COL.main]]))}
+        ${tarjeta("¿Creció más que el resto?", `Crecimiento del distribuidor vs. resto de los clientes · ${VENTANA} días`,
+          leyenda([["Resto de los clientes", COL.gris], ["Distribuidor del evento", COL.main]]) +
+          columnas(med.map(k => k.ev.titulo || "Sin nombre"), [{ c: COL.gris, vals: med.map(k => k.base.crec * 100) }, { c: COL.main, vals: med.map(k => k.crec == null ? null : k.crec * 100) }],
+            v => `${v > 0 ? "+" : ""}${Math.round(v)} %`, v => `${Math.round(v)} %`))}
+        ${tarjeta("Compras extra por distribuidor", `Suma de sus eventos · US$ a ${VENTANA} días`,
+          divergente(porDist.filter(d => d.medidos).slice(0, 10).map(d => ({ l: d.nombre, v: d.X, c: d.X >= 0 ? COL.main : COL.neg })), signo))}
       </div>` : ""}
       ${evs.length ? `<section class="ec-card ec-tabla-card"><h3>Eventos</h3>
         <div class="ec-tabla-wrap"><table class="ec-tabla">
-          <thead><tr><th>Evento</th><th>Fecha</th><th class="n">Invitados</th><th class="n">Asistieron</th><th class="n">Compraron</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Incremental</th><th class="n">Retorno</th></tr></thead>
+          <thead><tr><th>Evento</th><th>Distribuidor</th><th class="n">Profesionales</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Esperado</th><th class="n">Compras extra</th><th class="n">Por US$ 1</th><th>¿Sirvió?</th></tr></thead>
           <tbody>${ks.map(k => `<tr data-abrir="${k.ev.id}" tabindex="0">
-            <td><b>${esc(k.ev.titulo) || "<i>Sin nombre</i>"}</b>${k.ev.formato ? `<small>${esc(k.ev.formato)}${k.ev.lugar ? " · " + esc(k.ev.lugar) : ""}</small>` : ""}</td>
-            <td>${esc(fechaLarga(k.ev.fecha)) || "—"}</td>
-            <td class="n">${k.lista.length}</td>
-            <td class="n">${k.asist.n}${k.lista.length ? ` <small>${pctN(k.asist.n / k.lista.length)}</small>` : ""}</td>
-            <td class="n">${k.antes ? k.asist.compraron : "—"}</td>
-            <td class="n">${k.antes ? usd(k.asist.antes) : "—"}</td>
-            <td class="n">${k.antes ? usd(k.asist.despues) : "—"}${k.antes && k.dias < VENTANA ? ` <small title="Todavía no pasaron ${VENTANA} días">${k.dias} d</small>` : ""}</td>
-            <td class="n ${k.antes ? tono(k.asist.dif) : ""}">${k.antes ? signo(k.asist.dif) : "—"}</td>
-            <td class="n">${k.retorno != null ? veces(k.retorno) : "—"}</td></tr>`).join("")}</tbody>
+            <td><b>${esc(k.ev.titulo) || "<i>Sin nombre</i>"}</b><small>${esc([fechaLarga(k.ev.fecha), k.ev.formato].filter(Boolean).join(" · "))}</small></td>
+            <td>${esc(k.nombres) || "—"}</td>
+            <td class="n">${k.asis != null ? k.asis : "—"}${k.inscr ? ` <small>de ${k.inscr}</small>` : ""}</td>
+            <td class="n">${k.antes ? usd(k.A) : "—"}</td>
+            <td class="n">${k.antes ? usd(k.P) : "—"}${k.antes && k.dias < VENTANA ? ` <small title="Todavía no pasaron ${VENTANA} días">${k.dias} d</small>` : ""}</td>
+            <td class="n">${k.antes && k.base ? usd(k.E) : "—"}</td>
+            <td class="n ${k.antes && k.base ? tono(k.X) : ""}">${k.antes && k.base ? signo(k.X) : "—"}</td>
+            <td class="n">${k.base && k.retorno != null && k.X > 0 ? veces(k.retorno) : "—"}</td>
+            <td>${chipVer(k)}</td></tr>`).join("")}</tbody>
         </table></div></section>` : ""}
-      ${evs.length ? (() => { const rk = ranking(ks); return rk.length ? `<section class="ec-card ec-tabla-card"><h3>Clientes en eventos</h3>
-        <p class="ec-card-sub">Cada cliente con los eventos a los que fue y lo que compró antes y después (suma de los eventos, ${VENTANA} días)</p>
+      ${porDist.length ? `<section class="ec-card ec-tabla-card"><h3>Por distribuidor</h3>
+        <p class="ec-card-sub">Con quién hicimos eventos y cuánto movieron las compras (suma de sus eventos, ${VENTANA} días)</p>
         <div class="ec-tabla-wrap"><table class="ec-tabla">
-          <thead><tr><th>Cliente</th><th>Vendedor</th><th class="n">Invitado</th><th class="n">Asistió</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Diferencia</th></tr></thead>
-          <tbody>${rk.slice(0, 40).map(r => `<tr><td><b>${esc(r.nombre)}</b>${r.razon && r.razon !== r.nombre ? `<small>${esc(r.razon)}</small>` : ""}</td>
-            <td>${esc(r.vendedor)}</td><td class="n">${r.invitado}</td><td class="n">${r.asistio}</td>
-            <td class="n">${usd(r.antes)}</td><td class="n">${usd(r.despues)}</td><td class="n ${tono(r.dif)}">${signo(r.dif)}</td></tr>`).join("")}</tbody>
-        </table></div>${rk.length > 40 ? `<p class="ec-card-sub">Y ${rk.length - 40} más en el Excel.</p>` : ""}</section>` : ""; })() : ""}`;
+          <thead><tr><th>Distribuidor</th><th>Vendedor</th><th class="n">Eventos</th><th class="n">Profesionales</th><th class="n">Inversión</th><th class="n">Compras extra</th><th class="n">Por US$ 1</th></tr></thead>
+          <tbody>${porDist.map(d => `<tr><td><b>${esc(d.nombre)}</b>${d.razon && d.razon !== d.nombre ? `<small>${esc(d.razon)}</small>` : ""}</td>
+            <td>${esc(d.vendedor)}</td><td class="n">${d.eventos}</td><td class="n">${d.asis || "—"}</td><td class="n">${d.inv ? usd(d.inv) : "—"}</td>
+            <td class="n ${d.medidos ? tono(d.X) : ""}">${d.medidos ? signo(d.X) : "—"}</td><td class="n">${d.medidos && d.inv && d.X > 0 ? veces(d.X / d.inv) : "—"}</td></tr>`).join("")}</tbody>
+        </table></div></section>` : ""}`;
     pintarNota();
   }
-  // Clientes que fueron a algún evento (de los filtrados), con las compras sumadas de esos eventos.
-  function ranking(ks) {
+  // Un renglón por distribuidor. Si un evento tuvo varios, la inversión y los profesionales
+  // se reparten en partes iguales (para no contarlos dos veces).
+  function resumenDistribuidores(ks) {
     const m = new Map();
-    ks.forEach(k => k.filas.forEach(r => {
-      const key = r.x.cuit || "n:" + low(r.nombre);
-      const o = m.get(key) || { nombre: r.nombre, razon: r.razon, vendedor: r.vendedor, cuit: r.x.cuit || "", invitado: 0, asistio: 0, antes: 0, despues: 0 };
-      o.invitado++;
-      if (r.x.asistio) { o.asistio++; o.antes += r.antes; o.despues += r.despues; }
-      m.set(key, o);
-    }));
-    return [...m.values()].filter(o => o.asistio).map(o => Object.assign(o, { dif: o.despues - o.antes }))
-      .sort((a, b) => b.despues - a.despues || b.asistio - a.asistio);
+    ks.forEach(k => {
+      const n = k.lista.length || 1;
+      (k.dists.length ? k.dists : k.lista.map(x => ({ x, nombre: x.nombre || (CLI.get(x.cuit) || {}).nombre || x.razon_social, razon: x.razon_social, vendedor: (CLI.get(x.cuit) || {}).vendedor || "" })))
+        .forEach(r => {
+          const o = m.get(r.x.cuit) || { nombre: r.nombre, razon: r.razon, vendedor: r.vendedor, cuit: r.x.cuit, eventos: 0, asis: 0, inv: 0, X: 0, medidos: 0 };
+          o.eventos++; o.asis += (k.asis || 0) / n; o.inv += (k.inv.usd || 0) / n;
+          if (k.antes && k.base && r.extra != null) { o.X += r.extra; o.medidos++; }
+          m.set(r.x.cuit, o);
+        });
+    });
+    return [...m.values()].map(o => Object.assign(o, { asis: Math.round(o.asis) })).sort((a, b) => b.X - a.X || b.eventos - a.eventos);
   }
 
   /* ---------- EVENTO ---------- */
@@ -466,6 +489,7 @@
     const formatos = [...new Set([...FORMATOS, ev.formato].filter(Boolean))];
     const accs = ACCS.slice().sort((a, b) => (b.tipo === "Evento") - (a.tipo === "Evento"));
     const invAcc = inversion(Object.assign({}, ev, { inversion_usd: null }));
+    const n = v => num(v) == null ? "" : num(v);
     w.innerHTML = `
       <div class="ec-d-top ec-no-print">
         <button class="btn-ghost" data-ec="volver">← Eventos con clientes</button>
@@ -474,21 +498,23 @@
         ${puedeBorrar ? `<button class="btn-ghost ec-borrar" data-ec="borrar">Eliminar</button>` : ""}
       </div>
       <section class="ec-card ec-datos">
-        <input class="ec-titulo" data-campo="titulo" placeholder="Nombre del evento (ej. Showroom con distribuidores zona norte)" value="${esc(ev.titulo)}" aria-label="Nombre del evento">
+        <input class="ec-titulo" data-campo="titulo" placeholder="Nombre del evento (ej. Charla de iluminación con Luz Design)" value="${esc(ev.titulo)}" aria-label="Nombre del evento">
         <div class="ec-campos">
           <label><span>Fecha</span><input type="date" data-campo="fecha" value="${esc(ev.fecha || "")}"></label>
           <label><span>Formato</span><select data-campo="formato"><option value="">—</option>${formatos.map(f => `<option ${ev.formato === f ? "selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
-          <label><span>Lugar</span><input data-campo="lugar" value="${esc(ev.lugar)}" placeholder="Showroom Palermo"></label>
+          <label><span>Lugar</span><input data-campo="lugar" value="${esc(ev.lugar)}" placeholder="Showroom del distribuidor"></label>
+          <label><span>Profesionales inscriptos</span><input type="number" min="0" step="1" data-campo="prof_inscriptos" value="${n(ev.prof_inscriptos)}" placeholder="0"></label>
+          <label><span>Profesionales que fueron</span><input type="number" min="0" step="1" data-campo="prof_asistentes" value="${n(ev.prof_asistentes)}" placeholder="0"></label>
           <label class="ancho"><span>Acción vinculada</span><select data-campo="accion_id"><option value="">Sin vincular</option>${accs.map(a => `<option value="${a.id}" ${ev.accion_id === a.id ? "selected" : ""}>${esc(a.titulo)}${a.tipo ? ` (${esc(a.tipo)})` : ""}</option>`).join("")}</select></label>
-          <label><span>Inversión (US$)</span><input type="number" min="0" step="1" data-campo="inversion_usd" value="${num(ev.inversion_usd) == null ? "" : num(ev.inversion_usd)}" placeholder="${invAcc.usd != null ? Math.round(invAcc.usd) : "0"}"></label>
+          <label><span>Inversión (US$)</span><input type="number" min="0" step="1" data-campo="inversion_usd" value="${n(ev.inversion_usd)}" placeholder="${invAcc.usd != null ? Math.round(invAcc.usd) : "0"}"></label>
         </div>
         <p class="ec-ayuda ec-inv-ayuda">${ayudaInv(ev)}</p>
         <textarea data-campo="notas" rows="2" placeholder="Notas: objetivo, qué se mostró, condiciones especiales que se ofrecieron…">${esc(ev.notas)}</textarea>
-        ${nuevo ? `<div class="ec-crear"><button class="btn-primary" data-ec="crear">Crear evento</button><span class="ec-ayuda">Después le sumás los clientes.</span></div>` : ""}
+        ${nuevo ? `<div class="ec-crear"><button class="btn-primary" data-ec="crear">Crear evento</button><span class="ec-ayuda">Después elegís el distribuidor.</span></div>` : ""}
       </section>
-      ${nuevo ? "" : `<div class="ec-analisis"></div><section class="ec-card ec-clientes"></section>`}`;
+      ${nuevo ? "" : `<section class="ec-card ec-clientes"></section><div class="ec-analisis"></div>`}`;
     pintarNota();
-    if (!nuevo) { pintarAnalisis(); pintarClientes(); asegurarDatos(ev); }
+    if (!nuevo) { pintarDistribuidores(); pintarAnalisis(); asegurarDatos(ev); }
   }
 
   // De dónde sale la inversión cuando no se cargó a mano.
@@ -503,105 +529,77 @@
     const i = inversion(Object.assign({}, ev, { inversion_usd: null })), inp = caja().querySelector('[data-campo="inversion_usd"]');
     if (inp) inp.placeholder = i.usd != null ? Math.round(i.usd) : "0";
   }
-  // Trae lo que falte para el análisis (ventas de sus clientes, base, TC) y repinta.
+  // Trae lo que falte para el análisis (ventas del distribuidor, resto de clientes, TC) y repinta.
   async function asegurarDatos(ev) {
     const cuits = (INV[ev.id] || []).map(x => x.cuit).filter(Boolean);
-    const necesita = cuits.some(c => !VENTAS.has(c));
     try {
-      await Promise.all([
-        cargarVentas(cuits),
-        ev.fecha && accionDe(ev) && (accionDe(ev).moneda || "ARS") !== "USD" ? tcCerca(ev.fecha) : null,
-      ]);
-      const k = calcular(ev, VENTANA);
-      const yaBase = !k.antes || BASE[claveBase(ev, k)];
-      if (!yaBase) await traerBase(ev, k);
-      if (ABIERTO === ev.id && (necesita || !yaBase || accionDe(ev))) { pintarAyudaInv(); pintarAnalisis(); pintarClientes(); }
-    } catch (e) { nota("No se pudieron traer las ventas de los clientes.", true); }
+      await Promise.all([cargarVentas(cuits), necesitaTC(ev) ? tcCerca(ev.fecha) : null]);
+      await traerBase(ev, calcular(ev, VENTANA));
+      if (ABIERTO === ev.id) { pintarAyudaInv(); pintarDistribuidores(); pintarAnalisis(); }
+    } catch (e) { nota("No se pudieron traer las ventas del distribuidor.", true); }
   }
 
   function pintarAnalisis() {
     const w = caja().querySelector(".ec-analisis"); if (!w) return;
     const ev = eventoAbierto(); if (!ev) return;
     const k = calcular(ev, VENTANA);
-    const cargando = k.lista.some(x => x.cuit && !VENTAS.has(x.cuit));
-    if (!k.lista.length) { w.innerHTML = `<div class="res-intro">Sumá abajo los clientes que invitaste y marcá quiénes vinieron: acá aparecen sus compras antes y después del evento.</div>`; return; }
     const encab = `<div class="ec-bar ec-no-print">${ventanaChips()}${k.antes ? `<span class="ec-ayuda">Antes: ${fechaLarga(k.antes[0])} → ${fechaLarga(k.antes[1])} · Después: ${fechaLarga(k.despues[0])} → ${fechaLarga(k.despues[1])}${k.dias < VENTANA ? ` · <b>sólo ${k.dias} días con datos</b>` : ""}</span>` : ""}</div>`;
-    const kpisAsis = `<div class="mh-kpis">
-        ${kpi(`${k.asist.n}<small>/${k.lista.length}</small>`, "clientes asistieron", `${k.inscriptos} inscriptos · ${plural(k.personas, "persona")}`)}
+    const ver = `<section class="ec-veredicto ${k.ver.c}"><b>${esc(k.ver.t)}</b>${k.ver.txt ? `<p>${k.ver.txt}</p>` : ""}</section>`;
+    const kpis = `<div class="mh-kpis">
+        ${kpi(k.asis != null ? `${k.asis}${k.inscr ? `<small>/${k.inscr}</small>` : ""}` : "—", "profesionales fueron", k.asistencia != null ? `${pctN(k.asistencia)} de los inscriptos` : "cargá inscriptos y asistentes")}
         ${k.antes ? `
-        ${kpi(k.asist.compraron, "compraron después", k.asist.n ? `${pctN(k.asist.compraron / k.asist.n)} de los que vinieron` : "")}
-        ${kpi(usd(k.asist.despues), `compras a ${k.dias} días`, `antes: ${usd(k.asist.antes)}`)}
-        ${kpi(signo(k.asist.dif), "incremental", `${pct(k.asist.crec)} vs. antes`, tono(k.asist.dif))}
-        ${kpi(k.asist.facturas ? usd(k.asist.despues / k.asist.facturas) : "—", "ticket promedio", plural(k.asist.facturas, "factura"))}
-        ${kpi(k.retorno != null ? veces(k.retorno) : "—", "retorno", k.inv.usd ? `sobre ${usd(k.inv.usd)} invertidos` : "cargá la inversión", tono(k.retorno))}
-        ${kpi(k.nuevos, "nuevos o reactivados", "sin compras en el año previo")}` : ""}
+        ${kpi(usd(k.P), `compras del distribuidor a ${k.dias} días`, `antes: ${usd(k.A)} (${pct(k.crec)})`)}
+        ${kpi(k.base ? signo(k.X) : "…", "compras extra", k.base ? `esperado: ${usd(k.E)}` : "calculando", k.base ? tono(k.X) : "")}
+        ${kpi(k.puntos != null ? `${k.puntos >= 0 ? "+" : "−"}${Math.abs(Math.round(k.puntos * 100))} pts` : "—", "vs. el resto de los clientes", k.base ? `el resto: ${pct(k.base.crec)}` : "", tono(k.puntos))}
+        ${kpi(k.retorno != null && k.base && k.X > 0 ? veces(k.retorno) : "—", "por cada US$ 1 invertido", !k.inv.usd ? "cargá la inversión" : k.base && k.X <= 0 ? `sin compras extra · ${usd(k.inv.usd)} invertidos` : `${usd(k.inv.usd)} invertidos`, k.base && k.X > 0 ? "ok" : "")}` : ""}
+        ${kpi(k.costoProf != null ? usd(k.costoProf) : "—", "costo por profesional", "inversión ÷ asistentes")}
+        ${k.antes && k.base && k.extraProf != null ? kpi(signo(k.extraProf), "compras extra por profesional", "que asistió", tono(k.extraProf)) : ""}
       </div>`;
-    if (!k.antes) { w.innerHTML = encab + kpisAsis + `<div class="res-intro">${esc(k.falta)}</div>`; return; }
-    const ev2 = evolucion(k);
-    const fams = Object.entries(k.famAsist).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    const top = k.filas.filter(r => r.x.asistio && (r.despues > 0 || r.antes > 0)).sort((a, b) => b.despues - a.despues).slice(0, 10);
-    const crec = [["Vinieron", k.asist.crec], ["No vinieron", k.noAsist.n ? k.noAsist.crec : null], ["Resto de los clientes", k.base ? k.base.crec : null]];
-    w.innerHTML = encab + kpisAsis + (cargando ? `<p class="ec-ayuda">Trayendo las ventas de los clientes…</p>` : "") + `
+    if (!k.antes) { w.innerHTML = encab + ver + kpis; return; }
+    const e2 = evolucion(k);
+    const fams = Object.entries(k.fam).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const crec = [["Distribuidor del evento", k.crec, COL.main], ["Resto de los clientes", k.base ? k.base.crec : null, COL.gris],
+                  ["Distribuidor, año anterior", k.crecLy, COL.soft]].filter(c => c[1] != null);
+    w.innerHTML = encab + ver + kpis + `
       <div class="ec-grid">
-        ${tarjeta("Quiénes compraron después", `US$ a ${k.dias} días · clientes que vinieron`,
-          top.length ? barrasH(top.map(r => ({ l: r.nombre, v: r.despues, g: r.antes })), usd) + leyenda([["Antes (fondo)", COL.gris], ["Después", COL.main]])
-                     : `<div class="ec-graf-vacio">Ninguno de los que vinieron compró en la ventana.</div>`)}
-        ${tarjeta("¿Movió algo el evento?", "Crecimiento de las compras: después vs. antes",
-          divergente(crec.filter(c => c[1] != null).map(([l, v], i) => ({ l, v, c: i ? COL.gris : COL.main })), pct) +
-          `<p class="ec-ayuda">${crecTexto(k)}</p>`)}
-        ${tarjeta("Evolución mensual", "Compra promedio por cliente, 6 meses antes y después",
-          leyenda([["Vinieron", COL.main], ["No vinieron", COL.gris, true]]) +
-          lineas(ev2.labels, [{ c: COL.main, vals: ev2.asist }, { c: COL.gris, vals: ev2.noAsist, dash: true }], usdCorto, 6))}
-        ${tarjeta("Qué compraron", `Por familia · US$ a ${k.dias} días, clientes que vinieron`,
-          barrasH(fams.map(([l, v]) => ({ l, v })), usd))}
+        ${tarjeta("Antes, esperado y después", `US$ · ${k.dias} días antes vs. ${k.dias} días después`,
+          barrasH([{ l: "Antes del evento", v: k.A, c: COL.gris }, { l: "Esperado sin evento", v: k.E, c: COL.soft }, { l: "Después del evento", v: k.P }], usd))}
+        ${tarjeta("¿Creció más que el resto?", "Crecimiento de las compras: después vs. antes",
+          divergente(crec.map(([l, v, c]) => ({ l, v, c })), pct) +
+          `<p class="ec-ayuda">Si el distribuidor crece más que el resto de los clientes en las mismas fechas, esa diferencia es lo que se le atribuye al evento.</p>`)}
+        ${tarjeta("Compras mes a mes", `${esc(k.nombres || "Distribuidor")} · 6 meses antes y después del evento`,
+          leyenda([["Este período", COL.main], ["Mismos meses, año anterior", COL.gris, true]]) +
+          lineas(e2.labels, [{ c: COL.gris, vals: e2.anterior, dash: true }, { c: COL.main, vals: e2.este }], usdCorto, 6))}
+        ${tarjeta("Qué compró después", `Por familia · US$ a ${k.dias} días (de fondo, lo que compraba antes)`,
+          barrasH(fams.map(([l, v]) => ({ l, v, g: Math.max(0, k.famAntes[l] || 0) })), usd))}
       </div>`;
-  }
-  // Texto que acompaña al gráfico de crecimiento (las barras no muestran negativos).
-  function crecTexto(k) {
-    const p = [`Los que vinieron: <b>${pct(k.asist.crec)}</b>`];
-    if (k.noAsist.n) p.push(`los invitados que no vinieron: <b>${pct(k.noAsist.crec)}</b>`);
-    if (k.base) p.push(`el resto de los clientes: <b>${pct(k.base.crec)}</b>`);
-    const dif = k.base && k.asist.crec != null && k.base.crec != null ? k.asist.crec - k.base.crec : null;
-    return p.join(" · ") + (dif != null ? `. ${dif >= 0 ? "Crecieron" : "Quedaron"} <b>${Math.abs(Math.round(dif * 100))} puntos ${dif >= 0 ? "por encima" : "por debajo"}</b> del resto.` : ".");
   }
 
-  function pintarClientes() {
+  function pintarDistribuidores() {
     const w = caja().querySelector(".ec-clientes"); if (!w) return;
     const ev = eventoAbierto(); if (!ev) return;
     const k = calcular(ev, VENTANA);
-    const conVentas = !!k.antes;
-    const F = {
-      todos: () => true, asistieron: r => r.x.asistio, no: r => !r.x.asistio,
-      compraron: r => r.x.asistio && r.despues > 0, nuevos: r => r.x.asistio && !!r.tipo,
-    };
-    // Orden fijo (no depende de los tildes): al marcar "Asistió" la fila no salta de lugar.
-    const filas = k.filas.filter(F[CFILTRO] || F.todos).sort((a, b) =>
-      (b.despues - a.despues) || a.nombre.localeCompare(b.nombre, "es"));
+    const conVentas = !!(k.antes && k.base);
     const conFoco = document.activeElement && document.activeElement.classList.contains("ec-busca-cli");
-    const chip = (key, t) => `<button class="ac-chip ${CFILTRO === key ? "on" : ""}" data-ec="cfiltro" data-k="${key}">${t} <span class="c">${k.filas.filter(F[key]).length}</span></button>`;
+    const filas = k.dists.length ? k.dists : k.lista.map(x => { const c = CLI.get(x.cuit) || {};
+      return { x, nombre: x.nombre || c.nombre || x.razon_social, razon: x.razon_social || c.razon_social || "", vendedor: c.vendedor || "" }; });
+    const accDist = accionDe(ev) && accionDe(ev).distribuidor;
     w.innerHTML = `
       <div class="ec-cli-top">
-        <h3>Clientes del evento</h3>
+        <h3>Distribuidor del evento</h3>
         <div class="ec-agregar ec-no-print">
-          <input type="search" class="ec-busca-cli" placeholder="Sumar cliente: nombre, razón social o CUIT" autocomplete="off" value="${esc(BUSCA_CLI)}" aria-label="Buscar cliente para sumar">
+          <input type="search" class="ec-busca-cli" placeholder="${filas.length ? "Sumar otro distribuidor" : "Buscar distribuidor: nombre, razón social o CUIT"}" autocomplete="off" value="${esc(BUSCA_CLI)}" aria-label="Buscar distribuidor">
           <div class="ec-sug" role="listbox"></div>
         </div>
-        <button class="btn-ghost ec-no-print" data-ec="pegar" title="Pegar una lista de CUITs o nombres">Pegar lista</button>
       </div>
-      <div class="mh-chips ac-chips ec-no-print">
-        ${chip("todos", "Todos")}${chip("asistieron", "Asistieron")}${chip("no", "No vinieron")}${conVentas ? chip("compraron", "Compraron") + chip("nuevos", "Nuevos / reactivados") : ""}
-      </div>
-      ${!k.filas.length ? `<p class="ec-ayuda">Buscá arriba a los distribuidores que invitaste. Salen de las ventas cargadas (por eso hace falta el CUIT); si alguno nunca compró, escribí su nombre y sumalo igual.</p>` : `
+      ${!filas.length ? `<p class="ec-ayuda">Elegí el distribuidor con el que se hizo el evento (sale de las ventas cargadas).${accDist ? ` La acción vinculada dice <b>${esc(accDist)}</b>.` : ""} Si fueron varios, sumalos a todos.</p>` : `
       <div class="ec-tabla-wrap"><table class="ec-tabla ec-cli">
-        <thead><tr><th>Cliente</th><th>Vendedor</th><th class="c">Inscripto</th><th class="c">Asistió</th><th class="c">Personas</th>
-          ${conVentas ? `<th class="n">Antes</th><th class="n">Después</th><th class="n">Diferencia</th>` : ""}<th class="ec-no-print"></th></tr></thead>
-        <tbody>${filas.map(r => `<tr class="${r.x.asistio ? "si" : "no"}">
-          <td><b>${esc(r.nombre)}</b>${r.tipo ? ` <span class="ec-tag ${r.tipo}">${r.tipo}</span>` : ""}<small>${esc([r.razon !== r.nombre ? r.razon : "", r.x.cuit || "sin CUIT"].filter(Boolean).join(" · "))}</small></td>
+        <thead><tr><th>Distribuidor</th><th>Vendedor</th>
+          ${conVentas ? `<th class="n">Antes</th><th class="n">Después</th><th class="n">Esperado</th><th class="n">Compras extra</th>` : ""}<th class="ec-no-print"></th></tr></thead>
+        <tbody>${filas.map(r => `<tr>
+          <td><b>${esc(r.nombre)}</b><small>${esc([r.razon !== r.nombre ? r.razon : "", r.x.cuit].filter(Boolean).join(" · "))}</small></td>
           <td>${esc(r.vendedor)}</td>
-          <td class="c"><input type="checkbox" data-inv="${r.x.id}" data-k="inscripto" ${r.x.inscripto ? "checked" : ""} aria-label="Inscripto"></td>
-          <td class="c"><input type="checkbox" data-inv="${r.x.id}" data-k="asistio" ${r.x.asistio ? "checked" : ""} aria-label="Asistió"></td>
-          <td class="c"><input type="number" min="0" step="1" class="ec-personas" data-inv="${r.x.id}" data-k="personas" value="${num(r.x.personas) == null ? "" : r.x.personas}" placeholder="${r.x.asistio ? "1" : ""}" aria-label="Personas"></td>
-          ${conVentas ? `<td class="n">${usd(r.antes)}</td><td class="n"><b>${usd(r.despues)}</b></td><td class="n ${tono(r.dif)}">${signo(r.dif)}</td>` : ""}
+          ${conVentas ? `<td class="n">${usd(r.antes)}</td><td class="n"><b>${usd(r.despues)}</b></td><td class="n">${usd(r.esperado)}</td><td class="n ${tono(r.extra)}">${signo(r.extra)}</td>` : ""}
           <td class="ec-no-print"><button class="ac-mini" data-ec="quitar" data-id="${r.x.id}" title="Quitar del evento" aria-label="Quitar del evento">✕</button></td>
         </tr>`).join("")}</tbody>
       </table></div>`}`;
@@ -609,7 +607,7 @@
     if (conFoco) { const t = w.querySelector(".ec-busca-cli"); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
   }
 
-  /* ---- Sumar clientes ---- */
+  /* ---- Sumar distribuidores ---- */
   function sugerencias() {
     const q = sinTildes(BUSCA_CLI.trim()); if (q.length < 2) return [];
     const ev = eventoAbierto(); const ya = new Set((INV[ev && ev.id] || []).map(x => x.cuit));
@@ -623,64 +621,39 @@
     const q = BUSCA_CLI.trim();
     if (q.length < 2) { d.innerHTML = ""; d.classList.remove("on"); return; }
     const s = sugerencias();
-    d.innerHTML = s.map(c => `<button type="button" data-ec="sumar" data-cuit="${esc(c.cuit)}">
-        <b>${esc(c.nombre || c.razon_social)}</b><small>${esc(c.razon_social !== c.nombre ? c.razon_social + " · " : "")}${esc(c.cuit)}${c.vendedor ? " · " + esc(c.vendedor) : ""}${c.ultima_compra ? " · últ. compra " + esc(fechaLarga(c.ultima_compra)) : ""}</small></button>`).join("") +
-      `<button type="button" data-ec="sumar-libre" class="libre">＋ Sumar «${esc(q)}» como cliente sin compras</button>`;
+    d.innerHTML = s.length ? s.map(c => `<button type="button" data-ec="sumar" data-cuit="${esc(c.cuit)}">
+        <b>${esc(c.nombre || c.razon_social)}</b><small>${esc(c.razon_social !== c.nombre ? c.razon_social + " · " : "")}${esc(c.cuit)}${c.vendedor ? " · " + esc(c.vendedor) : ""}${c.ultima_compra ? " · últ. compra " + esc(fechaLarga(c.ultima_compra)) : ""}</small></button>`).join("")
+      : `<p class="ec-sug-vacio">Ningún cliente con ese nombre o CUIT en las ventas cargadas.</p>`;
     d.classList.add("on");
   }
+  const filaDe = c => ({ cuit: c.cuit, razon_social: c.razon_social || "", nombre: c.nombre || "" });
   async function sumar(filas) {
     const ev = eventoAbierto(); if (!ev || !filas.length) return;
     try {
       const r = await fetch(url("eventos_clientes_inv"), { method: "POST", headers: head({ Prefer: "return=representation" }),
-        body: JSON.stringify(filas.map(f => Object.assign({ evento_id: ev.id, inscripto: true, asistio: false }, f))) });
+        body: JSON.stringify(filas.map(f => Object.assign({ evento_id: ev.id, inscripto: true, asistio: true }, f))) });
       const d = r.ok ? await r.json() : [];
       if (!d.length) throw new Error();
       (INV[ev.id] = INV[ev.id] || []).push(...d);
       BUSCA_CLI = "";
-      pintarClientes(); pintarAnalisis();
-      const t = caja().querySelector(".ec-busca-cli"); if (t) t.focus();
+      pintarDistribuidores(); pintarAnalisis();
       asegurarDatos(ev);
-    } catch (e) { nota("No se pudo sumar el cliente. ¿Ya estaba en el evento?", true); }
-  }
-  const filaDe = c => ({ cuit: c.cuit, razon_social: c.razon_social || "", nombre: c.nombre || "" });
-  async function pegarLista() {
-    const t = prompt("Pegá los CUITs o nombres de los clientes, uno por renglón (sirve copiar una columna de Excel):");
-    if (!t) return;
-    const ev = eventoAbierto(); const ya = new Set((INV[ev.id] || []).map(x => x.cuit));
-    const clis = [...CLI.values()];
-    const ok = [], no = [];
-    t.split(/\r?\n|;/).map(s => s.trim()).filter(Boolean).forEach(s => {
-      const dig = s.replace(/\D/g, "");
-      const q = sinTildes(s);
-      const c = (dig.length === 11 && clis.find(x => x.cuit.replace(/\D/g, "") === dig)) ||
-        clis.find(x => sinTildes(x.nombre) === q || sinTildes(x.razon_social) === q);
-      if (c) { if (!ya.has(c.cuit) && !ok.some(o => o.cuit === c.cuit)) ok.push(filaDe(c)); } else no.push(s);
-    });
-    if (ok.length) await sumar(ok);
-    nota(`${plural(ok.length, "cliente sumado", "clientes sumados")}${no.length ? ` · sin encontrar: ${no.slice(0, 5).join(", ")}${no.length > 5 ? "…" : ""}` : ""}`, !!no.length);
-  }
-  async function guardarInv(id, campos) {
-    const ev = eventoAbierto(); const x = (INV[ev.id] || []).find(y => y.id === id); if (!x) return;
-    const antes = Object.assign({}, x); Object.assign(x, campos);
-    pintarAnalisis();
-    try {
-      const r = await fetch(url(`eventos_clientes_inv?id=eq.${enc(id)}`), { method: "PATCH", headers: head({ Prefer: "return=representation" }), body: JSON.stringify(campos) });
-      const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
-    } catch (e) { Object.assign(x, antes); nota("No se pudo guardar. Revisá la conexión.", true); pintarClientes(); pintarAnalisis(); }
+    } catch (e) { nota("No se pudo sumar el distribuidor. ¿Ya estaba en el evento?", true); }
   }
   async function quitar(id) {
-    const ev = eventoAbierto(); const l = INV[ev.id] || []; const x = l.find(y => y.id === id); if (!x) return;
+    const ev = eventoAbierto(); const l = INV[ev.id] || []; if (!l.some(y => y.id === id)) return;
     try {
       const r = await fetch(url(`eventos_clientes_inv?id=eq.${enc(id)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) });
       const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
       INV[ev.id] = l.filter(y => y.id !== id);
-      pintarClientes(); pintarAnalisis();
+      pintarDistribuidores(); pintarAnalisis(); asegurarDatos(ev);
     } catch (e) { nota("No se pudo quitar.", true); }
   }
 
   /* ---- Evento: crear / guardar / borrar ---- */
   function nuevo() {
-    BORRADOR = { id: null, titulo: "", fecha: hoyISO(), lugar: "", formato: "", accion_id: null, inversion_usd: null, notas: "" };
+    BORRADOR = { id: null, titulo: "", fecha: hoyISO(), lugar: "", formato: "", accion_id: null, inversion_usd: null, notas: "",
+                 prof_inscriptos: null, prof_asistentes: null };
     ABIERTO = "nuevo"; pintar();
     const t = caja().querySelector(".ec-titulo"); if (t) t.focus();
   }
@@ -694,11 +667,11 @@
       const r = await fetch(url("eventos_clientes"), { method: "POST", headers: head({ Prefer: "return=representation" }), body: JSON.stringify(cuerpo) });
       const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
       EVS.unshift(d[0]); INV[d[0].id] = [];
-      BORRADOR = null; ABIERTO = d[0].id; CFILTRO = "todos";
-      nota("Evento creado. Ahora sumale los clientes invitados.");
+      BORRADOR = null; ABIERTO = d[0].id;
+      nota("Evento creado. Ahora elegí el distribuidor.");
       pintar();
       const s = caja().querySelector(".ec-busca-cli"); if (s) s.focus();
-    } catch (e) { nota("No se pudo crear el evento. ¿Corriste el SQL 2026-10-15-eventos-clientes.sql?", true); }
+    } catch (e) { nota("No se pudo crear el evento. ¿Corriste los SQL de Eventos con clientes?", true); }
   }
   async function guardar(campos) {
     if (ABIERTO === "nuevo") { Object.assign(BORRADOR, campos); return true; }
@@ -709,11 +682,15 @@
       const r = await fetch(url(`eventos_clientes?id=eq.${enc(ev.id)}`), { method: "PATCH", headers: head({ Prefer: "return=representation" }), body: JSON.stringify(campos) });
       const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
       return true;
-    } catch (e) { Object.assign(ev, antes); nota("No se pudo guardar el cambio.", true); pintarDetalle(); return false; }
+    } catch (e) {
+      Object.assign(ev, antes);
+      nota(/prof_/.test(Object.keys(campos).join()) ? "No se pudo guardar. ¿Corriste el SQL 2026-10-15-eventos-clientes-profesionales.sql?" : "No se pudo guardar el cambio.", true);
+      pintarDetalle(); return false;
+    }
   }
   async function borrar() {
     const ev = eventoAbierto(); if (!ev) return;
-    if (!confirm(`¿Eliminar el evento "${ev.titulo}" y su lista de clientes?\n\nLas ventas no se tocan. No se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar el evento "${ev.titulo}"?\n\nLas ventas no se tocan. No se puede deshacer.`)) return;
     try {
       const r = await fetch(url(`eventos_clientes?id=eq.${enc(ev.id)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) });
       const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
@@ -721,20 +698,25 @@
       ABIERTO = null; nota("Evento eliminado."); pintar();
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien lo creó o un admin.", true); }
   }
-  function abrir(id) { ABIERTO = id; CFILTRO = "todos"; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
+  function abrir(id) { ABIERTO = id; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
   function volver() {
     if (ABIERTO === "nuevo") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !confirm("¿Descartar el evento que estabas creando?")) return; }
     ABIERTO = null; BORRADOR = null; BUSCA_CLI = "";
     pintar(); refrescarTablero();
   }
-  // El tablero necesita las ventas de TODOS los clientes de eventos.
+  // El tablero necesita las ventas de todos los distribuidores, el TC y el "resto de clientes" de cada evento.
   async function refrescarTablero() {
-    const faltan = todosLosCuits().some(c => !VENTAS.has(c));
-    if (!faltan) return;
-    nota("Trayendo las ventas de los clientes…", false, true);
-    try { await cargarVentas(todosLosCuits()); } catch (e) { return nota("No se pudieron traer las ventas.", true); }
-    const accTc = EVS.filter(e => e.fecha && accionDe(e) && (accionDe(e).moneda || "ARS") !== "USD" && num(e.inversion_usd) == null);
-    await Promise.all(accTc.map(e => tcCerca(e.fecha)));
+    const faltaVentas = todosLosCuits().some(c => !VENTAS.has(c));
+    const evs = delFiltro();
+    const faltaBase = evs.some(e => { const k = calcular(e, VENTANA); return k.antes && !k.base; });
+    const faltaTC = evs.some(e => necesitaTC(e) && !(e.fecha in TCS));
+    if (!faltaVentas && !faltaBase && !faltaTC) return;
+    nota("Calculando las compras de cada evento…", false, true);
+    try {
+      await cargarVentas(todosLosCuits());
+      await Promise.all(evs.filter(necesitaTC).map(e => tcCerca(e.fecha)));
+      await Promise.all(evs.map(e => traerBase(e, calcular(e, VENTANA))));
+    } catch (e) { return nota("No se pudieron traer las ventas.", true); }
     nota("");
     if (!ABIERTO) pintarTablero();
   }
@@ -782,7 +764,7 @@
                  tipo: "talonariotipo", tc: "tipo_de_cambio" };
 
   function procesarCSV(texto) {
-    texto = texto.replace(/^﻿/, "");
+    texto = texto.replace(/^\uFEFF/, "");
     const l0 = texto.slice(0, Math.max(0, texto.search(/\r?\n/)));
     const sep = (l0.match(/;/g) || []).length >= (l0.match(/,/g) || []).length ? ";" : ",";
     const it = registros(texto, sep);
@@ -836,7 +818,7 @@
       const buf = await file.arrayBuffer();
       // El sistema exporta en Latin-1; si viene en UTF-8 se nota por la cabecera.
       let texto = new TextDecoder("utf-8").decode(buf);
-      if (texto.includes("�")) texto = new TextDecoder("windows-1252").decode(buf);
+      if (texto.includes("\uFFFD")) texto = new TextDecoder("windows-1252").decode(buf);
       const p = procesarCSV(texto);
       if (!confirm(`${file.name}\n\n${p.filas.toLocaleString("es-AR")} líneas de factura · ${p.clientes.length} clientes\nDel ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)}\n\nSe reemplazan las ventas cargadas de ese período. ¿Seguimos?`)) { nota(""); return; }
       const TANDA = 3000;
@@ -860,57 +842,60 @@
 
   /* ======================= DESCARGAS ======================= */
   const nombreArchivo = s => sinTildes(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "evento";
-  const filaCliente = (k, r) => [k.ev.titulo, k.ev.fecha || "", r.nombre, r.razon, r.x.cuit || "", r.vendedor,
-    r.x.inscripto ? "Sí" : "No", r.x.asistio ? "Sí" : "No", num(r.x.personas) == null ? (r.x.asistio ? 1 : 0) : num(r.x.personas),
-    k.antes ? Math.round(r.antes * 100) / 100 : "", k.antes ? Math.round(r.despues * 100) / 100 : "", k.antes ? Math.round(r.dif * 100) / 100 : "", r.tipo];
-  const CAB_CLI = ["Evento", "Fecha", "Cliente", "Razón social", "CUIT", "Vendedor", "Inscripto", "Asistió", "Personas",
-    "USD antes", "USD después", "USD diferencia", "Nuevo / reactivado"];
+  const r2 = v => v == null ? "" : Math.round(v * 100) / 100;
+  const r3 = v => v == null || !isFinite(v) ? "" : Math.round(v * 1000) / 1000;
   function hoja(wb, nombre, aoa, anchos) {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     if (anchos) ws["!cols"] = anchos.map(w => ({ wch: w }));
     XLSX.utils.book_append_sheet(wb, ws, nombre);
   }
+  const CAB_EV = ["Evento", "Fecha", "Formato", "Lugar", "Distribuidor", "Profesionales inscriptos", "Profesionales asistieron", "% asistencia",
+    "Días medidos", "USD antes", "USD después", "Crecimiento distribuidor", "Crecimiento resto de clientes", "USD esperado", "USD compras extra",
+    "Inversión USD", "Compras extra por US$ 1", "Costo por profesional USD", "Compras extra por profesional USD", "¿Sirvió?"];
+  const filaEv = k => {
+    const m = !!(k.antes && k.base);
+    return [k.ev.titulo, k.ev.fecha || "", k.ev.formato, k.ev.lugar, k.nombres, k.inscr ?? "", k.asis ?? "", r3(k.asistencia),
+      k.dias || "", k.antes ? r2(k.A) : "", k.antes ? r2(k.P) : "", r3(k.crec), m ? r3(k.base.crec) : "", m ? r2(k.E) : "", m ? r2(k.X) : "",
+      k.inv.usd == null ? "" : r2(k.inv.usd), m ? r2(k.retorno) : "", r2(k.costoProf), m ? r2(k.extraProf) : "", k.ver.t];
+  };
   async function excel() {
     if (!window.XLSX) { alert("No se pudo cargar el exportador."); return; }
     const wb = XLSX.utils.book_new();
     const ev = ABIERTO && ABIERTO !== "nuevo" ? eventoAbierto() : null;
     if (ev) {
-      await cargarVentas((INV[ev.id] || []).map(x => x.cuit));
+      await asegurarDatos(ev);
       const k = calcular(ev, VENTANA);
-      hoja(wb, "Resumen", [
-        ["Evento", ev.titulo], ["Fecha", ev.fecha || ""], ["Formato", ev.formato], ["Lugar", ev.lugar],
-        ["Ventana", k.antes ? `${k.dias} días (antes ${k.antes[0]} a ${k.antes[1]} · después ${k.despues[0]} a ${k.despues[1]})` : k.falta],
-        [], ["Invitados", k.lista.length], ["Inscriptos", k.inscriptos], ["Clientes que asistieron", k.asist.n], ["Personas", k.personas],
-        ["Compraron después (de los que vinieron)", k.antes ? k.asist.compraron : ""],
-        ["USD antes (vinieron)", k.antes ? k.asist.antes : ""], ["USD después (vinieron)", k.antes ? k.asist.despues : ""],
-        ["USD incremental (vinieron)", k.antes ? k.asist.dif : ""], ["Crecimiento vinieron", k.asist.crec == null ? "" : k.asist.crec],
-        ["Crecimiento no vinieron", k.noAsist.crec == null ? "" : k.noAsist.crec], ["Crecimiento resto de clientes", k.base && k.base.crec != null ? k.base.crec : ""],
-        ["Inversión USD", k.inv.usd == null ? "" : Math.round(k.inv.usd)], ["Retorno (incremental / inversión)", k.retorno == null ? "" : k.retorno],
-        ["Clientes nuevos o reactivados", k.nuevos],
-      ], [38, 60]);
-      hoja(wb, "Clientes", [CAB_CLI, ...k.filas.sort((a, b) => b.despues - a.despues).map(r => filaCliente(k, r))], [26, 11, 30, 34, 15, 14, 9, 8, 9, 12, 12, 13, 16]);
+      hoja(wb, "Resumen", [["Campo", "Valor"], ...CAB_EV.map((c, i) => [c, filaEv(k)[i]]), [],
+        ["Ventana antes", k.antes ? `${k.antes[0]} a ${k.antes[1]}` : ""], ["Ventana después", k.despues ? `${k.despues[0]} a ${k.despues[1]}` : ""],
+        ["Crecimiento distribuidor mismas fechas año anterior", r3(k.crecLy)],
+        ["Conclusión", String(k.ver.txt || "").replace(/<[^>]+>/g, "")],
+        ["Cómo se calcula", "Esperado = compras antes × (1 + crecimiento del resto de los clientes). Compras extra = después − esperado."]], [44, 70]);
+      hoja(wb, "Distribuidores", [["Distribuidor", "Razón social", "CUIT", "Vendedor", "USD antes", "USD después", "USD esperado", "USD compras extra", "Crecimiento"],
+        ...k.dists.map(r => [r.nombre, r.razon, r.x.cuit, r.vendedor, r2(r.antes), r2(r.despues), k.base ? r2(r.esperado) : "", k.base ? r2(r.extra) : "", r3(r.crec)])],
+        [28, 34, 15, 14, 12, 12, 13, 15, 11]);
       if (k.antes) {
-        hoja(wb, "Familias", [["Familia", "USD después (vinieron)"], ...Object.entries(k.famAsist).sort((a, b) => b[1] - a[1]).map(([f, v]) => [f, Math.round(v * 100) / 100])], [28, 22]);
+        const fams = [...new Set([...Object.keys(k.fam), ...Object.keys(k.famAntes)])];
+        hoja(wb, "Familias", [["Familia", "USD antes", "USD después", "Diferencia"],
+          ...fams.map(f => [f, r2(k.famAntes[f] || 0), r2(k.fam[f] || 0), r2((k.fam[f] || 0) - (k.famAntes[f] || 0))]).sort((a, b) => b[2] - a[2])], [28, 12, 12, 12]);
         const e2 = evolucion(k);
-        hoja(wb, "Evolución mensual", [["Mes", "Promedio por cliente: vinieron", "Promedio por cliente: no vinieron"],
-          ...e2.labels.map((l, i) => [l, e2.asist && e2.asist[i] != null ? Math.round(e2.asist[i]) : "", e2.noAsist && e2.noAsist[i] != null ? Math.round(e2.noAsist[i]) : ""])], [12, 30, 32]);
+        hoja(wb, "Mes a mes", [["Mes", "USD este período", "USD mismos meses año anterior"],
+          ...e2.labels.map((l, i) => [l, e2.este[i] == null ? "" : Math.round(e2.este[i]), e2.anterior[i] == null ? "" : Math.round(e2.anterior[i])])], [12, 18, 28]);
       }
       XLSX.writeFile(wb, `evento-${nombreArchivo(ev.titulo)}-${hoyISO()}.xlsx`);
       return;
     }
-    await cargarVentas(todosLosCuits());
+    await refrescarTablero();
     const ks = delFiltro().map(e => calcular(e, VENTANA));
-    hoja(wb, "Eventos", [["Evento", "Fecha", "Formato", "Lugar", "Invitados", "Inscriptos", "Asistieron", "Personas", "Compraron después",
-      "USD antes", "USD después", "USD incremental", "Crecimiento", "Inversión USD", "Retorno", `Días medidos (de ${VENTANA})`],
-      ...ks.map(k => [k.ev.titulo, k.ev.fecha || "", k.ev.formato, k.ev.lugar, k.lista.length, k.inscriptos, k.asist.n, k.personas,
-        k.antes ? k.asist.compraron : "", k.antes ? Math.round(k.asist.antes) : "", k.antes ? Math.round(k.asist.despues) : "",
-        k.antes ? Math.round(k.asist.dif) : "", k.asist.crec == null ? "" : Math.round(k.asist.crec * 1000) / 1000,
-        k.inv.usd == null ? "" : Math.round(k.inv.usd), k.retorno == null ? "" : Math.round(k.retorno * 100) / 100, k.dias || ""])],
-      [32, 11, 16, 18, 9, 9, 10, 9, 10, 12, 12, 13, 11, 12, 9, 12]);
-    hoja(wb, "Clientes por evento", [CAB_CLI, ...ks.flatMap(k => k.filas.map(r => filaCliente(k, r)))], [26, 11, 30, 34, 15, 14, 9, 8, 9, 12, 12, 13, 16]);
-    hoja(wb, "Ranking clientes", [["Cliente", "Razón social", "CUIT", "Vendedor", "Eventos invitado", "Eventos asistió", "USD antes", "USD después", "USD diferencia"],
-      ...ranking(ks).map(r => [r.nombre, r.razon, r.cuit, r.vendedor, r.invitado, r.asistio, Math.round(r.antes), Math.round(r.despues), Math.round(r.dif)])],
-      [30, 34, 15, 14, 10, 10, 12, 12, 13]);
+    hoja(wb, "Eventos", [CAB_EV, ...ks.map(filaEv)], [32, 11, 14, 18, 26, 12, 12, 10, 8, 12, 12, 12, 12, 12, 14, 12, 12, 12, 14, 26]);
+    hoja(wb, "Por distribuidor", [["Distribuidor", "Razón social", "CUIT", "Vendedor", "Eventos", "Profesionales asistieron", "Inversión USD", "USD compras extra", "Compras extra por US$ 1"],
+      ...resumenDistribuidores(ks).map(d => [d.nombre, d.razon, d.cuit, d.vendedor, d.eventos, d.asis, r2(d.inv), d.medidos ? r2(d.X) : "", d.medidos && d.inv ? r2(d.X / d.inv) : ""])],
+      [28, 34, 15, 14, 8, 12, 12, 14, 14]);
+    hoja(wb, "Cómo se calcula", [["Concepto", "Cálculo"],
+      ["Ventana", `Antes = los ${VENTANA} días previos al evento; después = el día del evento y los siguientes (se acortan las dos si todavía no hay datos)`],
+      ["Esperado", "Compras del distribuidor antes × (1 + crecimiento del resto de los clientes en las mismas fechas)"],
+      ["Compras extra", "Compras del distribuidor después − esperado"],
+      ["Compras extra por US$ 1", "Compras extra ÷ inversión"],
+      ["Costo por profesional", "Inversión ÷ profesionales que asistieron"]], [24, 110]);
     XLSX.writeFile(wb, `eventos-con-clientes-${ANIO || "todos"}-${hoyISO()}.xlsx`);
   }
   // PDF = la impresión del navegador ("Guardar como PDF"); el CSS de impresión deja sólo esta página.
@@ -934,11 +919,12 @@
     importar: () => { const f = caja().querySelector(".ec-csv"); if (f) f.click(); },
     excel: () => excel().catch(() => nota("No se pudo armar el Excel.", true)),
     pdf: () => pdf(),
-    ventana: a => { VENTANA = +a.dataset.n; if (ABIERTO) { pintarAnalisis(); pintarClientes(); const ev = eventoAbierto(); if (ev) asegurarDatos(ev); } else pintarTablero(); },
-    cfiltro: a => { CFILTRO = a.dataset.k; pintarClientes(); },
+    ventana: a => {
+      VENTANA = +a.dataset.n;
+      if (ABIERTO) { pintarDistribuidores(); pintarAnalisis(); const ev = eventoAbierto(); if (ev && ev.id) asegurarDatos(ev); }
+      else { pintarTablero(); refrescarTablero(); }
+    },
     sumar: a => { const c = CLI.get(a.dataset.cuit); if (c) sumar([filaDe(c)]); },
-    "sumar-libre": () => { const n = BUSCA_CLI.trim(); if (n) sumar([{ cuit: null, nombre: n, razon_social: "" }]); },
-    pegar: () => pegarLista(),
     quitar: a => quitar(a.dataset.id),
   };
   function enganchar() {
@@ -964,24 +950,17 @@
     c.addEventListener("change", ev => {
       const el = ev.target;
       if (el.classList.contains("ec-csv")) { const f = el.files[0]; el.value = ""; importar(f); return; }
-      if (el.dataset.f === "anio") { ANIO = el.value; pintarTablero(); return; }
-      if (el.dataset.f === "formato") { FORMATO = el.value; pintarTablero(); return; }
-      if (el.dataset.inv) {
-        const k = el.dataset.k;
-        const v = el.type === "checkbox" ? el.checked : num(el.value);
-        const campos = { [k]: v };
-        if (k === "asistio" && v) campos.inscripto = true;           // si vino, se inscribió
-        guardarInv(el.dataset.inv, campos).then(() => { if (k !== "personas") pintarClientes(); });
-        return;
-      }
+      if (el.dataset.f === "anio") { ANIO = el.value; pintarTablero(); refrescarTablero(); return; }
+      if (el.dataset.f === "formato") { FORMATO = el.value; pintarTablero(); refrescarTablero(); return; }
       const campo = el.dataset.campo; if (!campo) return;
       let v = el.value;
       if (campo === "titulo") { v = v.trim(); if (!v && ABIERTO !== "nuevo") { el.value = eventoAbierto().titulo; return nota("El nombre no puede quedar vacío.", true); } }
-      if (campo === "inversion_usd") v = num(v);
+      if (["inversion_usd", "prof_inscriptos", "prof_asistentes"].includes(campo)) v = num(v);
       if (["fecha", "accion_id"].includes(campo) && !v) v = null;
       guardar({ [campo]: v }).then(ok => {
         if (!ok || ABIERTO === "nuevo") return;
-        if (["fecha", "accion_id", "inversion_usd"].includes(campo)) { pintarDetalle(); }
+        if (["fecha", "accion_id", "inversion_usd"].includes(campo)) pintarDetalle();
+        else if (["prof_inscriptos", "prof_asistentes"].includes(campo)) pintarAnalisis();
       });
     });
     document.addEventListener("click", ev => {   // cerrar las sugerencias al tocar afuera

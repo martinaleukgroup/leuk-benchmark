@@ -2500,7 +2500,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "usuarios", "kpis"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "eventos-clientes", "usuarios", "kpis"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2539,7 +2539,8 @@
     // Seguimiento de acciones (alianzas, eventos, sponsoreos…): sólo Admin y Líder (ver ROLES).
     acciones: {
       label: "Acciones",
-      pages: [{ p: "acciones", t: "Seguimiento de acciones" }],
+      pages: [{ p: "acciones", t: "Seguimiento de acciones" },
+              { p: "eventos-clientes", t: "Eventos con clientes" }],   // eventos-clientes.js
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2560,6 +2561,7 @@
     inicio:          { t: "Mi día",               ic: "home" },
     tareas:          { t: "Tareas",               ic: "view_kanban",  badge: "tareas" },
     acciones:        { t: "Acciones",             ic: "campaign",     badge: "acciones" },
+    "eventos-clientes": { t: "Eventos con clientes", ic: "handshake" },
     eventos:         { t: "Eventos",              ic: "confirmation_number" },
     contenidos:      { t: "Comunidad WhatsApp",   ic: "chat" },
     "contenidos-ig": { t: "Instagram",            ic: "photo_camera" },
@@ -2588,7 +2590,7 @@
   // `badge` en el grupo: ahí pinta su contador el módulo (Contenidos cuenta sus dos canales juntos).
   const GRUPOS = [
     { items: ["inicio"] },
-    { g: "Planificación",      items: ["tareas", "acciones", "eventos"] },
+    { g: "Planificación",      items: ["tareas", "acciones", "eventos-clientes", "eventos"] },
     { g: "Contenidos",         items: ["contenidos", "contenidos-ig", "contenidos-mail"], badge: "contenidos" },
     { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
     { g: "Generadores",        items: ["firmas", "stock", "reingresos"] },
@@ -2719,6 +2721,12 @@
       "En la <b>línea de tiempo</b> sumá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
       "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
       "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
+    { t: "Eventos con clientes", ic: "handshake", pages: ["eventos-clientes"], pasos: [
+      "Subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Reemplaza sólo el período que trae el archivo, así que lo podés volver a subir cada mes.",
+      "Creá el evento con <b>＋ Nuevo evento</b>: fecha, formato y, si querés, la <b>acción</b> de donde sale la inversión (o cargala en US$).",
+      "Sumá a los <b>distribuidores invitados</b> buscándolos por nombre, razón social o CUIT (o con <b>Pegar lista</b>) y marcá quién se <b>inscribió</b> y quién <b>asistió</b>.",
+      "Elegí la ventana (<b>30, 60, 90 o 180 días</b>): ves cuánto compró cada cliente antes y después, comparado con los que no vinieron y con el resto de los clientes.",
+      "Descargá todo en <b>Excel</b> (resumen, clientes, familias y evolución) o en <b>PDF</b> desde la impresión del navegador."] },
     { t: "Usuarios", ic: "group", pages: ["usuarios"], pasos: [
       "<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
       "<b>Cambiá el rol</b> cuando cambie de equipo: se aplica la próxima vez que entre.",
@@ -2792,6 +2800,8 @@
     if (page === "tareas" && window.renderTareas) window.renderTareas();
     // Acciones de marketing: lista + ficha con línea de tiempo y métricas. Lo arma acciones.js.
     if (page === "acciones" && window.renderAcciones) window.renderAcciones();
+    // Eventos con clientes: quiénes vinieron y cuánto compraron después. Lo arma eventos-clientes.js.
+    if (page === "eventos-clientes" && window.renderEventosClientes) window.renderEventosClientes();
     if (page === "usuarios") renderUsuarios();
     if (page === "kpis" && window.renderKpisConfig) window.renderKpisConfig();
     window.scrollTo({ top: 0 });

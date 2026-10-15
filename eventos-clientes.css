@@ -1,0 +1,105 @@
+/* ============================================================================
+   EVENTOS CON CLIENTES (sección de Acciones) — tablero y ficha del evento.
+   Prefijo ec-; reusa .mh (encabezado común), .ac-sel/.ac-chip/.ac-mini de Acciones.
+   ========================================================================== */
+.ec-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 10px}
+.ec-nota{font-size:12.5px;color:var(--olive)}
+.ec-nota.err{color:var(--no)}
+.ec-ayuda{font-size:12.5px;color:var(--gray-soft);margin:6px 0 0}
+.ec-ayuda b{color:var(--ink)}
+.ec-falta{color:var(--warn)!important}
+
+.ec-ventana{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--gray-soft)}
+.ec-ventana span{margin-right:4px}
+.ec-ventana button{border:1px solid var(--line);background:var(--card);color:var(--gray);padding:5px 10px;border-radius:999px;font-size:12.5px}
+.ec-ventana button.on{background:var(--olive);border-color:var(--olive);color:#fff}
+
+.mh-kpi b small{font-size:16px;color:var(--gray-soft)}
+.mh-kpi small{font-size:11.5px;color:var(--gray-soft);line-height:1.3}
+
+/* ---- Tarjetas y gráficos ---- */
+.ec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;margin:12px 0}
+.ec-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;min-width:0}
+.ec-card h3{margin:0;font-size:17px;color:var(--ink)}
+.ec-card-sub{margin:2px 0 8px;font-size:12.5px;color:var(--gray-soft)}
+.ec-svg{width:100%;height:auto;display:block;overflow:visible}
+.ec-t{font-family:var(--font-body);font-size:12px;fill:var(--gray)}
+.ec-v{fill:var(--ink);font-weight:600}
+.ec-eje{font-size:11px;fill:var(--gray-soft)}
+.ec-svg .ec-gl{stroke:var(--line);stroke-width:1}
+.ec-base{stroke:var(--olive-soft);stroke-width:1}
+.ec-marca{stroke:var(--olive-soft);stroke-width:1;stroke-dasharray:3 3}
+.ec-marca-t{fill:var(--olive);font-weight:600}
+.ec-graf-vacio{color:var(--gray-soft);font-size:13px;padding:30px 0;text-align:center}
+.ec-ley{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--gray-soft);margin:2px 0 6px}
+.ec-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* ---- Tablas ---- */
+.ec-tabla-card{margin:12px 0}
+.ec-tabla-wrap{overflow-x:auto;margin-top:8px}
+.ec-tabla{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.ec-tabla th{font-size:11.5px;font-weight:600;color:var(--gray-soft);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ec-tabla td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ec-tabla td small{display:block;font-size:11.5px;color:var(--gray-soft)}
+.ec-tabla td.n small{display:inline}
+.ec-tabla .n{text-align:right;white-space:nowrap}
+.ec-tabla .c{text-align:center}
+.ec-tabla td.ok{color:var(--ok)} .ec-tabla td.no{color:var(--no)}
+.ec-tabla tr[data-abrir]{cursor:pointer}
+.ec-tabla tr[data-abrir]:hover td{background:var(--olive-pale)}
+.ec-cli tr.no td{color:var(--gray-soft)}
+.ec-cli tr.no td b{color:var(--gray)}
+.ec-personas{width:58px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;font-family:var(--font-body);text-align:center}
+.ec-tag{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;vertical-align:1px;text-transform:uppercase;letter-spacing:.03em}
+.ec-tag.nuevo{background:#e3eedc;color:var(--ok)}
+.ec-tag.reactivado{background:#f4ead8;color:var(--warn)}
+
+/* ---- Ficha del evento ---- */
+.ec-d-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ec-d-top .ec-nota{flex:1}
+.ec-borrar{color:var(--no);border-color:#e3c9c4}
+.ec-datos{display:flex;flex-direction:column;gap:10px}
+.ec-titulo{font-family:var(--font-title);font-size:24px;font-weight:600;border:0;border-bottom:1.5px solid transparent;padding:2px 0;color:var(--ink);background:transparent;outline:none}
+.ec-titulo:focus{border-bottom-color:var(--olive-soft)}
+.ec-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ec-campos label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--gray-soft);min-width:0}
+.ec-campos label.ancho{grid-column:span 2}
+.ec-campos input,.ec-campos select,.ec-datos textarea{font-family:var(--font-body);font-size:14px;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);min-width:0}
+.ec-datos textarea{resize:vertical}
+.ec-campos input:focus,.ec-campos select:focus,.ec-datos textarea:focus{outline:none;border-color:var(--olive-mid)}
+.ec-crear{display:flex;align-items:center;gap:12px}
+.ec-analisis{margin-top:12px}
+.ec-clientes{margin-top:12px}
+.ec-cli-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.ec-cli-top h3{flex:1;min-width:160px}
+.ec-agregar{position:relative;flex:1 1 280px;max-width:420px}
+.ec-busca-cli{width:100%;font-family:var(--font-body);font-size:14px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);outline:none}
+.ec-busca-cli:focus{border-color:var(--olive-mid)}
+.ec-sug{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:var(--shadow);padding:4px;max-height:340px;overflow:auto}
+.ec-sug.on{display:block}
+.ec-sug button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:7px;font-family:var(--font-body);font-size:13.5px;color:var(--ink)}
+.ec-sug button:hover{background:var(--olive-pale)}
+.ec-sug button small{display:block;font-size:11.5px;color:var(--gray-soft)}
+.ec-sug button.libre{color:var(--olive);border-top:1px solid var(--line);border-radius:0 0 7px 7px}
+
+@media (max-width:640px){
+  .ec-campos label.ancho{grid-column:auto}
+  .ec-titulo{font-size:20px}
+}
+
+/* ---- PDF: se imprime sólo esta página, sin menú ni controles ---- */
+@media print{
+  body.ec-imprimiendo .side,body.ec-imprimiendo .side-scrim,body.ec-imprimiendo .topwrap,
+  body.ec-imprimiendo #ayudaFab,body.ec-imprimiendo #notis,body.ec-imprimiendo .ec-no-print,
+  body.ec-imprimiendo main > section:not(#page-eventos-clientes){display:none!important}
+  body.ec-imprimiendo .shell{display:block}
+  body.ec-imprimiendo{background:#fff}
+  body.ec-imprimiendo .ec-card,body.ec-imprimiendo .mh-kpi{break-inside:avoid;box-shadow:none}
+  body.ec-imprimiendo .ec-grid{grid-template-columns:1fr 1fr}
+  body.ec-imprimiendo .ec-tabla{min-width:0;font-size:11px}
+  body.ec-imprimiendo .ec-tabla-wrap{overflow:visible}
+  body.ec-imprimiendo .ec-datos input,body.ec-imprimiendo .ec-datos select,body.ec-imprimiendo .ec-datos textarea{border-color:transparent}
+  body.ec-imprimiendo .ec-personas{border:0}
+}
+.ec-campos input::placeholder,.ec-datos textarea::placeholder{color:var(--olive-soft)}

@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <!-- íconos del menú (sólo los que se usan; la lista va en orden alfabético) -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=alternate_email,assignment_ind,assignment_return,campaign,cancel,chat,check_circle,close,compare_arrows,confirmation_number,description,edit,event_upcoming,group,group_add,home,insights,inventory_2,mail,menu,menu_book,monitoring,move_to_inbox,notifications,payments,photo_camera,rate_review,search,signature,sync,upload,view_kanban&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=alternate_email,assignment_ind,assignment_return,campaign,cancel,chat,check_circle,close,compare_arrows,confirmation_number,description,edit,event_upcoming,group,group_add,handshake,home,insights,inventory_2,mail,menu,menu_book,monitoring,move_to_inbox,notifications,payments,photo_camera,rate_review,search,signature,sync,upload,view_kanban&display=block">
 <link rel="stylesheet" href="styles.css?v=263">
 <link rel="stylesheet" href="fichas.css?v=249">
 <link rel="stylesheet" href="fichas-panel.css?v=249">
@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="resultados.css?v=2">
 <link rel="stylesheet" href="tareas.css?v=6">
 <link rel="stylesheet" href="acciones.css?v=6">
+<link rel="stylesheet" href="eventos-clientes.css?v=1">
 </head>
 <body class="locked">
 
@@ -155,6 +156,8 @@
 
   <!-- PÁGINA ACCIONES — sólo Admin y Líder (lista + ficha con línea de tiempo y métricas, lo dibuja acciones.js) -->
   <section id="page-acciones" class="page hidden"><div id="acciones"></div></section>
+  <!-- PÁGINA EVENTOS CON CLIENTES — sección de Acciones (lo dibuja eventos-clientes.js) -->
+  <section id="page-eventos-clientes" class="page hidden"><div id="eventos-clientes"></div></section>
 
   <!-- PÁGINA USUARIOS (sólo admin) -->
   <section id="page-usuarios" class="page hidden"><div id="usuarios"></div></section>
@@ -186,7 +189,7 @@
 <script src="vendor/html2canvas.min.js?v=249"></script>
 <script src="vendor/jspdf.umd.min.js?v=249"></script>
 <script src="vendor/jszip.min.js?v=249"></script>
-<script src="app.js?v=270"></script>
+<script src="app.js?v=271"></script>
 <script src="fichas-data.js?v=249"></script>
 <script src="fichas-ui.js?v=249"></script>
 <script src="fichas-panel.js?v=249"></script>
@@ -194,6 +197,7 @@
 <script src="resultados.js?v=3"></script>
 <script src="tareas.js?v=9"></script>
 <script src="acciones.js?v=8"></script>
+<script src="eventos-clientes.js?v=1"></script>
 
 <!-- Mantiene --appbar-h igual al alto real de la barra (topbar + sub-barra),
      para que las mini-apps embebidas llenen exacto el alto de pantalla. -->

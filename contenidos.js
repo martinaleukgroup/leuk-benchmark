@@ -827,7 +827,7 @@
     if (!cambios.length) return;
     try {
       await Promise.all(cambios.map(c => guardarCampos(c.id, { fecha: c.fecha, orden: c.orden })));
-    } catch (e) { alert("No se pudo mover la pieza. Puede que no tengas permiso."); return; }
+    } catch (e) { lkAviso("No se pudo mover la pieza. Puede que no tengas permiso."); return; }
 
     const nueva = (cambios.find(c => c.id === desdeId) || {}).fecha;
     FEEDNOTA = `«${recorte(mov.criterio || "La pieza", 40)}» pasó al ${nueva ? nueva.slice(8) + "/" + nueva.slice(5, 7) : "nuevo lugar"}` +
@@ -850,13 +850,13 @@
     const cambiaMes = mesNuevo !== m.mes;
     if (cambiaMes && !(await asegurarMes(mesNuevo))) {
       const q = `No se pudo abrir ${mesLabel(mesNuevo)} para mudar ${C().art} ${C().unidad}.`;
-      if (avisoFicha) avisar(id, "No se pudo mover la fecha", false); else alert(q);
+      if (avisoFicha) avisar(id, "No se pudo mover la fecha", false); else lkAviso(q);
       return;
     }
     try { await guardarCampos(id, cambiaMes ? { fecha: nuevaFecha, mes: mesNuevo } : { fecha: nuevaFecha }); }
     catch (e) {
       if (avisoFicha) avisar(id, "No se pudo mover la fecha", false);
-      else alert("No se pudo mover la fecha. Puede que no tengas permiso.");
+      else lkAviso("No se pudo mover la fecha. Puede que no tengas permiso.");
       return;
     }
     const corta = nuevaFecha.slice(8) + "/" + nuevaFecha.slice(5, 7);
@@ -1080,14 +1080,14 @@
       const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${nombreSeguro(f.name)}`;
       const r = await fetch(sto(`object/${BUCKET_MAIL}/${encodeURI(path)}`), {
         method: "POST", headers: head({ "Content-Type": esHtml ? "text/html; charset=utf-8" : f.type, "x-upsert": "false" }), body: f });
-      if (!r.ok) { alert(`No se pudo subir «${f.name}».`); continue; }
+      if (!r.ok) { lkAviso(`No se pudo subir «${f.name}».`); continue; }
       const ref = { path, nombre: f.name, tam: f.size, ts: new Date().toISOString() };
       if (esHtml) { if (meta.html) sobran.push(meta.html.path); meta.html = ref; }
       else meta.imgs = (Array.isArray(meta.imgs) ? meta.imgs : []).concat([ref]);
       n++;
     }
     if (n) {
-      try { await guardarCampos(id, { meta }); } catch (e) { alert("Se subió el archivo pero no se pudo guardar en la ficha."); }
+      try { await guardarCampos(id, { meta }); } catch (e) { lkAviso("Se subió el archivo pero no se pudo guardar en la ficha."); }
       borrarMail(sobran);
     }
     pintar();
@@ -1103,16 +1103,16 @@
     let ref;
     if (cual === "html") { ref = meta.html; delete meta.html; }
     else { ref = (meta.imgs || [])[i]; meta.imgs = (meta.imgs || []).filter((_, k) => k !== i); }
-    if (!ref || !confirm(`¿Quitar «${ref.nombre}» de este envío?`)) return;
+    if (!ref || !(await lkConfirmar(`¿Quitar «${ref.nombre}» de este envío?`, { ok: "Quitar", peligro: true }))) return;
     try { await guardarCampos(id, { meta }); borrarMail([ref.path]); pintar(); }
-    catch (e) { alert("No se pudo quitar el archivo."); }
+    catch (e) { lkAviso("No se pudo quitar el archivo."); }
   }
   async function moverMail(id, i, d) {
     const m = MSGS.find(x => x.id === id); if (!m) return;
     const meta = JSON.parse(JSON.stringify(m.meta || {})), l = meta.imgs || [], j = i + d;
     if (j < 0 || j >= l.length) return;
     [l[i], l[j]] = [l[j], l[i]]; meta.imgs = l;
-    try { await guardarCampos(id, { meta }); pintar(); } catch (e) { alert("No se pudo reordenar."); }
+    try { await guardarCampos(id, { meta }); pintar(); } catch (e) { lkAviso("No se pudo reordenar."); }
   }
   async function copiarHtmlMail(id) {
     const m = MSGS.find(x => x.id === id), h = m && mailHtml(m); if (!h) return;
@@ -1313,7 +1313,7 @@
     const nueva = fn(copia);
     const { col, val } = conCampo(m, ruta, nueva);
     try { await guardarCampo(id, col, val); }
-    catch (e) { alert("No se pudo guardar la encuesta."); return; }
+    catch (e) { lkAviso("No se pudo guardar la encuesta."); return; }
     pintar();
     if (foco) {
       const el = document.querySelector(`.ct-msg[data-id="${id}"] [data-c="${ruta}.${foco}"]`);
@@ -1442,7 +1442,7 @@
     cont.querySelectorAll("[data-tipo]").forEach(s => {
       s.onchange = async () => {
         try { await guardarCampo(s.dataset.tipo, "tipo", s.value); pintar(); }
-        catch (e) { alert("No se pudo cambiar el tipo de pieza."); }
+        catch (e) { lkAviso("No se pudo cambiar el tipo de pieza."); }
       };
     });
 
@@ -1585,7 +1585,7 @@
       if (est) {
         const nuevo = est.dataset.est;
         try { await guardarCampo(id, "estado", nuevo); pintar(); }
-        catch (e) { alert("No se pudo cambiar el estado. Puede que no tengas permiso."); }
+        catch (e) { lkAviso("No se pudo cambiar el estado. Puede que no tengas permiso."); }
         return;
       }
 
@@ -1603,7 +1603,7 @@
         pls[+n] = Object.assign({}, pls[+n], { estado: nuevo });
         // El `estado` de la pieza lo recalcula el trigger de la base: no se manda.
         try { await guardarCampo(pid, "placas", pls); pintar(); }
-        catch (e) { alert("No se pudo cambiar el estado de la placa. Puede que no tengas permiso."); return; }
+        catch (e) { lkAviso("No se pudo cambiar el estado de la placa. Puede que no tengas permiso."); return; }
         // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame,
         // así que sin guardar el PNG lo aprobado cambiaría solo cuando la
         // diseñadora siga trabajando. Si falla, la aprobación igual queda hecha.
@@ -1629,7 +1629,7 @@
       if (cEst) {
         const [pid, nuevo] = cEst.dataset.copyest.split(":");
         try { await guardarCampo(pid, "copy_estado", nuevo); pintar(); }
-        catch (e) { alert("No se pudo cambiar el estado del copy."); }
+        catch (e) { lkAviso("No se pudo cambiar el estado del copy."); }
         return;
       }
       if (t.closest("[data-addplaca]")) {
@@ -1645,7 +1645,7 @@
       const dp = t.closest("[data-delplaca]");
       if (dp) {
         const [pid, n] = dp.dataset.delplaca.split(":");
-        if (!confirm("¿Eliminar esta placa? Los comentarios que apunten a ella quedan sueltos.")) return;
+        if (!(await lkConfirmar("¿Eliminar esta placa? Los comentarios que apunten a ella quedan sueltos.", { ok: "Eliminar", peligro: true }))) return;
         const m = MSGS.find(x => x.id === pid); if (!m) return;
         const pls = placasDe(m).slice(); pls.splice(+n, 1);
         await guardarCampo(pid, "placas", pls);
@@ -1655,12 +1655,12 @@
       }
       const tp = t.closest("[data-trabaplaca]");
       if (tp) {
-        alert(`Quedan ${tp.dataset.trabaplaca} comentario(s) sin resolver acá. Resolvelos en el hilo antes de aprobar.`);
+        lkAviso(`Quedan ${tp.dataset.trabaplaca} comentario(s) sin resolver acá. Resolvelos en el hilo antes de aprobar.`);
         return;
       }
 
       if (t.closest("[data-del]")) {
-        if (!confirm("¿Eliminar este mensaje del cronograma? No se puede deshacer.")) return;
+        if (!(await lkConfirmar("¿Eliminar este mensaje del cronograma? No se puede deshacer.", { ok: "Eliminar", peligro: true }))) return;
         await fetch(url(`contenidos?id=eq.${id}`), { method: "DELETE", headers: head() });
         await traerMes(MES); pintar(); return;
       }
@@ -1668,7 +1668,7 @@
       const dv = t.closest("[data-delvar]");
       if (dv) {
         ev.preventDefault();
-        if (!confirm("¿Eliminar esta variante?")) return;
+        if (!(await lkConfirmar("¿Eliminar esta variante?", { ok: "Eliminar", peligro: true }))) return;
         const m = MSGS.find(x => x.id === id);
         const vs = (m.variantes || []).slice(); vs.splice(+dv.dataset.delvar, 1);
         await guardarCampo(id, "variantes", vs); pintar(); return;
@@ -1677,7 +1677,7 @@
       if (ea) return cambiarEncuesta(id, ea.dataset.encadd, () => ({ q: "", hint: "", opciones: ["", ""], multiple: false }), "q");
       const ed_ = t.closest("[data-encdel]");
       if (ed_) {
-        if (!confirm("¿Quitar la encuesta de este mensaje?")) return;
+        if (!(await lkConfirmar("¿Quitar la encuesta de este mensaje?", { ok: "Quitar", peligro: true }))) return;
         return cambiarEncuesta(id, ed_.dataset.encdel, () => null);
       }
       const em = t.closest("[data-encmas]");
@@ -1701,7 +1701,7 @@
       const ds = t.closest("[data-descarta]");
       if (ds) return descartarSugerencia(ds.dataset.descarta);
       const tr = t.closest("[data-trabado]");
-      if (tr) { alert(`Quedan ${tr.dataset.trabado} sugerencia(s) sin resolver. Aceptalas o descartalas antes de aprobar el mensaje.`); return; }
+      if (tr) { lkAviso(`Quedan ${tr.dataset.trabado} sugerencia(s) sin resolver. Aceptalas o descartalas antes de aprobar el mensaje.`); return; }
       // click en un tramo sugerido → abre el hilo y resalta la ficha de esa sugerencia
       const dl = t.closest("[data-sug]");
       if (dl) {
@@ -1764,7 +1764,7 @@
       const { col, val } = conCampo(CAB, el.dataset.cabc, nuevo);
       const ok = await guardarCab(col, val);
       if (ok) { el.dataset.orig = nuevo; CAB[col] = val; if (!nuevo.trim()) await compactarCab(col); }
-      else { el.textContent = el.dataset.orig; alert("No se pudo guardar."); }
+      else { el.textContent = el.dataset.orig; lkAviso("No se pudo guardar."); }
       return;
     }
     const msg = el.closest(".ct-msg"); if (!msg) return;
@@ -1789,20 +1789,20 @@
     const abiertos = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto);
     if (a === "cambios" && !abiertos.length && !coms.some(c => c.tipo === "sugerencia" && !c.decision)) {
       // "Con ajustes" sin decir qué ajustar no le sirve a nadie: se pide el texto
-      const txt = (prompt("¿Qué hay que ajustar? (queda como comentario en la pieza)") || "").trim();
+      const txt = ((await lkPedir("¿Qué hay que ajustar?\n\nQueda como comentario en la pieza.", "", { ok: "Guardar comentario" })) || "").trim();
       if (!txt) return;
       const r = await fetch(url("contenidos_comentarios"), { method: "POST", headers: head({ Prefer: "return=minimal" }),
         body: JSON.stringify([{ contenido_id: id, texto: txt, variante: null, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }]) });
-      if (!r.ok) { alert("No se pudo guardar el comentario."); return; }
+      if (!r.ok) { lkAviso("No se pudo guardar el comentario."); return; }
     }
     if (a === "aprobado" && abiertos.length &&
-        !confirm(`Quedan ${abiertos.length} comentario${abiertos.length > 1 ? "s" : ""} sin resolver. ¿La marcás lista para publicar igual?`)) return;
-    if (a === "borrador" && !confirm("¿Volver a editarla? Va a tener que pedir feedback de nuevo.")) return;
+        !(await lkConfirmar(`Quedan ${abiertos.length} comentario${abiertos.length > 1 ? "s" : ""} sin resolver. ¿La marcás lista para publicar igual?`, { ok: "Marcarla lista" }))) return;
+    if (a === "borrador" && !(await lkConfirmar("¿Volver a editarla? Va a tener que pedir feedback de nuevo.", { ok: "Volver a editar" }))) return;
     if (boton) boton.disabled = true;
     const r = await fetch(url("rpc/contenidos_pasar"), { method: "POST", headers: head(), body: JSON.stringify({ p_id: id, p_a: a }) });
     if (!r.ok) {
       const d = await r.json().catch(() => ({}));
-      alert(r.status === 404 ? "Falta correr el SQL del flujo de Contenidos en Supabase." : (d.message || "No se pudo cambiar el estado."));
+      lkAviso(r.status === 404 ? "Falta correr el SQL del flujo de Contenidos en Supabase." : (d.message || "No se pudo cambiar el estado."));
       if (boton) boton.disabled = false; return;
     }
     await traerMes(MES);
@@ -1841,7 +1841,7 @@
         autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" }]),
     });
     ta.disabled = false;
-    if (!r.ok) { alert("No se pudo publicar el comentario."); return; }
+    if (!r.ok) { lkAviso("No se pudo publicar el comentario."); return; }
     ta.value = "";
     await traerMes(MES); pintar();
   }
@@ -1898,7 +1898,7 @@
     if (a === "nuevo-msg") {
       if (!MES) return;
       const r = await crearEnBlanco(MES);
-      if (!r.ok) { alert(await faltaSQL(r) ? FALTA_SQL : `No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
+      if (!r.ok) { lkAviso(await faltaSQL(r) ? FALTA_SQL : `No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
       VISTA = "fichas"; FILTRO = "todos"; BUSCA = ""; await traerMes(MES);
       FOCO = ((await r.json())[0] || {}).id || ""; pintar(); return;
     }
@@ -2029,7 +2029,7 @@
       });
       if (!r.ok) return falla("No se pudo crear el mes. Puede que no tengas permiso.");
       const rp = await crearEnBlanco(m, 0);
-      if (!rp.ok) alert(await faltaSQL(rp) ? `El mes se creó, pero sin ${C().art} ${C().unidad} en blanco. ${FALTA_SQL}` : `El mes se creó, pero no se pudo sumar ${C().art} ${C().unidad} en blanco.`);
+      if (!rp.ok) lkAviso(await faltaSQL(rp) ? `El mes se creó, pero sin ${C().art} ${C().unidad} en blanco. ${FALTA_SQL}` : `El mes se creó, pero no se pudo sumar ${C().art} ${C().unidad} en blanco.`);
       cerrar();
       MES = m; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; VISTA = "fichas";
       await traerMeses(); await traerMes(MES); pintar();
@@ -2065,20 +2065,20 @@
   // Importa un mes entero. Si el mes ya existe pide confirmación y REEMPLAZA sus
   // mensajes (los comentarios se van con ellos: por eso el aviso es explícito).
   async function importar(file) {
-    let d; try { d = JSON.parse(await file.text()); } catch (e) { alert("Ese archivo no es un .json válido."); return; }
-    if (!d || !d.mes || !Array.isArray(d.mensajes)) { alert("Al .json le falta 'mes' o 'mensajes'."); return; }
+    let d; try { d = JSON.parse(await file.text()); } catch (e) { lkAviso("Ese archivo no es un .json válido."); return; }
+    if (!d || !d.mes || !Array.isArray(d.mensajes)) { lkAviso("Al .json le falta 'mes' o 'mensajes'."); return; }
 
     // Un .json sin canal es de antes de los canales: es de WhatsApp. Y si trae uno
     // que no es el que estás mirando, se avisa en vez de mezclar los cronogramas.
     const canalJson = d.canal || "whatsapp";
     if (canalJson !== CANAL) {
-      alert(`Ese archivo es del cronograma de ${(CANALES[canalJson] || {}).corto || canalJson}` +
+      lkAviso(`Ese archivo es del cronograma de ${(CANALES[canalJson] || {}).corto || canalJson}` +
             ` y estás parada en ${C().corto}.\n\nAbrí la solapa de ${(CANALES[canalJson] || {}).corto || canalJson} e importalo desde ahí.`);
       return;
     }
 
     const existe = MESES.some(x => x.mes === d.mes);
-    if (existe && !confirm(`${cap(mesLabel(d.mes))} de ${C().corto} ya está cargado.\n\nImportar REEMPLAZA sus ${C().unidadPl} y borra los comentarios que tengan. ¿Seguir?`)) return;
+    if (existe && !(await lkConfirmar(`${cap(mesLabel(d.mes))} de ${C().corto} ya está cargado.\n\nImportar REEMPLAZA sus ${C().unidadPl} y borra los comentarios que tengan. ¿Seguir?`, { ok: "Reemplazar", peligro: true }))) return;
 
     const autor = SES().nombre ? SES().nombre() : "", email = SES().email ? SES().email() : "";
     const cab = {
@@ -2089,7 +2089,7 @@
     let r = await fetch(url("contenidos_meses"), {
       method: "POST", headers: head({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify([cab]),
     });
-    if (!r.ok) { alert("No se pudo crear el mes. ¿Corriste el SQL de contenidos?"); return; }
+    if (!r.ok) { lkAviso("No se pudo crear el mes. ¿Corriste el SQL de contenidos?"); return; }
 
     if (existe) await fetch(url(`contenidos?mes=eq.${enc(d.mes)}&canal=eq.${CANAL}`), { method: "DELETE", headers: head() });
 
@@ -2102,7 +2102,7 @@
       estado: m.estado || "borrador", orden: i, autor, autor_email: email,
     }));
     r = await fetch(url("contenidos"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) });
-    if (!r.ok) { alert(`El mes se creó pero fallaron ${C().unidadPl}:\n` + (await r.text()).slice(0, 300)); }
+    if (!r.ok) { lkAviso(`El mes se creó pero fallaron ${C().unidadPl}:\n` + (await r.text()).slice(0, 300)); }
 
     MES = d.mes; await traerMeses(); await traerMes(MES); pintar();
   }
@@ -2436,8 +2436,8 @@
     const t = TOOL; if (!t) return;
     const propuesto = t.querySelector(".ct-seltool-ta").value;
     const original = t.dataset.original;
-    if (propuesto === original) { alert("El texto propuesto es igual al original."); return; }
-    if (!propuesto.trim() && !confirm("El cuadro está vacío: ¿sugerís borrar este fragmento?")) return;
+    if (propuesto === original) { lkAviso("El texto propuesto es igual al original."); return; }
+    if (!propuesto.trim() && !(await lkConfirmar("El cuadro está vacío: ¿sugerís borrar este fragmento?", { ok: "Sugerir borrarlo" }))) return;
     const fila = {
       contenido_id: t.dataset.id, tipo: "sugerencia", campo: t.dataset.campo,
       desde: +t.dataset.desde, hasta: +t.dataset.hasta, original, propuesto,
@@ -2448,7 +2448,7 @@
     const r = await fetch(url("contenidos_comentarios"), {
       method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify([fila]),
     });
-    if (!r.ok) { alert("No se pudo guardar la sugerencia."); return; }
+    if (!r.ok) { lkAviso("No se pudo guardar la sugerencia."); return; }
     ABIERTOS[id] = true;
     await traerMes(MES); pintar();
   }
@@ -2464,13 +2464,13 @@
     const g = (COMS[m.id] || []).find(c => c.id === id); if (!g) return;
     const txt = leerCampo(m, g.campo);
     if (typeof txt !== "string" || txt.slice(g.desde, g.hasta) !== g.original) {
-      alert("El texto original ya cambió, así que esta sugerencia no se puede aplicar. Descartala y volvé a proponerla.");
+      lkAviso("El texto original ya cambió, así que esta sugerencia no se puede aplicar. Descartala y volvé a proponerla.");
       return;
     }
     const nuevo = txt.slice(0, g.desde) + g.propuesto + txt.slice(g.hasta);
     const { col, val } = conCampo(m, g.campo, nuevo);
     try { await guardarCampo(m.id, col, val); }
-    catch (e) { alert("No se pudo aplicar el cambio. Puede que no tengas permiso."); return; }
+    catch (e) { lkAviso("No se pudo aplicar el cambio. Puede que no tengas permiso."); return; }
 
     const delta = g.propuesto.length - g.original.length;
     for (const o of (COMS[m.id] || [])) {

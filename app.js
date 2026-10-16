@@ -166,10 +166,10 @@
     try { await fetch(`${SB.url}/rest/v1/${SB.table}?key=eq.${encodeURIComponent(k)}`, { method: "DELETE", headers: sbHead() }); } catch (e) { }
   }
   const AUTOR_KEY = "benchmark_leuk_autor";
-  function getAutor() {
+  async function getAutor() {
     let a = localStorage.getItem(AUTOR_KEY);
     if (!a) {
-      a = (prompt("¿Cómo te llamás? Queda registrado en las comparaciones que autorices (una sola vez).") || "").trim();
+      a = ((await lkPedir("¿Cómo te llamás?\n\nQueda registrado en las comparaciones que autorices (una sola vez).")) || "").trim();
       if (a) localStorage.setItem(AUTOR_KEY, a);
     }
     return a || "Anónimo";
@@ -299,7 +299,7 @@
     } catch (e) { }
   }
   async function savePrice(key, precio) {                // precio null = volver al original
-    if (!AUTHSES.logged()) { alert("Ingresá con tu usuario para editar precios."); return; }
+    if (!AUTHSES.logged()) { lkAviso("Ingresá con tu usuario para editar precios."); return; }
     const autor = AUTHSES.email(), ts = Date.now();
     if (precio == null) delete PRICEOV[key];
     else PRICEOV[key] = { precio, autor, ts };
@@ -320,21 +320,21 @@
         });
       }
       if ((r.status === 401 || r.status === 403) && !retried && await AUTHSES.refresh()) return priceWrite(key, precio, autor, ts, true);
-      if (!r.ok) alert("No se pudo guardar el precio (¿sesión vencida? volvé a ingresar).");
+      if (!r.ok) lkAviso("No se pudo guardar el precio (¿sesión vencida? volvé a ingresar).");
     } catch (e) { }
   }
-  function openPriceEditor(key, curList, marca, label) {
+  async function openPriceEditor(key, curList, marca, label) {
     const ov = PRICEOV[key];
     const cur = ov ? ov.precio : curList;
     const quien = marca === "LEUK" ? "Leuk" : marca;
     const msg = `Precio de LISTA en US$ para:\n${label || key}  (${quien})` +
       (ov ? `\n\n(editado por ${ov.autor}. Dejalo vacío para volver al valor original)` : "");
-    const inp = prompt(msg, cur != null ? cur : "");
+    const inp = await lkPedir(msg, cur != null ? cur : "", { ok: "Guardar" });
     if (inp === null) return;
     const v = inp.trim();
     if (v === "") { savePrice(key, null).then(afterPriceEdit); return; }
     const num = Number(v.replace(/\./g, "").replace(",", "."));
-    if (!isFinite(num) || num < 0) { alert("Precio inválido. Poné solo el número, ej: 42.50"); return; }
+    if (!isFinite(num) || num < 0) { lkAviso("Precio inválido. Poné solo el número, ej: 42.50"); return; }
     savePrice(key, Math.round(num * 100) / 100).then(afterPriceEdit);
   }
   function afterPriceEdit() { const d = $("#detail"); if (d) d.classList.add("hidden"); rerenderActive(); }
@@ -415,7 +415,7 @@
   const isMono = sku => !!MONO[sku];
   function toggleMono(p) {
     if (MONO[p.sku]) {
-      if (!puedeBorrar(MONO[p.sku])) { alert(AVISO_BORRAR); return false; }   // quitar la marca = eliminarla
+      if (!puedeBorrar(MONO[p.sku])) { lkAviso(AVISO_BORRAR); return false; }   // quitar la marca = eliminarla
       delete MONO[p.sku]; sbDel(monoKey(p.sku));
     }
     else {
@@ -472,7 +472,7 @@
     const ak = keyOf(p.sku, prop);
     if (AUTH[ak]) {
       if (puedeBorrar(AUTH[ak])) { delete AUTH[ak]; save(); sbDel(ak); }
-      else alert(`Lo descartaste, pero la selección de ${AUTH[ak].autor || "otra persona"} sigue en Comparaciones. Pedile a un administrador que la quite.`);
+      else lkAviso(`Lo descartaste, pero la selección de ${AUTH[ak].autor || "otra persona"} sigue en Comparaciones. Pedile a un administrador que la quite.`);
     }
   }
   function descartarEnt(prop, motivo) {
@@ -488,10 +488,10 @@
     const ajenas = tocadas.filter(a => !puedeBorrar(a));
     tocadas.filter(puedeBorrar).forEach(a => { delete AUTH[a.key]; sbDel(a.key); });
     save();
-    if (ajenas.length) alert(`Quedaron ${ajenas.length} selección(es) de otras personas contra este producto. Pedile a un administrador que las quite.`);
+    if (ajenas.length) lkAviso(`Quedaron ${ajenas.length} selección(es) de otras personas contra este producto. Pedile a un administrador que las quite.`);
   }
   function quitarDescarte(o) {
-    if (!puedeBorrar(o)) { alert(AVISO_BORRAR); return false; }
+    if (!puedeBorrar(o)) { lkAviso(AVISO_BORRAR); return false; }
     if (o.sku) { delete NOPAR[noParId(o.sku, o)]; sbDel(`no|${o.sku}|${o.marca}|${o.fslug}`); }
     else { delete NOENT[entKey(o.marca, o.fslug)]; sbDel(noEntKey(o.marca, o.fslug)); }
     return true;
@@ -517,7 +517,7 @@
   function toggleAuth(p, prop) {
     const k = keyOf(p.sku, prop);
     if (AUTH[k]) {
-      if (!puedeBorrar(AUTH[k])) { alert(AVISO_BORRAR); return; }   // quitar una selección = eliminarla
+      if (!puedeBorrar(AUTH[k])) { lkAviso(AVISO_BORRAR); return; }   // quitar una selección = eliminarla
       delete AUTH[k]; save(); sbDel(k);
     }
     else {
@@ -1215,9 +1215,9 @@
   // competidor, precios de lista y con descuento (neto) de ambos, y la diferencia. Nombre de archivo
   // con el competidor. Usa la config de descuentos vigente (mismos números que muestra la app).
   function exportXLSX() {
-    if (typeof XLSX === "undefined") { alert("No se pudo cargar el generador de Excel."); return; }
+    if (typeof XLSX === "undefined") { lkAviso("No se pudo cargar el generador de Excel."); return; }
     const f = authList();
-    if (!f.length) { alert("No hay comparaciones seleccionadas para exportar."); return; }
+    if (!f.length) { lkAviso("No hay comparaciones seleccionadas para exportar."); return; }
     const HEAD = ["Competidor", "Producto Leuk", "SKU Leuk", "Producto competidor", "Equivalencia",
       "Lista Leuk (US$)", "Desc. Leuk %", "Neto Leuk (US$)",
       "Lista competidor (US$)", "Desc. comp. %", "Neto competidor (US$)",
@@ -1251,8 +1251,8 @@
         const obj = JSON.parse(rd.result); let n = 0;
         Object.entries(obj).forEach(([k, v]) => { if (v && v.leukSku) { AUTH[k] = v; n++; sbPut(k); } });
         save(); renderTabla();
-        alert(`Importadas ${n} autorización(es). Total: ${Object.keys(AUTH).length}.`);
-      } catch (e) { alert("Archivo inválido."); }
+        lkAviso(`Importadas ${n} autorización(es). Total: ${Object.keys(AUTH).length}.`);
+      } catch (e) { lkAviso("Archivo inválido."); }
     };
     rd.readAsText(file);
   }
@@ -1655,7 +1655,7 @@
   // Al cerrar sesión este dispositivo deja de recibir los avisos de esa persona (si no,
   // en una compu compartida le llegarían a quien entre después).
   async function doLogout() {
-    if (!confirm(`Sesión: ${AUTHSES.email()}\n¿Cerrar sesión?`)) return;
+    if (!(await lkConfirmar(`¿Cerrar sesión?\n\nEntraste como ${AUTHSES.email()}.`, { ok: "Cerrar sesión" }))) return;
     clearInterval(NT_TIMER);
     await desactivarPush().catch(() => { });
     AUTHSES.logout(); lock();
@@ -1909,7 +1909,7 @@
     return { out, total: items.length };
   }
   function openPrecios() {
-    if (!puedePrecios()) { alert("No tenés permiso para actualizar precios. Pedile a un administrador que te habilite como editor."); return; }
+    if (!puedePrecios()) { lkAviso("No tenés permiso para actualizar precios. Pedile a un administrador que te habilite como editor."); return; }
     const ov = el("div", "detail"); ov.id = "preciosModal";
     const opts = `<option value="LEUK">Leuk</option>` + MARCAS.map(m => `<option value="${m}">${m}</option>`).join("");
     ov.innerHTML = `<div class="detail-inner desc-modal">
@@ -2042,7 +2042,7 @@
     return { out: items.filter(i => skus.has(i.sku)), total: items.length };
   }
   function openCostos() {
-    if (!puedeCostos()) { alert("Sólo Admin y Líder pueden actualizar costos."); return; }
+    if (!puedeCostos()) { lkAviso("Sólo Admin y Líder pueden actualizar costos."); return; }
     const ov = el("div", "detail"); ov.id = "costosModal";
     ov.innerHTML = `<div class="detail-inner desc-modal">
       <button class="detail-close" id="cxClose">✕</button>
@@ -2150,7 +2150,7 @@
   // lleva IVA, si los códigos de la web cruzan con los del PDF) y eso se resuelve con el
   // asistente de alta, que además deja escrita la RECETA. Sin receta no hay actualización.
   function openActualizar() {
-    if (!puedeIntegrar()) { alert("Sólo Admin, Líder y Coordinación pueden actualizar listas de competencia."); return; }
+    if (!puedeIntegrar()) { lkAviso("Sólo Admin, Líder y Coordinación pueden actualizar listas de competencia."); return; }
     const ov = el("div", "detail"); ov.id = "integrarModal";
     ov.innerHTML = `<div class="detail-inner desc-modal ci-modal">
       <button class="detail-close" id="ciClose">✕</button>
@@ -2469,7 +2469,7 @@
       const nuevo = (p.aprobado === val) ? null : val;   // volver a tocar el mismo = des-marcar (sin revisar)
       one.disabled = true;
       const ok = await guardarAprob(`id=eq.${id}`, nuevo);
-      if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3 (columna 'aprobado' + policy)?"); one.disabled = false; return; }
+      if (!ok) { lkAviso("No se pudo guardar. ¿Corriste el SQL de la Fase 3 (columna 'aprobado' + policy)?"); one.disabled = false; return; }
       p.aprobado = nuevo; paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
       return;
     }
@@ -2488,12 +2488,12 @@
         : modo === "fotoprecio"
         ? `¿Aprobar los ${n} productos de ${marca} que tienen foto y precio? Los ${dela.length - n} restantes quedan sin revisar.`
         : `¿${val ? "Aprobar" : "Descartar"} TODO el portfolio de ${marca}? (${n} productos)`;
-      if (!n) { alert(`No hay productos de ${marca} que cumplan la condición.`); return; }
-      if (!confirm(txt)) return;
+      if (!n) { lkAviso(`No hay productos de ${marca} que cumplan la condición.`); return; }
+      if (!(await lkConfirmar(txt, { ok: val ? "Aprobar" : "Descartar" }))) return;
       const filtro = `marca=eq.${encodeURIComponent(marca)}` + (modo === "foto" ? "&imagen=not.is.null"
         : modo === "fotoprecio" ? "&imagen=not.is.null&precio_usd=gt.0" : "");
       const ok = await guardarAprob(filtro, val);
-      if (!ok) { alert("No se pudo guardar. ¿Corriste el SQL de la Fase 3?"); return; }
+      if (!ok) { lkAviso("No se pudo guardar. ¿Corriste el SQL de la Fase 3?"); return; }
       INTEG.forEach(p => { if (p.marca === marca && entra(p)) p.aprobado = val; });
       paintInteg($("#intgSearch") ? $("#intgSearch").value : "");
     }
@@ -2954,14 +2954,14 @@
     // contraseña nueva / quitar acceso
     cont.querySelectorAll(".us-pass").forEach(b => b.onclick = async () => {
       const email = b.closest("tr").dataset.email;
-      const p = prompt(`Contraseña nueva para ${email} (mín. 8):`);
+      const p = await lkPedir(`Contraseña nueva para ${email}\n\nMínimo 8 caracteres.`, "", { ok: "Cambiar contraseña" });
       if (!p) return;
       try { await llamarFn("password", { email, password: p }); msg(`✓ Contraseña actualizada para ${email}.`, true); }
       catch (e) { msg(e.message === "FALTA_FN" ? "Falta desplegar la función 'gestion-usuarios'." : e.message, false); }
     });
     cont.querySelectorAll(".us-del").forEach(b => b.onclick = async () => {
       const email = b.closest("tr").dataset.email;
-      if (!confirm(`¿Quitar el acceso de ${email}?\n\nSe elimina su cuenta y su rol.`)) return;
+      if (!(await lkConfirmar(`¿Quitar el acceso de ${email}?\n\nSe elimina su cuenta y su rol.`, { ok: "Quitar acceso", peligro: true }))) return;
       try { await llamarFn("eliminar", { email }); msg(`✓ ${email} ya no tiene acceso.`, true); renderUsuarios(); }
       catch (e) {
         if (e.message !== "FALTA_FN") return msg(e.message, false);

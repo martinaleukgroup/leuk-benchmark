@@ -225,7 +225,7 @@
   async function descargarTodas(btn, note) {
     if (btn.disabled) return;
     if (!window.jspdf || !window.JSZip || !window.html2canvas) {
-      alert("No se pudieron cargar las librerías para generar los PDF. Recargá la página (Cmd+Shift+R) e intentá de nuevo.");
+      lkAviso("No se pudieron cargar las librerías para generar los PDF. Recargá la página (Cmd+Shift+R) e intentá de nuevo.");
       return;
     }
     const textoPrevio = btn.textContent;
@@ -278,7 +278,7 @@
       note.innerHTML = `Listo: <b>${DOCS.length}</b> fichas en un ZIP de ${(blob.size / 1e6).toFixed(0)} MB` +
         (min ? ` (tardó ${min} min).` : ".");
     } catch (e) {
-      alert("Se cortó la generación del ZIP: " + e.message);
+      lkAviso("Se cortó la generación del ZIP: " + e.message);
     } finally {
       jaula.remove();
       btn.disabled = false;

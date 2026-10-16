@@ -553,14 +553,14 @@
     if (!r || !r.ok) {
       if (antes == null) delete V[k]; else V[k] = antes;
       el.value = antes ?? ""; el.classList.add("mal"); repintarResultados();
-      alert("No se pudo guardar ese dato. Probá de nuevo.");
+      lkAviso("No se pudo guardar ese dato. Probá de nuevo.");
       return;
     }
     el.classList.add("ok"); setTimeout(() => el.classList.remove("ok"), 900);
   }
 
   function exportar() {
-    if (!window.XLSX) { alert("No se pudo cargar el exportador."); return; }
+    if (!window.XLSX) { lkAviso("No se pudo cargar el exportador."); return; }
     const ms = todosLosMeses();
     const kpis = [["KPI", ...ms.map(mesLargo)], ...(CFG.kpis || []).map(k => [k.t, ...ms.map(m => {
       const v = calc(k, [m]); return v == null ? "" : k.fmt === "pct" ? Math.round(v * 1000) / 10 : Math.round(v * 10) / 10; })])];
@@ -827,7 +827,7 @@
       const b = ev.target.closest("button"); if (!b) return;
       if (b.dataset.edcanal) {
         if (b.dataset.edcanal === ED_CANAL) return;
-        if (sucio() && !confirm("Tenés cambios sin guardar en este canal. ¿Descartarlos?")) return;
+        if (sucio() && !(await lkConfirmar("Tenés cambios sin guardar en este canal. ¿Descartarlos?", { ok: "Descartar" }))) return;
         await edCargar(b.dataset.edcanal); return edPintar();
       }
       if (b.dataset.edagregar) {
@@ -851,10 +851,10 @@
         const [l, i] = b.dataset.edborrar.split(":"); const x = ED[l][+i];
         if (l === "datos") {
           const usos = usosDe(x.k);
-          if (usos.length) { alert(`No se puede eliminar «${x.t}»: lo usa ${usos.join(", ")}.\n\nCambiá esas fórmulas primero.`); return; }
+          if (usos.length) { lkAviso(`No se puede eliminar «${x.t}»: lo usa ${usos.join(", ")}.\n\nCambiá esas fórmulas primero.`); return; }
           const cargados = Object.keys(ED_DATOS.v).filter(c => c.endsWith("|" + x.k)).length;
-          if (!confirm(`¿Eliminar el dato «${x.t || "sin nombre"}»?` + (cargados ? `\n\nTiene ${cargados} valores cargados: no se borran, pero se dejan de mostrar.` : ""))) return;
-        } else if (!confirm(`¿Eliminar «${x.t || "sin nombre"}»?`)) return;
+          if (!(await lkConfirmar(`¿Eliminar el dato «${x.t || "sin nombre"}»?` + (cargados ? `\n\nTiene ${cargados} valores cargados: no se borran, pero se dejan de mostrar.` : ""), { ok: "Eliminar", peligro: true }))) return;
+        } else if (!(await lkConfirmar(`¿Eliminar «${x.t || "sin nombre"}»?`, { ok: "Eliminar", peligro: true }))) return;
         ED[l].splice(+i, 1); return edPintar();
       }
       if (b.hasAttribute("data-eddescartar")) { ED = JSON.parse(ED_ORIG); ED_MSG = ""; return edPintar(); }

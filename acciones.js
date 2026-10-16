@@ -383,7 +383,7 @@
   async function borrarAccion(id) {
     const a = ACC.find(x => x.id === id); if (!a) return;
     const nArch = archivosDe(id);
-    if (!confirm(`¿Eliminar la acción "${a.titulo}"?\n\nSe borra también su línea de tiempo${nArch ? ` y sus ${nArch} archivo${nArch === 1 ? "" : "s"}` : ""}. No se puede deshacer.`)) return;
+    if (!(await lkConfirmar(`¿Eliminar la acción "${a.titulo}"?\n\nSe borra también su línea de tiempo${nArch ? ` y sus ${nArch} archivo${nArch === 1 ? "" : "s"}` : ""}. No se puede deshacer.`, { ok: "Eliminar", peligro: true }))) return;
     const paths = (HITOS[id] || []).flatMap(h => h.archivos.map(f => f.path));
     try {
       const r = await fetch(url(`acciones?id=eq.${enc(id)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) });
@@ -473,7 +473,7 @@
     const id = ABIERTA, h = (HITOS[id] || []).find(x => x.id === hid); if (!h) return;
     const n = h.archivos.length, nc = comsDe(hid).length;
     const tambien = [n ? (n === 1 ? "su archivo" : `sus ${n} archivos`) : "", nc ? (nc === 1 ? "su comentario" : `sus ${nc} comentarios`) : ""].filter(Boolean).join(" y ");
-    if (!confirm(`¿Borrar esta entrada de la línea de tiempo?${tambien ? `\n\nSe borra${n + nc > 1 ? "n" : ""} ${tambien} también.` : ""}`)) return;
+    if (!(await lkConfirmar(`¿Borrar esta entrada de la línea de tiempo?${tambien ? `\n\nSe borra${n + nc > 1 ? "n" : ""} ${tambien} también.` : ""}`, { ok: "Borrar", peligro: true }))) return;
     const r = await fetch(url(`acciones_hitos?id=eq.${enc(hid)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) }).catch(() => null);
     const d = r && r.ok ? await r.json() : [];
     if (!d.length) return nota("No se pudo borrar. Sólo puede hacerlo quien la escribió o un admin.", true);
@@ -518,7 +518,7 @@
   }
   async function borrarComentario(cid) {
     const id = ABIERTA;
-    if (!confirm("¿Borrar este comentario?")) return;
+    if (!(await lkConfirmar("¿Borrar este comentario?", { ok: "Borrar", peligro: true }))) return;
     const r = await fetch(url(`acciones_comentarios?id=eq.${enc(cid)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) }).catch(() => null);
     const d = r && r.ok ? await r.json() : [];
     if (!d.length) return nota("No se pudo borrar. Sólo puede hacerlo quien lo escribió o un admin.", true);
@@ -920,12 +920,12 @@
     ABIERTA = "nueva"; pintar();
     const t = caja().querySelector(".ac-titulo"); if (t) t.focus();
   }
-  function volver() {
+  async function volver() {
     if (ABIERTA === "nueva") {
       const t = caja().querySelector(".ac-titulo");
-      if (t && t.value.trim() && !confirm("¿Descartar la acción que estabas creando?")) return;
-    } else if ((COMP.texto.trim() || PEND.length) && !confirm("Tenés una entrada sin agregar a la línea de tiempo. ¿Salir igual?")) return;
-    if (Object.values(BORR_COM).some(v => v.trim()) && !confirm("Tenés un comentario sin enviar. ¿Salir igual?")) return;
+      if (t && t.value.trim() && !(await lkConfirmar("¿Descartar la acción que estabas creando?", { ok: "Descartar" }))) return;
+    } else if ((COMP.texto.trim() || PEND.length) && !(await lkConfirmar("Tenés una entrada sin agregar a la línea de tiempo. ¿Salir igual?", { ok: "Salir igual" }))) return;
+    if (Object.values(BORR_COM).some(v => v.trim()) && !(await lkConfirmar("Tenés un comentario sin enviar. ¿Salir igual?", { ok: "Salir igual" }))) return;
     Object.keys(BORR_COM).forEach(k => delete BORR_COM[k]);
     cerrarMenc();
     ABIERTA = null; BORRADOR = null; COMP = compVacio(); PEND = [];

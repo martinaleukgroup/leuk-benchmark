@@ -713,7 +713,7 @@
   }
   async function borrar() {
     const ev = eventoAbierto(); if (!ev) return;
-    if (!confirm(`¿Eliminar el evento "${ev.titulo}"?\n\nLas ventas no se tocan. No se puede deshacer.`)) return;
+    if (!(await lkConfirmar(`¿Eliminar el evento "${ev.titulo}"?\n\nLas ventas no se tocan. No se puede deshacer.`, { ok: "Eliminar", peligro: true }))) return;
     try {
       const r = await fetch(url(`eventos_clientes?id=eq.${enc(ev.id)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) });
       const d = r.ok ? await r.json() : []; if (!d.length) throw new Error();
@@ -722,8 +722,8 @@
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien lo creó o un admin.", true); }
   }
   function abrir(id) { ABIERTO = id; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
-  function volver() {
-    if (ABIERTO === "nuevo") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !confirm("¿Descartar el evento que estabas creando?")) return; }
+  async function volver() {
+    if (ABIERTO === "nuevo") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !(await lkConfirmar("¿Descartar el evento que estabas creando?", { ok: "Descartar" }))) return; }
     ABIERTO = null; BORRADOR = null; BUSCA_CLI = "";
     pintar(); refrescarTablero();
   }
@@ -843,7 +843,7 @@
       let texto = new TextDecoder("utf-8").decode(buf);
       if (texto.includes("\uFFFD")) texto = new TextDecoder("windows-1252").decode(buf);
       const p = procesarCSV(texto);
-      if (!confirm(`${file.name}\n\n${p.filas.toLocaleString("es-AR")} líneas de factura · ${p.clientes.length} clientes\nDel ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)}\n\nSe reemplazan las ventas cargadas de ese período. ¿Seguimos?`)) { nota(""); return; }
+      if (!(await lkConfirmar(`${file.name}\n\n${p.filas.toLocaleString("es-AR")} líneas de factura · ${p.clientes.length} clientes\nDel ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)}\n\nSe reemplazan las ventas cargadas de ese período. ¿Seguimos?`, { ok: "Importar" }))) { nota(""); return; }
       const TANDA = 3000;
       for (let i = 0; i < p.dias.length; i += TANDA) {
         nota(`Guardando ventas… ${Math.min(100, Math.round(i / p.dias.length * 100))} %`, false, true);
@@ -884,7 +884,7 @@
       r2(k.costoProf), m ? r2(k.extraProf) : "", k.ver.t];
   };
   async function excel() {
-    if (!window.XLSX) { alert("No se pudo cargar el exportador."); return; }
+    if (!window.XLSX) { lkAviso("No se pudo cargar el exportador."); return; }
     const wb = XLSX.utils.book_new();
     const ev = ABIERTO && ABIERTO !== "nuevo" ? eventoAbierto() : null;
     if (ev) {

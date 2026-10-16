@@ -377,7 +377,7 @@
 
   async function borrarTarea(id) {
     const t = TAREAS.find(x => x.id === id); if (!t) return;
-    if (!confirm(`¿Eliminar la tarea "${t.titulo}"?\n\nSe borran también su checklist y sus comentarios.`)) return;
+    if (!(await lkConfirmar(`¿Eliminar la tarea "${t.titulo}"?\n\nSe borran también su checklist y sus comentarios.`, { ok: "Eliminar", peligro: true }))) return;
     try {
       const r = await fetch(url(`tareas?id=eq.${enc(id)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) });
       const d = r.ok ? await r.json() : [];
@@ -409,7 +409,7 @@
   }
 
   async function borrarComentario(tareaId, cid) {
-    if (!confirm("¿Borrar este comentario?")) return;
+    if (!(await lkConfirmar("¿Borrar este comentario?", { ok: "Borrar", peligro: true }))) return;
     const r = await fetch(url(`tareas_comentarios?id=eq.${enc(cid)}`), { method: "DELETE", headers: head({ Prefer: "return=representation" }) }).catch(() => null);
     const d = r && r.ok ? await r.json() : [];
     if (!d.length) return nota("No se pudo borrar el comentario.", true);
@@ -420,14 +420,14 @@
   /* ---- Panel: abrir / nueva / cerrar ---- */
   const tareaAbierta = () => ABIERTA === "nueva" ? BORRADOR : TAREAS.find(x => x.id === ABIERTA);
 
-  function abrir(id) {
-    if (ABIERTA === "nueva" && !descartarBorrador()) return;
+  async function abrir(id) {
+    if (ABIERTA === "nueva" && !(await descartarBorrador())) return;
     ABIERTA = id; BORRADOR = null;
     marcarVisto(id);
     pintarPanel(); pintarCuerpo(); marcarNav(avisos());
   }
-  function nueva(def) {
-    if (ABIERTA === "nueva" && !descartarBorrador()) return;
+  async function nueva(def) {
+    if (ABIERTA === "nueva" && !(await descartarBorrador())) return;
     const enEquipo = EQUIPO.some(p => low(p.email) === yo());
     BORRADOR = {
       id: null, titulo: "", descripcion: "", estado: def.estado || "pendiente", prioridad: "media",
@@ -438,14 +438,14 @@
     pintarPanel(); pintarCuerpo();
     const t = caja().querySelector(".tk-p-titulo"); if (t) t.focus();
   }
-  function descartarBorrador() {
+  async function descartarBorrador() {
     const t = caja() && caja().querySelector(".tk-p-titulo");
     const escrito = (t && t.value.trim()) || (BORRADOR && (BORRADOR.descripcion || BORRADOR.checklist.length));
-    return !escrito || confirm("¿Descartar la tarea que estabas creando?");
+    return !escrito || await lkConfirmar("¿Descartar la tarea que estabas creando?", { ok: "Descartar" });
   }
-  function cerrar() {
+  async function cerrar() {
     if (!ABIERTA) return;
-    if (ABIERTA === "nueva" && !descartarBorrador()) return;
+    if (ABIERTA === "nueva" && !(await descartarBorrador())) return;
     ABIERTA = null; BORRADOR = null;
     pintarPanel(); pintarCuerpo();
   }

@@ -2706,6 +2706,7 @@
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
       "Dejá <b>comentarios</b> en 💬, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
       "Con sugerencias sin resolver no se puede marcar <b>Listo para publicar</b>. Los ajustes se van tildando como resueltos en los comentarios.",
+      "En la <b>Comunidad de WhatsApp</b> un mensaje puede llevar <b>📊 encuesta</b>: tocá <b>Agregar encuesta</b> en la ficha, escribí la pregunta y las opciones (de 2 a 12) y marcá si acepta <b>varias respuestas</b>.",
       "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual.",
       "En <b>Mailing</b> cada envío es un <b>archivo</b>: subí el <b>.html</b> (o las imágenes en orden) y lo ves en la ficha, en escritorio y en celular. Elegí el <b>destino</b> (Profesionales o Distribuidores): de eso depende qué conversión se mide.",
       "En <b>📈 Resultados</b> ves el embudo, la evolución de cada KPI y el histórico del canal. Quien hace el canal carga los números crudos abajo (a las 48 h de cada pieza, y los del mes); los % y totales los calcula la plataforma."] },

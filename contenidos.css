@@ -658,3 +658,23 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-nm-op.on{border-color:var(--olive-soft);background:var(--olive-pale)}
 .ct-nm-op.off{opacity:.55;cursor:default}
 @media(max-width:560px){.ct-nm-grilla{grid-template-columns:repeat(3,1fr)}}
+
+/* Encuesta de WhatsApp editable en la ficha (oct 2026) */
+.ct-poll-add{align-self:flex-start;margin-bottom:10px}
+.ct-poll{margin-bottom:12px}
+.ct-poll-top{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin-bottom:8px}
+.ct-poll-tit{white-space:nowrap;font-family:var(--font-title);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--olive);font-weight:600}
+.ct-poll-multi{margin-left:auto;white-space:nowrap;display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--gray-soft);cursor:pointer}
+.ct-poll-multi input{accent-color:var(--olive)}
+.ct-poll-x{border:0;background:transparent;color:var(--gray-soft);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:6px;line-height:1}
+.ct-poll-x:hover{background:var(--olive-pale);color:#a5463a}
+.ct-poll li{display:list-item}
+.ct-poll li>span{outline:none;display:inline-block;min-width:60%}
+.ct-poll li .ct-poll-x{margin-left:6px;opacity:0;vertical-align:middle}
+.ct-poll li:hover .ct-poll-x,.ct-poll li:focus-within .ct-poll-x{opacity:1}
+.ct-poll-mas{margin-top:8px}
+.ct-edit .ct-poll [data-ph]:empty::before{content:attr(data-ph);color:var(--olive-soft);font-weight:400}
+.ct-edit .ct-poll [contenteditable]:focus{background:var(--olive-pale);border-radius:4px}
+@media(hover:none){.ct-poll li .ct-poll-x{opacity:1}}
+.ct-poll-ctrl{margin-left:auto;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ct-poll-ctrl .ct-poll-multi{margin-left:0}

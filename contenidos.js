@@ -1258,11 +1258,8 @@
       <div class="ct-copy ${sugs.length ? "con-sugs" : ""}"${eCopy} data-c="${pre}copy" data-raw="1">${copyConSugs(o.copy || "", sugs)}</div>
       ${sugs.length ? `<p class="ct-sug-aviso">✎ ${sugs.length} sugerencia${sugs.length > 1 ? "s" : ""} sin resolver — el copy se desbloquea al aceptarlas o descartarlas.</p>` : ""}
       <div class="ct-meta">
-        ${enc ? `<div class="ct-poll">
-          <p class="q"${e} data-c="${pre}encuesta.q">${esc(enc.q || "")}</p>
-          <p class="hint"${e} data-c="${pre}encuesta.hint">${esc(enc.hint || "")}</p>
-          <ol>${(enc.opciones || []).map((op, i) => `<li${e} data-c="${pre}encuesta.opciones.${i}">${esc(op)}</li>`).join("")}</ol>
-        </div>` : ""}
+        ${enc ? encuestaHTML(enc, pre, ed)
+          : ed && CANAL === "whatsapp" ? `<button class="btn-mini ct-poll-add" data-encadd="${pre}">📊 Agregar encuesta</button>` : ""}
         <dl>
           ${campo("Imagen", "imagen")}
           ${meta.link || ed ? `<div><dt>Link</dt><dd${e} data-c="${pre}meta.link">${esc(meta.link || "")}</dd></div>` : ""}
@@ -1271,6 +1268,48 @@
         </dl>
       </div>
     </div>`;
+  }
+
+  /* Encuesta de WhatsApp (oct 2026): antes sólo entraba importando un .json. Se arma
+     igual que en WhatsApp: pregunta, de 2 a 12 opciones y si se puede elegir más de una.
+     Vive en `encuesta` (o en `variantes.N.encuesta`) como {q, hint, opciones, multiple}. */
+  const ENC_MAX = 12;
+  function encuestaHTML(enc, pre, ed) {
+    const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
+    const ops = Array.isArray(enc.opciones) ? enc.opciones : [];
+    return `<div class="ct-poll" data-enc="${pre}">
+      <div class="ct-poll-top"><span class="ct-poll-tit">📊 Encuesta</span>
+        ${ed ? `<span class="ct-poll-ctrl"><label class="ct-poll-multi"><input type="checkbox" data-encmulti="${pre}" ${enc.multiple ? "checked" : ""}> Varias respuestas</label>
+               <button class="ct-poll-x" data-encdel="${pre}" title="Quitar la encuesta">✕</button></span>`
+             : `<span class="ct-poll-multi">${enc.multiple ? "Varias respuestas" : "Una sola respuesta"}</span>`}</div>
+      <p class="q"${e} data-ph="Pregunta de la encuesta" data-c="${pre}encuesta.q">${esc(enc.q || "")}</p>
+      ${enc.hint || ed ? `<p class="hint"${e} data-ph="Aclaración para el equipo (opcional, no sale en WhatsApp)" data-c="${pre}encuesta.hint">${esc(enc.hint || "")}</p>` : ""}
+      <ol>${ops.map((op, i) => `<li><span${e} data-ph="Opción ${i + 1}" data-c="${pre}encuesta.opciones.${i}">${esc(op)}</span>${
+        ed && ops.length > 2 ? `<button class="ct-poll-x" data-encquitar="${pre}|${i}" title="Quitar esta opción">✕</button>` : ""}</li>`).join("")}</ol>
+      ${ed && ops.length < ENC_MAX ? `<button class="btn-mini ct-poll-mas" data-encmas="${pre}">+ Opción</button>` : ""}
+    </div>`;
+  }
+  async function cambiarEncuesta(id, pre, fn, foco) {
+    const m = MSGS.find(x => x.id === id); if (!m) return;
+    const ruta = `${pre}encuesta`;
+    const actual = leerCampo(m, ruta);
+    let copia = actual ? JSON.parse(JSON.stringify(actual)) : null;
+    // Lo que está en pantalla manda: si recién escribiste una opción y tocaste "+ Opción",
+    // el guardado de ese campo puede no haber vuelto todavía y se perdería.
+    if (copia) document.querySelectorAll(`.ct-msg[data-id="${id}"] [data-c^="${ruta}."]`).forEach(el => {
+      const k = el.dataset.c.slice(ruta.length + 1).split(".");
+      if (k[0] === "opciones") { if (Array.isArray(copia.opciones)) copia.opciones[+k[1]] = el.textContent; }
+      else copia[k[0]] = el.textContent;
+    });
+    const nueva = fn(copia);
+    const { col, val } = conCampo(m, ruta, nueva);
+    try { await guardarCampo(id, col, val); }
+    catch (e) { alert("No se pudo guardar la encuesta."); return; }
+    pintar();
+    if (foco) {
+      const el = document.querySelector(`.ct-msg[data-id="${id}"] [data-c="${ruta}.${foco}"]`);
+      if (el) el.focus();
+    }
   }
 
   /* El flujo (sep 2026): Borrador → Precisa feedback → Con ajustes ↺ / Listo para publicar → Publicado.
@@ -1387,6 +1426,9 @@
       if (sel.value === "__nuevo") { sel.value = MES; abrirNuevoMes(); return; }
       MES = sel.value; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); };
 
+    cont.querySelectorAll("[data-encmulti]").forEach(c => {
+      c.onchange = () => cambiarEncuesta(c.closest(".ct-msg").dataset.id, c.dataset.encmulti, o => Object.assign(o, { multiple: c.checked }));
+    });
     // Post / carrusel / reel: cambia el badge de la grilla, no el contenido.
     cont.querySelectorAll("[data-tipo]").forEach(s => {
       s.onchange = async () => {
@@ -1621,6 +1663,23 @@
         const m = MSGS.find(x => x.id === id);
         const vs = (m.variantes || []).slice(); vs.splice(+dv.dataset.delvar, 1);
         await guardarCampo(id, "variantes", vs); pintar(); return;
+      }
+      const ea = t.closest("[data-encadd]");
+      if (ea) return cambiarEncuesta(id, ea.dataset.encadd, () => ({ q: "", hint: "", opciones: ["", ""], multiple: false }), "q");
+      const ed_ = t.closest("[data-encdel]");
+      if (ed_) {
+        if (!confirm("¿Quitar la encuesta de este mensaje?")) return;
+        return cambiarEncuesta(id, ed_.dataset.encdel, () => null);
+      }
+      const em = t.closest("[data-encmas]");
+      if (em) {
+        const m = MSGS.find(x => x.id === id), n = ((leerCampo(m, em.dataset.encmas + "encuesta") || {}).opciones || []).length;
+        return cambiarEncuesta(id, em.dataset.encmas, o => Object.assign(o, { opciones: (o.opciones || []).concat([""]) }), `opciones.${n}`);
+      }
+      const eq = t.closest("[data-encquitar]");
+      if (eq) {
+        const [pre, i] = eq.dataset.encquitar.split("|");
+        return cambiarEncuesta(id, pre, o => { o.opciones.splice(+i, 1); return o; });
       }
       if (t.closest("[data-addvar]")) {
         const m = MSGS.find(x => x.id === id);

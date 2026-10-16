@@ -190,8 +190,8 @@ async function diario(perfiles: Perfil[]) {
   const hoy = hoyAR();
   const subs: Fila[] = await rest("push_suscripciones?select=email");
   const emails = [...new Set(subs.map((s) => low(s.email)))];
-  const tareas: Fila[] = await rest(`tareas?select=id,titulo,responsable_email,fecha_limite&estado=neq.hecha&fecha_limite=lte.${hoy}`);
-  const piezas: Fila[] = await rest(`contenidos?select=id,estado,canal&fecha=eq.${hoy}&estado=not.in.(aprobado,publicado)`);
+  const tareas: Fila[] = await rest(`tareas?select=id,titulo,responsable_email,fecha_limite&estado=not.in.(hecha,pospuesta)&fecha_limite=lte.${hoy}`);
+  const piezas: Fila[] = await rest(`contenidos?select=id,estado,canal&fecha=eq.${hoy}&estado=not.in.(aprobado,calendarizado,publicado)`);
   const resp: Resp[] = await rest("contenidos_responsables?select=canal,email,papel");
   let enviados = 0;
   for (const email of emails) {

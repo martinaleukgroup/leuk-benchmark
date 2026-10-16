@@ -850,24 +850,33 @@ def main():
     # Fotos corregidas a mano (la del maestro está mal). Ganan sobre todo.
     # 7228 (tensor 7mts) ya está bien en el ZIP actualizado → usa el PNG curado, sin override.
     FOTO_OVERRIDE = {}
-    # Set curado de PNG por SKU (fondo transparente, escala pareja) que baja ficha_fotos.py.
+    # La foto sale SIEMPRE de la carpeta de diseño en Drive: ficha_fotos.py baja en cada corrida
+    # las nuevas o cambiadas a app/assets/ficha/fotos/<SKU>.png. (No se enlaza directo a Drive:
+    # lh3.googleusercontent.com responde 429 apenas se piden unas cuantas fotos seguidas.)
     FOTOS_DIR = P.ROOT / "app" / "assets" / "ficha" / "fotos"
+    # ?v= cambia cuando cambia la foto en Drive, para que el navegador no muestre la vieja.
+    try:
+        FOTO_VER = {s: e.get("v", "") for s, e in json.loads(
+            (P.ROOT / "pipeline" / "ficha_fotos_estado.json").read_text()).items()}
+    except Exception:
+        FOTO_VER = {}
 
     def mejor_foto(f):
         sku = str(f["sku"])
         if sku in FOTO_OVERRIDE:
             return FOTO_OVERRIDE[sku]
-        # PNG curado: probar la SKU representativa y luego cualquier variante de color
+        # probar la SKU representativa y luego cualquier variante de color
         for s in [sku] + [str(x) for x in (f.get("skus") or [])]:
-            if (FOTOS_DIR / f"{s}.png").exists():   # PNG curado > foto del benchmark
-                return f"assets/ficha/fotos/{s}.png"
+            if (FOTOS_DIR / f"{s}.png").exists():   # foto de la carpeta > foto del benchmark
+                return f"assets/ficha/fotos/{s}.png" + (f"?v={FOTO_VER[s]}" if FOTO_VER.get(s) else "")
         return photo.get(sku)
 
-    con_foto = 0
+    con_foto = de_drive = 0
     for f in fichas:
         f["foto_url"] = mejor_foto(f)
         if f["foto_url"]:
             con_foto += 1
+            de_drive += f["foto_url"].startswith("assets/ficha/fotos/")
 
     # Fuera las agrupaciones que no llevan ficha. Va ANTES de repartir accesorios
     # para no copiar nada hacia un documento que no va a existir.
@@ -909,7 +918,7 @@ def main():
                        "filas": [], "colores": [], "assets": {}})
 
     OUT.write_text("window.FICHAS = " + json.dumps(fichas, ensure_ascii=False) + ";\n", encoding="utf-8")
-    print(f"✓ fichas.js: {len(fichas)} fichas ({unificadas} unificadas por color) · {len(blue)} columnas azules · foto resuelta en {con_foto}")
+    print(f"✓ fichas.js: {len(fichas)} fichas ({unificadas} unificadas por color) · {len(blue)} columnas azules · foto resuelta en {con_foto} ({de_drive} de la carpeta de fotos de Drive)")
     print(f"  → {OUT}")
 
     # Corriendo solo (sin nadie mirando el log), publicar desde el xlsx local

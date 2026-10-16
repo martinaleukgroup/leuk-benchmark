@@ -13,6 +13,7 @@ sin romper. Re-ejecutable. Modelado sobre img_leuk_manifest.py.
 """
 import json
 import re
+import sys
 import time
 
 import gdown
@@ -41,9 +42,12 @@ def listar(fid, intentos=3):
 
 def main():
     by_name, dibujo_by_sku, curva_by_sku, manuals = {}, {}, {}, []
+    vacias = []
     for tipo, fid in FOLDERS.items():
         files = listar(fid)
         print(f"{tipo}: {len(files)} archivos", flush=True)
+        if not files:
+            vacias.append(tipo)
         for f in files:
             fn = f.path.split("/")[-1]
             low = fn.lower()
@@ -59,6 +63,13 @@ def main():
                         curva_by_sku.setdefault(s, {})[kind] = f.id
             elif tipo == "manual" and low.endswith(".pdf"):
                 manuals.append({"name": low, "id": f.id})
+
+    # Una carpeta que vuelve vacía es Drive que no contestó, no una carpeta vaciada. Salir con
+    # error ANTES de escribir: queda el manifiesto anterior y actualizar_fichas.sh no publica.
+    # (El 13/10/2026 falló la de dibujos y se publicaron 292 fichas sin dibujo técnico.)
+    if vacias:
+        print(f"⛔ Drive no devolvió archivos para: {', '.join(vacias)}. No se toca el manifiesto.", flush=True)
+        sys.exit(1)
 
     OUT.write_text(json.dumps(
         {"by_name": by_name, "dibujo_by_sku": dibujo_by_sku, "curva_by_sku": curva_by_sku, "manuals": manuals},

@@ -50,6 +50,7 @@
   const pct = x => x == null || !isFinite(x) ? "—" : `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(Math.round(x * 100))} %`;
   const pctN = x => x == null || !isFinite(x) ? "—" : `${Math.round(x * 100)} %`;
   const veces = x => x == null || !isFinite(x) ? "—" : `${x < 0 ? "−" : ""}US$ ${Math.abs(x).toFixed(1).replace(".", ",")}`;
+  const roas = x => x == null || !isFinite(x) ? "—" : `${x < 0 ? "−" : ""}${Math.abs(x).toFixed(1).replace(".", ",")}×`;
   const signo = v => v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${usd(Math.abs(v))}`;
   const plural = (n, s, p) => `${n} ${n === 1 ? s : (p || s + "s")}`;
 
@@ -229,7 +230,9 @@
     out.crec = out.A > 0 ? (out.P - out.A) / out.A : null;
     out.crecLy = out.Aly > 0 ? (out.Ply - out.Aly) / out.Aly : null;
     out.puntos = out.crec != null && g != null ? out.crec - g : null;
-    out.retorno = out.inv.usd ? out.X / out.inv.usd : null;
+    // Sin compras extra el ROAS es 0 (no negativo).
+    out.retorno = out.inv.usd ? Math.max(0, out.X) / out.inv.usd : null;   // ROAS incremental
+    out.roasTotal = out.inv.usd ? out.P / out.inv.usd : null;
     out.extraProf = out.asis ? out.X / out.asis : null;
     return veredicto(out);
   }
@@ -244,7 +247,8 @@
       k.ver.txt = `${esc(quien)} nos compró <b>${usd(k.P)}</b> en los ${k.dias} días posteriores al evento. ` +
         `Antes compraba ${usd(k.A)} y el resto de los clientes ${k.base.crec >= 0 ? "creció" : "bajó"} ${pct(k.base.crec).replace(/^[+−]/, "")}, ` +
         `así que sin el evento esperábamos unos <b>${usd(k.E)}</b>: compró <b>${usd(Math.abs(k.X))} ${k.X >= 0 ? "más" : "menos"}</b> de lo esperado.` +
-        (k.retorno == null ? " Cargá la inversión para ver el retorno." : k.X > 0 ? ` Cada US$ 1 invertido trajo <b>${veces(k.retorno)}</b> de compras extra.` : ` La inversión fue de ${usd(k.inv.usd)}.`) +
+        (k.retorno == null ? " Cargá la inversión para ver el ROAS." : k.X > 0 ? ` Cada US$ 1 invertido trajo <b>${veces(k.retorno)}</b> de compras extra (<b>ROAS ${roas(k.retorno)}</b>).`
+          : ` La inversión fue de ${usd(k.inv.usd)}.`) +
         (k.dias < 30 ? ` <i>Ojo: sólo hay ${k.dias} días de datos después del evento.</i>` : "");
     }
     return k;
@@ -397,6 +401,7 @@
     const inscr = S(ks, k => k.inscr), asis = S(ks, k => k.asis);
     const X = S(med, k => k.X), invMed = S(med, k => k.inv.usd), invTot = S(ks, k => k.inv.usd);
     const sirvieron = med.filter(k => k.X > 0).length;
+    const Xpos = S(med, k => Math.max(0, k.X));
     const formatos = [...new Set([...FORMATOS, ...EVS.map(e => e.formato).filter(Boolean)])];
     const porDist = resumenDistribuidores(ks);
 
@@ -419,7 +424,7 @@
           ${kpi(evs.length, evs.length === 1 ? "evento" : "eventos", med.length ? `${sirvieron} de ${med.length} con compras extra` : (ANIO ? `en ${ANIO}` : "en total"))}
           ${kpi(`${asis}<small>/${inscr}</small>`, "profesionales asistieron", inscr ? `${pctN(asis / inscr)} de los inscriptos` : "cargá los inscriptos")}
           ${kpi(signo(X), "compras extra", `a ${VENTANA} días, sobre lo esperado`, tono(X))}
-          ${kpi(invMed && X > 0 ? veces(X / invMed) : "—", "por cada US$ 1 invertido", invTot ? `${usd(invTot)} invertidos` : "cargá la inversión", tono(X))}
+          ${kpi(invMed ? roas(Xpos / invMed) : "—", "ROAS", invTot ? `compras extra ÷ ${usd(invTot)} invertidos` : "cargá la inversión", invMed ? (Xpos / invMed >= 1 ? "ok" : "no") : "")}
           ${kpi(invTot && asis ? usd(invTot / asis) : "—", "costo por profesional", "inversión ÷ asistentes")}
           ${kpi(asis && med.length ? signo(X / S(med, k => k.asis)) : "—", "compras extra por profesional", "que asistió")}
         </div>` : ""}
@@ -448,7 +453,7 @@
       </div>` : ""}
       ${evs.length ? `<section class="ec-card ec-tabla-card"><h3>Eventos</h3>
         <div class="ec-tabla-wrap"><table class="ec-tabla">
-          <thead><tr><th>Evento</th><th>Distribuidor</th><th class="n">Profesionales</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Esperado</th><th class="n">Compras extra</th><th class="n">Por US$ 1</th><th>¿Sirvió?</th></tr></thead>
+          <thead><tr><th>Evento</th><th>Distribuidor</th><th class="n">Profesionales</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Esperado</th><th class="n">Compras extra</th><th class="n">ROAS</th><th>¿Sirvió?</th></tr></thead>
           <tbody>${ks.map(k => `<tr data-abrir="${k.ev.id}" tabindex="0">
             <td><b>${esc(k.ev.titulo) || "<i>Sin nombre</i>"}</b><small>${esc([fechaLarga(k.ev.fecha), k.ev.formato].filter(Boolean).join(" · "))}</small></td>
             <td>${esc(k.nombres) || "—"}</td>
@@ -457,16 +462,16 @@
             <td class="n">${k.antes ? usd(k.P) : "—"}${k.antes && k.dias < VENTANA ? ` <small title="Todavía no pasaron ${VENTANA} días">${k.dias} d</small>` : ""}</td>
             <td class="n">${k.antes && k.base ? usd(k.E) : "—"}</td>
             <td class="n ${k.antes && k.base ? tono(k.X) : ""}">${k.antes && k.base ? signo(k.X) : "—"}</td>
-            <td class="n">${k.base && k.retorno != null && k.X > 0 ? veces(k.retorno) : "—"}</td>
+            <td class="n">${k.base && k.retorno != null ? roas(k.retorno) : "—"}</td>
             <td>${chipVer(k)}</td></tr>`).join("")}</tbody>
         </table></div></section>` : ""}
       ${porDist.length ? `<section class="ec-card ec-tabla-card"><h3>Por distribuidor</h3>
         <p class="ec-card-sub">Con quién hicimos eventos y cuánto movieron las compras (suma de sus eventos, ${VENTANA} días)</p>
         <div class="ec-tabla-wrap"><table class="ec-tabla">
-          <thead><tr><th>Distribuidor</th><th>Vendedor</th><th class="n">Eventos</th><th class="n">Profesionales</th><th class="n">Inversión</th><th class="n">Compras extra</th><th class="n">Por US$ 1</th></tr></thead>
+          <thead><tr><th>Distribuidor</th><th>Vendedor</th><th class="n">Eventos</th><th class="n">Profesionales</th><th class="n">Inversión</th><th class="n">Compras extra</th><th class="n">ROAS</th></tr></thead>
           <tbody>${porDist.map(d => `<tr><td><b>${esc(d.nombre)}</b>${d.razon && d.razon !== d.nombre ? `<small>${esc(d.razon)}</small>` : ""}</td>
             <td>${esc(d.vendedor)}</td><td class="n">${d.eventos}</td><td class="n">${d.asis || "—"}</td><td class="n">${d.inv ? usd(d.inv) : "—"}</td>
-            <td class="n ${d.medidos ? tono(d.X) : ""}">${d.medidos ? signo(d.X) : "—"}</td><td class="n">${d.medidos && d.inv && d.X > 0 ? veces(d.X / d.inv) : "—"}</td></tr>`).join("")}</tbody>
+            <td class="n ${d.medidos ? tono(d.X) : ""}">${d.medidos ? signo(d.X) : "—"}</td><td class="n">${d.medidos && d.inv ? roas(Math.max(0, d.X) / d.inv) : "—"}</td></tr>`).join("")}</tbody>
         </table></div></section>` : ""}`;
     pintarNota();
   }
@@ -559,7 +564,7 @@
         ${kpi(usd(k.P), `compras del distribuidor a ${k.dias} días`, `antes: ${usd(k.A)} (${pct(k.crec)})`)}
         ${kpi(k.base ? signo(k.X) : "…", "compras extra", k.base ? `esperado: ${usd(k.E)}` : "calculando", k.base ? tono(k.X) : "")}
         ${kpi(k.puntos != null ? `${k.puntos >= 0 ? "+" : "−"}${Math.abs(Math.round(k.puntos * 100))} pts` : "—", "vs. el resto de los clientes", k.base ? `el resto: ${pct(k.base.crec)}` : "", tono(k.puntos))}
-        ${kpi(k.retorno != null && k.base && k.X > 0 ? veces(k.retorno) : "—", "por cada US$ 1 invertido", !k.inv.usd ? "cargá la inversión" : k.base && k.X <= 0 ? `sin compras extra · ${usd(k.inv.usd)} invertidos` : `${usd(k.inv.usd)} invertidos`, k.base && k.X > 0 ? "ok" : "")}` : ""}
+        ${kpi(k.retorno != null && k.base ? roas(k.retorno) : "—", "ROAS", !k.inv.usd ? "cargá la inversión" : `compras extra ÷ ${usd(k.inv.usd)} invertidos · sobre el total: ${roas(k.roasTotal)}`, k.base && k.retorno != null ? (k.retorno >= 1 ? "ok" : "no") : "")}` : ""}
         ${kpi(k.costoProf != null ? usd(k.costoProf) : "—", "costo por profesional", "inversión ÷ asistentes")}
         ${k.antes && k.base && k.extraProf != null ? kpi(signo(k.extraProf), "compras extra por profesional", "que asistió", tono(k.extraProf)) : ""}
       </div>`;
@@ -869,12 +874,14 @@
   }
   const CAB_EV = ["Evento", "Fecha", "Formato", "Lugar", "Distribuidor", "Profesionales inscriptos", "Profesionales asistieron", "% asistencia",
     "Días medidos", "USD antes", "USD después", "Crecimiento distribuidor", "Crecimiento resto de clientes", "USD esperado", "USD compras extra",
-    "Inversión USD", "Compras extra por US$ 1", "Costo por profesional USD", "Compras extra por profesional USD", "¿Sirvió?"];
+    "Inversión USD", "ROAS (compras extra ÷ inversión)", "ROAS sobre el total (compras después ÷ inversión)",
+    "Costo por profesional USD", "Compras extra por profesional USD", "¿Sirvió?"];
   const filaEv = k => {
     const m = !!(k.antes && k.base);
     return [k.ev.titulo, k.ev.fecha || "", k.ev.formato, k.ev.lugar, k.nombres, k.inscr ?? "", k.asis ?? "", r3(k.asistencia),
       k.dias || "", k.antes ? r2(k.A) : "", k.antes ? r2(k.P) : "", r3(k.crec), m ? r3(k.base.crec) : "", m ? r2(k.E) : "", m ? r2(k.X) : "",
-      k.inv.usd == null ? "" : r2(k.inv.usd), m ? r2(k.retorno) : "", r2(k.costoProf), m ? r2(k.extraProf) : "", k.ver.t];
+      k.inv.usd == null ? "" : r2(k.inv.usd), m ? r2(k.retorno) : "", m ? r2(k.roasTotal) : "",
+      r2(k.costoProf), m ? r2(k.extraProf) : "", k.ver.t];
   };
   async function excel() {
     if (!window.XLSX) { alert("No se pudo cargar el exportador."); return; }
@@ -887,7 +894,7 @@
         ["Ventana antes", k.antes ? `${k.antes[0]} a ${k.antes[1]}` : ""], ["Ventana después", k.despues ? `${k.despues[0]} a ${k.despues[1]}` : ""],
         ["Crecimiento distribuidor mismas fechas año anterior", r3(k.crecLy)],
         ["Conclusión", String(k.ver.txt || "").replace(/<[^>]+>/g, "")],
-        ["Cómo se calcula", "Esperado = compras antes × (1 + crecimiento del resto de los clientes). Compras extra = después − esperado."]], [44, 70]);
+        ["Cómo se calcula", "Esperado = compras antes × (1 + crecimiento del resto de los clientes). Compras extra = después − esperado. ROAS = compras extra ÷ inversión."]], [44, 70]);
       hoja(wb, "Distribuidores", [["Distribuidor", "Razón social", "CUIT", "Vendedor", "USD antes", "USD después", "USD esperado", "USD compras extra", "Crecimiento"],
         ...k.dists.map(r => [r.nombre, r.razon, r.x.cuit, r.vendedor, r2(r.antes), r2(r.despues), k.base ? r2(r.esperado) : "", k.base ? r2(r.extra) : "", r3(r.crec)])],
         [28, 34, 15, 14, 12, 12, 13, 15, 11]);
@@ -905,14 +912,14 @@
     await refrescarTablero();
     const ks = delFiltro().map(e => calcular(e, VENTANA));
     hoja(wb, "Eventos", [CAB_EV, ...ks.map(filaEv)], [32, 11, 14, 18, 26, 12, 12, 10, 8, 12, 12, 12, 12, 12, 14, 12, 12, 12, 14, 26]);
-    hoja(wb, "Por distribuidor", [["Distribuidor", "Razón social", "CUIT", "Vendedor", "Eventos", "Profesionales asistieron", "Inversión USD", "USD compras extra", "Compras extra por US$ 1"],
-      ...resumenDistribuidores(ks).map(d => [d.nombre, d.razon, d.cuit, d.vendedor, d.eventos, d.asis, r2(d.inv), d.medidos ? r2(d.X) : "", d.medidos && d.inv ? r2(d.X / d.inv) : ""])],
+    hoja(wb, "Por distribuidor", [["Distribuidor", "Razón social", "CUIT", "Vendedor", "Eventos", "Profesionales asistieron", "Inversión USD", "USD compras extra", "ROAS"],
+      ...resumenDistribuidores(ks).map(d => [d.nombre, d.razon, d.cuit, d.vendedor, d.eventos, d.asis, r2(d.inv), d.medidos ? r2(d.X) : "", d.medidos && d.inv ? r2(Math.max(0, d.X) / d.inv) : ""])],
       [28, 34, 15, 14, 8, 12, 12, 14, 14]);
     hoja(wb, "Cómo se calcula", [["Concepto", "Cálculo"],
       ["Ventana", `Antes = los ${VENTANA} días previos al evento; después = el día del evento y los siguientes (se acortan las dos si todavía no hay datos)`],
       ["Esperado", "Compras del distribuidor antes × (1 + crecimiento del resto de los clientes en las mismas fechas)"],
       ["Compras extra", "Compras del distribuidor después − esperado"],
-      ["Compras extra por US$ 1", "Compras extra ÷ inversión"],
+      ["ROAS", "Compras extra ÷ inversión (0 si no hubo compras extra). El ROAS sobre el total usa todo lo que compró el distribuidor después"],
       ["Costo por profesional", "Inversión ÷ profesionales que asistieron"]], [24, 110]);
     XLSX.writeFile(wb, `eventos-con-clientes-${ANIO || "todos"}-${hoyISO()}.xlsx`);
   }

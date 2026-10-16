@@ -2726,6 +2726,7 @@
       "Creá el evento con <b>＋ Nuevo evento</b>: fecha, formato, <b>profesionales inscriptos y que fueron</b>, y la inversión (en US$ o desde la <b>acción</b> vinculada).",
       "Elegí el <b>distribuidor</b> con el que se hizo el evento (buscalo por nombre, razón social o CUIT).",
       "Arriba ves si <b>sirvió</b>: cuánto compró el distribuidor después contra lo que <b>esperábamos</b> sin el evento (lo que compraba antes, ajustado por cómo se movió el resto de los clientes). La diferencia son las <b>compras extra</b>.",
+      "<b>ROAS</b> = compras extra ÷ inversión: cuántos dólares de compras extra trajo cada dólar invertido (también ves el ROAS sobre el total de compras).",
       "Elegí la ventana (<b>30, 60, 90 o 180 días</b>) y descargá todo en <b>Excel</b> o en <b>PDF</b>."] },
     { t: "Usuarios", ic: "group", pages: ["usuarios"], pasos: [
       "<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",

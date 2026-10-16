@@ -2500,7 +2500,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "eventos-clientes", "usuarios", "kpis"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "liquidacion", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "eventos-clientes", "usuarios", "kpis"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2517,7 +2517,8 @@
       pages: [{ p: "fichas", t: "Fichas técnicas" },
               { p: "firmas", t: "Firmas de mail" },
               { p: "stock", t: "Stock diario" },
-              { p: "reingresos", t: "Reingresos" }],
+              { p: "reingresos", t: "Reingresos" },
+              { p: "liquidacion", t: "Liquidación" }],
     },
     eventos: {
       label: "Eventos",
@@ -2573,6 +2574,7 @@
     firmas:          { t: "Firmas de mail",       ic: "signature" },
     stock:           { t: "Stock diario",         ic: "inventory_2" },
     reingresos:      { t: "Reingresos",           ic: "assignment_return" },
+    liquidacion:     { t: "Liquidación",          ic: "sell" },
     integraciones:   { t: "Nuevas integraciones", ic: "move_to_inbox" },
     manual:          { t: "Manual de carga",      ic: "menu_book" },
     usuarios:        { t: "Usuarios",             ic: "group" },
@@ -2593,7 +2595,7 @@
     { g: "Planificación",      items: ["tareas", "acciones", "eventos-clientes", "eventos"] },
     { g: "Contenidos",         items: ["contenidos", "contenidos-ig", "contenidos-mail"], badge: "contenidos" },
     { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
-    { g: "Generadores",        items: ["firmas", "stock", "reingresos"] },
+    { g: "Generadores",        items: ["firmas", "stock", "reingresos", "liquidacion"] },
     { g: "Administración",     items: ["integraciones", "manual", "usuarios", "kpis", "@precios", "@costos", "@lista"], abajo: true },
   ];
   const GRUPO_DE = {};                              // página -> nombre del grupo (para la barra de página)
@@ -2684,14 +2686,19 @@
       "Subí la base del equipo (.xlsx o .csv) con <b>Nombre y Apellido, Rol, Teléfono, Dirección y Link Web</b>.",
       "Revisá la vista previa y <b>descargá las firmas en PDF</b>, una por persona, con el diseño oficial de Leuk."] },
     { t: "Stock diario", ic: "inventory_2", pages: ["stock"], pasos: [
-      "Cargá el <b>Stock (.xlsx)</b>. Si cambiaron, actualizá también <b>Familias (.xlsx)</b> y <b>Fotos (.zip)</b>.",
-      "Elegí la <b>fecha</b>, revisá la vista previa y <b>descargá el PDF</b>.",
-      "En <b>Personalizar</b> cambiás logo y fuentes; queda guardado para la próxima."] },
+      "Al entrar lee solo del Drive el <b>stock</b>, la organización por familias, los ventiladores y las <b>fotos</b>. Si cambió algo, tocá <b>Actualizar desde el Drive</b>.",
+      "Elegí la <b>fecha</b>, revisá la vista previa y <b>descargá el PDF o los JPG</b>.",
+      "En <b>Personalizar y cargar a mano</b> cambiás logo y fuentes (queda guardado) y, si el Drive no responde, subís Stock, Familias o Fotos a mano."] },
     { t: "Reingresos", ic: "assignment_return", pages: ["reingresos"], pasos: [
       "Seguí los <b>pasos 1 a 5</b>: título y aviso → Excel/CSV con los reingresos (detecta SKU, nombre y color) → fotos en ZIP → ajuste de productos → descarga.",
       "Las fotos se matchean solas por <b>SKU o nombre</b> del archivo (ej. “6832.jpg”).",
       "Descargás la pieza en <b>PDF o JPG</b>.",
       "En <b>Configurar una vez</b> guardás el estándar de marca (logo, portada, fuentes) para los próximos reingresos."] },
+    { t: "Liquidación", ic: "sell", pages: ["liquidacion"], pasos: [
+      "Cargá el <b>Excel de liquidación</b> (SKU · cantidad mínima · precio de lista · precio con descuento). Si no lo tenés, bajá la <b>plantilla</b>.",
+      "Las fotos del Drive ya vienen incluidas; podés sumar o reemplazar alguna con un PNG cuyo nombre empiece con el SKU.",
+      "Elegí franja, logo, banner y pie. <b>Todo texto de la pieza se edita haciendo clic</b> sobre él.",
+      "Descargás en <b>PDF o JPG</b> a 300 dpi."] },
     { t: "Eventos", ic: "confirmation_number", pages: ["eventos"], pasos: [
       "<b>Marcá presente</b> a cada persona cuando llega: el estado se comparte en vivo con quien tenga la app abierta.",
       "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
@@ -2789,9 +2796,11 @@
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
     // Stock diario: app autocontenida embebida.
-    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=7"; }
+    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=9"; }
     // Reingresos: app autocontenida embebida.
     if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
+    // Liquidación: app autocontenida embebida (trae fuentes y fotos adentro: pesa ~13 MB).
+    if (page === "liquidacion") { const f = $("#liquidacionFrame"); if (f && !f.src) f.src = "liquidacion.html?v=1"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
     if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=139"; }
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma

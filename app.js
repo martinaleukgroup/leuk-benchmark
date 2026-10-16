@@ -2699,6 +2699,7 @@
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
       "Elegí el canal en el menú (<b>Comunidad WhatsApp</b>, <b>Instagram</b> o <b>Mailing</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
+      "Para armar un mes nuevo elegí <b>＋ Nuevo mes…</b> al final del selector de mes: marcás el mes en la grilla, le ponés título y elegís si arranca en blanco, con el brief del mes anterior o <b>repitiendo su cadencia</b> (las mismas piezas en blanco, en los mismos días de la semana).",
       "En <b>Instagram</b> elegís el perfil arriba (<b>Leuk</b> o <b>Laftdren</b>): cada uno tiene su propio cronograma, feed, Resultados y avisos.",
       "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
       "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",

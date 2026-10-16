@@ -560,6 +560,7 @@
         <div class="mh-bar">
           <select class="ct-mes" title="Elegí el mes">
             ${MESES.map(m => `<option value="${esc(m.mes)}" ${m.mes === MES ? "selected" : ""}>${cap(mesLabel(m.mes))} — ${esc(m.titulo || "sin título")}</option>`).join("")}
+            ${ed ? `<option disabled>──────────</option><option value="__nuevo">＋ Nuevo mes…</option>` : ""}
           </select>
           <div class="ct-vistas">
             <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">📅 Calendario</button>
@@ -1382,7 +1383,9 @@
     if (cont.querySelector("[data-limpiar]")) cont.querySelector("[data-limpiar]").addEventListener("click", () => { BUSCA = ""; });
 
     const sel = cont.querySelector(".ct-mes");
-    if (sel) sel.onchange = async () => { MES = sel.value; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); };
+    if (sel) sel.onchange = async () => {
+      if (sel.value === "__nuevo") { sel.value = MES; abrirNuevoMes(); return; }
+      MES = sel.value; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); };
 
     // Post / carrusel / reel: cambia el badge de la grilla, no el contenido.
     cont.querySelectorAll("[data-tipo]").forEach(s => {
@@ -1822,22 +1825,7 @@
       return;
     }
 
-    if (a === "nuevo-mes") {
-      const m = (prompt("¿Qué mes? Formato AAAA-MM (ej: 2026-10)") || "").trim();
-      if (!/^\d{4}-\d{2}$/.test(m)) { if (m) alert("El formato tiene que ser AAAA-MM."); return; }
-      if (MESES.some(x => x.mes === m)) { MES = m; await traerMes(MES); pintar(); return; }
-      const titulo = (prompt("Título del mes (el eje del cronograma):") || "").trim();
-      const r = await fetch(url("contenidos_meses"), {
-        method: "POST", headers: head({ Prefer: "return=representation" }),
-        body: JSON.stringify([{
-          mes: m, canal: CANAL, titulo, eyebrow: C().eyebrow(m),
-          brief: [{ h: "Objetivo", p: "" }, { h: "Recursos", p: "" }, { h: "Cadencia", p: "" }],
-          autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
-        }]),
-      });
-      if (!r.ok) { alert("No se pudo crear el mes."); return; }
-      MES = m; await traerMeses(); await traerMes(MES); pintar(); return;
-    }
+    if (a === "nuevo-mes") return abrirNuevoMes();
 
     if (a === "nuevo-msg") {
       if (!MES) return;
@@ -1864,6 +1852,151 @@
       f.onchange = () => { const file = f.files[0]; if (file) importar(file); f.value = ""; };
       f.click(); return;
     }
+  }
+
+  /* ---- Nuevo mes (oct 2026) ----
+     Antes eran dos prompt() ("AAAA-MM" y el título). Ahora es un panel: se elige el
+     mes en una grilla (los ya cargados se ven y abren ese mes), título y bajada en el
+     mismo lugar, y se puede arrancar desde el mes anterior en vez de en blanco.     */
+  const sumarMes = (m, n) => { const p = m.split("-"); const d = new Date(+p[0], +p[1] - 1 + n, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+  const MES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  // "El 2º martes" de un mes → el 2º martes del otro (si no hay 5º, el último). Así la
+  // cadencia se mantiene: lo que salía los martes sigue saliendo los martes.
+  function mismoDiaDeSemana(fecha, mesNuevo) {
+    const d = aFecha(fecha), n = Math.ceil(d.getDate() / 7), dow = d.getDay();
+    const p = mesNuevo.split("-"), y = +p[0], mi = +p[1] - 1;
+    const primero = (dow - new Date(y, mi, 1).getDay() + 7) % 7 + 1;
+    let dia = primero + (n - 1) * 7;
+    if (dia > new Date(y, mi + 1, 0).getDate()) dia -= 7;
+    return `${mesNuevo}-${String(dia).padStart(2, "0")}`;
+  }
+
+  function abrirNuevoMes() {
+    const hechos = new Set(MESES.map(x => x.mes));
+    const hoyMes = hoyISO().slice(0, 7);
+    // Sugerido: el que sigue al último cargado (o el de hoy, si no hay nada o quedó atrás).
+    const ultimo = MESES.map(x => x.mes).sort().pop();
+    let elegido = ultimo && sumarMes(ultimo, 1) > hoyMes ? sumarMes(ultimo, 1) : hoyMes;
+    if (hechos.has(elegido)) elegido = sumarMes(elegido, 1);
+    let anio = +elegido.slice(0, 4);
+    let base = "blanco";
+    const fuenteDe = m => MESES.map(x => x.mes).filter(x => x < m).sort().pop() || "";
+
+    const ov = document.createElement("div"); ov.className = "detail";
+    ov.innerHTML = `<div class="detail-inner ct-nm" role="dialog" aria-label="Nuevo mes">
+      <button class="detail-close" data-x aria-label="Cerrar">✕</button>
+      <p class="ct-eyebrow">${esc(C().icono)} ${esc(C().corto)}</p>
+      <h2>Nuevo mes</h2>
+      <div class="ct-nm-sec">
+        <div class="ct-nm-anio"><button type="button" data-anio="-1" aria-label="Año anterior">‹</button><b data-anio-t></b><button type="button" data-anio="1" aria-label="Año siguiente">›</button></div>
+        <div class="ct-nm-grilla" data-grilla></div>
+      </div>
+      <label class="ct-nm-campo"><span>Título del mes <i>el eje del cronograma</i></span>
+        <input type="text" data-titulo maxlength="120" placeholder="Ej: Luz en obra" autocomplete="off"></label>
+      <label class="ct-nm-campo"><span>Bajada <i>opcional</i></span>
+        <input type="text" data-dek maxlength="240" placeholder="Una línea sobre el foco del mes" autocomplete="off"></label>
+      <div class="ct-nm-sec" data-bases></div>
+      <p class="us-msg" data-msg></p>
+      <div class="desc-actions"><button class="btn-ghost" data-x>Cancelar</button><button class="btn-primary" data-crear></button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const q = s => ov.querySelector(s);
+    const cerrar = () => { ov.remove(); document.removeEventListener("keydown", tecla); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); };
+    document.addEventListener("keydown", tecla);
+    ov.querySelectorAll("[data-x]").forEach(b => b.onclick = cerrar);
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+
+    // Cuántas piezas tiene el mes de base: se pide una vez por mes y se guarda.
+    const cuantas = {};
+    async function contar(m) {
+      if (!m || m in cuantas) return;
+      cuantas[m] = null;
+      const r = await fetch(url(`contenidos?mes=eq.${enc(m)}&canal=eq.${CANAL}&select=id`), { headers: head() });
+      cuantas[m] = r.ok ? (await r.json()).length : 0;
+      pintarNM();
+    }
+
+    function pintarNM() {
+      q("[data-anio-t]").textContent = anio;
+      q("[data-grilla]").innerHTML = MES_CORTO.map((t, i) => {
+        const m = `${anio}-${String(i + 1).padStart(2, "0")}`;
+        const ya = hechos.has(m);
+        return `<button type="button" data-m="${m}" class="${m === elegido ? "on" : ""} ${ya ? "ya" : ""} ${m === hoyMes ? "hoy" : ""}"
+          title="${ya ? "Ya está cargado: abrirlo" : cap(mesLabel(m))}">${t}${ya ? `<small>cargado</small>` : m === hoyMes ? `<small>este mes</small>` : ""}</button>`;
+      }).join("");
+      const fuente = fuenteDe(elegido);
+      if (fuente) contar(fuente);
+      const n = cuantas[fuente];
+      if (!fuente && base !== "blanco") base = "blanco";
+      if (base === "cadencia" && n === 0) base = "brief";
+      const op = (k, t, d, off) => `<label class="ct-nm-op ${base === k ? "on" : ""} ${off ? "off" : ""}">
+        <input type="radio" name="nm-base" value="${k}" ${base === k ? "checked" : ""} ${off ? "disabled" : ""}>
+        <span><b>${t}</b><small>${d}</small></span></label>`;
+      const fl = fuente ? cap(mesLabel(fuente)) : "";
+      q("[data-bases]").innerHTML = `<h4>¿Cómo arranca?</h4>` +
+        op("blanco", "En blanco", `Brief vacío y sin ${C().unidadPl}.`) +
+        (fuente ? op("brief", `Con el brief de ${fl}`, "Objetivo, recursos y cadencia para retocar. Sin las obras.") +
+          op("cadencia", `Repetir la cadencia de ${fl}`,
+            n == null ? "Contando…"
+            : n ? `El brief y ${n} ${n === 1 ? C().unidad : C().unidadPl} en blanco, en los mismos días de la semana (el 2º martes cae en el 2º martes).`
+            : `${fl} no tiene ${C().unidadPl}.`, !n) : "");
+      q("[data-crear]").textContent = `Crear ${mesLabel(elegido)}`;
+    }
+    pintarNM();
+    q("[data-titulo]").focus();
+
+    ov.addEventListener("click", async e => {
+      const b = e.target.closest("button[data-m], button[data-anio]");
+      if (!b) return;
+      if (b.dataset.anio) { anio += +b.dataset.anio; pintarNM(); return; }
+      const m = b.dataset.m;
+      if (hechos.has(m)) {                       // ya existe: lo más útil es llevarte ahí
+        cerrar(); MES = m; ABIERTOS = {}; MOVIENDO = ""; await traerMes(MES); pintar(); return;
+      }
+      elegido = m; pintarNM();
+    });
+    ov.addEventListener("change", e => { if (e.target.name === "nm-base") { base = e.target.value; pintarNM(); } });
+    ov.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("input[type=text]")) q("[data-crear]").click(); });
+
+    q("[data-crear]").onclick = async ev => {
+      const msg = q("[data-msg]");
+      const falla = t => { msg.textContent = t; msg.className = "us-msg px-err"; ev.target.disabled = false; };
+      ev.target.disabled = true; msg.textContent = "Creando…"; msg.className = "us-msg";
+      const m = elegido, fuente = fuenteDe(m);
+      const autor = SES().nombre ? SES().nombre() : "", autor_email = SES().email ? SES().email() : "";
+      let brief = [{ h: "Objetivo", p: "" }, { h: "Recursos", p: "" }, { h: "Cadencia", p: "" }];
+      let piezas = [];
+      if (base !== "blanco" && fuente) {
+        const [rc, rp] = await Promise.all([
+          fetch(url(`contenidos_meses?mes=eq.${enc(fuente)}&canal=eq.${CANAL}&select=brief`), { headers: head() }),
+          base === "cadencia" ? fetch(url(`contenidos?mes=eq.${enc(fuente)}&canal=eq.${CANAL}&select=fecha,tipo,orden&order=fecha.asc,orden.asc`), { headers: head() }) : null,
+        ]);
+        const cab = rc.ok ? (await rc.json())[0] : null;
+        if (cab && Array.isArray(cab.brief) && cab.brief.length) brief = cab.brief.map(x => ({ h: x.h || "", p: x.p || "" }));
+        if (rp && rp.ok) piezas = await rp.json();
+      }
+      const r = await fetch(url("contenidos_meses"), {
+        method: "POST", headers: head({ Prefer: "return=representation" }),
+        body: JSON.stringify([{
+          mes: m, canal: CANAL, titulo: q("[data-titulo]").value.trim(), dek: q("[data-dek]").value.trim(),
+          eyebrow: C().eyebrow(m), brief, autor, autor_email,
+        }]),
+      });
+      if (!r.ok) return falla("No se pudo crear el mes. Puede que no tengas permiso.");
+      if (piezas.length) {
+        const filas = piezas.map((p, i) => ({
+          mes: m, canal: CANAL, fecha: mismoDiaDeSemana(p.fecha, m), criterio: C().nuevo, objetivo: "", copy: "", meta: {},
+          tipo: p.tipo || "post", orden: i, autor, autor_email,
+        }));
+        const rp = await fetch(url("contenidos"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) });
+        if (!rp.ok) alert(`El mes se creó, pero no se pudieron sumar ${C().art === "una" ? "las" : "los"} ${C().unidadPl} de la cadencia.`);
+      }
+      cerrar();
+      MES = m; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos";
+      if (piezas.length && VISTA !== "feed") VISTA = "calendario";   // la cadencia se lee mejor en el calendario
+      await traerMeses(); await traerMes(MES); pintar();
+    };
   }
 
   function exportar() {

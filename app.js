@@ -2686,9 +2686,10 @@
       "Subí la base del equipo (.xlsx o .csv) con <b>Nombre y Apellido, Rol, Teléfono, Dirección y Link Web</b>.",
       "Revisá la vista previa y <b>descargá las firmas en PDF</b>, una por persona, con el diseño oficial de Leuk."] },
     { t: "Stock diario", ic: "inventory_2", pages: ["stock"], pasos: [
-      "Al entrar lee solo del Drive el <b>stock</b>, la organización por familias, los ventiladores y las <b>fotos</b>. Si cambió algo, tocá <b>Actualizar desde el Drive</b>.",
+      "Al entrar lee solo del Drive el <b>stock</b>, la organización por familias y los ventiladores. Si cambió algo, tocá <b>Actualizar desde el Drive</b>.",
+      "Las <b>fotos</b> salen siempre de la carpeta de fotos del Drive (la misma de las fichas técnicas): lo que subas ahí, con el SKU al principio del nombre, aparece solo al día siguiente.",
       "Elegí la <b>fecha</b>, revisá la vista previa y <b>descargá el PDF o los JPG</b>.",
-      "En <b>Personalizar y cargar a mano</b> cambiás logo y fuentes (queda guardado) y, si el Drive no responde, subís Stock, Familias o Fotos a mano."] },
+      "En <b>Personalizar y cargar a mano</b> cambiás logo y fuentes (queda guardado) y, si el Drive no responde, subís Stock o Familias a mano."] },
     { t: "Reingresos", ic: "assignment_return", pages: ["reingresos"], pasos: [
       "Seguí los <b>pasos 1 a 5</b>: título y aviso → Excel/CSV con los reingresos (detecta SKU, nombre y color) → fotos en ZIP → ajuste de productos → descarga.",
       "Las fotos se matchean solas por <b>SKU o nombre</b> del archivo (ej. “6832.jpg”).",
@@ -2796,7 +2797,7 @@
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
     if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
     // Stock diario: app autocontenida embebida.
-    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=9"; }
+    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=10"; }
     // Reingresos: app autocontenida embebida.
     if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
     // Liquidación: app autocontenida embebida (trae fuentes y fotos adentro: pesa ~13 MB).

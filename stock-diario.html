@@ -960,7 +960,7 @@ if (window.lkAviso) window.alert = t => { window.lkAviso(t); };</script>
       <div class="step-body">
         <span class="step-lbl">Datos <em>se leen solos del Drive al entrar</em></span>
         <div class="step-controls">
-          <button class="btn-custom" id="btn-nube" onclick="actualizarDesdeLaNube()" title="Vuelve a leer el stock de la web, el HUB de Marketing, el maestro de ventiladores y las fotos del Drive">Actualizar desde el Drive</button>
+          <button class="btn-custom" id="btn-nube" onclick="actualizarDesdeLaNube()" title="Vuelve a leer el stock de la web, el HUB de Marketing, el maestro de ventiladores y las fotos de la carpeta del Drive">Actualizar desde el Drive</button>
           <span class="tb-status">
             <span class="fotos-pill" id="fotos-pill">Sin fotos cargadas</span>
             <span class="fotos-pill" id="familias-pill">Sin familias cargadas</span>
@@ -1049,10 +1049,6 @@ if (window.lkAviso) window.alert = t => { window.lkAviso(t); };</script>
 
   <div class="custom-item respaldo">
     <label>Respaldo manual (sólo si el Drive no responde)</label>
-    <label class="drop-xlsx custom-upload" id="drop-zip" title="Subí el .zip con todas las fotos. Los archivos deben tener el SKU en el nombre (ej: 6792.jpg o FOTO-6792.png)">
-      <input type="file" accept=".zip" id="inp-zip" onchange="loadZipPhotos(this.files[0])">
-      Fotos (.zip)
-    </label>
     <label class="drop-xlsx custom-upload" id="drop-xlsx" title="Arrastrá un .xlsx nuevo para actualizar el stock">
       <input type="file" accept=".xlsx" id="inp-xlsx" onchange="loadXLSX(this.files[0])">
       Stock (.xlsx)
@@ -1358,71 +1354,55 @@ function armarVentiladores(filas) {
   return Object.keys(mapa).length;
 }
 
-/* ── fotos del Drive ──────────────────────────────────────────────
-   Se bajan de a varias, se achican igual que las del zip y quedan en
-   PHOTO_MAP como hasta ahora: el resto del generador no se entera de
-   dónde vinieron. Google sirve estas imágenes con permiso para usarlas
-   en la exportación, así que salen en el PDF y en los JPG. */
-/* Orden de búsqueda de la foto de cada SKU:
-   1) Carpeta «Fotos png para Claude / Web» (PNG nombrados con el SKU adelante):
-      primero la «Imagen destacada» del HUB si está ahí, si no la mejor del SKU.
-   2) Si no hay, la carpeta «Productos Leuk: Recursos Técnicos y Visuales»,
-      pero sólo se acepta si el archivo es PNG (las JPG tienen fondo).
-   Devuelve la lista de candidatas en orden; se usa la primera que baje bien. */
-function idDeFoto(sku) {
-  const clave = s => String(s || '').trim().toLowerCase()
-    .replace(/\.(png|jpe?g|webp)$/, '').replace(/\s+/g, '');
-  const destacada = IMG_DESTACADA[sku];
-  const cand = [], vistos = {};
-  const sumar = (id, metodo, archivo, soloPng) => {
-    if (!id || vistos[id]) return; vistos[id] = 1;
-    cand.push({ id, metodo, archivo: archivo || '', soloPng });
-  };
-  if (destacada && (NUBE.pngNombre || {})[clave(destacada)]) {
-    sumar(NUBE.pngNombre[clave(destacada)], 'PNG web · imagen destacada', destacada, false);
-  }
-  ((NUBE.fotosPng || {})[String(sku)] || []).forEach(id => sumar(id, 'PNG web', '', false));
-  if (destacada && NUBE.fotoIndex[clave(destacada)]) {
-    sumar(NUBE.fotoIndex[clave(destacada)], 'Productos Leuk · imagen destacada (PNG)', destacada, true);
-  }
-  (NUBE.fotosSku[String(sku)] || []).forEach(id => sumar(id, 'Productos Leuk (PNG)', '', true));
-  return cand.length ? cand : null;
-}
+/* ── fotos: SIEMPRE de la carpeta de fotos del Drive ────────────────
+   Carpeta: https://drive.google.com/drive/folders/1OmHlMZ4sMK5890tNkRoeMoNZVgU15JLD
+   (pedido de la usuaria, 16/10/2026: sin zip, siempre de esta carpeta).
+   No se piden a Google en el momento: Google corta con «429» apenas se piden
+   unas 15 seguidas. La plataforma copia esa carpeta todos los días a las 7:30
+   (pipeline/ficha_fotos.py, el mismo proceso que alimenta las fichas técnicas)
+   en assets/ficha/fotos/<SKU>.png, con un indice.json {SKU: versión}. De ahí
+   se leen: rápido, sin cortes, y lo nuevo de la carpeta entra solo al día
+   siguiente. Si un SKU tiene varias fotos, gana la toma principal. */
+const FOTOS_DIR = 'assets/ficha/fotos/';
 
 async function cargarFotosDelDrive() {
   const skus = Object.keys(STOCK_MAP)
     .filter(s => STOCK_MAP[s] && STOCK_MAP[s].disp !== 'SIN STOCK' && !OMITIR[s]);
-  const tareas = skus.map(s => ({ sku: s, f: idDeFoto(parseInt(s, 10)) }));
   DIAG_LOG = [];
   Object.keys(PHOTO_MAP).forEach(k => { try { URL.revokeObjectURL(PHOTO_MAP[k]); } catch (e) {} delete PHOTO_MAP[k]; });
 
+  let indice = {};
+  try {
+    const r = await fetch(FOTOS_DIR + 'indice.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    indice = await r.json();
+  } catch (e) {
+    console.warn('[FOTOS] no pude leer el índice de fotos:', e.message);
+    ORIGEN.fotos = 'no se pudo leer la carpeta de fotos (' + e.message + ')';
+    updateFotosPill();
+    return 0;
+  }
+
   let hechas = 0, ok = 0;
-  const total = tareas.length;
-  showOverlay('FOTOS DESDE EL DRIVE', `0/${total}`, true);
-  const trabajar = async t => {
-    if (!t.f) {
+  const total = skus.length;
+  showOverlay('CARGANDO FOTOS', `0/${total}`, true);
+  const trabajar = async sku => {
+    const v = indice[String(sku)];
+    if (v === undefined) {
       DIAG_LOG.push({ path: '', filename: '', carpetaProducto: '', carpetaPadre: '', textoBusqueda: '',
-                      resultado: 'NO MATCH', sku: t.sku, metodo: 'sin foto en el Drive' });
+                      resultado: 'NO MATCH', sku, metodo: 'no hay foto con este SKU en la carpeta' });
     } else {
-      let hecho = false, ultimoError = '';
-      for (const f of t.f) {
-        try {
-          const r = await fetch(urlFoto(f.id, 800));
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          const blob = await r.blob();
-          if (f.soloPng && blob.type !== 'image/png') throw new Error('no es PNG (tiene fondo)');
-          const chico = await comprimirImagen(blob, 600, 0.85);
-          PHOTO_MAP[t.sku] = URL.createObjectURL(chico);
-          ok++; hecho = true;
-          DIAG_LOG.push({ path: 'Drive · ' + f.id, filename: f.archivo || '', carpetaProducto: '',
-                          carpetaPadre: '', textoBusqueda: '', resultado: 'OK', sku: t.sku, metodo: f.metodo });
-          break;
-        } catch (e) { ultimoError = e.message; }
-      }
-      if (!hecho) {
-        DIAG_LOG.push({ path: 'Drive', filename: '', carpetaProducto: '',
-                        carpetaPadre: '', textoBusqueda: '', resultado: 'NO MATCH', sku: t.sku,
-                        metodo: 'sin PNG utilizable (' + ultimoError + ')' });
+      try {
+        const r = await fetch(`${FOTOS_DIR}${sku}.png?v=${v}`);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const chico = await comprimirImagen(await r.blob(), 600, 0.85);
+        PHOTO_MAP[sku] = URL.createObjectURL(chico);
+        ok++;
+        DIAG_LOG.push({ path: 'Carpeta de fotos · ' + sku + '.png', filename: sku + '.png', carpetaProducto: '',
+                        carpetaPadre: '', textoBusqueda: '', resultado: 'OK', sku, metodo: 'carpeta de fotos del Drive' });
+      } catch (e) {
+        DIAG_LOG.push({ path: 'Carpeta de fotos', filename: '', carpetaProducto: '', carpetaPadre: '', textoBusqueda: '',
+                        resultado: 'NO MATCH', sku, metodo: 'no se pudo leer la foto (' + e.message + ')' });
       }
     }
     hechas++;
@@ -1430,13 +1410,13 @@ async function cargarFotosDelDrive() {
       updateOverlayProgress(Math.round(hechas / total * 100), `${hechas}/${total} · ${ok} fotos`);
     }
   };
-  const cola = tareas.slice();
+  const cola = skus.slice();
   await Promise.all(Array.from({ length: 8 }, async () => {
     while (cola.length) await trabajar(cola.shift());
   }));
   hideOverlay();
   updateFotosPill();
-  ORIGEN.fotos = `${ok} de ${total} desde el Drive`;
+  ORIGEN.fotos = `${ok} de ${total} de la carpeta de fotos del Drive`;
   return ok;
 }
 
@@ -3506,7 +3486,7 @@ function wireDrop(el) {
     const f = e.dataTransfer.files[0];
     if (!f) return;
     if (f.name.match(/\.zip$/i)) {
-      loadZipPhotos(f);
+      alert('Las fotos ya no se cargan a mano.\n\nSalen siempre de la carpeta de fotos del Drive: subí o reemplazá ahí la foto (con el SKU al principio del nombre) y aparece sola al día siguiente.');
     } else if (f.name.match(/\.xlsx$/i)) {
       // Detectar si es familias o stock por nombre del archivo
       const nombre = f.name.toLowerCase();
@@ -3516,11 +3496,10 @@ function wireDrop(el) {
         loadXLSX(f);
       }
     } else {
-      alert('Formato no soportado. Subí un .xlsx o un .zip de fotos.');
+      alert('Formato no soportado. Subí un .xlsx.');
     }
   });
 }
-wireDrop(document.getElementById('drop-zip'));
 wireDrop(document.getElementById('drop-xlsx'));
 wireDrop(document.getElementById('drop-familias'));
 
@@ -3530,7 +3509,7 @@ wireDrop(document.getElementById('drop-familias'));
    ---------------------------------------------------------------- */
 function exportarDiagnostico() {
   if (DIAG_LOG.length === 0) {
-    alert('Primero cargá un zip de fotos. Después podés exportar el diagnóstico.');
+    alert('Las fotos todavía se están cargando. Probá de nuevo en un momento.');
     return;
   }
 
@@ -3545,7 +3524,7 @@ function exportarDiagnostico() {
 
   txt += 'RESUMEN\n';
   txt += '─────────────────────────────────────────────────────────────\n';
-  txt += `Archivos en el zip: ${DIAG_LOG.length}\n`;
+  txt += `SKU revisados: ${DIAG_LOG.length}\n`;
   txt += `SKUs en el catálogo: ${skusValidos.size}\n`;
   txt += `SKUs con foto: ${skusConFoto.size}\n`;
   txt += `SKUs SIN foto: ${skusSinFoto.length}\n\n`;

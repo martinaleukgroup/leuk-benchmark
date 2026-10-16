@@ -79,8 +79,9 @@ if [ "$ANTES" -gt 0 ] && [ "$AHORA" -gt 0 ]; then
   log "· fichas: $ANTES → $AHORA"
 fi
 
-# 3) publicar sólo si cambió algo
-if git diff --quiet -- fichas-data.js; then
+# 3) publicar sólo si cambió algo (las fichas o las fotos: el Stock diario usa fotos
+#    de SKU que no tienen ficha, así que una foto nueva sola también se publica)
+if git diff --quiet -- fichas-data.js && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
   log "· sin cambios en las fichas. No se publica."
   log "──────── listo ────────"
   exit 0

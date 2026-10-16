@@ -103,11 +103,12 @@
     revision:  { t: "Precisa feedback" },
     cambios:   { t: "Con ajustes" },
     aprobado:  { t: "Listo para publicar" },
+    calendarizado: { t: "Calendarizado" },   // sólo Instagram: ya programada en la red, falta que salga
     publicado: { t: "Publicado" },
   };
   // "Publicado" es un paso más allá de "aprobado" (ya salió al canal), no una
   // vuelta a pendiente: para todo lo que cuenta avance, los dos cuentan igual.
-  const yaAprobado = m => m.estado === "aprobado" || m.estado === "publicado";
+  const yaAprobado = m => m.estado === "aprobado" || m.estado === "calendarizado" || m.estado === "publicado";
   // Los recortes salen de los datos: nadie tiene que mantener una lista de pendientes.
   const FILTROS = [
     { k: "todos",     t: "Todo",             f: () => true },
@@ -118,6 +119,7 @@
     { k: "comentado", t: "Con comentarios",  f: m => (COMS[m.id] || []).some(c => c.tipo !== "sugerencia" && !c.resuelto) },
     { k: "aviso",     t: "Con aviso",        f: m => !!m.flag },
     { k: "aprobado",  t: "Listos para publicar", f: m => m.estado === "aprobado" },
+    { k: "calendarizado", t: "Calendarizados", f: m => m.estado === "calendarizado" },
     { k: "publicado", t: "Publicados",       f: m => m.estado === "publicado" },
   ];
   const filtroActivo = () => (FILTROS.find(x => x.k === FILTRO) || FILTROS[0]).f;
@@ -585,6 +587,7 @@
           ${kpi(cuenta("revisar"), "precisan feedback", "revisar", "warn")}
           ${kpi(cuenta("ajustes"), "con ajustes", "ajustes", "no")}
           ${kpi(cuenta("aprobado"), fem ? "listas para publicar" : "listos para publicar", "aprobado", "ok")}
+          ${esIG(CANAL) ? kpi(cuenta("calendarizado"), fem ? "calendarizadas" : "calendarizados", "calendarizado") : ""}
           ${kpi(cuenta("publicado"), fem ? "publicadas" : "publicados", "publicado")}
         </div>` : ""}
       </header>
@@ -810,6 +813,7 @@
           <span><i class="revision"></i>Precisa feedback</span>
           <span><i class="cambios"></i>Con ajustes</span>
           <span><i class="aprobado"></i>Listo para publicar</span>
+          <span><i class="calendarizado"></i>Calendarizado</span>
           <span><i class="publicado"></i>Publicado</span>
           <span class="ct-feed-ley-nota">El punto es el estado de la pieza.</span>
         </div>
@@ -990,6 +994,7 @@
       revision: r ? `Espera el feedback de ${r}` : "Espera feedback",
       cambios: h ? `Ajustes para ${h}` : "Tiene ajustes para hacer",
       aprobado: h ? `La publica ${h}` : "Lista para publicar",
+      calendarizado: "Programada en la red",
       publicado: "",
     })[m.estado] || "";
   }
@@ -1379,6 +1384,14 @@
                 : `<button class="btn-mini on" data-paso="aprobado">✓ Listo para publicar</button>`)
         : espera(turno(m));
     if (m.estado === "aprobado")
+      return puedoHacer()
+        ? `<button class="btn-mini" data-paso="borrador" title="Volver a editarla (pide feedback de nuevo)">Volver a editar</button>
+           ${esIG(CANAL)
+             ? `<button class="btn-mini on" data-paso="calendarizado" title="Ya quedó programada en Instagram">📅 Marcar calendarizado</button>`
+             : `<button class="btn-mini on" data-paso="publicado">✓ Marcar publicado</button>`}`
+        : espera(turno(m));
+    // Instagram: entre "listo" y "publicado" está "calendarizado" (ya programada en la red).
+    if (m.estado === "calendarizado")
       return puedoHacer()
         ? `<button class="btn-mini" data-paso="borrador" title="Volver a editarla (pide feedback de nuevo)">Volver a editar</button>
            <button class="btn-mini on" data-paso="publicado">✓ Marcar publicado</button>`
@@ -1879,7 +1892,7 @@
   async function pasar(id, a, boton) {
     const m = MSGS.find(x => x.id === id); if (!m) return;
     // Instagram no avanza sin el diseño (oct 2026): cada placa con su link de Figma.
-    if (esIG(CANAL) && ["revision", "aprobado", "publicado"].includes(a) && faltaFigma(m)) {
+    if (esIG(CANAL) && ["revision", "aprobado", "calendarizado", "publicado"].includes(a) && faltaFigma(m)) {
       const pls = placasDe(m);
       const sin = pls.map((p, n) => conFigma(m, p) ? 0 : n + 1).filter(Boolean);
       if (sin.length) PLACA[id] = sin[0] - 1;
@@ -1906,14 +1919,16 @@
     const r = await fetch(url("rpc/contenidos_pasar"), { method: "POST", headers: head(), body: JSON.stringify({ p_id: id, p_a: a }) });
     if (!r.ok) {
       const d = await r.json().catch(() => ({}));
-      lkAviso(r.status === 404 ? "Falta correr el SQL del flujo de Contenidos en Supabase." : (d.message || "No se pudo cambiar el estado."));
+      lkAviso(r.status === 404 ? "Falta correr el SQL del flujo de Contenidos en Supabase."
+        : /desconocido/.test(d.message || "") && a === "calendarizado" ? "Falta correr en Supabase el SQL del paso Calendarizado (2026-10-16-contenidos-calendarizado.sql)."
+        : (d.message || "No se pudo cambiar el estado."));
       if (boton) boton.disabled = false; return;
     }
     await traerMes(MES);
     if (a === "aprobado") await congelarPiezas(MSGS.find(x => x.id === id));
     pintar();
     avisar(id, { revision: "Listo: se le avisó a quien revisa.", cambios: "Listo: se le avisó a quien la arma.",
-      aprobado: "Lista para publicar ✓", publicado: "Marcada como publicada ✓", borrador: "Volvió a borrador." }[a], true);
+      aprobado: "Lista para publicar ✓", calendarizado: "Marcada como calendarizada ✓", publicado: "Marcada como publicada ✓", borrador: "Volvió a borrador." }[a], true);
   }
   // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame, así que sin
   // guardar el PNG lo aprobado cambiaría solo. Si falla, la pieza igual queda lista.

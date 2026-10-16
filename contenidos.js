@@ -91,6 +91,7 @@
   let CALNOTA = "";      // qué pieza se movió de día en el calendario, y a dónde
   let MOVIENDO = "";     // pieza "levantada" a mano: el próximo día que se toque es su fecha nueva
   let RENDER = {};       // "archivo|nodo" -> URL del render de Figma (vive lo que dure la pestaña)
+  let FEEDPL = {};       // contenido_id -> placa que se ve en la baldosa del feed (carrusel)
   let CONGELADAS = {};   // path en Storage -> URL firmada del PNG congelado
   // Por qué un estado y no un try/catch suelto: mientras no esté desplegada la
   // función o cargado el token, la vista tiene que explicarlo una vez y seguir
@@ -783,11 +784,7 @@
         <p>Este mes son todas historias: no dejan baldosa en el perfil.</p>
         <button class="btn-mini" data-vista="calendario" style="margin-top:10px">Verlas en el calendario</button></div>`;
     }
-    // Orden de Instagram: descendente por fecha. `orden` desempata dentro del día.
-    const orden = enFeed.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
-    const vienen = orden.filter(m => m.fecha >= hoy);
-    const salieron = orden.filter(m => m.fecha < hoy);
-    const contexto = PREV.filter(p => p.tipo !== "historia" && !MSGS.some(m => m.id === p.id));
+    const { vienen, salieron, contexto } = ordenFeed();
 
     const grilla = vienen.map(m => baldosaHTML(m, ed, false)).join("") +
       (salieron.length || contexto.length
@@ -804,7 +801,7 @@
             <b>leukiluminacion</b>
             <small>${esc(cap(mesLabel(MES)))} · ${enFeed.length} ${enFeed.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas${historias ? ` · ${historias} historia${historias > 1 ? "s" : ""} aparte` : ""}</small>
           </div>
-          ${ed ? `<span class="ct-feed-tip">Arrastrá una pieza para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
+          ${ed ? `<span class="ct-feed-tip">Tocá una pieza para verla en grande y bajar a las siguientes. Arrastrala para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
         </div>
         ${FEEDNOTA ? `<p class="ct-feed-nota">${esc(FEEDNOTA)}</p>` : ""}
         <div class="ct-grid">${grilla}</div>
@@ -820,9 +817,24 @@
       </div>`;
   }
 
+  // Orden de Instagram: descendente por fecha. `orden` desempata dentro del día.
+  // Lo usan la grilla y el visor, que recorre las piezas en el MISMO orden.
+  function ordenFeed() {
+    const hoy = hoyISO();
+    const orden = MSGS.filter(m => m.tipo !== "historia" && m.fecha)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
+    const vienen = orden.filter(m => m.fecha >= hoy);
+    const salieron = orden.filter(m => m.fecha < hoy);
+    const contexto = PREV.filter(p => p.tipo !== "historia" && !MSGS.some(m => m.id === p.id));
+    return { vienen, salieron, contexto,
+      todas: vienen.concat(salieron).map(m => ({ m, ajena: false })).concat(contexto.map(m => ({ m, ajena: true }))) };
+  }
+
   function baldosaHTML(m, ed, ajena) {
     const pls = placasDe(m);
-    const img = imagenDe(m, 0);
+    // Un carrusel se pasa adentro de la baldosa, como en Instagram (flechas o deslizando).
+    const k = pls.length > 1 ? Math.min(FEEDPL[m.id] || 0, pls.length - 1) : 0;
+    const img = imagenDe(m, k);
     const f = aFecha(m.fecha);
     const fecha = `${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}`;
     const n = pls.length;
@@ -840,8 +852,111 @@
       ${ajena ? "" : `<span class="ct-bald-est ${esc(m.estado)}"></span>`}
       ${badge ? `<span class="ct-bald-tipo">${badge}</span>` : ""}
       <span class="ct-bald-dia">${fecha}${ajena ? " · " + esc(mesLabel(m.mes).slice(0, 3)) : ""}</span>
+      ${pls.length > 1 ? `
+        ${k > 0 ? `<span class="ct-bald-fl izq" data-feedpl="${m.id}:-1" title="Placa anterior">‹</span>` : ""}
+        ${k < pls.length - 1 ? `<span class="ct-bald-fl der" data-feedpl="${m.id}:1" title="Placa siguiente">›</span>` : ""}
+        <span class="ct-bald-pts">${pls.map((_, j) => `<i class="${j === k ? "on" : ""}"></i>`).join("")}</span>` : ""}
       ${ajena ? "" : `<span class="ct-bald-segs">${segs}</span>`}
     </button>`;
+  }
+  function pasarPlacaFeed(id, paso) {
+    const m = MSGS.find(x => x.id === id) || PREV.find(x => x.id === id); if (!m) return;
+    const n = placasDe(m).length;
+    FEEDPL[id] = Math.max(0, Math.min(n - 1, (FEEDPL[id] || 0) + paso));
+    pintar();
+  }
+
+  /* ---- Visor: las piezas en grande, una debajo de otra --------------------
+     Tocar una baldosa abre el posteo como en un perfil de Instagram: se baja a
+     la siguiente, y un carrusel se pasa de costado. La ficha queda a un botón. */
+  function abrirVisor(id) {
+    const lista = ordenFeed().todas;
+    if (!lista.length) return;
+    const perfil = (PERFILES.find(p => p.k === CANAL) || {}).t || "Instagram";
+    const chip = est => `<span class="ct-est ${esc(est)}">${ESTADOS[est] ? ESTADOS[est].t : esc(est)}</span>`;
+    const post = ({ m, ajena }) => {
+      const pls = placasDe(m);
+      const n = Math.max(1, pls.length);
+      const f = aFecha(m.fecha);
+      const fecha = `${DIA_CORTO[f.getDay()]} ${f.getDate()} de ${MES_NOMBRE[f.getMonth()]}`;
+      const video = ((m.meta || {}).video || "").trim();
+      const fotos = Array.from({ length: n }, (_, j) => {
+        const img = imagenDe(m, j);
+        return `<div class="ct-vs-foto">${img ? `<img src="${esc(img)}" alt="" loading="lazy">`
+          : `<span class="ct-vs-ph">${esc(m.criterio || "Sin título")}${!ajena && faltaFigma(m) ? `<small>Falta el link de Figma</small>` : ""}</span>`}</div>`;
+      }).join("");
+      return `<article class="ct-vs-post" data-vspost="${m.id}">
+        <header><span class="av">${esc(perfil[0])}</span>
+          <div><b>${esc(perfil)}</b><small>${esc(fecha)}${ajena ? " · ya publicado" : ""}</small></div>
+          ${ajena ? "" : chip(m.estado)}</header>
+        <div class="ct-vs-media">
+          <div class="ct-vs-tira" data-vstira>${fotos}</div>
+          ${n > 1 ? `<button class="ct-vs-fl izq" data-vsfl="-1" title="Anterior" hidden>‹</button>
+            <button class="ct-vs-fl der" data-vsfl="1" title="Siguiente">›</button>
+            <span class="ct-vs-n">1/${n}</span>` : ""}
+          ${m.tipo === "reel" ? `<span class="ct-vs-reel">▶ Reel</span>` : ""}
+        </div>
+        ${n > 1 ? `<div class="ct-vs-pts">${Array.from({ length: n }, (_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>` : ""}
+        <div class="ct-vs-txt">
+          <h4>${esc(m.criterio || "Sin título")}</h4>
+          ${m.copy ? `<div class="ct-vs-copy">${copyHTML(m.copy)}</div>` : ""}
+          <div class="ct-vs-accs">
+            ${m.tipo === "reel" && esURL(video) ? `<a class="btn-mini" href="${esc(video)}" target="_blank" rel="noopener">▶ Ver el video en Drive</a>` : ""}
+            ${ajena ? "" : `<button class="btn-mini on" data-vsficha="${m.id}">Abrir la ficha</button>`}
+          </div>
+        </div>
+      </article>`;
+    };
+    const ov = document.createElement("div");
+    ov.className = "ct-visor";
+    ov.innerHTML = `<button class="ct-vs-x" data-vsx title="Cerrar (Esc)">✕</button>
+      <div class="ct-vs-col" data-vscol>${lista.map(post).join("")}</div>`;
+    document.body.appendChild(ov);
+    document.body.classList.add("ct-visor-abierto");
+    const col = ov.querySelector("[data-vscol]");
+    const destino = col.querySelector(`[data-vspost="${CSS.escape(id)}"]`);
+    if (destino) col.scrollTop = destino.offsetTop - 12;
+
+    const cerrar = () => { ov.remove(); document.body.classList.remove("ct-visor-abierto"); document.removeEventListener("keydown", tecla); };
+    const actual = () => [...col.querySelectorAll("[data-vspost]")].find(a => a.offsetTop + a.offsetHeight / 2 > col.scrollTop) || null;
+    const tecla = e => {
+      if (e.key === "Escape") { cerrar(); return; }
+      const a = actual(); if (!a) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const otro = e.key === "ArrowDown" ? a.nextElementSibling : a.previousElementSibling;
+        if (otro) col.scrollTo({ top: otro.offsetTop - 12, behavior: "smooth" });
+      }
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault(); correr(a.querySelector("[data-vstira]"), e.key === "ArrowRight" ? 1 : -1);
+      }
+    };
+    document.addEventListener("keydown", tecla);
+    const correr = (tira, paso) => { if (tira) tira.scrollBy({ left: paso * tira.clientWidth, behavior: "smooth" }); };
+    // El carrusel es una tira con scroll de costado: con el dedo se desliza solo;
+    // acá sólo se mantienen al día el contador, los puntitos y las flechas.
+    const alDia = tira => {
+      const media = tira.parentElement, total = tira.children.length;
+      const j = Math.round(tira.scrollLeft / Math.max(1, tira.clientWidth));
+      const nn = media.querySelector(".ct-vs-n"); if (nn) nn.textContent = `${j + 1}/${total}`;
+      const iz = media.querySelector(".izq"), de = media.querySelector(".der");
+      if (iz) iz.hidden = j <= 0; if (de) de.hidden = j >= total - 1;
+      media.parentElement.querySelectorAll(".ct-vs-pts i").forEach((p, q) => p.classList.toggle("on", q === j));
+    };
+    ov.querySelectorAll("[data-vstira]").forEach(tira => tira.addEventListener("scroll", () => alDia(tira), { passive: true }));
+    // Cada carrusel arranca en la placa que se estaba viendo en la baldosa.
+    ov.querySelectorAll("[data-vspost]").forEach(a => {
+      const j = FEEDPL[a.dataset.vspost] || 0, tira = a.querySelector("[data-vstira]");
+      if (j && tira) { tira.scrollLeft = j * tira.clientWidth; alDia(tira); }
+    });
+    ov.addEventListener("click", e => {
+      const t = e.target;
+      if (t === ov || t.closest("[data-vsx]")) { cerrar(); return; }
+      const fl = t.closest("[data-vsfl]");
+      if (fl) { correr(fl.parentElement.querySelector("[data-vstira]"), +fl.dataset.vsfl); return; }
+      const fi = t.closest("[data-vsficha]");
+      if (fi) { cerrar(); FOCO = fi.dataset.vsficha; VISTA = "fichas"; pintar(); }
+    });
   }
 
   /* Arrastrar = cambiar el lugar en la grilla. Las FECHAS se quedan donde
@@ -1227,12 +1342,22 @@
     if (!esIG(CANAL)) return "";
     const pls = placasDe(m);
     const TIPOS = { post: "Post", carrusel: "Carrusel", reel: "Reel", historia: "Historia" };
+    // Un reel es un video: la placa es su MINIATURA (la portada que queda en el
+    // perfil, de Figma) y el video va aparte, como link de Drive.
+    const reel = m.tipo === "reel";
+    const tipoSel = ed ? `<select class="ct-tipo" data-tipo="${m.id}" title="Cómo se publica">
+          ${Object.keys(TIPOS).map(k => `<option value="${k}" ${(m.tipo || "post") === k ? "selected" : ""}>${TIPOS[k]}</option>`).join("")}
+        </select>` : `<span class="ct-pill">${TIPOS[m.tipo] || "Post"}</span>`;
 
     if (!pls.length) {
       return `<div class="ct-placas-blk vacio">
-        <p>Esta pieza todavía no tiene placas. Cada placa se carga con el link de su frame en Figma, y de ahí sale la imagen.</p>
-        ${ed ? `<button class="btn-mini" data-addplaca="1">+ Agregar la primera placa</button>` : ""}
-      </div>`;
+        <div class="ct-placas-cab"><h5>${reel ? "El reel" : "La pieza"}</h5>${tipoSel}</div>
+        <p>${reel
+          ? "Este reel todavía no tiene miniatura. La miniatura es la portada que se ve en el perfil: se carga con el link de su frame en Figma."
+          : "Esta pieza todavía no tiene placas. Cada placa se carga con el link de su frame en Figma, y de ahí sale la imagen."}</p>
+        ${ed ? `<button class="btn-mini" data-addplaca="1">${reel ? "+ Sumar la miniatura de Figma" : "+ Agregar la primera placa"}</button>` : ""}
+      </div>
+      ${reel ? videoHTML(m, ed) : ""}`;
     }
 
     const i = Math.min(PLACA[m.id] || 0, pls.length - 1);
@@ -1243,10 +1368,8 @@
 
     return `<div class="ct-placas-blk">
       <div class="ct-placas-cab">
-        <h5>${pls.length > 1 ? `Carrusel de ${pls.length} placas` : "La pieza"}</h5>
-        ${ed ? `<select class="ct-tipo" data-tipo="${m.id}" title="Cómo se publica">
-          ${Object.keys(TIPOS).map(k => `<option value="${k}" ${(m.tipo || "post") === k ? "selected" : ""}>${TIPOS[k]}</option>`).join("")}
-        </select>` : `<span class="ct-pill">${TIPOS[m.tipo] || "Post"}</span>`}
+        <h5>${reel ? "El reel" : pls.length > 1 ? `Carrusel de ${pls.length} placas` : "La pieza"}</h5>
+        ${tipoSel}
 
       </div>
 
@@ -1261,20 +1384,20 @@
             <span class="ct-placa-n">${n + 1}</span>
           </button>`;
         }).join("")}
-        ${ed ? `<button class="ct-placa mas" data-addplaca="1" title="Sumar una placa">+</button>` : ""}
+        ${ed && !reel ? `<button class="ct-placa mas" data-addplaca="1" title="Sumar una placa">+</button>` : ""}
       </div>
 
       <div class="ct-placa-cap">
         ${chip(act.estado || "borrador")}
-        <b>${pls.length > 1 ? `Placa ${i + 1} de ${pls.length}` : "Imagen"}</b>
+        <b>${reel ? (pls.length > 1 ? `Miniatura ${i + 1} de ${pls.length}` : "Miniatura") : pls.length > 1 ? `Placa ${i + 1} de ${pls.length}` : "Imagen"}</b>
         <span class="ct-placa-pie"${e} data-c="placas.${i}.pie">${esc(act.pie || "")}</span>
         ${traba ? `<span class="ct-placa-traba">· ${traba} comentario${traba > 1 ? "s" : ""} sin resolver acá</span>` : ""}
       </div>
 
       ${ed ? `<label class="ct-figma ${conFigma(m, act) ? "" : "falta"}">
-          <span>Link de Figma <b>obligatorio</b></span>
+          <span>Link de Figma${reel ? " de la miniatura" : ""} <b>obligatorio</b></span>
           <input type="url" data-figmalink="${m.id}:${i}" value="${esc(figmaUrl(m, act))}"
-            placeholder="Pegá acá el link del frame de esta placa" spellcheck="false" autocomplete="off">
+            placeholder="Pegá acá el link del frame de ${reel ? "la miniatura" : "esta placa"}" spellcheck="false" autocomplete="off">
         </label>` : ""}
       ${figmaUrl(m, act) ? `<p class="ct-placa-figma">
           <a href="${esc(figmaUrl(m, act))}" target="_blank" rel="noopener">◈ Abrir el frame en Figma</a>
@@ -1289,9 +1412,42 @@
         : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 
       ${ed ? `<div class="ct-placa-accs">
-        <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕ Eliminar placa</button>
+        <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕ Eliminar ${reel ? "miniatura" : "placa"}</button>
       </div>` : ""}
+      ${reel ? videoHTML(m, ed) : ""}
     </div>`;
+  }
+
+  // El video del reel vive en Drive (pesa demasiado para la base): acá va el link.
+  const esDrive = s => { try { return /(^|\.)(drive|docs)\.google\.com$/i.test(new URL(String(s).trim()).hostname); } catch (e) { return false; } };
+  function videoHTML(m, ed) {
+    const v = ((m.meta || {}).video || "").trim();
+    return `<div class="ct-video">
+      ${ed ? `<label class="ct-figma ct-video-in">
+          <span>Video en Drive</span>
+          <input type="url" data-videolink="${m.id}" value="${esc(v)}"
+            placeholder="Pegá acá el link del video en Google Drive" spellcheck="false" autocomplete="off">
+        </label>` : ""}
+      ${esURL(v) ? `<p class="ct-placa-figma"><a href="${esc(v)}" target="_blank" rel="noopener">▶ Ver el video en Drive</a>
+          <span class="tenue">En Drive, el video tiene que estar compartido con quien revisa.</span></p>`
+        : `<p class="ct-placa-figma tenue">${ed ? "Todavía no hay link del video. En Drive: clic derecho sobre el video → Compartir → Copiar vínculo." : "Todavía no hay link del video."}</p>`}
+    </div>`;
+  }
+  async function guardarVideo(pid, valor, inp) {
+    const m = MSGS.find(x => x.id === pid); if (!m) return;
+    const meta = m.meta || {};
+    const v = String(valor || "").trim();
+    if (v === (meta.video || "")) return;
+    if (v && !esDrive(v)) {
+      if (inp) inp.value = meta.video || "";
+      lkAviso("Ese link no es de Google Drive\n\nEn Drive: clic derecho sobre el video → Compartir → Copiar vínculo, y pegalo acá.");
+      return;
+    }
+    avisar(pid, "Guardando…", false);
+    try { await guardarCampo(pid, "meta", Object.assign({}, meta, { video: v })); }
+    catch (e) { if (inp) inp.value = meta.video || ""; avisar(pid, "No se pudo guardar", false); return; }
+    avisar(pid, v ? "Link del video guardado ✓" : "Link del video borrado", true);
+    pintar();
   }
 
   function cuerpoHTML(o, pre, ed, m) {
@@ -1494,11 +1650,26 @@
       };
     });
     // El link de Figma de cada placa: se guarda al pegarlo o al salir del campo.
+    cont.querySelectorAll("[data-videolink]").forEach(inp => {
+      inp.onchange = () => guardarVideo(inp.dataset.videolink, inp.value, inp);
+      inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); } };
+    });
     cont.querySelectorAll("[data-figmalink]").forEach(inp => {
       inp.onchange = () => { const [pid, n] = inp.dataset.figmalink.split(":"); guardarFigma(pid, +n, inp.value, inp); };
       inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); } };
     });
 
+    // Deslizar el dedo sobre un carrusel del feed pasa sus placas, como en Instagram.
+    cont.querySelectorAll(".ct-bald[data-bald]").forEach(b => {
+      if (!b.querySelector(".ct-bald-pts")) return;
+      let x0 = null;
+      b.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+      b.addEventListener("touchend", e => {
+        if (x0 == null) return;
+        const dx = e.changedTouches[0].clientX - x0; x0 = null;
+        if (Math.abs(dx) > 35) { e.preventDefault(); pasarPlacaFeed(b.dataset.bald, dx < 0 ? 1 : -1); }
+      });
+    });
     // Arrastrar baldosas del feed. Los listeners van por elemento (no se puede
     // delegar drag) y se vuelven a poner en cada pintado, que es cuando corre esto.
     let llevando = null;
@@ -1573,6 +1744,10 @@
       const fl = t.closest("[data-filtro]");
       if (fl) { FILTRO = fl.dataset.filtro; if (VISTA === "resultados") VISTA = "fichas"; pintar(); return; }
 
+      const fp = t.closest("[data-feedpl]");
+      if (fp) { const [pid, paso] = fp.dataset.feedpl.split(":"); pasarPlacaFeed(pid, +paso); return; }
+      const bd = t.closest(".ct-bald[data-bald]");
+      if (bd) { abrirVisor(bd.dataset.bald); return; }
       const ir = t.closest("[data-ir]");
       if (ir) { FOCO = ir.dataset.ir; VISTA = "fichas"; pintar(); return; }
 
@@ -1692,7 +1867,7 @@
       if (t.closest("[data-addplaca]")) {
         const m = MSGS.find(x => x.id === id); if (!m) return;
         // Sin link no hay placa: es de donde sale la imagen.
-        const f = await pedirFigma(`Placa ${placasDe(m).length + 1}`);
+        const f = await pedirFigma(m.tipo === "reel" ? "la miniatura del reel" : `Placa ${placasDe(m).length + 1}`);
         if (!f) return;
         const pls = placasDe(m).slice();
         pls.push({ pie: "", nodo: f.nodo, archivo: f.archivo, link: f.link, png: "", estado: "borrador" });
@@ -1898,7 +2073,9 @@
       if (sin.length) PLACA[id] = sin[0] - 1;
       pintar();
       lkAviso(!pls.length
-        ? "Falta el link de Figma\n\nEsta pieza todavía no tiene placas. Sumá la primera con el link de su frame en Figma y después pedí feedback."
+        ? (m.tipo === "reel"
+          ? "Falta la miniatura de Figma\n\nEste reel todavía no tiene miniatura. Sumala con el link de su frame en Figma y después seguí."
+          : "Falta el link de Figma\n\nEsta pieza todavía no tiene placas. Sumá la primera con el link de su frame en Figma y después pedí feedback.")
         : `Falta el link de Figma\n\n${pls.length > 1 ? `${sin.length > 1 ? "Las placas" : "La placa"} ${sin.join(", ")} no ${sin.length > 1 ? "tienen" : "tiene"}` : "La placa no tiene"} link de Figma. Pegalo en el campo «Link de Figma» de la ficha y después seguí.\n\n${FIGMA_AYUDA}`);
       return;
     }

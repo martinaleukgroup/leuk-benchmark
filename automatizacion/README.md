@@ -8,11 +8,25 @@ edita BASE ÚNICA. Hay que correr el pipeline. Esto lo automatiza.
 `actualizar_fichas.sh`, todos los días a las **7:30**:
 
 1. Re-indexa Drive (dibujos, curvas, LDT, CAD, manuales)
+   y baja las **fotos de producto** nuevas o cambiadas de la
+   [carpeta de fotos](https://drive.google.com/drive/folders/1OmHlMZ4sMK5890tNkRoeMoNZVgU15JLD)
 2. Regenera `app/fichas-data.js` leyendo BASE ÚNICA
 3. Publica a GitHub Pages — **sólo si algo cambió**
 
 Corre con `launchd`, no con `cron`: si la Mac está apagada a las 7:30, la
 tarea se dispara al prenderla.
+
+## Las fotos de producto
+
+Salen siempre de la carpeta de Drive de arriba. Para que una foto entre sola:
+
+- nombrarla empezando por la SKU: `4169FotoProducto0.png` o `4169.png`
+- subirla suelta a la carpeta (los ZIP se ignoran)
+- para corregir una, reemplazarla o subir la nueva y borrar la vieja
+
+Entra en la corrida siguiente (7:30) o al correrlo a mano. Las fichas no enlazan directo a
+Drive —Google corta con error 429 cuando se piden varias fotos seguidas—: el proceso las
+copia a `app/assets/ficha/fotos/`. Qué bajó cada vez queda en el log.
 
 ## Correrlo a mano
 

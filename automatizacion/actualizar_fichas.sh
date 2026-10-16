@@ -4,6 +4,7 @@
 # ============================================================
 # Hace, en orden:
 #   1. Re-indexa los archivos de Drive (dibujos, curvas, LDT, CAD, manuales)
+#      y baja de la carpeta de fotos de Drive las fotos nuevas o cambiadas
 #   2. Regenera app/fichas-data.js leyendo la planilla BASE ÚNICA
 #   3. Publica a GitHub Pages, SÓLO si algo cambió
 #
@@ -36,6 +37,14 @@ if ! python3 ficha_assets_manifest.py >>"$LOG" 2>&1; then
   exit 1
 fi
 log "✓ índice de Drive actualizado"
+
+# 1b) fotos de producto: la carpeta de Drive de diseño es la fuente. Baja sólo lo nuevo o
+# cambiado. Si falla no se corta: las fichas salen con las fotos que ya había.
+if python3 ficha_fotos.py >>"$LOG" 2>&1; then
+  log "✓ fotos al día con la carpeta de Drive"
+else
+  log "⚠ no pude actualizar las fotos desde Drive. Sigo con las que ya había."
+fi
 
 # 2) fichas. Código 2 = leyó el xlsx local en vez de la planilla → no publicar.
 python3 fichas_build.py >>"$LOG" 2>&1

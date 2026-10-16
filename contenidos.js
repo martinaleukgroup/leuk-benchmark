@@ -274,12 +274,16 @@
   const placasDe = m => (Array.isArray(m.placas) && m.placas.length) ? m.placas : [];
   // La imagen sale del PNG congelado o del link cargado a mano. Cuando entre
   // Figma, `png` lo va a llenar el render y esto no cambia.
+  // Cada placa puede venir de un archivo de Figma distinto (oct 2026: se carga
+  // pegando el link del frame). Las de antes sólo tenían el archivo de la pieza.
+  const archivoDe = (m, p) => (p && p.archivo) || m.figma_file || "";
   function imagenDe(m, i) {
     const pl = placasDe(m)[i] || {};
+    const fk = archivoDe(m, pl);
     if (esURL(pl.png)) return pl.png;                       // URL pegada a mano
     if (pl.png && CONGELADAS[pl.png]) return CONGELADAS[pl.png];   // PNG congelado al aprobar
-    if (m.figma_file && pl.nodo && RENDER[m.figma_file + "|" + pl.nodo])
-      return RENDER[m.figma_file + "|" + pl.nodo];          // render en vivo del frame
+    if (fk && pl.nodo && RENDER[fk + "|" + pl.nodo])
+      return RENDER[fk + "|" + pl.nodo];                    // render en vivo del frame
     if (esURL(pl.url)) return pl.url;
     if (i === 0 && esURL((m.meta || {}).imagen)) return m.meta.imagen;
     return "";
@@ -290,9 +294,37 @@
     c.tipo !== "sugerencia" && !c.resuelto &&
     (n === null ? c.variante == null : +c.variante === n));
   const placasListas = m => placasDe(m).filter(p => p.estado === "aprobado").length;
-  const figmaUrl = (m, p) => (m.figma_file && p && p.nodo)
-    ? `https://www.figma.com/design/${encodeURIComponent(m.figma_file)}/?node-id=${encodeURIComponent(String(p.nodo).replace(/:/g, "-"))}`
+  const figmaUrl = (m, p) => (p && esURL(p.link)) ? p.link
+    : (archivoDe(m, p) && p && p.nodo)
+    ? `https://www.figma.com/design/${encodeURIComponent(archivoDe(m, p))}/?node-id=${encodeURIComponent(String(p.nodo).replace(/:/g, "-"))}`
     : "";
+  const conFigma = (m, p) => !!(p && p.nodo && archivoDe(m, p));
+  // Una pieza de Instagram no avanza sin el diseño: todas sus placas con link de Figma.
+  const faltaFigma = m => !placasDe(m).length || placasDe(m).some(p => !conFigma(m, p));
+
+  /* Del link que se copia en Figma (clic derecho en el frame → "Copiar link a la
+     selección") salen los dos datos que pide la API: el archivo y el frame.
+       https://www.figma.com/design/<ARCHIVO>/Nombre?node-id=12-345&t=...
+     También /file/ y /proto/; en una rama manda la clave de la rama. */
+  function leerFigma(txt) {
+    const s = String(txt || "").trim();
+    if (!s) return { error: "vacio" };
+    let u;
+    try { u = new URL(s); } catch (e) { return { error: "no-link" }; }
+    if (!/(^|\.)figma\.com$/i.test(u.hostname)) return { error: "no-figma" };
+    const r = /^\/(?:design|file|proto|board)\/([A-Za-z0-9]+)(?:\/[^/]*)?(?:\/branch\/([A-Za-z0-9]+))?/.exec(u.pathname);
+    if (!r) return { error: "no-figma" };
+    const nodo = decodeURIComponent(u.searchParams.get("node-id") || "").replace(/-/g, ":").trim();
+    if (!/^\d+:\d+$/.test(nodo) || nodo === "0:1") return { error: "sin-frame" };
+    return { archivo: r[2] || r[1], nodo, link: s };
+  }
+  const FIGMA_AYUDA = "En Figma: clic derecho sobre el frame de la placa → Copiar/Pegar como → Copiar link a la selección.";
+  const FIGMA_ERR = {
+    vacio: "Falta el link de Figma.",
+    "no-link": "Eso no es un link.",
+    "no-figma": "Ese link no es de un archivo de Figma.",
+    "sin-frame": "Ese link es del archivo entero, no de la placa.",
+  };
   // Las placas mandan sólo cuando existen: una pieza sin placas sigue el flujo viejo.
   const porPlacas = m => esIG(CANAL) && placasDe(m).length > 0;
 
@@ -343,7 +375,7 @@
     PREV = [];
     if (!esIG(CANAL) || !MES) return;
     const r = await fetch(url(`contenidos?canal=eq.${CANAL}&mes=lt.${enc(MES)}` +
-      `&select=id,mes,fecha,criterio,tipo,placas,meta,estado&order=fecha.desc&limit=9`), { headers: head() });
+      `&select=id,mes,fecha,criterio,tipo,placas,meta,estado,figma_file&order=fecha.desc&limit=9`), { headers: head() });
     if (r.ok) PREV = await r.json();
   }
 
@@ -377,8 +409,8 @@
     const porArchivo = {}, paths = [];
     const juntar = m => (m.placas || []).forEach(p => {
       if (p.png && !esURL(p.png)) { if (!CONGELADAS[p.png] || forzar) paths.push(p.png); }
-      else if (m.figma_file && p.nodo && (forzar || !RENDER[m.figma_file + "|" + p.nodo]))
-        (porArchivo[m.figma_file] = porArchivo[m.figma_file] || new Set()).add(p.nodo);
+      else if (conFigma(m, p) && (forzar || !RENDER[archivoDe(m, p) + "|" + p.nodo]))
+        (porArchivo[archivoDe(m, p)] = porArchivo[archivoDe(m, p)] || new Set()).add(p.nodo);
     });
     MSGS.forEach(juntar); PREV.forEach(juntar);
 
@@ -674,6 +706,8 @@
       return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}${moviendoAca ? " origen" : ""}"
           data-dia="${iso}">
         <span class="num">${num}</span>
+        ${ed && !fuera && !MOVIENDO ? `<button class="ct-dia-add" data-acc="nuevo-msg" data-fecha="${iso}"
+          title="Agregar ${C().art === "una" ? "una nueva" : "un nuevo"} ${esc(C().unidad)} este día">＋</button>` : ""}
         <div class="ct-chips">${lista.map(chip).join("")}</div>
       </div>`;
     };
@@ -797,7 +831,8 @@
     return `<button class="ct-bald ${ajena ? "ajena" : ""}" data-ir="${m.id}" data-bald="${m.id}"
         ${ed && !ajena ? 'draggable="true"' : ""} title="${esc(m.criterio || "")}">
       ${img ? `<img src="${esc(img)}" alt="" loading="lazy">`
-            : `<span class="ct-bald-ph"><span>${esc(m.criterio || "Sin título")}</span></span>`}
+            : `<span class="ct-bald-ph"><span>${esc(m.criterio || "Sin título")}</span>${
+                !ajena && esIG(CANAL) && faltaFigma(m) ? `<small class="ct-bald-falta">Falta el link de Figma</small>` : ""}</span>`}
       ${ajena ? "" : `<span class="ct-bald-est ${esc(m.estado)}"></span>`}
       ${badge ? `<span class="ct-bald-tipo">${badge}</span>` : ""}
       <span class="ct-bald-dia">${fecha}${ajena ? " · " + esc(mesLabel(m.mes).slice(0, 3)) : ""}</span>
@@ -1190,7 +1225,7 @@
 
     if (!pls.length) {
       return `<div class="ct-placas-blk vacio">
-        <p>Esta pieza todavía no tiene placas.</p>
+        <p>Esta pieza todavía no tiene placas. Cada placa se carga con el link de su frame en Figma, y de ahí sale la imagen.</p>
         ${ed ? `<button class="btn-mini" data-addplaca="1">+ Agregar la primera placa</button>` : ""}
       </div>`;
     }
@@ -1215,7 +1250,7 @@
           const img = imagenDe(m, n);
           const c = comsPlaca(m, n + 1).length;
           return `<button class="ct-placa ${n === i ? "on" : ""}" data-placa="${m.id}:${n}" title="${esc(p.pie || "Placa " + (n + 1))}">
-            ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${n + 1}</span>`}
+            ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${conFigma(m, p) ? n + 1 : "Sin link"}</span>`}
             <span class="ct-placa-est ${esc(p.estado || "borrador")}"></span>
             ${c ? `<span class="ct-placa-pin">${c}</span>` : ""}
             <span class="ct-placa-n">${n + 1}</span>
@@ -1231,11 +1266,11 @@
         ${traba ? `<span class="ct-placa-traba">· ${traba} comentario${traba > 1 ? "s" : ""} sin resolver acá</span>` : ""}
       </div>
 
-      <dl class="ct-placa-datos">
-        <div><dt>Archivo de Figma</dt><dd${e} data-c="figma_file">${esc(m.figma_file || "")}</dd></div>
-        <div><dt>Frame</dt><dd${e} data-c="placas.${i}.nodo">${esc(act.nodo || "")}</dd></div>
-        <div><dt>Imagen</dt><dd${e} data-c="placas.${i}.png">${esc(act.png || "")}</dd></div>
-      </dl>
+      ${ed ? `<label class="ct-figma ${conFigma(m, act) ? "" : "falta"}">
+          <span>Link de Figma <b>obligatorio</b></span>
+          <input type="url" data-figmalink="${m.id}:${i}" value="${esc(figmaUrl(m, act))}"
+            placeholder="Pegá acá el link del frame de esta placa" spellcheck="false" autocomplete="off">
+        </label>` : ""}
       ${figmaUrl(m, act) ? `<p class="ct-placa-figma">
           <a href="${esc(figmaUrl(m, act))}" target="_blank" rel="noopener">◈ Abrir el frame en Figma</a>
           <span class="tenue">${
@@ -1246,7 +1281,7 @@
             : FIGMA.estado === "error" ? esc(FIGMA.msg || "No se pudo traer la imagen de Figma.")
             : "La imagen se trae de Figma y se congela al aprobar esta placa."
           }</span></p>`
-        : `<p class="ct-placa-figma tenue">Sin frame de Figma cargado: pegá el archivo y el nodo acá arriba y aparece el link.</p>`}
+        : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 
       ${ed ? `<div class="ct-placa-accs">
         <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕ Eliminar placa</button>
@@ -1445,6 +1480,11 @@
         catch (e) { lkAviso("No se pudo cambiar el tipo de pieza."); }
       };
     });
+    // El link de Figma de cada placa: se guarda al pegarlo o al salir del campo.
+    cont.querySelectorAll("[data-figmalink]").forEach(inp => {
+      inp.onchange = () => { const [pid, n] = inp.dataset.figmalink.split(":"); guardarFigma(pid, +n, inp.value, inp); };
+      inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); } };
+    });
 
     // Arrastrar baldosas del feed. Los listeners van por elemento (no se puede
     // delegar drag) y se vuelven a poner en cada pintado, que es cuando corre esto.
@@ -1552,7 +1592,7 @@
       }
 
       const acc = t.closest("[data-acc]");
-      if (acc) return accion(acc.dataset.acc);
+      if (acc) return accion(acc.dataset.acc, acc);
 
       const msg = t.closest(".ct-msg");
       const id = msg && msg.dataset.id;
@@ -1600,6 +1640,10 @@
         const [pid, n, nuevo] = pEst.dataset.placaest.split(":");
         const m = MSGS.find(x => x.id === pid); if (!m) return;
         const pls = placasDe(m).slice(); if (!pls[+n]) return;
+        if (nuevo !== "borrador" && !conFigma(m, pls[+n])) {
+          lkAviso(`Falta el link de Figma\n\nPegá el link de esta placa en el campo «Link de Figma» antes de cambiarle el estado.\n\n${FIGMA_AYUDA}`);
+          return;
+        }
         pls[+n] = Object.assign({}, pls[+n], { estado: nuevo });
         // El `estado` de la pieza lo recalcula el trigger de la base: no se manda.
         try { await guardarCampo(pid, "placas", pls); pintar(); }
@@ -1607,10 +1651,10 @@
         // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame,
         // así que sin guardar el PNG lo aprobado cambiaría solo cuando la
         // diseñadora siga trabajando. Si falla, la aprobación igual queda hecha.
-        if (nuevo === "aprobado" && m.figma_file && pls[+n].nodo && !pls[+n].png) {
+        if (nuevo === "aprobado" && conFigma(m, pls[+n]) && !pls[+n].png) {
           avisar(pid, "Congelando la imagen aprobada…", true);
           const d = await fnFigma({ accion: "congelar", contenido_id: pid, placa: +n,
-            file_key: m.figma_file, nodo: pls[+n].nodo });
+            file_key: archivoDe(m, pls[+n]), nodo: pls[+n].nodo });
           if (d && d.path) {
             const con = placasDe(MSGS.find(x => x.id === pid) || m).slice();
             con[+n] = Object.assign({}, con[+n], { png: d.path, png_ts: new Date().toISOString() });
@@ -1634,9 +1678,14 @@
       }
       if (t.closest("[data-addplaca]")) {
         const m = MSGS.find(x => x.id === id); if (!m) return;
+        // Sin link no hay placa: es de donde sale la imagen.
+        const f = await pedirFigma(`Placa ${placasDe(m).length + 1}`);
+        if (!f) return;
         const pls = placasDe(m).slice();
-        pls.push({ pie: "", nodo: "", png: "", estado: "borrador" });
+        pls.push({ pie: "", nodo: f.nodo, archivo: f.archivo, link: f.link, png: "", estado: "borrador" });
         await guardarCampo(id, "placas", pls);
+        if (!m.figma_file) { try { await guardarCampo(id, "figma_file", f.archivo); } catch (e) { } }
+        traerImagenes().then(h => { if (h) pintar(); });
         PLACA[id] = pls.length - 1;
         // Con más de una placa ya es un carrusel; con una sola no se toca el tipo.
         if (pls.length > 1 && m.tipo !== "carrusel") await guardarCampo(id, "tipo", "carrusel");
@@ -1783,11 +1832,66 @@
     }
   }
 
+  // Pide el link hasta que sea uno válido o se cancele. Devuelve {archivo, nodo, link} o null.
+  async function pedirFigma(que) {
+    let txt = "", err = "";
+    for (;;) {
+      const r = await lkPedir(`${err ? FIGMA_ERR[err] + " Probá de nuevo." : `Pegá el link de Figma de ${que.toLowerCase()}`}\n\n${FIGMA_AYUDA}`,
+        txt, { ok: "Guardar" });
+      if (r == null) return null;
+      txt = String(r).trim();
+      if (!txt) return null;
+      const f = leerFigma(txt);
+      if (!f.error) return f;
+      err = f.error;
+    }
+  }
+  async function guardarFigma(pid, n, valor, inp) {
+    const m = MSGS.find(x => x.id === pid); if (!m) return;
+    const pls = placasDe(m).slice(); const p = pls[n]; if (!p) return;
+    const volver = () => { if (inp) inp.value = figmaUrl(m, p); };
+    const f = leerFigma(valor);
+    if (f.error) {
+      volver();
+      lkAviso(`${FIGMA_ERR[f.error]}\n\n${f.error === "vacio" ? "Cada placa de Instagram necesita su link de Figma: es de donde sale la imagen. " : ""}${FIGMA_AYUDA}`);
+      return;
+    }
+    if (f.nodo === p.nodo && f.archivo === archivoDe(m, p)) {      // mismo frame: sólo se guarda el link
+      if (f.link !== p.link) { pls[n] = Object.assign({}, p, { link: f.link }); try { await guardarCampo(pid, "placas", pls); } catch (e) { } }
+      return;
+    }
+    // Otro frame = otro diseño: lo aprobado ya no vale, y la imagen congelada tampoco.
+    const aprobada = p.estado === "aprobado";
+    if (aprobada && !(await lkConfirmar("Esta placa ya estaba aprobada\n\nCon otro link es otro diseño: vuelve a borrador y hay que pedir feedback de nuevo.", { ok: "Cambiar el link" }))) { volver(); return; }
+    pls[n] = Object.assign({}, p, { nodo: f.nodo, archivo: f.archivo, link: f.link, png: "", png_ts: null },
+      aprobada ? { estado: "borrador" } : {});
+    avisar(pid, "Guardando…", false);
+    try {
+      await guardarCampo(pid, "placas", pls);
+      if (!m.figma_file) await guardarCampo(pid, "figma_file", f.archivo);
+    } catch (e) { volver(); avisar(pid, "No se pudo guardar", false); return; }
+    avisar(pid, "Link guardado ✓ · trayendo el diseño…", true);
+    pintar();
+    if (await traerImagenes()) pintar();
+    else if (FIGMA.estado && FIGMA.estado !== "ok") pintar();      // que se vea el motivo
+  }
+
   async function pasar(id, a, boton) {
     const m = MSGS.find(x => x.id === id); if (!m) return;
+    // Instagram no avanza sin el diseño (oct 2026): cada placa con su link de Figma.
+    if (esIG(CANAL) && ["revision", "aprobado", "publicado"].includes(a) && faltaFigma(m)) {
+      const pls = placasDe(m);
+      const sin = pls.map((p, n) => conFigma(m, p) ? 0 : n + 1).filter(Boolean);
+      if (sin.length) PLACA[id] = sin[0] - 1;
+      pintar();
+      lkAviso(!pls.length
+        ? "Falta el link de Figma\n\nEsta pieza todavía no tiene placas. Sumá la primera con el link de su frame en Figma y después pedí feedback."
+        : `Falta el link de Figma\n\n${pls.length > 1 ? `${sin.length > 1 ? "Las placas" : "La placa"} ${sin.join(", ")} no ${sin.length > 1 ? "tienen" : "tiene"}` : "La placa no tiene"} link de Figma. Pegalo en el campo «Link de Figma» de la ficha y después seguí.\n\n${FIGMA_AYUDA}`);
+      return;
+    }
     const coms = COMS[id] || [];
     const abiertos = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto);
-    if (a === "cambios" && !abiertos.length && !coms.some(c => c.tipo === "sugerencia" && !c.decision)) {
+    if (a === "cambios" && !abiertos.length &&!coms.some(c => c.tipo === "sugerencia" && !c.decision)) {
       // "Con ajustes" sin decir qué ajustar no le sirve a nadie: se pide el texto
       const txt = ((await lkPedir("¿Qué hay que ajustar?\n\nQueda como comentario en la pieza.", "", { ok: "Guardar comentario" })) || "").trim();
       if (!txt) return;
@@ -1814,11 +1918,11 @@
   // Aprobar es CONGELAR: Figma renderiza siempre el estado actual del frame, así que sin
   // guardar el PNG lo aprobado cambiaría solo. Si falla, la pieza igual queda lista.
   async function congelarPiezas(m) {
-    if (!m || !m.figma_file) return;
+    if (!m) return;
     const pls = placasDe(m);
     for (let n = 0; n < pls.length; n++) {
-      if (!pls[n].nodo || pls[n].png) continue;
-      const d = await fnFigma({ accion: "congelar", contenido_id: m.id, placa: n, file_key: m.figma_file, nodo: pls[n].nodo });
+      if (!conFigma(m, pls[n]) || pls[n].png) continue;
+      const d = await fnFigma({ accion: "congelar", contenido_id: m.id, placa: n, file_key: archivoDe(m, pls[n]), nodo: pls[n].nodo });
       if (!d || !d.path) continue;
       const act = MSGS.find(x => x.id === m.id) || m;
       const con = placasDe(act).slice();
@@ -1864,7 +1968,7 @@
   }
 
   /* ---- Acciones de la barra ---- */
-  async function accion(a) {
+  async function accion(a, boton) {
     if (a === "responsables") return abrirResponsables();
     if (a === "refrescar") {
       await traerMeses(); await Promise.all([traerMes(MES), traerAvisos()]);
@@ -1897,7 +2001,9 @@
 
     if (a === "nuevo-msg") {
       if (!MES) return;
-      const r = await crearEnBlanco(MES);
+      // Desde el "＋" de un día del calendario la pieza nace con esa fecha y se abre
+      // su ficha para completarla; desde el botón de arriba nace sin fecha.
+      const r = await crearEnBlanco(MES, null, (boton && boton.dataset.fecha) || null);
       if (!r.ok) { lkAviso(await faltaSQL(r) ? FALTA_SQL : `No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
       VISTA = "fichas"; FILTRO = "todos"; BUSCA = ""; await traerMes(MES);
       FOCO = ((await r.json())[0] || {}).id || ""; pintar(); return;
@@ -1919,11 +2025,11 @@
      (supabase/sql/2026-10-16-contenidos-sin-fecha.sql): sin ese SQL la base la rechaza. */
   const FALTA_SQL = "Falta correr en Supabase el SQL que deja crear piezas sin fecha (2026-10-16-contenidos-sin-fecha.sql).";
   const faltaSQL = async r => /fecha/.test(await r.clone().text().catch(() => "")) && r.status === 400;
-  function crearEnBlanco(mes, n) {
+  function crearEnBlanco(mes, n, fecha) {
     return fetch(url("contenidos"), {
       method: "POST", headers: head({ Prefer: "return=representation" }),
       body: JSON.stringify([{
-        mes, canal: CANAL, fecha: null, criterio: "", objetivo: "", copy: "", meta: {},
+        mes, canal: CANAL, fecha: fecha || null, criterio: "", objetivo: "", copy: "", meta: {},
         orden: n == null ? MSGS.length : n, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
       }]),
     });

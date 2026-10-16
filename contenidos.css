@@ -102,7 +102,14 @@
   font-size:11px;color:var(--olive);padding:9px 10px;text-align:left;font-weight:600}
 .ct-cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
 .ct-dia{min-height:112px;border-top:1px solid var(--line);border-left:1px solid var(--line);
-  padding:7px 8px 9px;display:flex;flex-direction:column;gap:6px;transition:background .1s}
+  padding:7px 8px 9px;display:flex;flex-direction:column;gap:6px;transition:background .1s;position:relative}
+/* "＋" de cada día: agrega una pieza con esa fecha. Aparece al pasar el mouse; en el celular, siempre. */
+.ct-dia-add{position:absolute;top:5px;right:6px;width:24px;height:24px;border-radius:50%;border:1px solid var(--olive-soft);
+  background:var(--card);color:var(--olive);font-size:14px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .12s,background .12s;cursor:pointer}
+.ct-dia:hover .ct-dia-add,.ct-dia-add:focus-visible{opacity:1}
+.ct-dia-add:hover{background:var(--olive);color:#fff;border-color:var(--olive)}
+@media (hover:none){.ct-dia-add{opacity:.7}}
 .ct-dia[data-dia].destino{background:var(--olive-pale);outline:2px dashed var(--olive);outline-offset:-2px}
 .ct-dia:nth-child(7n+1){border-left:0}
 .ct-dia.fuera{background:var(--bg)}
@@ -696,3 +703,18 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-edit .ct-titulo:empty::before{content:"Título del mes";color:var(--olive-soft)}
 .ct-edit .ct-dek:empty::before{content:"Bajada del mes";color:var(--olive-soft)}
 .ct-edit .ct-copy:empty::before{content:"Escribí el texto acá…";color:var(--olive-soft)}
+
+/* ---- Link de Figma por placa (oct 2026): obligatorio en Instagram ---- */
+.ct-figma{display:flex;flex-direction:column;gap:3px;margin:0 0 10px}
+.ct-figma > span{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--gray-soft)}
+.ct-figma > span b{font-weight:600;color:var(--olive);letter-spacing:.06em}
+.ct-figma input{font:13px var(--font-body);color:var(--gray);padding:7px 9px;border:1px solid var(--line);
+  border-radius:6px;background:#fff;width:100%;box-sizing:border-box;min-width:0}
+.ct-figma input:focus{outline:2px solid var(--olive-soft);outline-offset:0;border-color:var(--olive)}
+.ct-figma.falta input{border-color:var(--warn);background:#fbf5ea}
+.ct-figma.falta > span b{color:var(--warn)}
+.ct-placa-figma.falta{color:var(--warn);font-weight:500;display:block}
+.ct-placa-figma.falta .tenue{display:block;margin-top:2px}
+.ct-bald-ph{flex-direction:column;align-items:flex-start;justify-content:center;gap:8px}
+.ct-bald-falta{font-family:var(--font-body);font-size:10.5px;font-weight:600;color:var(--warn);
+  background:#f6ecd8;border-radius:4px;padding:2px 6px;line-height:1.3}

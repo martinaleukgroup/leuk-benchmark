@@ -159,7 +159,7 @@
   const kpisVis = () => (CFG.kpis || []).filter(k => !DEST || !k.solo || k.solo === DEST);
   const sinDestino = p => (CFG.destinos || []).length && !CFG.destinos.some(x => x.k === p.tipo);
   // Una pieza se mide cuando ya salió. "Publicado" no alcanza como regla: no siempre se marca.
-  const medible = p => p.fecha <= hoyISO();
+  const medible = p => !!p.fecha && p.fecha <= hoyISO();   // sin fecha todavía no salió: no se mide
 
   async function traer() {
     const c = CTX.canal;

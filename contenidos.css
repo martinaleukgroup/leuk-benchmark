@@ -678,3 +678,21 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 @media(hover:none){.ct-poll li .ct-poll-x{opacity:1}}
 .ct-poll-ctrl{margin-left:auto;display:flex;align-items:center;gap:4px;white-space:nowrap}
 .ct-poll-ctrl .ct-poll-multi{margin-left:0}
+
+/* Plantilla del mes (oct 2026): piezas sin fecha + "Agregar una nueva pieza" */
+.ct-fila-add{display:block;width:100%;border:0;border-top:1px dashed var(--line);background:transparent;color:var(--olive);
+  font-family:var(--font-body);font-size:13.5px;font-weight:600;text-align:left;padding:12px 14px;cursor:pointer}
+.ct-fila-add:hover{background:var(--olive-pale)}
+.ct-fila-f .sin{color:var(--olive-soft)}
+.ct-fecha.sin{font-family:var(--font-body);font-size:13.5px;font-weight:600;color:var(--olive);border:1px dashed var(--olive-soft);
+  padding:5px 10px;border-radius:8px;background:var(--card)}
+.ct-edit .ct-crit:empty::before,.ct-edit .ct-obj:empty::before{content:attr(data-ph);color:var(--olive-soft)}
+.ct-edit .ct-crit:empty{min-width:60px}
+.ct-sinfecha{border:1px dashed var(--olive-soft);border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--card)}
+.ct-sinfecha-t{display:block;font-size:12.5px;color:var(--gray-soft);margin-bottom:8px}
+.ct-sinfecha .ct-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ct-sinfecha .ct-chip{max-width:220px}
+.ct-nm-nota{font-size:12.5px;color:var(--gray-soft);margin:8px 0 0;line-height:1.4}
+.ct-edit .ct-titulo:empty::before{content:"Título del mes";color:var(--olive-soft)}
+.ct-edit .ct-dek:empty::before{content:"Bajada del mes";color:var(--olive-soft)}
+.ct-edit .ct-copy:empty::before{content:"Escribí el texto acá…";color:var(--olive-soft)}

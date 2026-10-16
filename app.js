@@ -2699,7 +2699,7 @@
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
       "Elegí el canal en el menú (<b>Comunidad WhatsApp</b>, <b>Instagram</b> o <b>Mailing</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
-      "Para armar un mes nuevo elegí <b>＋ Nuevo mes…</b> al final del selector de mes: marcás el mes en la grilla, le ponés título y elegís si arranca en blanco, con el brief del mes anterior o <b>repitiendo su cadencia</b> (las mismas piezas en blanco, en los mismos días de la semana).",
+      "Para armar un mes nuevo elegí <b>＋ Nuevo mes…</b> al final del selector de mes: marcás el mes en la grilla, le ponés título y elegís si el brief arranca en blanco o con el del mes anterior. Todo mes nace con una pieza en blanco y <b>sin fecha</b>: completás la fecha (📅 Poner fecha) y el contenido en la ficha, y sumás más con <b>＋ Agregar una nueva pieza</b> abajo de la lista. Las que todavía no tienen fecha aparecen arriba del calendario.",
       "En <b>Instagram</b> elegís el perfil arriba (<b>Leuk</b> o <b>Laftdren</b>): cada uno tiene su propio cronograma, feed, Resultados y avisos.",
       "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
       "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",
@@ -3244,9 +3244,9 @@
         meta: `${x.canalT} · tu sugerencia`, tag: [x.aceptada ? "Aceptada" : "Descartada", x.aceptada ? "ok" : "prox"], ir });
       const meta = `${x.canalT} · ${x.estado}`;
       if (x.tipo === "revisar") return items.push({ at: true, orden: 1, dias: x.dias, ic: "rate_review", tit: x.titulo, meta,
-        tag: [x.dias < 0 ? `Precisa tu feedback · era para ${cuando(x.dias)}` : `Precisa tu feedback · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
+        tag: [x.dias == null ? "Precisa tu feedback · sin fecha" : x.dias < 0 ? `Precisa tu feedback · era para ${cuando(x.dias)}` : `Precisa tu feedback · sale ${cuando(x.dias)}`, x.dias != null && x.dias <= 0 ? "venc" : "hoy"], ir });
       if (x.tipo === "corregir") return items.push({ at: true, orden: 1, dias: x.dias, ic: "edit", tit: x.titulo, meta,
-        tag: [x.dias < 0 ? `Con ajustes · era para ${cuando(x.dias)}` : `Con ajustes · sale ${cuando(x.dias)}`, x.dias <= 0 ? "venc" : "hoy"], ir });
+        tag: [x.dias == null ? "Con ajustes · sin fecha" : x.dias < 0 ? `Con ajustes · era para ${cuando(x.dias)}` : `Con ajustes · sale ${cuando(x.dias)}`, x.dias != null && x.dias <= 0 ? "venc" : "hoy"], ir });
       if (x.dias < 0) return items.push({ at: true, orden: 0, dias: x.dias, ic: icCanal(x.canal), tit: x.titulo, meta, tag: [`Era para ${cuando(x.dias)}`, "venc"], ir });
       // "sin aprobar" (sólo le llega a los responsables del canal)
       if (x.dias === 0 && !x.ok) return items.push({ at: true, orden: 1, dias: 0, ic: icCanal(x.canal), tit: x.titulo, meta, tag: ["Sale hoy y no está lista", "hoy"], ir });

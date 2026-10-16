@@ -662,7 +662,8 @@
     const hoy = hoyISO();
 
     const porDia = {};
-    MSGS.forEach(m => { (porDia[m.fecha] = porDia[m.fecha] || []).push(m); });
+    MSGS.forEach(m => { if (m.fecha) (porDia[m.fecha] = porDia[m.fecha] || []).push(m); });
+    const sinFecha = MSGS.filter(m => !m.fecha);
 
     // TODOS los días son destino, los de relleno (mes anterior/siguiente) también:
     // soltar ahí manda la pieza al mes vecino, y moverFecha se encarga de cambiarle
@@ -673,7 +674,10 @@
       return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}${moviendoAca ? " origen" : ""}"
           data-dia="${iso}">
         <span class="num">${num}</span>
-        <div class="ct-chips">${lista.map(m => {
+        <div class="ct-chips">${lista.map(chip).join("")}</div>
+      </div>`;
+    };
+    function chip(m) {
           const nc = (COMS[m.id] || []).filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
           const ns = (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision).length;
           const nv = (m.variantes || []).length;
@@ -683,16 +687,14 @@
               title="${esc(m.objetivo || "")}${ed ? " · arrastrá o tocá ✥ para cambiarle el día" : ""}">
             ${ed ? `<button class="ct-mover" data-mover="${m.id}"
               title="Mover a otro día">${MOVIENDO === m.id ? "✕" : "✥"}</button>` : ""}
-            <b>${esc(m.criterio || "Mensaje")}</b>
+            <b>${esc(m.criterio || "Sin título")}</b>
             <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
               ${esIG(CANAL) ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
               ${CANAL === "mailing" ? ` · ${DESTINOS[destinoDe(m)] || "Sin destino"}` : ""}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </div>`;
-        }).join("")}</div>
-      </div>`;
-    };
+    }
 
     // Los días de relleno también llevan su fecha real: son destino como cualquier otro.
     const iso = (y, mi, d) => { const f = new Date(y, mi, d), z = n => String(n).padStart(2, "0");
@@ -716,6 +718,8 @@
              o tocá <b>✥</b> y después el día (así también anda en el celular).
              Los días grises del mes de al lado también sirven.</p>` : ""}
       ${CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
+      ${sinFecha.length ? `<div class="ct-sinfecha"><span class="ct-sinfecha-t">Sin fecha · ${sinFecha.length}${ed ? " — arrastralas a un día o tocá ✥" : ""}</span>
+        <div class="ct-chips">${sinFecha.map(chip).join("")}</div></div>` : ""}
       <div class="ct-cal-dias"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
       <div class="ct-cal-grid${MOVIENDO ? " eligiendo" : ""}">${celdas}</div>
     </div>`;
@@ -735,7 +739,7 @@
     // El feed dibuja el PERFIL, y una historia se va a las 24 horas sin dejar
     // baldosa. Van al calendario y a las fichas, pero acá desentonarían: mostrarían
     // una grilla que nadie va a ver nunca así.
-    const enFeed = MSGS.filter(m => m.tipo !== "historia");
+    const enFeed = MSGS.filter(m => m.tipo !== "historia" && m.fecha);
     const historias = MSGS.length - enFeed.length;
     if (!enFeed.length) {
       return `<div class="empty"><div class="big">📸</div>
@@ -806,7 +810,7 @@
      cadencia, lo que cambia es qué sale cada día. */
   async function reordenarFeed(desdeId, hastaId) {
     if (!desdeId || desdeId === hastaId) return;
-    const orden = MSGS.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
+    const orden = MSGS.filter(m => m.fecha).sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.orden || 0) - (a.orden || 0));
     const i = orden.findIndex(x => x.id === desdeId), j = orden.findIndex(x => x.id === hastaId);
     if (i < 0 || j < 0) return;
     const fechas = orden.map(x => x.fecha);
@@ -897,7 +901,7 @@
   function fichasHTML(ed) {
     if (!MSGS.length) {
       return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene ${C().unidadPl}.</p>
-        ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar ${C().art === "una" ? "la primera" : "el primero"}</button>` : ""}</div>`;
+        ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">＋ Agregar ${C().art === "una" ? "una nueva" : "un nuevo"} ${C().unidad}</button>` : ""}</div>`;
     }
     const norm = x => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const q = norm(BUSCA.trim());
@@ -913,20 +917,23 @@
     if (ABIERTOS[m.id] === undefined) ABIERTOS[m.id] = true;      // en el panel, el feedback se ve de entrada
     return (CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : "") +
       `<div class="ct-split ${VER_PANEL ? "ver-panel" : ""}">
-        <div class="ct-lista" role="list">${lista.map(filaHTML).join("")}</div>
+        <div class="ct-lista" role="list">${lista.map(filaHTML).join("")}${ed ? agregarHTML() : ""}</div>
         <div class="ct-panel-pieza">
           <button class="ct-volver" data-volver="1">← ${C().art === "una" ? "Todas las" : "Todos los"} ${C().unidadPl}</button>
           ${fichaHTML(m, ed)}
         </div>
       </div>` + notaPie();
   }
+  // Abajo de la lista: sumar otra pieza en blanco, sin fecha (se completa en la ficha).
+  const agregarHTML = () => `<button class="ct-fila-add" data-acc="nuevo-msg">＋ Agregar ${C().art === "una" ? "una nueva" : "un nuevo"} ${esc(C().unidad)}</button>`;
   function filaHTML(m) {
-    const f = aFecha(m.fecha);
+    const f = m.fecha ? aFecha(m.fecha) : null;
     const coms = COMS[m.id] || [];
     const pend = coms.filter(c => c.tipo === "sugerencia" ? !c.decision : !c.resuelto).length;
     const t = turno(m);
     return `<button class="ct-fila ${m.id === SEL[CANAL] ? "on" : ""} ${meToca(m) ? "me-toca" : ""}" data-sel="${m.id}" role="listitem">
-      <span class="ct-fila-f"><b>${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}</b><small>${DIA_CORTO[f.getDay()].slice(0, 3)}</small></span>
+      <span class="ct-fila-f">${f ? `<b>${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}</b><small>${DIA_CORTO[f.getDay()].slice(0, 3)}</small>`
+        : `<b class="sin">—/—</b><small>Sin fecha</small>`}</span>
       <span class="ct-fila-t"><b>${esc(m.criterio || "Sin título")}</b>
         <small>${CANAL === "mailing" ? esc(DESTINOS[destinoDe(m)] || "Sin destino") + (t || pend ? " · " : "") : ""}${t ? esc(t) : ""}${pend ? `${t ? " · " : ""}💬 ${pend}` : ""}</small></span>
       <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
@@ -1121,7 +1128,7 @@
   }
 
   function fichaHTML(m, ed) {
-    const f = aFecha(m.fecha);
+    const f = m.fecha ? aFecha(m.fecha) : null;
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const coms = COMS[m.id] || [];
     const pendCom = coms.filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
@@ -1130,12 +1137,14 @@
 
     return `<article class="ct-msg" data-id="${m.id}">
       <div class="ct-msg-bar">
-        <span class="ct-fecha ${ed ? "editable" : ""}" title="${ed ? "Cambiar el día" : ""}">${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}
+        ${f ? `<span class="ct-fecha ${ed ? "editable" : ""}" title="${ed ? "Cambiar el día" : ""}">${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}
           <small>${DIA_CORTO[f.getDay()]}</small>
           ${ed ? `<input type="date" class="ct-fecha-input" value="${m.fecha}" data-fechainput="${m.id}">` : ""}</span>
-        <span class="ct-cuando ${cuando(m.fecha).c}">${cuando(m.fecha).t}</span>
-        <span class="ct-crit"${e} data-c="criterio">${esc(m.criterio || "")}</span>
-        <span class="ct-obj"${e} data-c="objetivo">${esc(m.objetivo || "")}</span>
+        <span class="ct-cuando ${cuando(m.fecha).c}">${cuando(m.fecha).t}</span>`
+        : `<span class="ct-fecha sin ${ed ? "editable" : ""}" title="${ed ? "Elegir el día" : ""}">${ed ? "📅 Poner fecha" : "Sin fecha"}
+          ${ed ? `<input type="date" class="ct-fecha-input" value="" data-fechainput="${m.id}">` : ""}</span>`}
+        <span class="ct-crit"${e} data-ph="Título" data-c="criterio">${esc(m.criterio || "")}</span>
+        <span class="ct-obj"${e} data-ph="Objetivo" data-c="objetivo">${esc(m.objetivo || "")}</span>
         ${m.flag ? `<span class="ct-flag"${e} data-c="flag">${esc(m.flag)}</span>` : ""}
         ${CANAL === "mailing" ? destinoHTML(m, ed) : ""}
         <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
@@ -1888,17 +1897,9 @@
 
     if (a === "nuevo-msg") {
       if (!MES) return;
-      const f = (prompt(`Fecha ${C().art === "una" ? "de la" : "del"} ${C().unidad} (AAAA-MM-DD):`, `${MES}-01`) || "").trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) { if (f) alert("El formato tiene que ser AAAA-MM-DD."); return; }
-      const r = await fetch(url("contenidos"), {
-        method: "POST", headers: head({ Prefer: "return=representation" }),
-        body: JSON.stringify([{
-          mes: MES, canal: CANAL, fecha: f, criterio: C().nuevo, objetivo: "", copy: "", meta: {},
-          orden: MSGS.length, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
-        }]),
-      });
-      if (!r.ok) { alert(`No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
-      VISTA = "fichas"; await traerMes(MES);
+      const r = await crearEnBlanco(MES);
+      if (!r.ok) { alert(await faltaSQL(r) ? FALTA_SQL : `No se pudo crear ${C().art === "una" ? "la" : "el"} ${C().unidad}.`); return; }
+      VISTA = "fichas"; FILTRO = "todos"; BUSCA = ""; await traerMes(MES);
       FOCO = ((await r.json())[0] || {}).id || ""; pintar(); return;
     }
 
@@ -1913,23 +1914,28 @@
     }
   }
 
+  /* Plantilla (oct 2026, pedido de la usuaria): cada pieza nace en blanco y SIN fecha —
+     la fecha se completa como cualquier otro dato. Necesita contenidos.fecha nullable
+     (supabase/sql/2026-10-16-contenidos-sin-fecha.sql): sin ese SQL la base la rechaza. */
+  const FALTA_SQL = "Falta correr en Supabase el SQL que deja crear piezas sin fecha (2026-10-16-contenidos-sin-fecha.sql).";
+  const faltaSQL = async r => /fecha/.test(await r.clone().text().catch(() => "")) && r.status === 400;
+  function crearEnBlanco(mes, n) {
+    return fetch(url("contenidos"), {
+      method: "POST", headers: head({ Prefer: "return=representation" }),
+      body: JSON.stringify([{
+        mes, canal: CANAL, fecha: null, criterio: "", objetivo: "", copy: "", meta: {},
+        orden: n == null ? MSGS.length : n, autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "",
+      }]),
+    });
+  }
+
   /* ---- Nuevo mes (oct 2026) ----
      Antes eran dos prompt() ("AAAA-MM" y el título). Ahora es un panel: se elige el
      mes en una grilla (los ya cargados se ven y abren ese mes), título y bajada en el
-     mismo lugar, y se puede arrancar desde el mes anterior en vez de en blanco.     */
+     mismo lugar, y el brief puede arrancar desde el del mes anterior. Todo mes nace
+     con una pieza en blanco y sin fecha: la plantilla que el equipo completa.        */
   const sumarMes = (m, n) => { const p = m.split("-"); const d = new Date(+p[0], +p[1] - 1 + n, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
   const MES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  // "El 2º martes" de un mes → el 2º martes del otro (si no hay 5º, el último). Así la
-  // cadencia se mantiene: lo que salía los martes sigue saliendo los martes.
-  function mismoDiaDeSemana(fecha, mesNuevo) {
-    const d = aFecha(fecha), n = Math.ceil(d.getDate() / 7), dow = d.getDay();
-    const p = mesNuevo.split("-"), y = +p[0], mi = +p[1] - 1;
-    const primero = (dow - new Date(y, mi, 1).getDay() + 7) % 7 + 1;
-    let dia = primero + (n - 1) * 7;
-    if (dia > new Date(y, mi + 1, 0).getDate()) dia -= 7;
-    return `${mesNuevo}-${String(dia).padStart(2, "0")}`;
-  }
-
   function abrirNuevoMes() {
     const hechos = new Set(MESES.map(x => x.mes));
     const hoyMes = hoyISO().slice(0, 7);
@@ -1966,16 +1972,6 @@
     ov.querySelectorAll("[data-x]").forEach(b => b.onclick = cerrar);
     ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
 
-    // Cuántas piezas tiene el mes de base: se pide una vez por mes y se guarda.
-    const cuantas = {};
-    async function contar(m) {
-      if (!m || m in cuantas) return;
-      cuantas[m] = null;
-      const r = await fetch(url(`contenidos?mes=eq.${enc(m)}&canal=eq.${CANAL}&select=id`), { headers: head() });
-      cuantas[m] = r.ok ? (await r.json()).length : 0;
-      pintarNM();
-    }
-
     function pintarNM() {
       q("[data-anio-t]").textContent = anio;
       q("[data-grilla]").innerHTML = MES_CORTO.map((t, i) => {
@@ -1985,21 +1981,15 @@
           title="${ya ? "Ya está cargado: abrirlo" : cap(mesLabel(m))}">${t}${ya ? `<small>cargado</small>` : m === hoyMes ? `<small>este mes</small>` : ""}</button>`;
       }).join("");
       const fuente = fuenteDe(elegido);
-      if (fuente) contar(fuente);
-      const n = cuantas[fuente];
       if (!fuente && base !== "blanco") base = "blanco";
-      if (base === "cadencia" && n === 0) base = "brief";
       const op = (k, t, d, off) => `<label class="ct-nm-op ${base === k ? "on" : ""} ${off ? "off" : ""}">
         <input type="radio" name="nm-base" value="${k}" ${base === k ? "checked" : ""} ${off ? "disabled" : ""}>
         <span><b>${t}</b><small>${d}</small></span></label>`;
       const fl = fuente ? cap(mesLabel(fuente)) : "";
       q("[data-bases]").innerHTML = `<h4>¿Cómo arranca?</h4>` +
-        op("blanco", "En blanco", `Brief vacío y sin ${C().unidadPl}.`) +
-        (fuente ? op("brief", `Con el brief de ${fl}`, "Objetivo, recursos y cadencia para retocar. Sin las obras.") +
-          op("cadencia", `Repetir la cadencia de ${fl}`,
-            n == null ? "Contando…"
-            : n ? `El brief y ${n} ${n === 1 ? C().unidad : C().unidadPl} en blanco, en los mismos días de la semana (el 2º martes cae en el 2º martes).`
-            : `${fl} no tiene ${C().unidadPl}.`, !n) : "");
+        op("blanco", "Brief en blanco", "Objetivo, recursos y cadencia vacíos.") +
+        (fuente ? op("brief", `Con el brief de ${fl}`, "Objetivo, recursos y cadencia para retocar. Sin las obras.") : "") +
+        `<p class="ct-nm-nota">El mes arranca con ${C().art} ${C().unidad} en blanco, sin fecha: se completa todo en la ficha y abajo de la lista está <b>＋ Agregar ${C().art === "una" ? "una nueva" : "un nuevo"} ${esc(C().unidad)}</b>.</p>`;
       q("[data-crear]").textContent = `Crear ${mesLabel(elegido)}`;
     }
     pintarNM();
@@ -2025,15 +2015,10 @@
       const m = elegido, fuente = fuenteDe(m);
       const autor = SES().nombre ? SES().nombre() : "", autor_email = SES().email ? SES().email() : "";
       let brief = [{ h: "Objetivo", p: "" }, { h: "Recursos", p: "" }, { h: "Cadencia", p: "" }];
-      let piezas = [];
-      if (base !== "blanco" && fuente) {
-        const [rc, rp] = await Promise.all([
-          fetch(url(`contenidos_meses?mes=eq.${enc(fuente)}&canal=eq.${CANAL}&select=brief`), { headers: head() }),
-          base === "cadencia" ? fetch(url(`contenidos?mes=eq.${enc(fuente)}&canal=eq.${CANAL}&select=fecha,tipo,orden&order=fecha.asc,orden.asc`), { headers: head() }) : null,
-        ]);
+      if (base === "brief" && fuente) {
+        const rc = await fetch(url(`contenidos_meses?mes=eq.${enc(fuente)}&canal=eq.${CANAL}&select=brief`), { headers: head() });
         const cab = rc.ok ? (await rc.json())[0] : null;
         if (cab && Array.isArray(cab.brief) && cab.brief.length) brief = cab.brief.map(x => ({ h: x.h || "", p: x.p || "" }));
-        if (rp && rp.ok) piezas = await rp.json();
       }
       const r = await fetch(url("contenidos_meses"), {
         method: "POST", headers: head({ Prefer: "return=representation" }),
@@ -2043,17 +2028,10 @@
         }]),
       });
       if (!r.ok) return falla("No se pudo crear el mes. Puede que no tengas permiso.");
-      if (piezas.length) {
-        const filas = piezas.map((p, i) => ({
-          mes: m, canal: CANAL, fecha: mismoDiaDeSemana(p.fecha, m), criterio: C().nuevo, objetivo: "", copy: "", meta: {},
-          tipo: p.tipo || "post", orden: i, autor, autor_email,
-        }));
-        const rp = await fetch(url("contenidos"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) });
-        if (!rp.ok) alert(`El mes se creó, pero no se pudieron sumar ${C().art === "una" ? "las" : "los"} ${C().unidadPl} de la cadencia.`);
-      }
+      const rp = await crearEnBlanco(m, 0);
+      if (!rp.ok) alert(await faltaSQL(rp) ? `El mes se creó, pero sin ${C().art} ${C().unidad} en blanco. ${FALTA_SQL}` : `El mes se creó, pero no se pudo sumar ${C().art} ${C().unidad} en blanco.`);
       cerrar();
-      MES = m; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos";
-      if (piezas.length && VISTA !== "feed") VISTA = "calendario";   // la cadencia se lee mejor en el calendario
+      MES = m; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; VISTA = "fichas";
       await traerMeses(); await traerMes(MES); pintar();
     };
   }
@@ -2229,13 +2207,13 @@
      comentarios y sugerencias de la otra parte. Quien no es responsable de ningún canal
      sólo se entera de qué pasó con sus propias sugerencias.
      Devuelven datos; el dibujo lo hace app.js. */
-  const dias = f => Math.round((aFecha(f) - aFecha(hoyISO())) / 864e5);
+  const dias = f => f ? Math.round((aFecha(f) - aFecha(hoyISO())) / 864e5) : null;   // null = todavía sin fecha
   const isoMas = n => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   // Las piezas "en curso" de mis canales: en revisión o con cambios pedidos, del último mes para acá.
   async function piezasEnCurso(canales) {
     if (!canales.length) return [];
     try {
-      const r = await fetch(url(`contenidos?canal=in.(${canales.join(",")})&fecha=gte.${isoMas(-30)}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() });
+      const r = await fetch(url(`contenidos?canal=in.(${canales.join(",")})&or=(fecha.gte.${isoMas(-30)},fecha.is.null)&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() });
       return r.ok ? await r.json() : [];
     } catch (e) { return []; }
   }

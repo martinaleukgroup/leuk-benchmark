@@ -95,6 +95,29 @@
         { t: "Visitan el perfil", f: "suma", dato: "visitas" },
         { t: "Clics a la web", f: "suma", dato: "clics" },
       ],
+      /* Pauta: piezas del feed promocionadas (botón Promocionar o Ads Manager usando el post).
+         En los datos de siempre se carga el TOTAL que da Instagram; acá, la parte PAGADA.
+         `resta` = de qué datos se descuenta para que embudo y KPIs queden en orgánico.
+         La pieza está promocionada si tiene `pauta_obj` (el n° del objetivo; 0 = sin elegir).
+         No es editable desde el editor de KPIs: se lee de acá aunque la base tenga su config. */
+      pauta: {
+        objetivos: [
+          { n: 1, t: "Alcance", res: "persona alcanzada" },
+          { n: 2, t: "Interacción", res: "interacción" },
+          { n: 3, t: "Visitas al perfil", res: "visita al perfil" },
+          { n: 4, t: "Tráfico a la web", res: "clic al sitio" },
+          { n: 5, t: "Mensajes", res: "conversación" },
+          { n: 6, t: "Seguidores", res: "seguidor" },
+        ],
+        datos: [
+          { k: "pauta_inversion", t: "Inversión ($)", ayuda: "Importe gastado en la promoción (Ads Manager → Importe gastado)" },
+          { k: "pauta_alcance", t: "Alcance pagado", resta: ["alcance", "alcance_ns"], ayuda: "Estadísticas de la publicación → Alcance → «De promociones» (o Ads Manager → Alcance)" },
+          { k: "pauta_resultados", t: "Resultados", ayuda: "Lo que Meta muestra como «Resultados» del objetivo elegido" },
+          { k: "pauta_interacciones", t: "Interacciones pagadas", resta: ["interacciones"], opcional: true, ayuda: "Interacciones que vinieron de la promoción" },
+          { k: "pauta_visitas", t: "Visitas pagadas", resta: ["visitas"], opcional: true, ayuda: "Visitas al perfil que vinieron de la promoción" },
+          { k: "pauta_clics", t: "Clics pagados", resta: ["clics"], opcional: true, ayuda: "Clics al sitio que vinieron de la promoción" },
+        ],
+      },
     },
   };
   // Instagram Laftdren se mide igual que el de Leuk (mismos datos y KPIs); sólo cambia el nombre.
@@ -171,6 +194,7 @@
     SIN_TABLA = !rv || !rv.ok;
     const cfg = rc && rc.ok ? (await rc.json())[0] : null;
     CFG = (cfg && cfg.config) || DEFAULT[c] || DEFAULT.whatsapp;
+    if (CFG.pauta === undefined && DEFAULT[c] && DEFAULT[c].pauta) CFG = Object.assign({}, CFG, { pauta: DEFAULT[c].pauta });
     V = {};
     if (rv && rv.ok) (await rv.json()).forEach(r => { if (r.valor != null) V[clave(r.mes, r.pieza, r.dato)] = +r.valor; });
     PIEZAS = rp && rp.ok ? await rp.json() : [];
@@ -184,11 +208,21 @@
   const piezasDe = (meses, todas) => PIEZAS.filter(p => meses.includes(p.mes) && medible(p) && (todas || !DEST || p.tipo === DEST));
   const vP = (p, k) => V[clave(p.mes, p.id, k)];
   const vM = (m, k) => V[clave(m, "", k)];
+  // Pauta: en una pieza promocionada, los KPIs y el embudo usan el total menos lo pagado.
+  const PA = () => (CFG && CFG.pauta) || null;
+  const promo = p => !!PA() && vP(p, "pauta_obj") != null;
+  const vO = (p, k) => {
+    const v = vP(p, k);
+    if (v == null || !promo(p)) return v;
+    let r = v;
+    PA().datos.forEach(d => { if ((d.resta || []).includes(k)) { const x = vP(p, d.k); if (x != null) r -= x; } });
+    return Math.max(0, r);
+  };
 
   function suma(k, meses) {
     let s = 0, hay = false;
     if (datoDef(k).nivel === "mes") meses.forEach(m => { const v = vM(m, k); if (v != null) { s += v; hay = true; } });
-    else piezasDe(meses).forEach(p => { const v = vP(p, k); if (v != null) { s += v; hay = true; } });
+    else piezasDe(meses).forEach(p => { const v = vO(p, k); if (v != null) { s += v; hay = true; } });
     return hay ? s : null;
   }
   function calc(f, meses) {
@@ -200,7 +234,7 @@
         return xs.length ? xs.reduce((a, b) => a + b, 0) : null;
       }
       case "promedio": {
-        const xs = piezasDe(meses).map(p => vP(p, f.dato)).filter(x => x != null);
+        const xs = piezasDe(meses).map(p => vO(p, f.dato)).filter(x => x != null);
         return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
       }
       case "resta": {
@@ -215,12 +249,12 @@
         const nN = datoDef(f.num).nivel, nD = datoDef(f.den).nivel;
         if (nN === "pieza" && nD === "mes") {
           // Cada pieza contra los miembros de SU mes, y después el promedio.
-          const xs = piezasDe(meses).map(p => { const n = vP(p, f.num), d = vM(p.mes, f.den); return n != null && d ? n / d : null; }).filter(x => x != null);
+          const xs = piezasDe(meses).map(p => { const n = vO(p, f.num), d = vM(p.mes, f.den); return n != null && d ? n / d : null; }).filter(x => x != null);
           return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
         }
         if (nN === "pieza" && nD === "pieza") {
           let n = 0, d = 0;
-          piezasDe(meses).forEach(p => { const a = vP(p, f.num), b = vP(p, f.den); if (a != null && b) { n += a; d += b; } });
+          piezasDe(meses).forEach(p => { const a = vO(p, f.num), b = vO(p, f.den); if (a != null && b) { n += a; d += b; } });
           return d ? n / d : null;
         }
         const n = suma(f.num, meses), d = suma(f.den, meses);
@@ -231,9 +265,9 @@
   }
   // El mismo KPI para una sola pieza (detalle del histórico). Sólo tiene sentido si el numerador es de la pieza.
   function calcPieza(f, p) {
-    if (f.f === "suma") return datoDef(f.dato).nivel === "pieza" ? vP(p, f.dato) ?? null : null;
+    if (f.f === "suma") return datoDef(f.dato).nivel === "pieza" ? vO(p, f.dato) ?? null : null;
     if (f.f === "cociente" && datoDef(f.num).nivel === "pieza") {
-      const n = vP(p, f.num), d = datoDef(f.den).nivel === "mes" ? vM(p.mes, f.den) : vP(p, f.den);
+      const n = vO(p, f.num), d = datoDef(f.den).nivel === "mes" ? vM(p.mes, f.den) : vO(p, f.den);
       return n != null && d ? n / d : null;
     }
     return null;
@@ -243,6 +277,7 @@
   function fmt(k, x) {
     if (x == null || isNaN(x)) return "—";
     if (k.fmt === "pct") return nf(x * 100, 1) + "%";
+    if (k.fmt === "plata") return "$ " + nf(x, x >= 100 ? 0 : 2);
     const s = nf(Math.abs(x) >= 100 ? Math.round(x) : x, 1);
     return k.fmt === "signo" && x > 0 ? "+" + s : s;
   }
@@ -251,8 +286,10 @@
     const d = a - b;
     const redondo = k.fmt === "pct" ? Math.round(d * 1000) : Math.round(d * 10);
     if (!redondo) return `<span class="rs-d igual">= que antes</span>`;
-    const t = k.fmt === "pct" ? `${d > 0 ? "+" : "−"}${nf(Math.abs(d) * 100, 1)} pts` : `${d > 0 ? "+" : "−"}${nf(Math.abs(d), 1)}`;
-    return `<span class="rs-d ${d > 0 ? "sube" : "baja"}">${t}</span>`;
+    const t = k.fmt === "pct" ? `${d > 0 ? "+" : "−"}${nf(Math.abs(d) * 100, 1)} pts`
+      : k.fmt === "plata" ? `${d > 0 ? "+" : "−"}$ ${nf(Math.abs(d), Math.abs(d) >= 100 ? 0 : 2)}` : `${d > 0 ? "+" : "−"}${nf(Math.abs(d), 1)}`;
+    // `menos`: un costo; que baje es lo bueno.
+    return `<span class="rs-d ${(d > 0) !== !!k.menos ? "sube" : "baja"}">${t}</span>`;
   }
 
   /* ---- Períodos ---- */
@@ -354,11 +391,13 @@
     return `
       ${pendientesHTML()}
       <p class="rs-periodo">Resultados de <b>${esc(etiquetaPeriodo())}</b>${baseTxt()}${CTX.mesPedido
-        ? ` <span class="rs-futuro">· ${esc(cap(mesLargo(CTX.mesPedido).split(" ")[0]))} todavía no empezó: te muestro ${esc(mesLargo(CTX.mes).split(" ")[0])}</span>` : ""}</p>
+        ? ` <span class="rs-futuro">· ${esc(cap(mesLargo(CTX.mesPedido).split(" ")[0]))} todavía no empezó: te muestro ${esc(mesLargo(CTX.mes).split(" ")[0])}</span>` : ""}${
+        piezasDe(ms).some(promo) ? ` <span class="rs-futuro">· embudo y KPIs sólo en orgánico; la pauta va aparte</span>` : ""}</p>
       ${hayAlgo ? `<div class="rs-top">
         <section class="rs-card rs-emb"><h3>Embudo</h3>${embudoHTML(ms)}</section>
         <section class="rs-card rs-evo"><h3>Evolución de cada KPI</h3>${evolucionHTML()}</section>
       </div>` : `<div class="rs-card rs-vacio">Todavía no hay datos cargados para este período.${CTX.puedeCargar ? " Cargalos abajo y los resultados aparecen solos." : ""}</div>`}
+      ${pautaHTML(ms)}
       <section class="rs-card"><div class="rs-hist-cab"><h3>Histórico</h3>
         <button class="btn-mini" data-rs-excel>⬇ Bajar a Excel</button></div>
         ${historicoHTML()}</section>`;
@@ -378,6 +417,10 @@
       if (sinDestino(p)) falta.push({ p, d: { t: "Destino (se elige en la ficha del envío)" } });
       (CFG.datos || []).filter(d => d.nivel === "pieza" && !d.opcional && aplica(d, p) && vP(p, d.k) == null)
         .forEach(d => falta.push({ p, d }));
+      if (promo(p)) {
+        if (!vP(p, "pauta_obj")) falta.push({ p, d: { t: "Objetivo de la pauta" } });
+        PA().datos.filter(d => !d.opcional && vP(p, d.k) == null).forEach(d => falta.push({ p, d }));
+      }
     });
     ms.filter(m => m <= mesActual()).forEach(m => {
       // El dato del mes que hace falta desde el día 1 (miembros) se pide siempre; el resto, al cerrar el mes.
@@ -475,6 +518,78 @@
       <path d="${path}" class="rs-graf-l"/>${pts}${eje}</svg>`;
   }
 
+  /* ---- Pauta ----
+     Sólo las piezas promocionadas. Un costo se calcula con las piezas que tienen los dos
+     números (inversión y lo que se mide), para no repartir plata entre piezas sin dato.
+     Cada objetivo tiene su propio costo por resultado: mezclarlos no dice nada.          */
+  const promosDe = ms => piezasDe(ms).filter(promo);
+  const objDe = p => (PA().objetivos || []).find(o => o.n === vP(p, "pauta_obj"));
+  const kAlcance = () => ((PA().datos.find(d => d.k === "pauta_alcance") || {}).resta || ["alcance"])[0];
+  const sumaPs = (ps, k) => { let s = 0, hay = false; ps.forEach(p => { const v = vP(p, k); if (v != null) { s += v; hay = true; } }); return hay ? s : null; };
+  const costo = (ps, k, por) => {
+    let i = 0, r = 0;
+    ps.forEach(p => { const a = vP(p, "pauta_inversion"), b = vP(p, k); if (a != null && b) { i += a; r += b; } });
+    return r ? i / r * (por || 1) : null;
+  };
+  function pautaKpis(ms) {
+    const objs = (PA().objetivos || []).filter(o => promosDe(ms).some(p => vP(p, "pauta_obj") === o.n));
+    return [
+      { t: "Inversión", fmt: "plata", siempre: true, f: m => sumaPs(promosDe(m), "pauta_inversion") },
+      { t: "Piezas promocionadas", siempre: true, f: m => promosDe(m).length || null },
+      ...objs.map(o => ({ t: `Costo por ${o.res}`, ayuda: `Objetivo ${o.t}: inversión ÷ resultados`, fmt: "plata", menos: true,
+        f: m => costo(promosDe(m).filter(p => vP(p, "pauta_obj") === o.n), "pauta_resultados") })),
+      { t: "Costo por 1.000 alcanzados", ayuda: "Inversión ÷ alcance pagado × 1.000", fmt: "plata", menos: true, f: m => costo(promosDe(m), "pauta_alcance", 1000) },
+      { t: "Costo por clic al sitio", ayuda: "Inversión ÷ clics pagados", fmt: "plata", menos: true, f: m => costo(promosDe(m), "pauta_clics") },
+      { t: "% del alcance que fue pagado", ayuda: "Alcance pagado ÷ alcance total de todas las piezas del período", fmt: "pct",
+        f: m => { const pa = sumaPs(promosDe(m), "pauta_alcance"), tot = sumaPs(piezasDe(m), kAlcance()); return pa != null && tot ? pa / tot : null; } },
+    ].filter((k, i, ks) => (k.siempre || k.f(ms) != null) && ks.findIndex(x => x.t === k.t) === i);   // tráfico = clic al sitio: una vez
+  }
+  function pautaHTML(ms) {
+    if (!PA()) return "";
+    const ps = promosDe(ms);
+    if (!ps.length) return `<section class="rs-card rs-pauta"><h3>Pauta</h3>
+      <p class="rs-nota">Ninguna pieza promocionada en ${esc(etiquetaPeriodo())}.${CTX.puedeCargar ? " Se marcan abajo, en «Cargar datos» → columna Pauta." : ""}</p></section>`;
+    const gm = mesesGrafico(), ant = periodoAnterior();
+    const tiles = pautaKpis(ms).map(k => {
+      const v = k.f(ms), va = ant ? k.f(ant.ms) : null;
+      return `<div class="rs-kpi" title="${esc(k.ayuda || "")}">
+        <span class="rs-kpi-t">${esc(k.t)}</span><b>${fmt(k, v)}</b>
+        ${ant && va != null ? delta(k, v, va) + `<span class="rs-d-vs"> vs ${esc(ant.t)}</span>` : ""}
+        ${grafico(gm, gm.map(m => k.f([m])), null)}
+      </div>`;
+    }).join("");
+    return `<section class="rs-card rs-pauta"><h3>Pauta</h3>
+      <div class="rs-kpis">${tiles}</div>
+      ${sumaPautaHTML(ms)}
+      <div class="rs-scroll"><table class="rs-hist">
+        <thead><tr><th>Pieza promocionada</th><th>Objetivo</th><th>Inversión</th><th>Alcance pagado</th><th>Resultados</th><th>Costo por resultado</th></tr></thead>
+        <tbody>${ps.map(p => { const o = objDe(p), cr = costo([p], "pauta_resultados"); return `<tr>
+          <td><button class="rs-link" data-rs-ficha="${p.id}" data-rs-fmes="${p.mes}">${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 34))}</button></td>
+          <td>${o ? esc(o.t) : `<span class="rs-falta">sin elegir</span>`}</td>
+          <td>${fmt({ fmt: "plata" }, vP(p, "pauta_inversion"))}</td>
+          <td>${fmt({}, vP(p, "pauta_alcance"))}</td>
+          <td>${fmt({}, vP(p, "pauta_resultados"))}</td>
+          <td>${cr == null ? "—" : fmt({ fmt: "plata" }, cr) + (o ? ` <small>por ${esc(o.res)}</small>` : "")}</td></tr>`; }).join("")}</tbody>
+      </table></div>
+      <p class="rs-nota">Los costos que bajan se marcan en verde.</p>
+    </section>`;
+  }
+  // ¿Cuánto suma la pauta? Alcance promedio de una pieza promocionada (orgánico + pagado) contra una sin pauta.
+  function sumaPautaHTML(ms) {
+    const ps = piezasDe(ms), k = kAlcance();
+    const prom = (xs, fn) => { const v = xs.map(fn).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+    const pr = ps.filter(p => promo(p) && vP(p, "pauta_alcance") != null);
+    const aO = prom(pr, p => vO(p, k)), aP = prom(pr, p => vP(p, "pauta_alcance")), aS = prom(ps.filter(p => !promo(p)), p => vP(p, k));
+    if (aO == null || aP == null || aS == null) return "";
+    const max = Math.max(aO + aP, aS) || 1, w = x => `${(x / max * 100).toFixed(1)}%`, n = x => nf(Math.round(x), 0);
+    return `<div class="rs-suma">
+      <h4>¿Cuánto suma la pauta? <small>alcance promedio por pieza</small></h4>
+      <div class="rs-suma-f"><span>Promocionadas</span><div class="rs-suma-b"><i class="org" style="width:${w(aO)}"></i><i class="pag" style="width:${w(aP)}"></i></div><b>${n(aO + aP)}</b></div>
+      <div class="rs-suma-f"><span>Sin pauta</span><div class="rs-suma-b"><i class="org" style="width:${w(aS)}"></i></div><b>${n(aS)}</b></div>
+      <p class="rs-nota"><i class="rs-ley org"></i> orgánico <i class="rs-ley pag"></i> pagado · En las promocionadas, ${n(aO)} orgánico + ${n(aP)} pagado.</p>
+    </div>`;
+  }
+
   /* ---- Histórico ---- */
   function historicoHTML() {
     const ms = PERIODO === "mes" ? mesesGrafico() : mesesPeriodo().filter(m => m <= mesActual());
@@ -493,7 +608,7 @@
     return `<div class="rs-det"><h4>${cap(mesLargo(m))} · pieza por pieza</h4>
       <div class="rs-scroll"><table class="rs-hist">
         <thead><tr><th>Pieza</th>${pk.map(k => `<th>${esc(k.t)}</th>`).join("")}</tr></thead>
-        <tbody>${ps.map(p => `<tr><td><button class="rs-link" data-rs-ficha="${p.id}" data-rs-fmes="${p.mes}">${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 34))}</button></td>
+        <tbody>${ps.map(p => `<tr><td><button class="rs-link" data-rs-ficha="${p.id}" data-rs-fmes="${p.mes}">${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 34))}</button>${promo(p) ? ` <span class="rs-tag-promo" title="Los números de esta fila son sólo orgánicos">Promocionada</span>` : ""}</td>
           ${pk.map(k => { const v = calcPieza(k, p); return `<td>${v == null ? "—" : fmt(k, v)}</td>`; }).join("")}</tr>`).join("")}</tbody>
       </table></div></div>`;
   }
@@ -513,15 +628,30 @@
         data-rs-in="${mes}|${pieza}|${d.k}" value="${v == null ? "" : v}" aria-label="${esc(d.t)}"></td>`;
     };
     const falta = pendientesCarga().length;
+    const th = d => `<th title="${esc(d.ayuda || "")}">${esc(d.t)}${d.opcional ? " <small>(opcional)</small>" : ""}</th>`;
+    const pps = PA() ? ps.filter(promo) : [];
+    const colPauta = p => !PA() ? "" : ed
+      ? `<td><button class="rs-promo ${promo(p) ? "on" : ""}" data-rs-promo="${p.id}" data-rs-pmes="${p.mes}" title="${promo(p) ? "Sacarle la pauta" : "Marcar que se promocionó"}">${promo(p) ? "✓ Promocionada" : "＋ Promocionar"}</button></td>`
+      : `<td>${promo(p) ? "Promocionada" : "—"}</td>`;
     return `<details class="rs-card rs-carga" ${falta && CTX.puedeCargar ? "open" : ""} id="rs-carga-${CTX.canal}">
       <summary><h3>Cargar datos de ${mesLargo(m).split(" ")[0]}</h3>
         <span class="rs-carga-est" data-rs-pend-carga>${faltanTxt(falta)}</span></summary>
       ${ed ? `<p class="rs-nota">Sólo números, tal cual los da ${CFG.fuente || (/^instagram/.test(CTX.canal) ? "Instagram" : "WhatsApp")}. Se guarda solo al salir de cada casillero; los % los calcula la plataforma.</p>`
            : `<p class="rs-nota">${SIN_TABLA ? "Se habilita cuando esté corrido el SQL." : "Los carga quien hace este canal."}</p>`}
       ${ps.length ? `<div class="rs-scroll"><table class="rs-cargat">
-        <thead><tr><th>${cap(U())}</th>${(CFG.destinos || []).length ? "<th>Destino</th>" : ""}${dp.map(d => `<th title="${esc(d.ayuda || "")}">${esc(d.t)}${d.opcional ? " <small>(opcional)</small>" : ""}</th>`).join("")}</tr></thead>
-        <tbody>${ps.map(p => `<tr><td>${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 30))}</td>${(CFG.destinos || []).length ? `<td>${esc(((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || "Sin destino")}</td>` : ""}${dp.map(d => inp(m, p.id, d, p)).join("")}</tr>`).join("")}</tbody>
+        <thead><tr><th>${cap(U())}</th>${(CFG.destinos || []).length ? "<th>Destino</th>" : ""}${dp.map(th).join("")}${PA() ? `<th title="Si la pieza se promocionó (botón Promocionar o Ads Manager)">Pauta</th>` : ""}</tr></thead>
+        <tbody>${ps.map(p => `<tr><td>${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 30))}</td>${(CFG.destinos || []).length ? `<td>${esc(((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || "Sin destino")}</td>` : ""}${dp.map(d => inp(m, p.id, d, p)).join("")}${colPauta(p)}</tr>`).join("")}</tbody>
       </table></div>` : `<p class="rs-nota">Todavía no salió ninguna pieza de este mes.</p>`}
+      ${pps.length ? `<h4 class="rs-carga-mes">Pauta de las piezas promocionadas</h4>
+        <p class="rs-nota">En la tabla de arriba va el <b>total</b> que da Instagram; acá, sólo la parte <b>pagada</b> (Estadísticas de la publicación → «De promociones», o Ads Manager). La plataforma la descuenta para que el embudo y los KPIs queden en orgánico.</p>
+        <div class="rs-scroll"><table class="rs-cargat">
+          <thead><tr><th>${cap(U())}</th><th>Objetivo</th>${PA().datos.map(th).join("")}</tr></thead>
+          <tbody>${pps.map(p => `<tr><td>${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)} · ${esc(recorte(p.criterio, 30))}</td>
+            <td><select class="rs-obj" data-rs-in="${m}|${p.id}|pauta_obj" ${ed ? "" : "disabled"} aria-label="Objetivo de la pauta">
+              <option value="0" ${vP(p, "pauta_obj") ? "" : "selected"}>Elegí…</option>
+              ${(PA().objetivos || []).map(o => `<option value="${o.n}" ${vP(p, "pauta_obj") === o.n ? "selected" : ""}>${esc(o.t)}</option>`).join("")}
+            </select></td>${PA().datos.map(d => inp(m, p.id, d)).join("")}</tr>`).join("")}</tbody>
+        </table></div>` : ""}
       ${dm.length ? `<h4 class="rs-carga-mes">Datos del mes</h4>
         <div class="rs-carga-grid">${dm.map(d => `<label title="${esc(d.ayuda || "")}"><span>${esc(d.t)}</span>
           <input type="number" inputmode="numeric" min="0" step="any" ${ed ? "" : "disabled"} data-rs-in="${m}||${d.k}" value="${V[clave(m, "", d.k)] ?? ""}"></label>`).join("")}</div>` : ""}
@@ -537,9 +667,23 @@
     el.classList.remove("mal");
     if ((V[k] ?? null) === nuevo) return;
     const antes = V[k];
-    if (nuevo == null) delete V[k]; else V[k] = nuevo;
+    const pr = escribir(mes, pieza, dato, nuevo);   // V cambia ya; la base, cuando conteste
     repintarResultados();
     el.classList.add("guardando");
+    const ok = await pr;
+    el.classList.remove("guardando");
+    if (!ok) {
+      el.value = antes ?? (el.tagName === "SELECT" ? "0" : ""); el.classList.add("mal"); repintarResultados();
+      lkAviso("No se pudo guardar ese dato. Probá de nuevo.");
+      return;
+    }
+    el.classList.add("ok"); setTimeout(() => el.classList.remove("ok"), 900);
+  }
+  // Guarda (o borra, con null) un número. Cambia V al instante y lo devuelve a como estaba si falla.
+  async function escribir(mes, pieza, dato, nuevo) {
+    const k = clave(mes, pieza, dato);
+    const antes = V[k];
+    if (nuevo == null) delete V[k]; else V[k] = nuevo;
     let r;
     try {
       r = nuevo == null
@@ -549,14 +693,24 @@
             body: JSON.stringify([{ canal: CTX.canal, mes, pieza, dato, valor: nuevo, autor_email: SES().email ? SES().email() : "", actualizado: new Date().toISOString() }]),
           });
     } catch (e) { r = null; }
-    el.classList.remove("guardando");
-    if (!r || !r.ok) {
-      if (antes == null) delete V[k]; else V[k] = antes;
-      el.value = antes ?? ""; el.classList.add("mal"); repintarResultados();
-      lkAviso("No se pudo guardar ese dato. Probá de nuevo.");
-      return;
+    if (!r || !r.ok) { if (antes == null) delete V[k]; else V[k] = antes; return false; }
+    return true;
+  }
+
+  // Marcar / desmarcar una pieza como promocionada. Al desmarcar se borran sus datos de pauta.
+  async function alternarPromo(id, mes) {
+    const p = PIEZAS.find(x => x.id === id); if (!p) return;
+    let ok = true;
+    if (!promo(p)) ok = await escribir(mes, id, "pauta_obj", 0);
+    else {
+      if (!(await lkConfirmar("¿Sacarle la pauta a esta pieza? Se borran sus datos de pauta (inversión, alcance pagado…).", { ok: "Sacar la pauta", peligro: true }))) return;
+      for (const k of ["pauta_obj", ...PA().datos.map(d => d.k)]) if (vP(p, k) != null) ok = (await escribir(mes, id, k, null)) && ok;
     }
-    el.classList.add("ok"); setTimeout(() => el.classList.remove("ok"), 900);
+    const y = window.scrollY;
+    pintar();
+    const d = RAIZ().querySelector(".rs-carga"); if (d) d.open = true;
+    window.scrollTo(0, y);
+    if (!ok) lkAviso("No se pudo guardar. Probá de nuevo.");
   }
 
   function exportar() {
@@ -566,14 +720,21 @@
       const v = calc(k, [m]); return v == null ? "" : k.fmt === "pct" ? Math.round(v * 1000) / 10 : Math.round(v * 10) / 10; })])];
     const dp = (CFG.datos || []).filter(d => d.nivel === "pieza");
     const cd = (CFG.destinos || []).length;
-    const piezas = [["Mes", "Fecha", "Pieza", ...(cd ? ["Destino"] : []), ...dp.map(d => d.t)],
-      ...PIEZAS.filter(medible).map(p => [p.mes, p.fecha, p.criterio, ...(cd ? [((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || ""] : []), ...dp.map(d => vP(p, d.k) ?? "")])];
+    const pd = PA() ? PA().datos : [];
+    const piezas = [["Mes", "Fecha", "Pieza", ...(cd ? ["Destino"] : []), ...dp.map(d => d.t), ...(PA() ? ["Promocionada", "Objetivo de la pauta", ...pd.map(d => d.t)] : [])],
+      ...PIEZAS.filter(medible).map(p => [p.mes, p.fecha, p.criterio, ...(cd ? [((CFG.destinos.find(x => x.k === p.tipo)) || {}).t || ""] : []), ...dp.map(d => vP(p, d.k) ?? ""),
+        ...(PA() ? [promo(p) ? "Sí" : "", promo(p) ? (objDe(p) || {}).t || "" : "", ...pd.map(d => vP(p, d.k) ?? "")] : [])])];
     const dm = (CFG.datos || []).filter(d => d.nivel === "mes");
     const mesesT = [["Mes", ...dm.map(d => d.t)], ...ms.map(m => [m, ...dm.map(d => vM(m, d.k) ?? "")])];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpis), "KPIs por mes (% en pts)");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(piezas), "Datos por pieza");
     if (dm.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mesesT), "Datos del mes");
+    if (PA() && PIEZAS.some(promo)) {
+      const pauta = [["Pauta", ...ms.map(mesLargo)], ...pautaKpis(ms).map(k => [k.t, ...ms.map(m => {
+        const v = k.f([m]); return v == null ? "" : k.fmt === "pct" ? Math.round(v * 1000) / 10 : Math.round(v * 100) / 100; })])];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pauta), "Pauta por mes");
+    }
     XLSX.writeFile(wb, `resultados-${CTX.canal}-${hoyISO()}.xlsx`);
   }
 
@@ -587,12 +748,13 @@
       if (t.dataset.rsMes) { DETALLE = DETALLE === t.dataset.rsMes ? "" : t.dataset.rsMes; repintarResultados(); return; }
       if (t.dataset.rsFicha) { CTX.irAFicha && CTX.irAFicha(t.dataset.rsFicha, t.dataset.rsFmes); return; }
       if (t.hasAttribute("data-rs-excel")) { exportar(); return; }
+      if (t.dataset.rsPromo) { alternarPromo(t.dataset.rsPromo, t.dataset.rsPmes); return; }
       if (t.hasAttribute("data-rs-ir-carga")) {
         const d = el.querySelector(".rs-carga"); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
           const vacio = [...d.querySelectorAll("input[data-rs-in]:not([disabled])")].find(i => i.value === ""); if (vacio) setTimeout(() => vacio.focus(), 350); }
       }
     });
-    el.addEventListener("change", ev => { const i = ev.target.closest("input[data-rs-in]"); if (i) guardar(i); });
+    el.addEventListener("change", ev => { const i = ev.target.closest("[data-rs-in]"); if (i) guardar(i); });
     el.addEventListener("keydown", ev => {
       const i = ev.target.closest("input[data-rs-in]"); if (!i || ev.key !== "Enter") return;
       ev.preventDefault();

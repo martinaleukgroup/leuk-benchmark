@@ -115,3 +115,92 @@
 .ec-ver{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--olive-pale);color:var(--gray);white-space:nowrap}
 .ec-ver.ok{background:#e3eedc;color:var(--ok)} .ec-ver.warn{background:#f4ead8;color:var(--warn)} .ec-ver.no{background:#f3e1dd;color:var(--no)}
 .ec-sug-vacio{margin:0;padding:8px 10px;font-size:13px;color:var(--gray-soft)}
+
+/* ---- Impacto de acciones (2026-10-20): pestañas, estados, oportunidades, audiencia, campañas ---- */
+.ec-tabs{display:flex;gap:2px;background:var(--olive-pale);border-radius:999px;padding:3px;margin:4px 0 2px;width:max-content;max-width:100%;overflow-x:auto}
+.ec-tabs button{border:0;background:transparent;color:var(--gray);padding:7px 16px;border-radius:999px;font-size:13px;white-space:nowrap}
+.ec-tabs button.on{background:var(--card);color:var(--olive);font-weight:600;box-shadow:var(--shadow)}
+.ec-estados{margin:0 0 6px}
+.ec-estados .ac-chip b{font-weight:600;margin-left:3px;color:var(--gray-soft)}
+.ec-estados .ac-chip.on b{color:inherit}
+.ec-estado{display:inline-block;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--gray-soft);margin-left:6px;vertical-align:1px}
+.ec-tabla td .ec-estado{display:block;margin:3px 0 0}
+.ec-estado.evaluado{color:var(--ok)} .ec-estado.provisorio{color:var(--warn)} .ec-estado.esperando{color:var(--olive)} .ec-estado.faltan{color:var(--no)}
+.ec-veredicto.op{border-left-color:var(--olive)} .ec-veredicto.op > b{color:var(--olive)}
+.ec-ver.op{background:#e6e8d8;color:var(--olive)}
+.ec-tag.partner{background:#e3eedc;color:var(--ok)}
+.ec-tag.nopartner{background:var(--olive-pale);color:var(--gray)}
+.ec-partner{font-family:var(--font-body);font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink)}
+
+.ec-fuente{font-size:12.5px;color:var(--gray-soft);margin:4px 0 8px}
+.ec-fuente summary{cursor:pointer;color:var(--olive);width:max-content}
+.ec-fuente p{margin:6px 0 0;max-width:820px;line-height:1.5}
+.ec-fuente b{color:var(--ink)}
+
+.ec-grid-2{grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))}
+.ec-chica{min-width:0;font-size:12.5px}
+.ec-chica td{padding:6px 8px}
+.ec-link{border:0;background:none;padding:0;color:var(--ink);font-weight:600;font-family:var(--font-body);font-size:13.5px;text-align:left;cursor:pointer}
+.ec-link:hover{color:var(--olive);text-decoration:underline}
+.ec-ops-lista{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ec-ops-lista li{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ec-ops-lista .ec-link{margin-right:4px}
+.ec-op-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:var(--olive-pale);color:var(--ink);padding:3px 10px;border-radius:999px}
+.ec-op-chip small{font-size:10.5px;color:var(--gray-soft);text-transform:uppercase;letter-spacing:.03em}
+.ec-op-chip.ok{background:#e3eedc} .ec-op-chip.ok small{color:var(--ok)}
+.ec-op-chip .ac-mini{padding:0 4px;min-width:0;border:0;background:transparent}
+
+.ec-op{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;display:flex;flex-direction:column;gap:8px}
+.ec-op.desc{opacity:.6}
+.ec-op-tit{font-family:var(--font-body);font-size:15px;font-weight:600;border:0;border-bottom:1.5px solid transparent;padding:2px 0;background:transparent;color:var(--ink);outline:none}
+.ec-op-tit:focus{border-bottom-color:var(--olive-soft)}
+.ec-op .ec-campos{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.ec-op .ec-campos input,.ec-op .ec-campos select{font-size:13px;padding:5px 8px}
+.ec-op-pie{display:flex;gap:8px;align-items:center}
+.ec-op-pie input{flex:1;min-width:0;font-family:var(--font-body);font-size:13px;padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+
+.ec-aud-t tr.obj td:first-child{font-weight:600;color:var(--ink)}
+.ec-aud-t tfoot td{border-bottom:0}
+.ec-aud-t input[type=checkbox]{accent-color:var(--olive);width:16px;height:16px}
+
+.ec-monto{display:flex;gap:4px;min-width:0}
+.ec-monto select{flex:0 0 66px;padding-left:8px!important;padding-right:4px!important}
+.ec-monto input{flex:1;min-width:0}
+
+.ec-faltan-ev h3{margin:0 0 6px}
+.ec-faltan-ev.hidden{display:none}
+.ec-faltan-lista{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ec-faltan-lista li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.ec-faltan-lista li:last-child{border-bottom:0}
+.ec-faltan-lista span{color:var(--gray-soft);font-size:12.5px}
+.ec-faltan-lista em{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;color:var(--olive);background:var(--olive-pale);padding:2px 9px;border-radius:999px}
+
+/* Campañas */
+.ec-pasos{display:inline-flex;gap:4px}
+.ec-pasos i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.ec-pasos i.ok{background:var(--ok)}
+.ec-checklist{margin-top:12px}
+.ec-pasos-lista{list-style:none;margin:8px 0 14px;padding:0;display:flex;flex-direction:column;gap:10px}
+.ec-pasos-lista li{display:flex;gap:12px;align-items:flex-start}
+.ec-pasos-lista li > div{flex:1;min-width:0}
+.ec-pasos-lista b{display:block;color:var(--ink);font-size:14px}
+.ec-pasos-lista small{display:block;font-size:12px;color:var(--gray-soft)}
+.ec-paso-n{flex:0 0 28px;height:28px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-weight:600;font-size:13px;color:var(--gray-soft);background:var(--card)}
+.ec-pasos-lista li.ok .ec-paso-n{background:var(--ok);border-color:var(--ok);color:#fff}
+.ec-paso-campos{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.ec-paso-campos input{font-family:var(--font-body);font-size:13.5px;padding:6px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);min-width:0}
+.ec-dest{display:flex;flex-wrap:wrap;gap:6px}
+.ec-camp-med{margin-top:12px}
+.ec-camp-med .ec-cli-top .ec-ventana{margin-left:auto}
+.ec-notas-camp{width:100%;margin-top:12px;font-family:var(--font-body);font-size:14px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);box-sizing:border-box}
+.ec-tabla tr[data-camp]{cursor:pointer}
+.ec-tabla tr[data-camp]:hover td{background:var(--olive-pale)}
+
+@media (max-width:640px){
+  .ec-tabs{width:100%}
+  .ec-faltan-lista em{margin-left:0}
+}
+@media print{
+  body.ec-imprimiendo .ec-grid-2{grid-template-columns:1fr 1fr}
+  body.ec-imprimiendo .ec-op input,body.ec-imprimiendo .ec-op select,body.ec-imprimiendo .ec-partner{border-color:transparent}
+}

@@ -111,8 +111,24 @@
     // Información complementaria: solo los botones cuyos archivos existen
     // label en dos líneas (como la ficha original): permite letra más grande sin separar los íconos
     const btns = [];
-    if (a.ldt_url) btns.push(`<a class="f-btn" href="${esc(a.ldt_url)}" download><img src="${ICON}ldt.png"><div class="lb">Archivo<br>LDT</div></a>`);
-    if (a.cad_url) btns.push(`<a class="f-btn" href="${esc(a.cad_url)}" download><img src="${ICON}cad.png"><div class="lb">Archivo<br>CAD</div></a>`);
+    // Una ficha puede tener varios LDT (CHILL: uno por ángulo; el kit SINTRA/YORK, uno
+    // por luminaria): va un botón por archivo, rotulado con lo que los distingue.
+    const sinExt = n => String(n || "").replace(/\.[a-z0-9]+$/i, "");
+    const distintivo = ns => {
+      const base = ns.map(sinExt);
+      if (base.length < 2) return base.map(() => "");
+      let i = 0;
+      while (i < base[0].length && base.every(b => b[i] === base[0][i])) i++;
+      return base.map(b => b.slice(i).trim());
+    };
+    const lista = (files, url, nombre) => (files && files.length)
+      ? files : (url ? [{ n: nombre, url: url }] : []);
+    [["ldt", "LDT"], ["cad", "CAD"]].forEach(([k, rotulo]) => {
+      const archivos = lista(a[k + "_files"], a[k + "_url"], a[k]);
+      const extra = distintivo(archivos.map(x => x.n));
+      archivos.forEach((x, i) => btns.push(
+        `<a class="f-btn" href="${esc(x.url)}" download><img src="${ICON}${k}.png"><div class="lb">Archivo<br>${rotulo}${extra[i] ? " " + esc(extra[i]) : ""}</div></a>`));
+    });
     if (a.manual_url) btns.push(`<a class="f-btn" href="${esc(a.manual_url)}" target="_blank" rel="noopener"><img src="${ICON}manual.png"><div class="lb">Manual de<br>Instalación</div></a>`);
     const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
     // Datos fotométricos: cada curva se muestra SOLO si existe. Si no hay ninguna,

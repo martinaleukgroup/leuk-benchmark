@@ -91,7 +91,7 @@
 .f-host .f-note{font-size:8px;color:var(--gray);line-height:1.4}
 /* íconos equidistantes: cada botón tiene ancho fijo, así el texto de abajo (más largo o
    más corto) no corre la posición de los íconos. Aire bajo la raya igual al del título. */
-.f-host .f-buttons{display:flex;gap:6px;margin-top:9px}
+.f-host .f-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .f-host .f-btn{width:84px;text-align:center;text-decoration:none;color:var(--ink)}
 .f-host .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
 .f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:.5px;line-height:1.2;margin-top:8px;text-transform:uppercase}

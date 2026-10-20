@@ -2541,7 +2541,7 @@
     acciones: {
       label: "Acciones",
       pages: [{ p: "acciones", t: "Seguimiento de acciones" },
-              { p: "eventos-clientes", t: "Eventos con clientes" }],   // eventos-clientes.js
+              { p: "eventos-clientes", t: "Impacto de acciones" }],   // eventos-clientes.js
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2562,7 +2562,7 @@
     inicio:          { t: "Mi día",               ic: "home" },
     tareas:          { t: "Tareas",               ic: "view_kanban",  badge: "tareas" },
     acciones:        { t: "Acciones",             ic: "campaign",     badge: "acciones" },
-    "eventos-clientes": { t: "Eventos con clientes", ic: "handshake" },
+    "eventos-clientes": { t: "Impacto de acciones", ic: "handshake" },
     eventos:         { t: "Eventos",              ic: "confirmation_number" },
     contenidos:      { t: "Comunidad WhatsApp",   ic: "chat" },
     "contenidos-ig": { t: "Instagram",            ic: "photo_camera" },
@@ -2731,13 +2731,17 @@
       "En la <b>línea de tiempo</b> sumá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
       "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
       "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
-    { t: "Eventos con clientes", ic: "handshake", pages: ["eventos-clientes"], pasos: [
-      "Subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Reemplaza sólo el período que trae el archivo, así que lo podés volver a subir cada mes.",
-      "Creá el evento con <b>＋ Nuevo evento</b>: fecha, formato, <b>profesionales inscriptos y que fueron</b>, y la inversión (en US$ o desde la <b>acción</b> vinculada).",
-      "Elegí el <b>distribuidor</b> con el que se hizo el evento (buscalo por nombre, razón social o CUIT).",
-      "Arriba ves si <b>sirvió</b>: cuánto compró el distribuidor después contra lo que <b>esperábamos</b> sin el evento (lo que compraba antes, ajustado por cómo se movió el resto de los clientes). La diferencia son las <b>compras extra</b>.",
-      "<b>ROAS</b> = compras extra ÷ inversión: cuántos dólares de compras extra trajo cada dólar invertido (también ves el ROAS sobre el total de compras).",
-      "Elegí la ventana (<b>30, 60, 90 o 180 días</b>) y descargá todo en <b>Excel</b> o en <b>PDF</b>."] },
+    { t: "Impacto de acciones", ic: "handshake", pages: ["eventos-clientes"], pasos: [
+      "Subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Reemplaza sólo el período que trae el archivo, así que lo podés volver a subir cada mes. En <b>¿De dónde salen las ventas?</b> ves qué archivo se usó y hasta qué fecha llega.",
+      "Creá el evento con <b>＋ Nuevo evento</b> (o pasalo desde Acciones en <b>Datos que faltan</b>): fecha, formato, <b>quién dio la charla</b>, profesionales inscriptos y que fueron, y la <b>inversión</b> en US$ o en pesos.",
+      "Elegí el <b>distribuidor</b> con el que se hizo el evento y marcá si <b>ya era partner</b>.",
+      "Arriba ves si <b>sirvió</b>: cuánto compró el distribuidor después contra lo que <b>esperábamos</b> sin el evento, sus <b>compras grandes</b> y el <b>ROAS</b> (compras extra ÷ inversión).",
+      "No se mide sólo en ventas: sumá las <b>oportunidades</b> que nacieron del evento (otra muestra, una obra, una alianza…). Un evento sin compras extra pero con oportunidades no se da por perdido.",
+      "En <b>Audiencia</b> cargá qué perfiles fueron (a mano o subiendo la encuesta de Luz en Acción) y marcá con ★ los que buscamos convocar.",
+      "Cada evento tiene un estado: <b>evaluado</b>, <b>provisorio</b> (todavía no pasó la ventana entera), <b>esperando ventas</b> o <b>faltan datos</b>.",
+      "<b>Comparar períodos</b> pone lado a lado los períodos de <b>octubre a octubre</b> y muestra qué funciona por formato, disertante y partner / no partner.",
+      "<b>Campañas de producto</b>: primero se confirma que el material llegó a Comercial y se distribuyó; recién ahí se miden las compras de la familia.",
+      "<b>Datos que faltan</b> junta todo lo pendiente agrupado por quién lo tiene que pasar; descargalo en Excel para repartirlo."] },
     { t: "Usuarios", ic: "group", pages: ["usuarios"], pasos: [
       "<b>Agregá una persona</b> con su mail, nombre, rol y una contraseña temporal.",
       "<b>Cambiá el rol</b> cuando cambie de equipo: se aplica la próxima vez que entre.",

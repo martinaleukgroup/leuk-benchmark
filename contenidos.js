@@ -1739,7 +1739,10 @@
       const pf = t.closest("[data-perfil]");
       if (pf) { if (pf.dataset.perfil !== CANAL) { MOVIENDO = ""; window.renderContenidos(pf.dataset.perfil, true); } return; }
       const v = t.closest("[data-vista]");
-      if (v) { VISTA = v.dataset.vista; MOVIENDO = ""; pintar(); return; }
+      if (v) {
+        if (v.dataset.vista === "resultados" && VISTA !== "resultados" && window.LeukResultados) window.LeukResultados.invalidar();
+        VISTA = v.dataset.vista; MOVIENDO = ""; pintar(); return;
+      }
 
       const fl = t.closest("[data-filtro]");
       if (fl) { FILTRO = fl.dataset.filtro; if (VISTA === "resultados") VISTA = "fichas"; pintar(); return; }

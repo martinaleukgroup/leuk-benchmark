@@ -177,7 +177,9 @@
   const clave = (mes, pieza, dato) => `${mes}|${pieza || ""}|${dato}`;
   const datoDef = k => (CFG.datos || []).find(d => d.k === k) || { k, nivel: "pieza" };
   // `solo`: "encuesta" (WhatsApp) o la clave de un destino (Mailing: el dato sólo se pide a ese destino).
-  const aplica = (d, p) => !d.solo || (d.solo === "encuesta" ? !!(p.encuesta && p.encuesta.q) : p.tipo === d.solo);
+  // La encuesta puede estar en el mensaje o en alguna de sus variantes.
+  const tieneEncuesta = p => [p.encuesta, ...(p.variantes || []).map(v => v && v.encuesta)].some(e => e && e.q);
+  const aplica = (d, p) => !d.solo || (d.solo === "encuesta" ? tieneEncuesta(p) : p.tipo === d.solo);
   const U = () => CFG.unidad || (/^instagram/.test(CTX.canal) ? "pieza" : "mensaje");
   const kpisVis = () => (CFG.kpis || []).filter(k => !DEST || !k.solo || k.solo === DEST);
   const sinDestino = p => (CFG.destinos || []).length && !CFG.destinos.some(x => x.k === p.tipo);
@@ -189,7 +191,7 @@
     const [rc, rv, rp] = await Promise.all([
       fetch(url(`resultados_config?canal=eq.${enc(c)}&select=config`), { headers: head() }).catch(() => null),
       fetch(url(`resultados_valores?canal=eq.${enc(c)}&select=mes,pieza,dato,valor`), { headers: head() }).catch(() => null),
-      fetch(url(`contenidos?canal=in.(${enc(c)})&select=id,mes,fecha,criterio,estado,encuesta,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
+      fetch(url(`contenidos?canal=in.(${enc(c)})&select=id,mes,fecha,criterio,estado,encuesta,variantes,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
     ]);
     SIN_TABLA = !rv || !rv.ok;
     const cfg = rc && rc.ok ? (await rc.json())[0] : null;
@@ -344,6 +346,8 @@
       pintar();
     },
     async refrescar() { if (CTX) { await traer(); pintar(); } },
+    // Al volver a la vista: lo que se cambió en las fichas (p. ej. una encuesta nueva) tiene que verse.
+    invalidar() { CARGADO = ""; },
   };
 
   function pintar() {
@@ -808,7 +812,7 @@
     const [rc, rv, rp] = await Promise.all([
       fetch(url(`resultados_config?canal=eq.${enc(canal)}&select=config`), { headers: head() }).catch(() => null),
       fetch(url(`resultados_valores?canal=eq.${enc(canal)}&select=mes,pieza,dato,valor`), { headers: head() }).catch(() => null),
-      fetch(url(`contenidos?canal=in.(${enc(canal)})&select=id,mes,fecha,criterio,estado,encuesta,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
+      fetch(url(`contenidos?canal=in.(${enc(canal)})&select=id,mes,fecha,criterio,estado,encuesta,variantes,tipo&order=fecha.asc`), { headers: head() }).catch(() => null),
     ]);
     const fila = rc && rc.ok ? (await rc.json())[0] : null;
     ED = clon((fila && fila.config) || DEFAULT[canal] || DEFAULT.whatsapp);

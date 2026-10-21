@@ -73,7 +73,8 @@
   const OP_TIPOS = ["Evento / exposición", "Proyecto / obra", "Nuevo cliente", "Alianza", "Prensa / difusión", "Capacitación", "Otro"];
   const OP_ESTADOS = ["Abierta", "En curso", "Concretada", "Descartada"];
   const CAMP_TIPOS = ["Exhibición", "Unboxing", "Material POP", "Muestras", "Catálogo / folleto", "Otro"];
-  const DISERTANTES = ["Martina", "Mati"];
+  let OTRO_DIS = false;   // eligió "Otro…" y todavía no escribió el nombre
+  const DISERTANTES = ["Barbara Hirsch", "Matias Maravankin"];   // las opciones fijas; "Otro…" pide escribir el nombre
   // Perfiles de la audiencia. `k` = palabras que los reconocen en la encuesta / lista de inscriptos.
   const PERFILES = [
     { p: "Arquitecto/a", k: ["arquitect", "arq."] },
@@ -784,8 +785,7 @@
         <div class="ec-campos">
           <label><span>Fecha</span><input type="date" data-campo="fecha" value="${esc(ev.fecha || "")}"></label>
           <label><span>Formato</span><select data-campo="formato"><option value="">—</option>${formatos.map(f => `<option ${ev.formato === f ? "selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
-          <label><span>Quién dio la charla</span><input data-campo="disertante" list="ec-disertantes" value="${esc(ev.disertante || "")}" placeholder="Martina, Mati…"${SIN_SQL3 ? " disabled" : ""}>
-            <datalist id="ec-disertantes">${disertantes().map(d => `<option value="${esc(d)}">`).join("")}</datalist></label>
+          ${campoDisertante(ev)}
           <label><span>Lugar</span><input data-campo="lugar" value="${esc(ev.lugar)}" placeholder="Showroom del distribuidor"></label>
           <label><span>Profesionales inscriptos</span><input type="number" min="0" step="1" data-campo="prof_inscriptos" value="${n(ev.prof_inscriptos)}" placeholder="0"></label>
           <label><span>Profesionales que fueron</span><input type="number" min="0" step="1" data-campo="prof_asistentes" value="${n(ev.prof_asistentes)}" placeholder="0"></label>
@@ -801,6 +801,13 @@
         <section class="ec-card ec-faltan-ev"></section>`}`;
     pintarNota();
     if (!nuevo) { pintarDistribuidores(); pintarAnalisis(); pintarOps(); pintarAudiencia(); pintarFaltanEvento(); asegurarDatos(ev); }
+  }
+
+  // Quién dio la charla: Barbara, Matias u "Otro…" (que pide escribir el nombre).
+  function campoDisertante(ev) {
+    const d = ev.disertante || "", otro = OTRO_DIS || (!!d && !DISERTANTES.includes(d)), dis = SIN_SQL3 ? " disabled" : "";
+    return `<label><span>Quién dio la charla</span><select data-campo="disertante_sel"${dis}><option value="">Elegí…</option>${DISERTANTES.map(x => `<option ${d === x && !otro ? "selected" : ""}>${esc(x)}</option>`).join("")}<option value="otro" ${otro ? "selected" : ""}>Otro…</option></select>
+            <input class="ec-dis-otro" data-campo="disertante" value="${otro ? esc(d) : ""}" placeholder="Escribí quién dio la charla" aria-label="Quién dio la charla"${otro ? "" : ' style="display:none"'}${dis}></label>`;
   }
 
   // De dónde sale la inversión cuando no se cargó en US$.
@@ -1125,7 +1132,7 @@
     BORRADOR = Object.assign({ id: null, titulo: "", fecha: hoyISO(), lugar: "", formato: "", accion_id: null, inversion_usd: null, notas: "",
                                prof_inscriptos: null, prof_asistentes: null }, SIN_SQL3 ? {} : { disertante: "", inversion_ars: null }, desde || {});
     INV_MON.nuevo = null;
-    ABIERTO = "nuevo"; CAMP = null; pintar();
+    ABIERTO = "nuevo"; CAMP = null; OTRO_DIS = false; pintar();
     const t = caja().querySelector(".ec-titulo"); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
   }
   // Pasar una acción (de Acciones) a un evento para medirlo: trae nombre, fecha y la vincula (la inversión sale de ahí).
@@ -1139,6 +1146,10 @@
     const b = BORRADOR; if (!b) return;
     const t = caja().querySelector(".ec-titulo"); if (t) b.titulo = t.value.trim();
     if (!b.titulo) { nota("Poné un nombre para crear el evento.", true); if (t) t.focus(); return; }
+    if (!SIN_SQL3 && !(b.disertante || "").trim()) {
+      nota(OTRO_DIS ? "Escribí quién dio la charla." : "Elegí quién dio la charla.", true);
+      const f = caja().querySelector(OTRO_DIS ? ".ec-dis-otro" : '[data-campo="disertante_sel"]'); if (f) f.focus(); return;
+    }
     const cuerpo = Object.assign({}, b, { autor: SES().nombre ? SES().nombre() : "", autor_email: SES().email ? SES().email() : "" });
     delete cuerpo.id;
     const busca = BUSCA_CLI;
@@ -1180,11 +1191,11 @@
       ABIERTO = null; nota("Evento eliminado."); pintar();
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien lo creó o un admin.", true); }
   }
-  function abrir(id) { ABIERTO = id; CAMP = null; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
+  function abrir(id) { ABIERTO = id; CAMP = null; OTRO_DIS = false; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
   async function volver() {
     if (ABIERTO === "nuevo") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !(await lkConfirmar("¿Descartar el evento que estabas creando?", { ok: "Descartar" }))) return; }
     if (CAMP === "nueva") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !(await lkConfirmar("¿Descartar la campaña que estabas creando?", { ok: "Descartar" }))) return; }
-    ABIERTO = null; BORRADOR = null; CAMP = null; BORRADOR_C = null; BUSCA_CLI = "";
+    ABIERTO = null; BORRADOR = null; CAMP = null; BORRADOR_C = null; BUSCA_CLI = ""; OTRO_DIS = false;
     pintar(); refrescarTablero();
   }
   // El tablero necesita las ventas de todos los distribuidores, el TC y el "resto de clientes" de
@@ -1792,10 +1803,21 @@
         guardarCampana({ [k]: v }).then(ok => { if (ok && CAMP !== "nueva" && (/_fecha$/.test(k) || k === "familia")) pintarCampana(); });
         return;
       }
-      const campo = el.dataset.campo; if (!campo) return;
+      let campo = el.dataset.campo; if (!campo) return;
       let v = el.value;
       if (campo === "titulo") { v = v.trim(); if (!v && ABIERTO !== "nuevo") { el.value = eventoAbierto().titulo; return nota("El nombre no puede quedar vacío.", true); } }
-      if (campo === "disertante") v = v.trim();
+      if (campo === "disertante_sel") {
+        const otro = caja().querySelector(".ec-dis-otro");
+        OTRO_DIS = v === "otro";
+        if (otro) { otro.style.display = OTRO_DIS ? "" : "none"; otro.value = ""; }
+        if (OTRO_DIS) { nota("Escribí quién dio la charla."); if (otro) otro.focus(); if (ABIERTO !== "nuevo") return; v = ""; }
+        campo = "disertante";
+      }
+      if (campo === "disertante") {
+        v = v.trim();
+        if (!v && OTRO_DIS) { nota("Escribí quién dio la charla.", true); return; }
+        if (v) OTRO_DIS = false;
+      }
       if (["prof_inscriptos", "prof_asistentes"].includes(campo)) v = num(v);
       if (["fecha", "accion_id"].includes(campo) && !v) v = null;
       const extra = {};

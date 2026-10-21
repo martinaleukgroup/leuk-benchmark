@@ -784,3 +784,15 @@ body.ct-visor-abierto{overflow:hidden}
 .ct-vs-accs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .ct-vs-accs a.btn-mini{text-decoration:none}
 @media (max-width:520px){.ct-vs-col{padding-top:60px}}
+
+/* Menciones (@Nombre) en los comentarios: mismo aspecto que en Tareas y Acciones */
+.ct-arroba{color:var(--olive);font-weight:600;background:var(--olive-pale);padding:0 4px;border-radius:5px}
+.ct-arroba.yo{background:#f7efdf;color:#8a6424}
+.ct-menc{position:fixed;z-index:80;width:250px;max-width:calc(100vw - 16px);background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 10px 30px rgba(40,42,34,.18);padding:4px;display:flex;flex-direction:column}
+.ct-menc button{display:flex;align-items:center;gap:9px;border:0;background:transparent;text-align:left;cursor:pointer;
+  padding:6px 8px;border-radius:7px;font-size:14px;color:var(--ink)}
+.ct-menc button.on,.ct-menc button:hover{background:var(--olive-pale)}
+.ct-menc .av{width:24px;height:24px;border-radius:50%;background:var(--olive-pale);color:var(--olive);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;text-transform:uppercase}
+.ct-menc button.on .av,.ct-menc button:hover .av{background:var(--card)}

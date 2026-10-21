@@ -1576,7 +1576,7 @@
                 <span class="ct-com-var">sugirió un cambio${dondeCampo(c.campo)}</span>
                 <span class="cuando">${hace(c.creado)}</span></div>
               <div class="ct-sug-cambio"><del>${esc(c.original)}</del><span class="fl">→</span><ins>${esc(c.propuesto)}</ins></div>
-              ${c.texto ? `<div class="texto">${esc(c.texto)}</div>` : ""}
+              ${c.texto ? `<div class="texto">${conMenciones(c.texto)}</div>` : ""}
               ${suelta ? `<p class="ct-sug-suelta">El texto original cambió, así que esta sugerencia ya no engancha. Descartala y volvé a proponerla.</p>` : ""}
               ${c.decision ? `<p class="ct-sug-fallo ${c.decision}">${c.decision === "aceptada" ? "✓ Aceptada" : "✗ Descartada"}${c.decidido_por ? " por " + esc(c.decidido_por) : ""}</p>` : ""}
             </div>
@@ -1593,7 +1593,7 @@
             <div class="quien">${esc(c.autor || c.autor_email || "—")}
               ${c.variante ? `<span class="ct-com-var">en la placa ${+c.variante}</span>` : ""}
               <span class="cuando">${hace(c.creado)}</span></div>
-            <div class="texto">${esc(c.texto)}</div>
+            <div class="texto">${conMenciones(c.texto)}</div>
           </div>
           <div class="accs">
             ${(mio || ed) ? `<button data-res="${c.id}" title="${c.resuelto ? "Reabrir" : "Marcar como resuelto"}">${c.resuelto ? "↺" : "✓"}</button>` : ""}
@@ -1606,7 +1606,7 @@
           <option value="">Toda la pieza</option>
           ${placasDe(m).map((p, n) => `<option value="${n + 1}" ${(PLACA[m.id] || 0) === n ? "selected" : ""}>Placa ${n + 1}${p.pie ? " · " + esc(p.pie.slice(0, 22)) : ""}</option>`).join("")}
         </select>` : ""}
-        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o un ajuste…" rows="1"></textarea>
+        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o un ajuste… Con @ mencionás a alguien" rows="1"></textarea>
         <button class="btn-mini" data-enviar="${m.id}">Enviar</button>
       </div>
     </div>`;
@@ -2432,10 +2432,118 @@
   const nombresDe = (canal, papel) => (RESP || []).filter(r => r.canal === canal && r.papel === papel).map(r => r.nombre || r.email.split("@")[0]);
   async function traerResponsables() {
     try {
-      const r = await fetch(url("contenidos_responsables?select=canal,email,papel,nombre"), { headers: head() });
+      const [r, rE] = await Promise.all([
+        fetch(url("contenidos_responsables?select=canal,email,papel,nombre"), { headers: head() }),
+        EQUIPO_RPC ? fetch(url("rpc/equipo_contenidos"), { method: "POST", headers: head(), body: "{}" }) : null,
+      ]);
       RESP = r.ok ? await r.json() : (r.status === 404 ? null : RESP);
+      if (rE && rE.ok) EQUIPO = await rE.json();
+      else if (rE && rE.status === 404) EQUIPO_RPC = false;   // falta 2026-10-21-contenidos-menciones.sql
     } catch (e) { }
   }
+
+  /* ---- Menciones (@Nombre) en los comentarios ----------------------------
+     Mismo criterio que Tareas y Acciones: se guardan como texto plano ("@Carla Ruiz")
+     y se reconocen contra los nombres del equipo de Contenidos. Sin el SQL, el equipo
+     son los responsables de los canales. Te "mencionan" sólo si lo escribió otra persona. */
+  let EQUIPO = [];          // [{email, nombre}] — quién entra a Contenidos
+  let EQUIPO_RPC = true;
+  let MENC = null;          // {el, desde, lista, i} mientras está abierto el desplegable de @
+  const lowC = s => String(s || "").toLowerCase();
+  const sinTildesC = s => lowC(s).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  function equipo() {
+    if (EQUIPO.length) return EQUIPO;
+    const vistos = {};
+    (RESP || []).forEach(r => { if (r.nombre && !vistos[lowC(r.email)]) vistos[lowC(r.email)] = { email: r.email, nombre: r.nombre }; });
+    return Object.values(vistos).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+  const escReC = x => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function reMenciones(escapar) {
+    const nombres = equipo().map(p => p.nombre).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!nombres.length) return null;
+    return new RegExp(`@(${nombres.map(n => escReC(escapar ? esc(n) : n)).join("|")})(?![\\p{L}\\p{N}])`, "giu");
+  }
+  function mencionesEn(texto) {
+    const re = texto && texto.includes("@") && reMenciones(false);
+    if (!re) return [];
+    const out = new Set();
+    for (const m of texto.matchAll(re)) { const p = equipo().find(x => lowC(x.nombre) === lowC(m[1])); if (p) out.add(lowC(p.email)); }
+    return [...out];
+  }
+  // Texto de comentario → HTML escapado con las menciones resaltadas (la tuya, en otro color).
+  function conMenciones(texto) {
+    const h = esc(texto), re = reMenciones(true);
+    return re ? h.replace(re, (m, n) => {
+      const p = equipo().find(x => esc(lowC(x.nombre)) === lowC(n));
+      return `<span class="ct-arroba ${p && lowC(p.email) === yoC() ? "yo" : ""}">${m}</span>`;
+    }) : h;
+  }
+  const meNombra = c => !!yoC() && lowC(c.autor_email) !== yoC() && mencionesEn(c.texto).includes(yoC());
+
+  // Autocompletar: escribir @ en un comentario abre la lista del equipo.
+  function buscarMencion(el) {
+    const pos = el.selectionStart;
+    const m = el.value.slice(0, pos).match(/(^|\s)@([^@\n]{0,30})$/);
+    if (!m) return cerrarMenc();
+    const q = sinTildesC(m[2]);
+    // Recién elegida ("@Carla Ruiz "): no volver a abrir la lista.
+    if (/\s$/.test(m[2]) && equipo().some(p => sinTildesC(p.nombre) === q.trim())) return cerrarMenc();
+    const lista = equipo().filter(p => {
+      const n = sinTildesC(p.nombre);
+      return !q || n.startsWith(q) || n.split(/\s+/).some(w => w.startsWith(q));
+    }).slice(0, 6);
+    if (!lista.length) return cerrarMenc();
+    const i = MENC && MENC.el === el ? Math.min(MENC.i, lista.length - 1) : 0;
+    MENC = { el, desde: pos - m[2].length - 1, lista, i };
+    pintarMenc();
+  }
+  function pintarMenc() {
+    let d = document.querySelector(".ct-menc");
+    if (!d) { d = document.createElement("div"); d.className = "ct-menc"; d.setAttribute("role", "listbox"); document.body.appendChild(d); }
+    d.innerHTML = MENC.lista.map((p, i) => `<button type="button" class="${i === MENC.i ? "on" : ""}" data-menc="${i}" role="option" aria-selected="${i === MENC.i}">
+      <span class="av">${esc(iniciales(p.nombre))}</span><span>${esc(p.nombre)}${lowC(p.email) === yoC() ? " (vos)" : ""}</span></button>`).join("");
+    const r = MENC.el.getBoundingClientRect(), alto = d.offsetHeight;
+    d.style.left = Math.max(8, Math.min(r.left, innerWidth - d.offsetWidth - 8)) + "px";
+    d.style.top = (r.bottom + 4 + alto > innerHeight ? Math.max(8, r.top - alto - 4) : r.bottom + 4) + "px";
+  }
+  function cerrarMenc() {
+    MENC = null;
+    const d = document.querySelector(".ct-menc"); if (d) d.remove();
+  }
+  function elegirMenc(i) {
+    if (!MENC || !MENC.lista[i]) return;
+    const { el, desde } = MENC, p = MENC.lista[i];
+    const ins = `@${p.nombre} `;
+    el.value = el.value.slice(0, desde) + ins + el.value.slice(el.selectionStart);
+    const caret = desde + ins.length;
+    cerrarMenc();
+    el.focus(); el.setSelectionRange(caret, caret);
+  }
+  // Una sola vez para todo el documento: enganchar() corre en cada repintado.
+  // keydown va en captura para ganarle al Enter que manda el comentario.
+  (function engancharMenciones() {
+    const campo = t => t instanceof Element && t.matches("textarea[data-nuevo]");
+    document.addEventListener("input", ev => { if (campo(ev.target)) buscarMencion(ev.target); });
+    document.addEventListener("keydown", ev => {
+      if (!MENC || ev.target !== MENC.el) return;
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        ev.preventDefault(); ev.stopPropagation();
+        MENC.i = (MENC.i + (ev.key === "ArrowDown" ? 1 : -1) + MENC.lista.length) % MENC.lista.length;
+        return pintarMenc();
+      }
+      if ((ev.key === "Enter" && !ev.shiftKey) || ev.key === "Tab") { ev.preventDefault(); ev.stopPropagation(); return elegirMenc(MENC.i); }
+      if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); return cerrarMenc(); }
+    }, true);
+    // Elegir con el mouse sin que el campo pierda el foco.
+    document.addEventListener("mousedown", ev => {
+      const b = ev.target instanceof Element && ev.target.closest(".ct-menc [data-menc]"); if (!b) return;
+      ev.preventDefault(); elegirMenc(+b.dataset.menc);
+    });
+    document.addEventListener("focusout", ev => {
+      if (MENC && ev.target === MENC.el) setTimeout(() => { if (MENC && document.activeElement !== MENC.el) cerrarMenc(); }, 150);
+    });
+    document.addEventListener("scroll", ev => { if (MENC && !campo(ev.target)) cerrarMenc(); }, true);
+  })();
   let PANEL = false;
 
   async function traerAvisos() {
@@ -2445,16 +2553,19 @@
     const desde = `${atras.getFullYear()}-${String(atras.getMonth() + 1).padStart(2, "0")}-${String(atras.getDate()).padStart(2, "0")}`;
     try {
       const pResp = traerResponsables();
-      const [rm, rs, rc] = await Promise.all([
+      const [rm, rs, rc, rk] = await Promise.all([
         // La campanita NO se filtra por canal: es una sola y avisa de todos.
         fetch(url(`contenidos?fecha=gte.${desde}&fecha=lte.${hoy}&select=id,mes,canal,fecha,criterio,estado&order=fecha.asc`), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.sugerencia&select=*&order=creado.desc&limit=60"), { headers: head() }),
         fetch(url("contenidos_comentarios?tipo=eq.comentario&resuelto=is.false&select=*&order=creado.desc&limit=40"), { headers: head() }),
+        // Comentarios con @ de los últimos 30 días: de ahí salen las menciones (de cualquier canal).
+        fetch(url(`contenidos_comentarios?texto=like.*%40*&creado=gte.${new Date(Date.now() - 30 * 864e5).toISOString()}&select=*&order=creado.desc&limit=80`), { headers: head() }),
       ]);
       await pResp;
       const msgs = rm.ok ? await rm.json() : [];
       const sugs = rs.ok ? await rs.json() : [];
       const coms = rc.ok ? await rc.json() : [];
+      const conArroba = rk.ok ? await rk.json() : [];
       const yo = (SES().email() || "").toLowerCase();
 
       AVISOS = {
@@ -2465,6 +2576,8 @@
         coms:  coms.filter(c => String(c.autor_email || "").toLowerCase() !== yo),
         // Para quien sugiere: en qué terminó lo suyo.
         mias:  sugs.filter(g => g.decision && String(g.autor_email || "").toLowerCase() === yo),
+        // Donde te mencionaron (aunque no seas responsable de ese canal).
+        menc:  conArroba.filter(meNombra),
         cargado: true,
       };
       // Para el número del menú: piezas que te toca mover (a revisar si revisás; con ajustes si hacés)
@@ -2472,12 +2585,12 @@
       AVISOS.meToca = enCurso.filter(m => (m.estado === "revision" && papelesEn(m.canal).includes("revisa"))
                                        || (m.estado === "cambios" && papelesEn(m.canal).includes("hace"))).length;
       // nombre del mensaje al que pertenece cada sugerencia/comentario
-      const ids = [...new Set([...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].map(x => x.contenido_id))];
+      const ids = [...new Set([...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias, ...AVISOS.menc].map(x => x.contenido_id))];
       if (ids.length) {
         const r = await fetch(url(`contenidos?id=in.(${ids.join(",")})&select=id,mes,canal,fecha,criterio`), { headers: head() });
         if (r.ok) {
           const por = {}; (await r.json()).forEach(m => { por[m.id] = m; });
-          [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias].forEach(x => { x._m = por[x.contenido_id]; });
+          [...AVISOS.sugs, ...AVISOS.coms, ...AVISOS.mias, ...AVISOS.menc].forEach(x => { x._m = por[x.contenido_id]; });
         }
       }
     } catch (e) { }
@@ -2568,10 +2681,13 @@
     const out = AVISOS.mias.filter(g => g._m).map(g => ({ key: `ct-d-${g.id}`, ts: g.decidido_en || g.creado,
       ic: g.decision === "aceptada" ? "check_circle" : "cancel",
       tit: g.decision === "aceptada" ? "Aceptaron tu sugerencia" : "Descartaron tu sugerencia", txt: donde(g._m), ir: ir(g._m) }));
+    // Menciones: le llegan a quien nombraron, sea o no responsable del canal.
+    (AVISOS.menc || []).filter(c => c._m).forEach(c => out.push({ key: `ct-${c.id}`, ts: c.creado, ic: "alternate_email",
+      tit: `${c.autor || "Alguien"} te mencionó`, txt: donde(c._m), ir: ir(c._m) }));
     const canales = misCanales();
     if (!canales.length) return out;
     [...AVISOS.sugs, ...AVISOS.coms]
-      .filter(x => x._m && canales.includes(x._m.canal) && String(x.autor_email || "").toLowerCase() !== yoC())
+      .filter(x => x._m && canales.includes(x._m.canal) && String(x.autor_email || "").toLowerCase() !== yoC() && !meNombra(x))
       .forEach(x => out.push({ key: `ct-${x.id}`, ts: x.creado, ic: "rate_review",
         tit: `${x.autor || "Alguien"} ${x.tipo === "sugerencia" ? "sugirió un cambio" : "comentó"}`, txt: donde(x._m), ir: ir(x._m) }));
 
@@ -2609,6 +2725,11 @@
     const cuando2 = f => { const c = cuando(f); return c.t; };
 
     let cuerpo = "";
+    const menc = (AVISOS.menc || []).filter(c => c._m).slice(0, 10);
+    if (menc.length) cuerpo += `<h5>Te mencionaron</h5>` +
+      menc.map(c => linea(c.contenido_id, nuevo(c.creado), "@",
+        `${esc(c.autor || "Alguien")} en <b>${esc(c._m.criterio || "algo del mes")}</b>`,
+        esc((c.texto || "").slice(0, 60)), c._m.canal)).join("");
     if (ed) {
       if (AVISOS.tarde.length) cuerpo += `<h5>Ya tendrían que haber salido</h5>` +
         AVISOS.tarde.map(m => linea(m.id, " urgente", "!", esc(m.criterio || "Sin título"),
@@ -2632,11 +2753,13 @@
               (g._m || {}).canal)).join("");
         });
       }
-      if (AVISOS.coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
-        AVISOS.coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
+      const coms = AVISOS.coms.filter(c => !meNombra(c));   // las que te nombran ya están arriba
+      if (coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
+        coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
           `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "algo del mes")}</b>`,
           esc((c.texto || "").slice(0, 60)), (c._m || {}).canal)).join("");
-    } else if (AVISOS.mias.length) {
+    }
+    if (!ed && AVISOS.mias.length) {
       cuerpo += `<h5>Tus sugerencias</h5>` +
         AVISOS.mias.slice(0, 15).map(g => linea(g.contenido_id, nuevo(g.decidido_en || g.creado),
           g.decision === "aceptada" ? "✓" : "✗",

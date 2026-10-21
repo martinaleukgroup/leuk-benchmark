@@ -173,6 +173,15 @@
 .ec-faltan-lista li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
 .ec-faltan-lista li:last-child{border-bottom:0}
 .ec-faltan-lista span{color:var(--gray-soft);font-size:12.5px}
+.ec-faltan-ir li{padding:0}
+.ec-faltan-ir button{all:unset;box-sizing:border-box;width:100%;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:8px 6px;border-radius:8px;cursor:pointer}
+.ec-faltan-ir button:hover,.ec-faltan-ir button:focus-visible{background:var(--olive-pale)}
+.ec-faltan-ir button:focus-visible{outline:2px solid var(--olive);outline-offset:1px}
+.ec-faltan-ir button[disabled]{cursor:default;background:none}
+.ec-faltan-ir i{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;color:var(--olive);white-space:nowrap}
+.ec-faltan-ir button[disabled] i{display:none}
+.ec-resaltado{outline:2px solid var(--olive);outline-offset:4px;border-radius:8px;animation:ec-resaltar 2.6s ease-out}
+@keyframes ec-resaltar{0%,30%{box-shadow:0 0 0 6px var(--olive-pale)}100%{box-shadow:0 0 0 0 transparent}}
 .ec-faltan-lista em{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;color:var(--olive);background:var(--olive-pale);padding:2px 9px;border-radius:999px}
 
 /* Campañas */

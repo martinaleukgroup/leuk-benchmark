@@ -371,19 +371,20 @@
 
   /* ---- Qué falta para evaluar (y quién lo tiene) ---- */
   function faltantesEvento(ev, k) {
-    const f = [], add = (que, quien, para, persona) => f.push({ que, quien, para, persona: persona || "" });
-    if (!ev.fecha) add("Fecha del evento", "mkt", "medir las compras");
-    if (!k.lista.length) add("Distribuidor con el que se hizo", "mkt", "medir las compras");
-    if (!RANGO) add("Reporte de ventas del sistema", "com", "medir las compras");
-    else if (k.estado === "esperando") add(`Reporte de ventas posterior al ${fechaLarga(ev.fecha)}`, "com", "medir las compras");
-    else if (k.estado === "provisorio" && k.listoEl > RANGO.hasta) add(`Reporte de ventas hasta el ${fechaLarga(k.listoEl)} (o después)`, "com", `evaluar con los ${VENTANA} días enteros`);
-    if (k.inv.usd == null) add(k.inv.origen ? `Inversión: ${k.inv.origen}` : "Inversión del evento", "mkt", "ROAS y costo por profesional");
-    k.lista.filter(x => x.era_partner == null).forEach(x => add(`¿${x.nombre || x.razon_social || x.cuit} era partner?`, "com", "comparar partners y no partners"));
-    if (k.asis == null) add("Profesionales inscriptos y que fueron", "mkt", "asistencia y costo por profesional");
-    if (!Object.keys(ev.perfiles || {}).length && !SIN_SQL3) add("Perfiles de la audiencia (encuesta de Luz en Acción)", "mkt", "saber a quién convocamos");
-    if (!ev.disertante && !SIN_SQL3) add("Quién dio la charla", "mkt", "comparar disertantes");
+    // ir: dónde se completa en la ficha del evento (selector; "ventas" = subir el reporte).
+    const f = [], add = (que, quien, para, persona, ir) => f.push({ que, quien, para, persona: persona || "", ir: ir || "" });
+    if (!ev.fecha) add("Fecha del evento", "mkt", "medir las compras", "", '[data-campo="fecha"]');
+    if (!k.lista.length) add("Distribuidor con el que se hizo", "mkt", "medir las compras", "", ".ec-busca-cli");
+    if (!RANGO) add("Reporte de ventas del sistema", "com", "medir las compras", "", "ventas");
+    else if (k.estado === "esperando") add(`Reporte de ventas posterior al ${fechaLarga(ev.fecha)}`, "com", "medir las compras", "", "ventas");
+    else if (k.estado === "provisorio" && k.listoEl > RANGO.hasta) add(`Reporte de ventas hasta el ${fechaLarga(k.listoEl)} (o después)`, "com", `evaluar con los ${VENTANA} días enteros`, "", "ventas");
+    if (k.inv.usd == null) add(k.inv.origen ? `Inversión: ${k.inv.origen}` : "Inversión del evento", "mkt", "ROAS y costo por profesional", "", '[data-campo="inv_monto"]');
+    k.lista.filter(x => x.era_partner == null).forEach(x => add(`¿${x.nombre || x.razon_social || x.cuit} era partner?`, "com", "comparar partners y no partners", "", `[data-ec-inv="era_partner"][data-id="${x.id}"]`));
+    if (k.asis == null) add("Profesionales inscriptos y que fueron", "mkt", "asistencia y costo por profesional", "", '[data-campo="prof_inscriptos"], [data-campo="prof_asistentes"]');
+    if (!Object.keys(ev.perfiles || {}).length && !SIN_SQL3) add("Perfiles de la audiencia (encuesta de Luz en Acción)", "mkt", "saber a quién convocamos", "", ".ec-aud");
+    if (!ev.disertante && !SIN_SQL3) add("Quién dio la charla", "mkt", "comparar disertantes", "", '[data-campo="disertante_sel"]');
     opsDe(ev).filter(o => ["Abierta", "En curso"].includes(o.estado) && difDias(String(o.actualizado || o.creado).slice(0, 10), hoyISO()) > 45)
-      .forEach(o => add(`Novedades de la oportunidad "${o.titulo || o.tipo}"`, "resp", "saber si se concretó", o.responsable));
+      .forEach(o => add(`Novedades de la oportunidad "${o.titulo || o.tipo}"`, "resp", "saber si se concretó", o.responsable, `[data-op="${o.id}"]`));
     return f;
   }
   const claveBase = (ev, k) => `${ev.id}|${k.antes && k.antes[0]}|${k.despues && k.despues[1]}|${(INV[ev.id] || []).map(x => x.cuit).join(",")}`;
@@ -1056,8 +1057,23 @@
     const ev = eventoAbierto(); if (!ev) return;
     const f = faltantesEvento(ev, calcular(ev, VENTANA));
     w.classList.toggle("hidden", !f.length);
-    w.innerHTML = f.length ? `<h3>Qué falta para evaluarlo</h3><ul class="ec-faltan-lista">${f.map(x => `<li><b>${esc(x.que)}</b> <span>para ${esc(x.para)}</span>
-      <em>${esc(x.quien === "resp" ? (x.persona || QUIEN.resp) : QUIEN[x.quien])}</em></li>`).join("")}</ul>` : "";
+    // Cada ítem es un acceso directo: lleva al campo y lo marca (el reporte de ventas abre el archivo).
+    w.innerHTML = f.length ? `<h3>Qué falta para evaluarlo</h3><ul class="ec-faltan-lista ec-faltan-ir">${f.map(x => `<li><button type="button" data-ec="ir-falta" data-ir="${esc(x.ir)}"${x.ir ? "" : " disabled"}>
+      <b>${esc(x.que)}</b> <span>para ${esc(x.para)}</span><i aria-hidden="true">${x.ir === "ventas" ? "Subir ↑" : "Completar →"}</i></button></li>`).join("")}</ul>
+      ${f.some(x => x.ir === "ventas") ? `<input type="file" class="ec-csv" accept=".csv,text/csv" hidden>` : ""}` : "";
+  }
+  // Lleva a un campo del evento y lo bordea un momento para que se vea qué completar.
+  function irAFalta(sel) {
+    if (sel === "ventas") return ACC.importar();
+    caja().querySelectorAll(".ec-resaltado").forEach(m => m.classList.remove("ec-resaltado"));
+    const els = [...caja().querySelectorAll(sel)]; if (!els.length) return;
+    const marcos = els.map(el => el.closest("label, td, .ec-op") || el);
+    marcos[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    marcos.forEach(m => { m.classList.remove("ec-resaltado"); void m.offsetWidth; m.classList.add("ec-resaltado"); });
+    const sacar = () => marcos.forEach(m => m.classList.remove("ec-resaltado"));   // se va al completarlo o a los 5 s
+    setTimeout(sacar, 5000); marcos.forEach(m => m.addEventListener("input", sacar, { once: true }));
+    const foco = els[0].matches("input, select, textarea") ? els[0] : els[0].querySelector("input, select, textarea, button");
+    if (foco && !foco.disabled) setTimeout(() => foco.focus({ preventScroll: true }), 350);
   }
 
   /* ---- Sumar distribuidores (evento) o clientes que recibieron el material (campaña) ---- */
@@ -1708,6 +1724,7 @@
     volver: () => volver(),
     borrar: () => borrar(),
     importar: () => { const f = caja().querySelector(".ec-csv"); if (f) f.click(); },
+    "ir-falta": a => irAFalta(a.dataset.ir),
     excel: () => excel().catch(() => nota("No se pudo armar el Excel.", true)),
     pdf: () => pdf(),
     tab: a => { TAB = a.dataset.tab; pintarTablero(); refrescarTablero(); },

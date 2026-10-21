@@ -356,18 +356,35 @@
       if (!r.ok || !d.access_token) throw new Error(d.error_description || d.msg || d.message || "Email o contraseña incorrectos");
       save({ access_token: d.access_token, refresh_token: d.refresh_token, email: (d.user && d.user.email) || email });
     }
-    async function refresh() {
-      if (!S || !S.refresh_token) return false;
-      try {
-        const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: S.refresh_token }),
-        });
-        const d = await r.json().catch(() => ({}));
-        if (r.ok && d.access_token) { save({ access_token: d.access_token, refresh_token: d.refresh_token, email: S.email }); return true; }
-      } catch (e) { }
-      save(null); return false;
+    // El access_token vence a la hora. Si la pestaña queda quieta (o la compu se duerme)
+    // nadie lo renovaba y todo lo que se pedía después volvía rechazado: la app mostraba
+    // pantallas vacías ("este mes no tiene mensajes") hasta recargar.
+    // · refresh() se comparte: si varios pedidos lo necesitan a la vez, se hace UNA vez
+    //   (el refresh_token rota; dos renovaciones en paralelo pisarían la sesión).
+    // · Sin red NO se cierra la sesión: sólo si Supabase rechaza el refresh_token.
+    let renovando = null;
+    function refresh() {
+      if (!S || !S.refresh_token) return Promise.resolve(false);
+      return renovando || (renovando = (async () => {
+        try {
+          const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
+            method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: S.refresh_token }),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (r.ok && d.access_token) { save({ access_token: d.access_token, refresh_token: d.refresh_token, email: S.email }); return true; }
+          if (r.status >= 400 && r.status < 500) { save(null); if (typeof lock === "function" && !document.body.classList.contains("locked")) lock(); }
+        } catch (e) { }
+        return false;
+      })().finally(() => { renovando = null; }));
     }
+    // Segundos que le quedan al access_token (lee el `exp` del JWT).
+    function restante() {
+      try { const p = JSON.parse(atob(S.access_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); return p.exp - Date.now() / 1000; }
+      catch (e) { return Infinity; }
+    }
+    // Renueva antes de usarlo si vence en menos de 2 minutos.
+    async function vigente() { if (S && S.access_token && restante() < 120) await refresh(); }
     function logout() {
       try { if (S) fetch(`${SB.url}/auth/v1/logout`, { method: "POST", headers: { apikey: SB.key, Authorization: `Bearer ${S.access_token}` } }); } catch (e) { }
       save(null);
@@ -377,8 +394,39 @@
       email: () => (S && S.email) || "",
       token: () => (S && S.access_token) || "",   // lo manda fichas-panel.js a 06_API.gs
       head: () => ({ apikey: SB.key, Authorization: `Bearer ${S && S.access_token}`, "Content-Type": "application/json" }),
-      login, refresh, logout,
+      login, refresh, logout, vigente,
     };
+  })();
+
+  /* ---- Sesión siempre vigente para TODOS los pedidos a Supabase -------------
+     Cada vista (contenidos.js, tareas.js, acciones.js…) arma sus propios fetch con
+     LEUK_SESION.head(). En vez de tocar cada uno, se envuelve fetch: antes de cada
+     pedido a la base/storage/funciones se asegura un token vigente (y se cambia el
+     viejo por el nuevo en el header); si igual vuelve 401, renueva y reintenta una vez. */
+  (function () {
+    const fetchOrig = window.fetch.bind(window);
+    const esSB = u => typeof u === "string" && u.startsWith(SB.url) && !u.startsWith(`${SB.url}/auth/v1/`);
+    const conToken = (init, viejo) => {
+      const h = new Headers((init && init.headers) || {});
+      if (viejo && h.get("Authorization") === `Bearer ${viejo}`) h.set("Authorization", `Bearer ${AUTHSES.token()}`);
+      return Object.assign({}, init, { headers: h });
+    };
+    window.fetch = async function (input, init) {
+      const u = typeof input === "string" ? input : (input && input.url);
+      if (!esSB(u) || typeof input !== "string" || !AUTHSES.logged()) return fetchOrig(input, init);
+      const antes = AUTHSES.token();
+      await AUTHSES.vigente();
+      const r = await fetchOrig(input, conToken(init, antes));
+      if (r.status !== 401 || !AUTHSES.logged()) return r;
+      const usado = AUTHSES.token();
+      if (!(await AUTHSES.refresh())) return r;
+      return fetchOrig(input, conToken(init, usado));
+    };
+    // Al volver a la pestaña (o al reconectarse) se renueva de una, sin esperar al próximo pedido.
+    const alVolver = () => { if (!document.hidden && AUTHSES.logged()) AUTHSES.vigente(); };
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("online", alVolver);
+    window.addEventListener("focus", alVolver);
   })();
 
   /* ---- Puente de sesión para las vistas en archivos aparte ----------------

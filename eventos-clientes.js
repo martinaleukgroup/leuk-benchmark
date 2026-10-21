@@ -109,6 +109,9 @@
   let ULT_IMPORT = null;    // último reporte de ventas subido (ventas_importaciones)
   let FAMILIAS = null;      // [{familia, usd}] de las ventas (para las campañas)
   let SIN_SQL3 = false;     // falta correr 2026-10-20-impacto-acciones.sql
+  let SIN_SQL4 = false;     // falta correr 2026-10-21-ventas-por-articulo.sql (campañas por palabra)
+  let RANGO_IT = null;      // {desde, hasta, articulos} de las ventas por artículo
+  const ARTS_PAL = {};      // palabra -> artículos que coinciden (caché)
   const VENTAS = new Map(); // cuit -> [{fecha, usd, facturas, familias}] ordenado por fecha
   const BASE = {};          // caché de ventas_base (resto de los clientes)
   const TCS = {};           // fecha -> tipo de cambio promedio cercano
@@ -172,12 +175,15 @@
       RANGO = rango && rango[0] && rango[0].hasta ? rango[0] : null;
       ACCS = accs;
       // Lo de 2026-10-20 (oportunidades, campañas): si falta el SQL, lo anterior sigue andando.
-      const [ops, camps, imp] = await Promise.all([
+      const [ops, camps, imp, rit] = await Promise.all([
         todo("eventos_clientes_oport?select=*&order=creado.asc").catch(() => null),
         todo("mkt_campanas?select=*&order=creado.desc").catch(() => null),
         fetch(url("ventas_importaciones?select=archivo,desde,hasta,filas,clientes,autor_email,creado&order=creado.desc&limit=1"), { headers: head() })
           .then(r => r.ok ? r.json() : []).catch(() => []),
+        rpc("ventas_items_rango").catch(e => e.status === 404 ? null : []),
       ]);
+      SIN_SQL4 = rit === null;
+      RANGO_IT = rit && rit[0] && rit[0].hasta ? rit[0] : null;
       SIN_SQL3 = !ops || !camps || !EVS.every(e => "disertante" in e);
       OPS = {}; (ops || []).forEach(o => { (OPS[o.evento_id] = OPS[o.evento_id] || []).push(o); });
       CAMPS = camps || [];
@@ -1245,13 +1251,16 @@
     if (!c.listo_fecha) return "material";
     if (!c.comercial_fecha) return "comercial";
     if (!c.distribuido_fecha) return "distribucion";
-    if (!c.familia) return "familia";
+    if (SIN_SQL4 ? !c.familia : !(c.palabra || "").trim()) return "familia";
     return "medible";
   }
   const ESTADOS_CAMP = { material: "Falta el material", comercial: "Falta confirmar que llegó a Comercial", distribucion: "Falta confirmar la distribución",
-                         familia: "Falta elegir la familia para medir", medible: "Distribución confirmada" };
+                         familia: "Falta la palabra del producto para medir", medible: "Distribución confirmada" };
   const vistaInvCamp = c => ({ fecha: c.distribuido_fecha || c.comercial_fecha || c.listo_fecha, inversion_usd: c.inversion_usd, inversion_ars: c.inversion_ars });
-  const claveCamp = c => `${c.id}|${c.familia}|${c.distribuido_fecha}|${VENTANA}|${(c.destinatarios || []).map(x => x.cuit).join(",")}|${RANGO && RANGO.hasta}`;
+  // Se mide por una palabra de la descripción del artículo (ej. "Chill"); sin el SQL 2026-10-21, por familia.
+  const porPalabra = c => !SIN_SQL4 && !!(c.palabra || "").trim();
+  const queMide = c => porPalabra(c) ? `«${c.palabra.trim()}»` : c.familia;
+  const claveCamp = c => `${c.id}|${porPalabra(c) ? "p:" + c.palabra.trim().toLowerCase() : c.familia}|${c.distribuido_fecha}|${VENTANA}|${(c.destinatarios || []).map(x => x.cuit).join(",")}|${RANGO && RANGO.hasta}`;
   // Compras de la familia antes y después de la distribución, contra cómo se movieron las ventas totales.
   // Si se cargaron los clientes que recibieron el material, también ellos contra el resto.
   async function medirCampana(c) {
@@ -1261,7 +1270,9 @@
     if (dias <= 0) { MED_CAMP[key] = { dias: 0 }; return; }
     const antes = [sumarDias(f0, -dias), sumarDias(f0, -1)], despues = [f0, sumarDias(f0, dias - 1)];
     const cuits = (c.destinatarios || []).map(x => x.cuit).filter(Boolean);
-    const q = (r, cs) => rpc("ventas_familia", { p_desde: r[0], p_hasta: r[1], p_familia: c.familia, p_cuits: cs || null }).then(x => ({ fam: Number(x[0].fam_usd) || 0, total: Number(x[0].total_usd) || 0, clientes: x[0].clientes || 0 }));
+    const q = (r, cs) => (porPalabra(c)
+      ? rpc("ventas_palabra", { p_desde: r[0], p_hasta: r[1], p_palabra: c.palabra.trim(), p_cuits: cs || null })
+      : rpc("ventas_familia", { p_desde: r[0], p_hasta: r[1], p_familia: c.familia, p_cuits: cs || null })).then(x => ({ fam: Number(x[0].fam_usd) || 0, total: Number(x[0].total_usd) || 0, clientes: x[0].clientes || 0 }));
     try {
       const [ta, td, da, dd] = await Promise.all([q(antes), q(despues), cuits.length ? q(antes, cuits) : null, cuits.length ? q(despues, cuits) : null]);
       const crecTot = ta.total > 0 ? (td.total - ta.total) / ta.total : null;
@@ -1288,12 +1299,12 @@
       <div class="mh-bar ec-bar ec-no-print">${filtroPeriodo()}${ventanaChips()}<span class="ec-nota" role="status"></span></div>
       ${avisoSQL3()}
       <div class="res-intro">Antes de medir el resultado de una campaña hay que confirmar que los materiales <b>se distribuyeron y llegaron a Comercial</b> (lo coordina Dai).
-        Cuando están los tres pasos, se comparan las compras de la <b>familia</b> de producto antes y después de la distribución, contra cómo se movieron las ventas totales.</div>
+        Cuando están los tres pasos, se comparan las compras de los <b>artículos cuya descripción tiene la palabra del producto</b> (ej. «Chill»: todas sus versiones) antes y después de la distribución, contra cómo se movieron las ventas totales.</div>
       ${lista.length ? `<section class="ec-card ec-tabla-card"><h3>Campañas</h3><div class="ec-tabla-wrap"><table class="ec-tabla">
-        <thead><tr><th>Campaña</th><th>Producto / familia</th><th>Distribución</th><th class="n">Inversión</th><th class="n">Compras extra de la familia</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Campaña</th><th>Producto / palabra</th><th>Distribución</th><th class="n">Inversión</th><th class="n">Compras extra del producto</th><th>Estado</th></tr></thead>
         <tbody>${lista.map(c => { const e = estadoCampana(c), m = MED_CAMP[claveCamp(c)], inv = inversion(vistaInvCamp(c));
           return `<tr data-camp="${c.id}" tabindex="0"><td><b>${esc(c.titulo) || "<i>Sin nombre</i>"}</b><small>${esc(c.tipo)}</small></td>
-            <td>${esc(c.producto) || "—"}${c.familia ? `<small>${esc(c.familia)}</small>` : ""}</td>
+            <td>${esc(c.producto) || "—"}${queMide(c) ? `<small>${esc(queMide(c))}</small>` : ""}</td>
             <td><span class="ec-pasos">${PASOS_CAMP.map(p => `<i class="${c[p.k] ? "ok" : ""}" title="${esc(p.t)}${c[p.k] ? ": " + fechaLarga(c[p.k]) : ""}"></i>`).join("")}</span></td>
             <td class="n">${inv.usd != null ? usd(inv.usd) : "—"}</td>
             <td class="n ${m && m.dias ? tono(m.extra) : ""}">${m && m.dias ? signo(m.extra) : m && m.dias === 0 ? "esperando ventas" : e === "medible" ? "…" : "—"}</td>
@@ -1303,8 +1314,8 @@
     if (RANGO && lista.some(c => estadoCampana(c) === "medible" && !MED_CAMP[claveCamp(c)])) refrescarTablero();
   }
   function nuevaCampana() {
-    BORRADOR_C = { id: null, titulo: "", tipo: "", producto: "", familia: "", inversion_usd: null, inversion_ars: null, materiales: "", responsable: "Dai",
-                   listo_fecha: null, comercial_fecha: null, comercial_recibio: "", distribuido_fecha: null, destinatarios: [], notas: "" };
+    BORRADOR_C = Object.assign({ id: null, titulo: "", tipo: "", producto: "", familia: "", inversion_usd: null, inversion_ars: null, materiales: "", responsable: "Dai",
+                   listo_fecha: null, comercial_fecha: null, comercial_recibio: "", distribuido_fecha: null, destinatarios: [], notas: "" }, SIN_SQL4 ? {} : { palabra: "" });
     INV_MON.nueva = null;
     CAMP = "nueva"; ABIERTO = null; pintar();
     const t = caja().querySelector(".ec-titulo"); if (t) t.focus();
@@ -1364,14 +1375,16 @@
         <div class="ec-campos">
           <label><span>Tipo</span><select data-c-campo="tipo"><option value="">—</option>${tipos.map(t => `<option ${c.tipo === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
           <label><span>Producto</span><input data-c-campo="producto" value="${esc(c.producto)}" placeholder="Chill"></label>
-          <label class="ancho"><span>Familia con la que se mide (del reporte de ventas)</span>${fams.length
+          ${!SIN_SQL4 ? `<label class="ancho"><span>Palabra a buscar en las ventas</span><input data-c-campo="palabra" value="${esc(c.palabra || "")}" placeholder="Chill (toma todos los artículos que la tienen en la descripción)"></label>`
+          : `<label class="ancho"><span>Familia con la que se mide (del reporte de ventas)</span>${fams.length
             ? `<select data-c-campo="familia"><option value="">Elegir familia…</option>${[...new Set([c.familia, ...fams.map(f => f.familia)].filter(Boolean))].map(f => `<option ${c.familia === f ? "selected" : ""}>${esc(f)}</option>`).join("")}</select>`
-            : `<input data-c-campo="familia" value="${esc(c.familia)}" placeholder="${RANGO ? "Cargando familias…" : "Subí las ventas para elegir"}">`}</label>
+            : `<input data-c-campo="familia" value="${esc(c.familia)}" placeholder="${RANGO ? "Cargando familias…" : "Subí las ventas para elegir"}">`}</label>`}
           ${campoInversion(key, c)}
           <label><span>Quién confirma la distribución</span><input data-c-campo="responsable" value="${esc(c.responsable)}" placeholder="Dai"></label>
         </div>
         ${inv.origen && inv.origen !== "cargada" ? `<p class="ec-ayuda">Inversión ${esc(inv.origen)}${inv.usd != null ? `: <b>${usd(inv.usd)}</b>` : ""}.</p>` : ""}
         <textarea data-c-campo="materiales" rows="2" placeholder="Materiales: qué se produjo y cuántos (exhibidores, cajas de unboxing, folletos…)">${esc(c.materiales)}</textarea>
+        ${!SIN_SQL4 ? `<div class="ec-arts"></div>` : ""}
         ${nueva ? `<div class="ec-crear"><button class="btn-primary" data-ec="camp-crear">Crear campaña</button></div>` : ""}
       </section>
       ${nueva ? "" : `
@@ -1396,11 +1409,34 @@
       <textarea class="ec-notas-camp" data-c-campo="notas" rows="2" placeholder="Notas">${esc(c.notas)}</textarea>`}`;
     pintarNota();
     if (!nueva) pintarMedicionCampana();
-    if (!FAMILIAS && RANGO) familias().then(() => { if (CAMP === key || (CAMP === "nueva" && key === "nueva")) pintarCampana(); });
+    pintarArticulosCampana();
+    if (SIN_SQL4 && !FAMILIAS && RANGO) familias().then(() => { if (CAMP === key || (CAMP === "nueva" && key === "nueva")) pintarCampana(); });
     if (!nueva) {
       const v = vistaInvCamp(c);
       if (necesitaTC(v) && !(v.fecha in TCS)) tcCerca(v.fecha).then(() => { if (CAMP === c.id) pintarCampana(); });
     }
+  }
+  // Qué artículos toma la palabra (para ver que se mide lo que corresponde).
+  async function pintarArticulosCampana() {
+    const w = caja().querySelector(".ec-arts"); if (!w) return;
+    const c = campanaAbierta(); if (!c) return;
+    const pal = (c.palabra || "").trim();
+    if (!pal) { w.innerHTML = `<p class="ec-ayuda">Se miden todos los artículos que tienen esa palabra en la descripción del reporte de ventas (ej. «Chill» toma proyectores, apliques y kits Chill). Es palabra entera: «Chill» no toma «Chiller».</p>`; return; }
+    if (!RANGO_IT) { w.innerHTML = `<p class="ec-ayuda ec-falta">Para buscar por palabra hay que volver a subir el reporte de ventas (⋯ Más → Actualizar ventas): así se cargan las ventas por artículo.</p>`; return; }
+    const k = pal.toLowerCase();
+    if (!ARTS_PAL[k]) {
+      w.innerHTML = `<p class="ec-ayuda">Buscando «${esc(pal)}» en las ventas…</p>`;
+      try { ARTS_PAL[k] = await rpc("ventas_palabra_articulos", { p_palabra: pal }); } catch (e) { ARTS_PAL[k] = null; }
+      if (campanaAbierta() !== c || (c.palabra || "").trim().toLowerCase() !== k) return;
+    }
+    const a = ARTS_PAL[k];
+    if (!a) { w.innerHTML = `<p class="ec-ayuda ec-falta">No se pudieron buscar los artículos.</p>`; return; }
+    if (!a.length) { w.innerHTML = `<p class="ec-ayuda ec-falta">Ningún artículo de las ventas tiene «${esc(pal)}» en la descripción. Probá con otra palabra.</p>`; return; }
+    const tot = a.reduce((s, x) => s + (Number(x.usd) || 0), 0);
+    w.innerHTML = `<details class="ec-arts-det"><summary><b>${a.length} ${a.length === 1 ? "artículo tiene" : "artículos tienen"} «${esc(pal)}»</b> · ${usd(tot)} vendidos en los últimos 2 años <span class="ec-ayuda">(ver cuáles)</span></summary>
+      <div class="ec-tabla-wrap"><table class="ec-tabla ec-chica"><thead><tr><th>Código</th><th>Descripción</th><th>Familia</th><th class="n">US$ 2 años</th></tr></thead>
+      <tbody>${a.map(x => `<tr><td>${esc(x.codigo)}</td><td>${esc(x.descripcion)}</td><td>${esc(x.familia)}</td><td class="n">${usd(Number(x.usd) || 0)}</td></tr>`).join("")}</tbody></table></div></details>
+      ${RANGO && RANGO_IT.hasta < RANGO.hasta ? `<p class="ec-ayuda ec-falta">Las ventas por artículo llegan al ${fechaLarga(RANGO_IT.hasta)} y las totales al ${fechaLarga(RANGO.hasta)}: volvé a subir el reporte de ventas.</p>` : ""}`;
   }
   async function pintarMedicionCampana() {
     const w = caja().querySelector(".ec-camp-med"); if (!w) return;
@@ -1408,27 +1444,27 @@
     const e = estadoCampana(c);
     if (e !== "medible") {
       w.innerHTML = `<h3>Resultado</h3><section class="ec-veredicto"><b>Todavía no se mide</b><p>${esc(ESTADOS_CAMP[e])}.
-        ${e === "familia" ? "Elegí arriba la familia del reporte de ventas que corresponde al producto. Si el producto no tiene una familia propia en el reporte, hace falta el reporte de ventas por artículo (Comercial)." : "Cuando estén confirmados los tres pasos, se comparan las compras de la familia antes y después de la distribución."}</p></section>`;
+        ${e === "familia" ? (SIN_SQL4 ? "Elegí arriba la familia del reporte de ventas que corresponde al producto." : "Escribí arriba la palabra del producto (ej. Chill) para buscarla en las ventas.") : "Cuando estén confirmados los tres pasos, se comparan las compras del producto antes y después de la distribución."}</p></section>`;
       return;
     }
-    if (!RANGO) { w.innerHTML = `<h3>Resultado</h3><section class="ec-veredicto"><b>Faltan las ventas</b><p>Subí el reporte de ventas (⋯ Más → Actualizar ventas).</p></section>`; return; }
+    if (!RANGO || (porPalabra(c) && !RANGO_IT)) { w.innerHTML = `<h3>Resultado</h3><section class="ec-veredicto"><b>Faltan las ventas${RANGO ? " por artículo" : ""}</b><p>Subí el reporte de ventas (⋯ Más → Actualizar ventas).</p></section>`; return; }
     const key = claveCamp(c);
     if (!MED_CAMP[key]) { w.innerHTML = `<h3>Resultado</h3><p class="ec-ayuda">Calculando…</p>`; await medirCampana(c); if (campanaAbierta() !== c) return; }
     const m = MED_CAMP[key];
-    if (m.error) { w.innerHTML = `<h3>Resultado</h3><p class="ec-ayuda ec-falta">No se pudieron traer las ventas de la familia. ¿Corriste el SQL 2026-10-20-impacto-acciones.sql?</p>`; return; }
+    if (m.error) { w.innerHTML = `<h3>Resultado</h3><p class="ec-ayuda ec-falta">No se pudieron traer las ventas del producto. ¿Corriste el SQL 2026-10-21-ventas-por-articulo.sql?</p>`; return; }
     if (!m.dias) { w.innerHTML = `<h3>Resultado</h3><section class="ec-veredicto"><b>Esperando ventas</b><p>Se distribuyó el ${fechaLarga(c.distribuido_fecha)} y las ventas cargadas llegan hasta el ${fechaLarga(RANGO.hasta)}.</p></section>`; return; }
     const inv = inversion(vistaInvCamp(c)), r = inv.usd ? Math.max(0, m.extra) / inv.usd : null;
-    const ver = m.extra > 0 && (r == null || r >= 1) ? ["ok", "Movió las compras de la familia"] : m.extra > 0 ? ["warn", "Movió las compras, pero no cubrió la inversión"] : ["no", "No se ve efecto en las compras de la familia"];
+    const ver = m.extra > 0 && (r == null || r >= 1) ? ["ok", "Movió las compras del producto"] : m.extra > 0 ? ["warn", "Movió las compras, pero no cubrió la inversión"] : ["no", "No se ve efecto en las compras del producto"];
     w.innerHTML = `<div class="ec-cli-top"><h3>Resultado</h3>${ventanaChips()}</div>
       <section class="ec-veredicto ${ver[0]}"><b>${ver[1]}</b>${m.dias < VENTANA ? ` <span class="ec-estado provisorio">Provisorio</span>` : ""}
-        <p>En los ${m.dias} días desde la distribución se compraron <b>${usd(m.td.fam)}</b> de ${esc(c.familia)} (antes: ${usd(m.ta.fam)}, ${pct(m.crecFam)}).
+        <p>En los ${m.dias} días desde la distribución se compraron <b>${usd(m.td.fam)}</b> de ${esc(queMide(c))} (antes: ${usd(m.ta.fam)}, ${pct(m.crecFam)}).
         Las ventas totales ${m.crecTot >= 0 ? "crecieron" : "bajaron"} ${pct(m.crecTot).replace(/^[+−]/, "")}, así que esperábamos unos <b>${usd(m.esperado)}</b>:
         <b>${usd(Math.abs(m.extra))} ${m.extra >= 0 ? "más" : "menos"}</b> de lo esperado.${r != null ? ` ROAS <b>${roas(r)}</b>.` : ""}
-        ${m.da ? ` Los clientes que recibieron el material: ${pct(m.crecDest)} en la familia; el resto: ${pct(m.crecResto)}.` : ""}</p></section>
+        ${m.da ? ` Los clientes que recibieron el material: ${pct(m.crecDest)} en el producto; el resto: ${pct(m.crecResto)}.` : ""}</p></section>
       <div class="mh-kpis">
-        ${kpi(usd(m.td.fam), `compras de ${esc(c.familia)}`, `${m.td.clientes} clientes · antes ${usd(m.ta.fam)}`)}
+        ${kpi(usd(m.td.fam), `compras de ${esc(queMide(c))}`, `${m.td.clientes} clientes · antes ${usd(m.ta.fam)}`)}
         ${kpi(signo(m.extra), "compras extra", `esperado ${usd(m.esperado)}`, tono(m.extra))}
-        ${kpi(pct(m.crecFam), "crecimiento de la familia", `ventas totales: ${pct(m.crecTot)}`, tono(m.crecFam != null && m.crecTot != null ? m.crecFam - m.crecTot : null))}
+        ${kpi(pct(m.crecFam), "crecimiento del producto", `ventas totales: ${pct(m.crecTot)}`, tono(m.crecFam != null && m.crecTot != null ? m.crecFam - m.crecTot : null))}
         ${kpi(r != null ? roas(r) : "—", "ROAS", inv.usd ? `compras extra ÷ ${usd(inv.usd)}` : "cargá la inversión", r != null ? (r >= 1 ? "ok" : "no") : "")}
       </div>`;
   }
@@ -1445,7 +1481,7 @@
       if (e === "material") add("Confirmar que el material está listo", "dai", "poder medir la campaña", c.responsable);
       if (e === "comercial") add("Confirmar que el material llegó a Comercial (y quién lo recibió)", "dai", "poder medir la campaña", c.responsable);
       if (e === "distribucion") add("Confirmar que Comercial distribuyó el material (y a qué clientes)", "dai", "poder medir la campaña", c.responsable);
-      if (e === "familia") add(`Familia del reporte de ventas que corresponde a ${c.producto || "el producto"} (o ventas por artículo)`, "com", "medir las compras del producto");
+      if (e === "familia") add(SIN_SQL4 ? `Familia del reporte de ventas que corresponde a ${c.producto || "el producto"}` : `Palabra para buscar ${c.producto || "el producto"} en las ventas`, "mkt", "medir las compras del producto");
       const inv = inversion(vistaInvCamp(c)); if (inv.usd == null) add("Inversión de la campaña", "mkt", "calcular el ROAS");
     });
     const sin = sinTildes;
@@ -1521,7 +1557,7 @@
     return d.length === 11 ? `${d.slice(0, 2)}-${d.slice(2, 10)}-${d.slice(10)}` : d || String(s || "").trim(); };
   const COLS = { fecha: "fechaemision", cuit: "fiscalclientecuit", razon: "fiscalclienterazonsocial", nombre: "empresa",
                  vendedor: "vendedor", usd: "importefacturanetousd", familia: "nombre_familia", nro: "facturanumero",
-                 tipo: "talonariotipo", tc: "tipo_de_cambio" };
+                 tipo: "talonariotipo", tc: "tipo_de_cambio", codigo: "codigo", desc: "descripcion", cant: "cantidad" };
 
   function procesarCSV(texto) {
     texto = texto.replace(/^\uFEFF/, "");
@@ -1530,9 +1566,10 @@
     const it = registros(texto, sep);
     const cab = (it.next().value || []).map(h => sinTildes(h).trim());
     const ix = {}; const faltan = [];
-    Object.entries(COLS).forEach(([k, h]) => { ix[k] = cab.indexOf(h); if (ix[k] < 0 && !["tc", "familia", "nro", "tipo", "nombre", "vendedor"].includes(k)) faltan.push(h); });
+    Object.entries(COLS).forEach(([k, h]) => { ix[k] = cab.indexOf(h); if (ix[k] < 0 && !["tc", "familia", "nro", "tipo", "nombre", "vendedor", "codigo", "desc", "cant"].includes(k)) faltan.push(h); });
     if (faltan.length) throw new Error(`Al archivo le faltan columnas: ${faltan.join(", ")}. ¿Es el "Reporte de ventas" del sistema?`);
     const dias = new Map(), clis = new Map();
+    const items = new Map(), arts = new Map();   // ventas por artículo (para medir campañas por palabra)
     let filas = 0, desde = "9999", hasta = "";
     let i = 0;
     for (const f of it) {
@@ -1551,6 +1588,14 @@
       const tc = ix.tc >= 0 ? numAR(f[ix.tc]) : 0; if (tc > 0) { d.tcs += tc; d.ntc++; }
       const fam = (ix.familia >= 0 && f[ix.familia] || "Sin familia").trim();
       d.familias[fam] = (d.familias[fam] || 0) + u;
+      const cod = ix.codigo >= 0 ? String(f[ix.codigo] || "").trim() : "";
+      if (cod) {
+        const ki = key + "|" + cod; let x = items.get(ki);
+        if (!x) { x = { cuit, fecha, codigo: cod, usd: 0, cantidad: 0 }; items.set(ki, x); }
+        x.usd += u; x.cantidad += ix.cant >= 0 ? numAR(f[ix.cant]) : 0;
+        const a = arts.get(cod), desc = ix.desc >= 0 ? String(f[ix.desc] || "").replace(/\s+/g, " ").trim() : "";
+        if (!a || fecha >= a.fecha) arts.set(cod, { codigo: cod, descripcion: desc || (a && a.descripcion) || "", familia: fam === "Sin familia" ? "" : fam, fecha });
+      }
       let c = clis.get(cuit);
       if (!c) { c = { cuit, razon_social: "", nombre: "", vendedor: "", primera_compra: fecha, ultima_compra: fecha }; clis.set(cuit, c); }
       if (fecha <= c.primera_compra) c.primera_compra = fecha;
@@ -1567,7 +1612,10 @@
       const fam = {}; Object.entries(d.familias).forEach(([k, v]) => { if (Math.abs(v) >= 0.01) fam[k] = r2(v); });
       return { cuit: d.cuit, fecha: d.fecha, usd: r2(d.usd), facturas: d.facs.size, tc: d.ntc ? r2(d.tcs / d.ntc) : null, familias: fam };
     });
-    return { dias: out, clientes: [...clis.values()], filas, desde, hasta };
+    const itemsOut = [...items.values()].filter(x => Math.abs(x.usd) >= 0.01 || x.cantidad)
+      .map(x => ({ cuit: x.cuit, fecha: x.fecha, codigo: x.codigo, usd: r2(x.usd), cantidad: Math.round(x.cantidad * 1000) / 1000 }));
+    const artsOut = [...arts.values()].map(a => ({ codigo: a.codigo, descripcion: a.descripcion, familia: a.familia }));
+    return { dias: out, clientes: [...clis.values()], filas, desde, hasta, items: itemsOut, articulos: artsOut };
   }
 
   async function importar(file) {
@@ -1581,18 +1629,28 @@
       if (texto.includes("\uFFFD")) texto = new TextDecoder("windows-1252").decode(buf);
       const p = procesarCSV(texto);
       if (!(await lkConfirmar(`${file.name}\n\n${p.filas.toLocaleString("es-AR")} líneas de factura · ${p.clientes.length} clientes\nDel ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)}\n\nSe reemplazan las ventas cargadas de ese período. ¿Seguimos?`, { ok: "Importar" }))) { nota(""); return; }
-      const TANDA = 3000;
+      const TANDA = 3000, TANDA_IT = 5000;
       for (let i = 0; i < p.dias.length; i += TANDA) {
         nota(`Guardando ventas… ${Math.min(100, Math.round(i / p.dias.length * 100))} %`, false, true);
         await rpc("ventas_importar", { p_desde: p.desde, p_hasta: p.hasta, p_borrar: i === 0,
           p_dias: p.dias.slice(i, i + TANDA), p_clientes: i === 0 ? p.clientes : [] });
       }
+      // Ventas por artículo (SQL 2026-10-21): si todavía no se corrió, lo demás queda igual.
+      let sinItems = !p.items.length;
+      for (let i = 0; !sinItems && i < p.items.length; i += TANDA_IT) {
+        nota(`Guardando ventas por artículo… ${Math.min(100, Math.round(i / p.items.length * 100))} %`, false, true);
+        try {
+          await rpc("ventas_importar_items", { p_desde: p.desde, p_hasta: p.hasta, p_borrar: i === 0,
+            p_items: p.items.slice(i, i + TANDA_IT), p_articulos: i === 0 ? p.articulos : [] });
+        } catch (e) { if (i === 0 && e.status === 404) sinItems = true; else throw e; }
+      }
       await fetch(url("ventas_importaciones"), { method: "POST", headers: head(), body: JSON.stringify({
         archivo: file.name, desde: p.desde, hasta: p.hasta, filas: p.filas, clientes: p.clientes.length,
         autor_email: SES().email ? SES().email() : "" }) }).catch(() => {});
-      VENTAS.clear(); [BASE, TCS, MED_CAMP].forEach(o => Object.keys(o).forEach(k => delete o[k])); FAMILIAS = null;
+      VENTAS.clear(); [BASE, TCS, MED_CAMP, ARTS_PAL].forEach(o => Object.keys(o).forEach(k => delete o[k])); FAMILIAS = null;
       await traer();
-      nota(`Listo: ventas del ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)} (${p.clientes.length} clientes).`);
+      nota(`Listo: ventas del ${fechaLarga(p.desde)} al ${fechaLarga(p.hasta)} (${p.clientes.length} clientes).` +
+        (sinItems && p.items.length ? " Las ventas por artículo no se guardaron: falta correr el SQL 2026-10-21-ventas-por-articulo.sql." : ""), sinItems && p.items.length > 0);
       pintar(); if (ABIERTO) { const ev = eventoAbierto(); if (ev && ev.id) asegurarDatos(ev); } else refrescarTablero();
     } catch (e) {
       nota(e && e.message && !/^\d+$/.test(e.message) && e.message.length < 200 ? e.message
@@ -1678,10 +1736,10 @@
       ...pat("Partner", k => ({ si: "Ya era partner", no: "No era partner", mixto: "Mixto" }[k.partner] || "Sin dato"))], [14, 22, 8, 9, 10, 10, 10, 12, 12, 14, 8, 12, 12, 12, 12, 16]);
     const aud = audienciaDe(ks);
     hoja(wb, "Audiencias", [["Perfil", "Asistentes", "%", "¿Lo buscamos?"], ...aud.filas.map(f => [f.p, f.n, r3(f.n / aud.total), f.objetivo ? "Sí" : ""])], [28, 12, 8, 14]);
-    hoja(wb, "Campañas", [["Campaña", "Tipo", "Producto", "Familia", "Material listo", "Llegó a Comercial", "Quién lo recibió", "Distribuido", "Clientes que lo recibieron", "Inversión USD", "Estado",
-        "Días medidos", "USD familia antes", "USD familia después", "Crecimiento familia", "Crecimiento ventas totales", "USD esperado", "USD compras extra"],
+    hoja(wb, "Campañas", [["Campaña", "Tipo", "Producto", "Se mide por", "Material listo", "Llegó a Comercial", "Quién lo recibió", "Distribuido", "Clientes que lo recibieron", "Inversión USD", "Estado",
+        "Días medidos", "USD producto antes", "USD producto después", "Crecimiento producto", "Crecimiento ventas totales", "USD esperado", "USD compras extra"],
       ...CAMPS.map(c => { const m = MED_CAMP[claveCamp(c)] || {}, inv = inversion(vistaInvCamp(c));
-        return [c.titulo, c.tipo, c.producto, c.familia, c.listo_fecha || "", c.comercial_fecha || "", c.comercial_recibio, c.distribuido_fecha || "", (c.destinatarios || []).length || "",
+        return [c.titulo, c.tipo, c.producto, porPalabra(c) ? `Palabra: ${c.palabra.trim()}` : c.familia ? `Familia: ${c.familia}` : "", c.listo_fecha || "", c.comercial_fecha || "", c.comercial_recibio, c.distribuido_fecha || "", (c.destinatarios || []).length || "",
           r2(inv.usd), ESTADOS_CAMP[estadoCampana(c)], m.dias || "", m.ta ? r2(m.ta.fam) : "", m.td ? r2(m.td.fam) : "", r3(m.crecFam), r3(m.crecTot), r2(m.esperado), r2(m.extra)]; })],
       [26, 14, 14, 20, 12, 12, 16, 12, 10, 12, 30, 8, 12, 12, 10, 10, 12, 12]);
     hoja(wb, "Datos que faltan", [["Quién", "Acción", "Fecha", "Qué falta", "Para qué"],
@@ -1817,7 +1875,14 @@
         const k = el.dataset.cCampo; let v = el.value;
         if (k === "titulo") { v = v.trim(); if (!v && CAMP !== "nueva") { el.value = campanaAbierta().titulo; return nota("El nombre no puede quedar vacío.", true); } }
         if (/_fecha$/.test(k) && !v) v = null;
-        guardarCampana({ [k]: v }).then(ok => { if (ok && CAMP !== "nueva" && (/_fecha$/.test(k) || k === "familia")) pintarCampana(); });
+        if (k === "palabra" || k === "producto") v = v.trim();
+        const extra = {}, cc = campanaAbierta();
+        if (k === "producto" && v && !SIN_SQL4 && cc && !(cc.palabra || "").trim()) extra.palabra = v;   // el producto sirve de palabra
+        guardarCampana(Object.assign({ [k]: v }, extra)).then(ok => {
+          if (!ok) return;
+          if (extra.palabra || k === "palabra") { const i = caja().querySelector('[data-c-campo="palabra"]'); if (i && extra.palabra) i.value = extra.palabra; pintarArticulosCampana(); }
+          if (CAMP !== "nueva" && (/_fecha$/.test(k) || k === "familia" || k === "palabra" || extra.palabra)) pintarCampana();
+        });
         return;
       }
       let campo = el.dataset.campo; if (!campo) return;

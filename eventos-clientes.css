@@ -213,3 +213,7 @@
   body.ec-imprimiendo .ec-grid-2{grid-template-columns:1fr 1fr}
   body.ec-imprimiendo .ec-op input,body.ec-imprimiendo .ec-op select,body.ec-imprimiendo .ec-partner{border-color:transparent}
 }
+/* Campañas: artículos que toma la palabra */
+.ec-arts{margin-top:10px}
+.ec-arts-det summary{cursor:pointer;font-size:13px;padding:4px 0}
+.ec-arts-det .ec-tabla-wrap{max-height:280px;overflow:auto;margin-top:6px}

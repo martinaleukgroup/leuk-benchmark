@@ -829,3 +829,4 @@ body.ct-visor-abierto{overflow:hidden}
 .ct-pdf-cab h1{margin:0;font-family:var(--font-title);font-size:30px;font-weight:600}
 .ct-pdf-cab p{margin:0;color:var(--gray-soft);font-size:13px}
 .ct-pdf-hoja .ct-dia-add,.ct-pdf-hoja .ct-mover{display:none}
+.mh-mas-menu button.peligro{color:var(--no);border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px}

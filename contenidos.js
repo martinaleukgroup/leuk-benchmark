@@ -572,6 +572,8 @@
             <button data-acc="exportar">⬇ Bajar este mes (.json)</button>` : "",
       `<button data-acc="exportar-pdf">⬇ Bajar el calendario (PDF)</button>`,
       esAdminC() && RESP ? `<button data-acc="responsables">👥 Responsables del canal</button>` : "",
+      // Borrar un mes: sólo admin, que es lo que deja la base (cm_del). Al final, aparte.
+      esAdminC() && CAB ? `<button data-acc="borrar-mes" class="peligro">🗑 Eliminar este mes…</button>` : "",
     ].join("");
 
     return `
@@ -2206,6 +2208,7 @@
     }
 
     if (a === "nuevo-mes") return abrirNuevoMes();
+    if (a === "borrar-mes") return borrarMes();
 
     if (a === "nuevo-msg") {
       if (!MES) return;
@@ -2349,6 +2352,29 @@
       MES = m; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; VISTA = "fichas";
       await traerMeses(); await traerMes(MES); pintar();
     };
+  }
+
+  /* Eliminar un mes (oct 2026): para el que se creó por error. La base borra en
+     cascada sus piezas y los comentarios. Con RLS un DELETE sin permiso no da error,
+     borra 0 filas: por eso se pide la fila de vuelta y se mira que haya venido. */
+  async function borrarMes() {
+    if (!CAB || !MES) return;
+    const n = MSGS.length;
+    const conAlgo = MSGS.filter(m => (m.copy || "").trim() || (m.criterio || "").trim() || (m.objetivo || "").trim() || m.fecha).length;
+    const nombre = `${cap(mesLabel(MES))}${CAB.titulo ? ` — ${CAB.titulo}` : ""}`;
+    const detalle = !n ? "El mes no tiene nada cargado."
+      : conAlgo ? `Se borran también ${n === 1 ? `${C().art === "una" ? "la" : "el"} ${C().unidad}` : `${C().art === "una" ? "las" : "los"} ${n} ${C().unidadPl}`} con sus comentarios, y ${conAlgo === 1 ? "hay 1 que ya tiene" : `hay ${conAlgo} que ya tienen`} contenido cargado.`
+      : `Se borra${n === 1 ? "" : "n"} también ${n === 1 ? `${C().art} ${C().unidad}` : `${n} ${C().unidadPl}`} en blanco.`;
+    if (!(await lkConfirmar(`¿Eliminar el mes «${nombre}» de ${C().corto}?\n\n${detalle} No se puede deshacer.`, { ok: "Eliminar el mes", peligro: true }))) return;
+    const r = await fetch(url(`contenidos_meses?mes=eq.${enc(MES)}&canal=eq.${CANAL}`), {
+      method: "DELETE", headers: head({ Prefer: "return=representation" }),
+    });
+    const fuera = r.ok ? await r.json().catch(() => []) : [];
+    if (!fuera.length) { lkAviso("No se pudo eliminar el mes. Sólo un administrador puede hacerlo."); return; }
+    if (ULTIMO[CANAL] === MES) delete ULTIMO[CANAL];
+    await traerMeses();
+    MES = (MESES[0] && MESES[0].mes) || ""; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; BUSCA = "";
+    await traerMes(MES); pintar();
   }
 
   function exportar() {

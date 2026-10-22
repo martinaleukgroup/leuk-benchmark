@@ -820,3 +820,12 @@ body.ct-visor-abierto{overflow:hidden}
 .ct-ley{border:1px solid var(--line);border-radius:7px;padding:2px 8px}
 .ct-ley.t-feed{background:var(--card)}
 .ct-ley.t-historia{background:var(--olive);border-color:var(--olive);color:#fff;border-radius:999px}
+
+/* Hoja para bajar el calendario en PDF: se dibuja fuera de la pantalla y se fotografía. */
+.ct-pdf-hoja{position:fixed;left:-99999px;top:0;background:var(--bg);padding:20px;
+  font-family:var(--font-body);color:var(--ink)}
+.ct-pdf-cab{display:flex;flex-direction:column;gap:2px;margin:0 0 14px}
+.ct-pdf-cab span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--olive)}
+.ct-pdf-cab h1{margin:0;font-family:var(--font-title);font-size:30px;font-weight:600}
+.ct-pdf-cab p{margin:0;color:var(--gray-soft);font-size:13px}
+.ct-pdf-hoja .ct-dia-add,.ct-pdf-hoja .ct-mover{display:none}

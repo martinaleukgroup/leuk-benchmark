@@ -570,6 +570,7 @@
       ed ? `<button data-acc="nuevo-mes">＋ Nuevo mes</button>
             <button data-acc="importar">⬆ Importar un mes (.json)</button>
             <button data-acc="exportar">⬇ Bajar este mes (.json)</button>` : "",
+      `<button data-acc="exportar-pdf">⬇ Bajar el calendario (PDF)</button>`,
       esAdminC() && RESP ? `<button data-acc="responsables">👥 Responsables del canal</button>` : "",
     ].join("");
 
@@ -688,8 +689,9 @@
   }
 
   /* ---- Vista calendario ---- */
-  function calendarioHTML() {
-    const ed = puedeEditar();
+  // pdf = la versión para bajar: sin botones de edición ni filtros apagando piezas.
+  function calendarioHTML(pdf) {
+    const ed = !pdf && puedeEditar();
     const p = String(MES).split("-");
     const anio = +p[0], mesIdx = (+p[1]) - 1;
     const primero = new Date(anio, mesIdx, 1);
@@ -722,7 +724,7 @@
           const nc = (COMS[m.id] || []).filter(c => c.tipo !== "sugerencia" && !c.resuelto).length;
           const ns = (COMS[m.id] || []).filter(c => c.tipo === "sugerencia" && !c.decision).length;
           const nv = (m.variantes || []).length;
-          const apagado = !filtroActivo()(m) ? " apagado" : "";
+          const apagado = !pdf && !filtroActivo()(m) ? " apagado" : "";
           const alzada = MOVIENDO === m.id ? " alzada" : "";
           // Historia = tarjeta liviana (punteada, con el aro de las stories, sin copy);
           // post/carrusel/reel = tarjeta llena con el ícono de su formato.
@@ -766,7 +768,7 @@
              Los días grises del mes de al lado también sirven.</p>` : ""}
       ${esIG(CANAL) ? `<p class="ct-cal-leyenda"><span class="ct-ley t-feed"><i class="ct-formato">◻</i>Feed: post, carrusel ▦ o reel ▶</span>
         <span class="ct-ley t-historia"><i class="ct-aro"></i>Historia</span></p>` : ""}
-      ${CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
+      ${CALNOTA && !pdf ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
       ${sinFecha.length ? `<div class="ct-sinfecha"><span class="ct-sinfecha-t">Sin fecha · ${sinFecha.length}${ed ? " — arrastralas a un día o tocá ✥" : ""}</span>
         <div class="ct-chips">${sinFecha.map(chip).join("")}</div></div>` : ""}
       <div class="ct-cal-dias"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
@@ -2216,6 +2218,7 @@
     }
 
     if (a === "exportar") return exportar();
+    if (a === "exportar-pdf") return exportarPDF();
 
     if (a === "importar") {
       // El input vive DENTRO del contenedor del canal: con los dos canales en el
@@ -2372,6 +2375,46 @@
     // El canal va en el nombre: un mes puede estar dos veces en la misma carpeta.
     a.download = `contenidos-${CANAL}-${CAB.mes}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  // El calendario del mes tal como se ve en pantalla, en un PDF A4 apaisado.
+  // Se dibuja aparte, a ancho de escritorio (así en el celular tampoco sale la lista),
+  // y se pasa a imagen con html2canvas + jsPDF, las mismas que usan las fichas.
+  async function exportarPDF() {
+    if (!CAB) return;
+    if (!window.jspdf || !window.html2canvas) {
+      lkAviso("No se pudieron cargar las librerías para generar el PDF. Recargá la página (Cmd+Shift+R) e intentá de nuevo.");
+      return;
+    }
+    const ANCHO = 1400;
+    const p = String(MES).split("-");
+    const nombreMes = MES_NOMBRE[(+p[1]) - 1] || "";
+    const titulo = `${C().corto} · ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${p[0]}`;
+    const movia = MOVIENDO; MOVIENDO = "";
+    const hoja = document.createElement("div");
+    hoja.className = "ct-pdf-hoja";
+    hoja.style.width = ANCHO + "px";
+    hoja.innerHTML = `<header class="ct-pdf-cab"><span>Cronograma de contenidos · Leuk</span>
+        <h1>${esc(titulo)}</h1>${CAB.titulo ? `<p>${esc(CAB.titulo)}</p>` : ""}</header>
+      ${calendarioHTML(true)}`;
+    MOVIENDO = movia;
+    document.body.appendChild(hoja);
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const cv = await html2canvas(hoja, { scale: 2, backgroundColor: "#fbfbf9", logging: false,
+        windowWidth: ANCHO + 40 });
+      const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
+      // Entra entero en una hoja: se achica por el lado que primero toque el borde.
+      const W = 297, H = 210, M = 8;
+      const k = Math.min((W - 2 * M) / cv.width, (H - 2 * M) / cv.height);
+      const w = cv.width * k, h = cv.height * k;
+      pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", (W - w) / 2, M, w, h);
+      pdf.save(`Cronograma ${C().corto} - ${nombreMes} ${p[0]}.pdf`);
+    } catch (e) {
+      lkAviso("No se pudo generar el PDF: " + e.message);
+    } finally {
+      hoja.remove();
+    }
   }
 
   // Importa un mes entero. Si el mes ya existe pide confirmación y REEMPLAZA sus

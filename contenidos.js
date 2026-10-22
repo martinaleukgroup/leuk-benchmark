@@ -705,7 +705,10 @@
     // soltar ahí manda la pieza al mes vecino, y moverFecha se encarga de cambiarle
     // también el `mes` de pertenencia y de abrir el mes al que fue a parar.
     const celda = (num, iso, fuera) => {
-      const lista = porDia[iso] || [];
+      // En Instagram, primero lo que va al feed y abajo las historias: se lee de
+      // un vistazo qué queda en el perfil y qué se va a las 24 horas.
+      const lista = (porDia[iso] || []).slice()
+        .sort((a, b) => esIG(CANAL) ? (a.tipo === "historia") - (b.tipo === "historia") : 0);
       const moviendoAca = MOVIENDO && lista.some(m => m.id === MOVIENDO);
       return `<div class="ct-dia ${fuera ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${lista.length ? "" : "vacio"}${moviendoAca ? " origen" : ""}"
           data-dia="${iso}">
@@ -721,14 +724,20 @@
           const nv = (m.variantes || []).length;
           const apagado = !filtroActivo()(m) ? " apagado" : "";
           const alzada = MOVIENDO === m.id ? " alzada" : "";
-          return `<div class="ct-chip ${m.estado}${apagado}${alzada}" data-ir="${m.id}" ${ed ? 'draggable="true"' : ""}
+          // Historia = tarjeta liviana (punteada, con el aro de las stories, sin copy);
+          // post/carrusel/reel = tarjeta llena con el ícono de su formato.
+          const ig = esIG(CANAL), hist = ig && m.tipo === "historia";
+          const forma = ig ? (hist ? " t-historia" : " t-feed") : "";
+          const icono = !ig ? "" : hist ? `<i class="ct-aro" aria-hidden="true"></i>`
+            : `<i class="ct-formato" aria-hidden="true">${{ carrusel: "▦", reel: "▶" }[m.tipo] || "◻"}</i>`;
+          return `<div class="ct-chip ${m.estado}${forma}${apagado}${alzada}" data-ir="${m.id}" ${ed ? 'draggable="true"' : ""}
               title="${esc(m.objetivo || "")}${ed ? " · arrastrá o tocá ✥ para cambiarle el día" : ""}">
             ${ed ? `<button class="ct-mover" data-mover="${m.id}"
               title="Mover a otro día">${MOVIENDO === m.id ? "✕" : "✥"}</button>` : ""}
-            <b>${esc(m.criterio || "Sin título")}</b>
-            <span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>
+            <b>${icono}${esc(m.criterio || "Sin título")}</b>
+            ${hist ? "" : `<span class="sub">${esc((m.copy || (m.variantes || [])[0] && m.variantes[0].copy || "").replace(/\s+/g, " ").slice(0, 52))}…</span>`}
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
-              ${esIG(CANAL) ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
+              ${ig ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
               ${CANAL === "mailing" ? ` · ${DESTINOS[destinoDe(m)] || "Sin destino"}` : ""}
               ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
           </div>`;
@@ -755,6 +764,8 @@
         : ed ? `<p class="ct-cal-tip">Para cambiar el día: arrastrá ${C().art} ${C().unidad} adonde quieras,
              o tocá <b>✥</b> y después el día (así también anda en el celular).
              Los días grises del mes de al lado también sirven.</p>` : ""}
+      ${esIG(CANAL) ? `<p class="ct-cal-leyenda"><span class="ct-ley t-feed"><i class="ct-formato">◻</i>Feed: post, carrusel ▦ o reel ▶</span>
+        <span class="ct-ley t-historia"><i class="ct-aro"></i>Historia</span></p>` : ""}
       ${CALNOTA ? `<p class="ct-cal-nota">${esc(CALNOTA)}</p>` : ""}
       ${sinFecha.length ? `<div class="ct-sinfecha"><span class="ct-sinfecha-t">Sin fecha · ${sinFecha.length}${ed ? " — arrastralas a un día o tocá ✥" : ""}</span>
         <div class="ct-chips">${sinFecha.map(chip).join("")}</div></div>` : ""}

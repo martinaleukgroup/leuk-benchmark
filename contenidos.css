@@ -796,3 +796,27 @@ body.ct-visor-abierto{overflow:hidden}
 .ct-menc .av{width:24px;height:24px;border-radius:50%;background:var(--olive-pale);color:var(--olive);flex:none;
   display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;text-transform:uppercase}
 .ct-menc button.on .av,.ct-menc button:hover .av{background:var(--card)}
+
+/* Instagram: feed vs historia en el calendario.
+   Feed = tarjeta blanca con el ícono del formato (◻ post, ▦ carrusel, ▶ reel).
+   Historia = píldora oliva llena con letra blanca, sin copy y con el aro de las
+   stories: al revés que el feed, para que se separen de un vistazo. La rayita de
+   la izquierda sigue diciendo el estado. Todo con la paleta de Leuk. */
+.ct-chip.t-feed{background:var(--card);box-shadow:0 1px 2px rgba(40,42,34,.07)}
+.ct-chip.t-historia{background:var(--olive);border-top-color:var(--olive);border-right-color:var(--olive);border-bottom-color:var(--olive);color:#fff;
+  border-left-width:4px;border-radius:10px;padding:5px 8px;gap:1px}
+.ct-chip.t-historia b{font-weight:500;font-size:12px;color:#fff}
+.ct-chip.t-historia .marcas{color:rgba(255,255,255,.72);font-size:10.5px;padding-left:19px}
+.ct-chip.t-historia:hover{background:var(--olive-mid);border-top-color:var(--olive-mid);border-right-color:var(--olive-mid);border-bottom-color:var(--olive-mid)}
+.ct-chip.t-historia.alzada{background:var(--olive-mid)}
+.ct-chip.t-historia.borrador{border-left-color:var(--olive-soft)}
+.ct-chip.t-historia .ct-mover{background:var(--olive);color:#fff;border-color:var(--olive-mid)}
+.ct-chip b{display:block}
+.ct-formato{font-style:normal;display:inline-block;width:15px;margin-right:4px;
+  color:var(--olive);font-size:11px}
+.ct-aro{display:inline-block;width:11px;height:11px;margin:0 6px 2px 1px;border-radius:50%;
+  vertical-align:middle;border:2px solid #fff;box-shadow:0 0 0 2px var(--olive) inset;background:var(--olive-soft)}
+.ct-cal-leyenda{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;font-size:11.5px;color:var(--gray-soft)}
+.ct-ley{border:1px solid var(--line);border-radius:7px;padding:2px 8px}
+.ct-ley.t-feed{background:var(--card)}
+.ct-ley.t-historia{background:var(--olive);border-color:var(--olive);color:#fff;border-radius:999px}

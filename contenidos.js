@@ -332,6 +332,14 @@
   const porPlacas = m => esIG(CANAL) && placasDe(m).length > 0;
 
   /* ========================= DATOS ========================= */
+  // Al entrar se abre el mes corriente. Si todavía no está cargado, el último
+  // anterior a hoy; si sólo hay meses futuros, el más cercano.
+  function mesPorDefecto() {
+    const d = new Date(), hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!MESES.length) return "";
+    const m = MESES.find(x => x.mes <= hoy) || MESES[MESES.length - 1];   // MESES viene de más nuevo a más viejo
+    return m.mes;
+  }
   async function traerMeses() {
     const r = await fetch(url(`contenidos_meses?canal=eq.${CANAL}&select=*&order=mes.desc`), { headers: head() });
     MESES = r.ok ? await r.json() : [];
@@ -487,7 +495,7 @@
     if (!MESES.length) {
       cont.innerHTML = `<div class="empty-mini">Cargando cronograma…</div>`;
       await traerMeses();
-      MES = MES || (MESES[0] && MESES[0].mes) || "";
+      MES = MES || mesPorDefecto();
       await Promise.all([traerMes(MES), traerAvisos()]);
     } else if (otroMes) {
       await traerMes(MES);                       // los meses ya estaban: falta el de la pieza
@@ -2373,7 +2381,7 @@
     if (!fuera.length) { lkAviso("No se pudo eliminar el mes. Sólo un administrador puede hacerlo."); return; }
     if (ULTIMO[CANAL] === MES) delete ULTIMO[CANAL];
     await traerMeses();
-    MES = (MESES[0] && MESES[0].mes) || ""; ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; BUSCA = "";
+    MES = mesPorDefecto(); ABIERTOS = {}; MOVIENDO = ""; FILTRO = "todos"; BUSCA = "";
     await traerMes(MES); pintar();
   }
 

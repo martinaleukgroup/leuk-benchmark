@@ -91,6 +91,7 @@
   let CALNOTA = "";      // qué pieza se movió de día en el calendario, y a dónde
   let MOVIENDO = "";     // pieza "levantada" a mano: el próximo día que se toque es su fecha nueva
   let RENDER = {};       // "archivo|nodo" -> URL del render de Figma (vive lo que dure la pestaña)
+  let SINRENDER = {};    // "archivo|nodo" -> 1 si Figma contestó sin imagen (frame vacío, oculto o borrado)
   let FEEDPL = {};       // contenido_id -> placa que se ve en la baldosa del feed (carrusel)
   let CONGELADAS = {};   // path en Storage -> URL firmada del PNG congelado
   // Por qué un estado y no un try/catch suelto: mientras no esté desplegada la
@@ -413,7 +414,15 @@
     // real: el corte dura bastante más de un minuto, así que insistir en cada carga de
     // mes sólo lo estira. Se espera, y el botón ◈ Piezas sigue pudiendo forzar.
     const enfriar = d.reintentar_en ? (d.reintentar_en + 5) * 1000 : 5 * 60000;
-    FIGMA = { estado: "ok", msg: d.error || "", espera: d.error ? Date.now() + enfriar : 0 };
+    let msg = d.error || "";
+    // La función lo dice en minutos; con los límites de Figma para el plan Starter
+    // la espera puede ser de días, y "en 4320 minutos" no se entiende.
+    if (msg && d.reintentar_en > 2 * 3600) {
+      const h = Math.ceil(d.reintentar_en / 3600);
+      msg = `Figma cortó por límite de renderizado: no da más imágenes hasta dentro de ${h > 48 ? Math.ceil(h / 24) + " días" : h + " horas"}. ` +
+        "Suele pasar cuando el token de Figma es de un usuario con asiento de lectura (View/Collab).";
+    }
+    FIGMA = { estado: "ok", msg, espera: d.error ? Date.now() + enfriar : 0 };
     return d;
   }
 
@@ -434,7 +443,8 @@
     const tareas = Object.keys(porArchivo).map(async fk => {
       const d = await fnFigma({ accion: "render", file_key: fk, forzar: !!forzar,
         nodos: [...porArchivo[fk]] });
-      if (d) for (const [nodo, u] of Object.entries(d.urls || {})) RENDER[fk + "|" + nodo] = u;
+      if (d) for (const [nodo, u] of Object.entries(d.urls || {})) { RENDER[fk + "|" + nodo] = u; delete SINRENDER[fk + "|" + nodo]; }
+      if (d) (d.sin_render || []).forEach(nodo => { SINRENDER[fk + "|" + nodo] = 1; });
     });
     if (paths.length) tareas.push((async () => {
       const d = await fnFigma({ accion: "ver", file_key: "-", paths: [...new Set(paths)] });
@@ -1449,7 +1459,10 @@
             : FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase para ver la imagen acá."
             : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase para ver la imagen acá."
             : FIGMA.estado === "error" ? esc(FIGMA.msg || "No se pudo traer la imagen de Figma.")
-            : "La imagen se trae de Figma y se congela al aprobar esta placa."
+            : imagenDe(m, i) ? "La imagen se trae de Figma y se congela al aprobar esta placa."
+            : SINRENDER[archivoDe(m, act) + "|" + act.nodo] ? "Figma no devolvió imagen para este frame: revisá que el link sea de un frame con contenido y que no esté oculto ni borrado."
+            : (FIGMA.estado === "ok" && FIGMA.msg) ? esc(FIGMA.msg)
+            : "Trayendo la imagen de Figma…"
           }</span></p>`
         : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 

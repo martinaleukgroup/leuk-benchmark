@@ -67,6 +67,9 @@
 .ct-brief h4{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.1em;
   font-size:11.5px;color:var(--olive);margin:0 0 6px;font-weight:700}
 .ct-brief p{margin:0;font-size:14px;color:var(--gray)}
+/* Objetivo / recursos / cadencia: abiertos debajo de la bajada */
+.ct-claves{margin-top:16px}
+.ct-claves p{white-space:pre-line}
 .ct-obras{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px}
 .ct-obras th,.ct-obras td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .ct-obras th{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.09em;

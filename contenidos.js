@@ -107,6 +107,12 @@
     calendarizado: { t: "Calendarizado" },   // sólo Instagram: ya programada en la red, falta que salga
     publicado: { t: "Publicado" },
   };
+  // Un .json puede traer el estado por su clave ("revision") o por el nombre que
+  // ve el equipo ("Precisa feedback"); los dos caen en la misma clave de la base.
+  const sinTildesE = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+  const ESTADO_DE = {};
+  Object.entries(ESTADOS).forEach(([k, v]) => { ESTADO_DE[k] = k; ESTADO_DE[sinTildesE(v.t)] = k; });
+  const estadoDe = s => ESTADO_DE[sinTildesE(s)] || "";
   // "Publicado" es un paso más allá de "aprobado" (ya salió al canal), no una
   // vuelta a pendiente: para todo lo que cuenta avance, los dos cuentan igual.
   const yaAprobado = m => m.estado === "aprobado" || m.estado === "calendarizado" || m.estado === "publicado";
@@ -669,24 +675,39 @@
   // Un cuadrante del brief (o una fila de obras) sin ningún texto no se dibuja.
   const vacia = o => !o || Object.values(o).every(v => !String(v == null ? "" : v).trim());
 
+  /* Objetivo, recursos y cadencia del mes (oct 2026). En el .json vienen arriba de
+     todo, al lado del título; en la base viven como cuadrantes del brief con ese
+     título (así ya estaban armados los meses viejos y no hace falta SQL). Los que
+     se llaman así se muestran abiertos debajo de la bajada; el resto, plegado.  */
+  const CLAVES_MES = [["objetivo", "Objetivo"], ["recursos", "Recursos"], ["cadencia", "Cadencia"]];
+  const claveDe = b => { const h = sinTildesE(b && b.h); return (CLAVES_MES.find(([k]) => k === h) || [])[0] || ""; };
+  // Texto o lista de renglones → el texto del cuadrante.
+  const textoClave = v => Array.isArray(v) ? v.map(x => String(x == null ? "" : x).trim()).filter(Boolean).join("\n") : String(v == null ? "" : v).trim();
+
   function cabeceraHTML(ed) {
     if (!CAB) return "";
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const brief = Array.isArray(CAB.brief) ? CAB.brief : [];
     const obras = Array.isArray(CAB.obras) ? CAB.obras : [];
+    const orden = k => CLAVES_MES.findIndex(c => c[0] === k);
+    const claves = brief.map((b, i) => ({ b, i, k: claveDe(b) })).filter(x => x.k && !vacia(x.b))
+      .sort((x, y) => orden(x.k) - orden(y.k));
+    const cuadrante = (b, i) => `
+            <section data-cabi="brief.${i}"><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
+                     <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`;
     // El brief y las obras son material de consulta, no lo que venís a hacer: van
     // plegados para que los mensajes queden arriba de todo.
-    const hayDetalle = brief.some(b => !vacia(b)) || obras.some(o => !vacia(o));
+    const resto = brief.some((b, i) => !vacia(b) && !claveDe(b));
+    const hayDetalle = resto || obras.some(o => !vacia(o));
     return `
       <div class="ct-head">
         <p class="ct-eyebrow"${e} data-cabc="eyebrow">${esc(CAB.eyebrow || "")}</p>
         <h2 class="ct-titulo"${e} data-cabc="titulo">${esc(CAB.titulo || "")}</h2>
         <p class="ct-dek"${e} data-cabc="dek">${esc(CAB.dek || "")}</p>
+        ${claves.length ? `<div class="ct-brief ct-claves">${claves.map(x => cuadrante(x.b, x.i)).join("")}</div>` : ""}
         ${hayDetalle ? `<details class="ct-detalle">
           <summary>Brief y obras del mes${obras.length ? ` · ${obras.length} obras asignadas` : ""}</summary>
-          ${brief.length ? `<div class="ct-brief">${brief.map((b, i) => vacia(b) ? "" : `
-            <section data-cabi="brief.${i}"><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
-                     <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`).join("")}</div>` : ""}
+          ${resto ? `<div class="ct-brief">${brief.map((b, i) => vacia(b) || claveDe(b) ? "" : cuadrante(b, i)).join("")}</div>` : ""}
           ${obras.length ? `<div class="ct-scroll"><table class="ct-obras">
             <thead><tr><th>Tipología</th><th>Obra</th><th>Productos</th></tr></thead>
             <tbody>${obras.map((o, i) => vacia(o) ? "" : `<tr data-cabi="obras.${i}">
@@ -2387,10 +2408,15 @@
 
   function exportar() {
     if (!CAB) return;
+    // Objetivo / recursos / cadencia salen arriba, como se importan; el brief, sin ellos.
+    const brief = Array.isArray(CAB.brief) ? CAB.brief : [];
+    const claves = {};
+    brief.forEach(b => { const k = claveDe(b); if (k && !vacia(b) && !(k in claves)) claves[k] = b.p || ""; });
     const d = {
       mes: CAB.mes, canal: CAB.canal || CANAL,
       titulo: CAB.titulo, eyebrow: CAB.eyebrow, dek: CAB.dek,
-      brief: CAB.brief, obras: CAB.obras,
+      objetivo: claves.objetivo, recursos: claves.recursos, cadencia: claves.cadencia,
+      brief: brief.filter(b => !(claveDe(b) && claves[claveDe(b)] === (b.p || ""))), obras: CAB.obras,
       mensajes: MSGS.map(m => ({
         fecha: m.fecha, criterio: m.criterio, objetivo: m.objetivo, flag: m.flag || undefined,
         estado: m.estado, copy: m.copy || undefined, meta: m.meta,
@@ -2469,10 +2495,24 @@
     const existe = MESES.some(x => x.mes === d.mes);
     if (existe && !(await lkConfirmar(`${cap(mesLabel(d.mes))} de ${C().corto} ya está cargado.\n\nImportar REEMPLAZA sus ${C().unidadPl} y borra los comentarios que tengan. ¿Seguir?`, { ok: "Reemplazar", peligro: true }))) return;
 
+    // Estados por clave o por nombre ("precisa feedback"). Uno que no se reconoce
+    // entra como borrador y se avisa, en vez de guardar algo que nada sabe mostrar.
+    const raros = [...new Set(d.mensajes.map(m => m.estado).filter(s => s && !estadoDe(s)))];
+    if (raros.length && !(await lkConfirmar(`Estos estados no los conozco: ${raros.map(s => `"${s}"`).join(", ")}.\n\n` +
+        `Esos ${C().unidadPl} entran como Borrador. Los que valen: ${Object.values(ESTADOS).map(v => v.t).join(", ")}. ¿Seguir?`, { ok: "Importar igual" }))) return;
+
+    // Objetivo / recursos / cadencia de arriba van como los primeros cuadrantes del
+    // brief; si el brief ya traía uno con ese título, gana el de arriba.
+    const arriba = CLAVES_MES.filter(([k]) => textoClave(d[k])).map(([k, h]) => ({ k, h, p: textoClave(d[k]) }));
+    const brief = [
+      ...arriba.map(({ h, p }) => ({ h, p })),
+      ...(Array.isArray(d.brief) ? d.brief : []).filter(b => !arriba.some(a => a.k === claveDe(b))),
+    ];
+
     const autor = SES().nombre ? SES().nombre() : "", email = SES().email ? SES().email() : "";
     const cab = {
       mes: d.mes, canal: CANAL, titulo: d.titulo || "", eyebrow: d.eyebrow || "", dek: d.dek || "",
-      brief: d.brief || [], obras: d.obras || [],
+      brief, obras: d.obras || [],
       autor, autor_email: email,
     };
     let r = await fetch(url("contenidos_meses"), {
@@ -2488,7 +2528,7 @@
       encuesta: m.encuesta || null, lead: m.lead || "", variantes: m.variantes || [],
       tipo: m.tipo || "post", placas: m.placas || [], copy_estado: m.copy_estado || "borrador",
       figma_file: m.figma_file || null,
-      estado: m.estado || "borrador", orden: i, autor, autor_email: email,
+      estado: estadoDe(m.estado) || "borrador", orden: i, autor, autor_email: email,
     }));
     r = await fetch(url("contenidos"), { method: "POST", headers: head({ Prefer: "return=minimal" }), body: JSON.stringify(filas) });
     if (!r.ok) { lkAviso(`El mes se creó pero fallaron ${C().unidadPl}:\n` + (await r.text()).slice(0, 300)); }

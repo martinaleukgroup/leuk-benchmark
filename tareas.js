@@ -143,7 +143,8 @@
       const p = EQUIPO.find(x => esc(low(x.nombre)) === low(n));
       return `<span class="tk-arroba ${p && low(p.email) === yo() ? "yo" : ""}">${m}</span>`;
     });
-    return h.replace(/\n/g, "<br>");
+    h = h.replace(/\n/g, "<br>");
+    return window.LK_IMG ? LK_IMG.html(h) : h;   // [img:…] → miniatura (comentarios-img.js)
   }
   // Cada paso recuerda a quién menciona, quién lo escribió y cuándo: así el aviso
   // salta sólo cuando la mención es nueva, no cada vez que alguien toca la tarea.
@@ -392,6 +393,7 @@
     const campo = caja().querySelector(".tk-com-nuevo");
     const texto = campo ? campo.value.trim() : "";
     if (!texto) return;
+    if (window.LK_IMG && LK_IMG.esperar()) return;
     campo.disabled = true;
     try {
       const r = await fetch(url("tareas_comentarios"), {
@@ -764,7 +766,7 @@
                 ${miCom(x) ? `<button class="tk-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
               <p>${conMenciones(x.texto)}</p>
             </div>`).join("") || `<p class="tk-vacio-mini">Todavía no hay comentarios.</p>`}</div>
-          <textarea class="tk-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien  (⌘/Ctrl + Enter para enviar)"></textarea>
+          <textarea class="tk-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien · pegá o arrastrá capturas  (⌘/Ctrl + Enter para enviar)"></textarea>
           <div class="tk-com-acc"><button class="btn-ghost" data-accion="comentar">Comentar</button></div>
         </div>
         <div class="tk-p-pie">

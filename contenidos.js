@@ -524,7 +524,6 @@
           ${ed ? `<div class="ct-acc" style="justify-content:center;margin-top:14px">
                     <button class="btn-primary" data-acc="nuevo-mes">Crear un mes</button>
                     <button class="btn-ghost" data-acc="importar">⬆ Importar mes (.json)</button>
-                    <input type="file" class="ct-file" accept="application/json" hidden>
                   </div>`
                 : `<p class="ct-com-vacio">Pedile a Coordinación que cargue el mes.</p>`}
         </div>`;
@@ -596,8 +595,7 @@
           <div class="mh-tit"><h1>${esc(C().label)}</h1>${perfilesHTML()}${respHTML()}</div>
           <div class="mh-acc">
             <details class="mh-mas"><summary class="btn-desc">⋯ Más</summary><div class="mh-mas-menu">${mas}</div></details>
-            ${ed ? `<button class="btn-primary" data-acc="nuevo-msg">＋ ${esc(C().nuevo)}</button>
-                    <input type="file" class="ct-file" accept="application/json" hidden>` : ""}
+            ${ed ? `<button class="btn-primary" data-acc="nuevo-msg">＋ ${esc(C().nuevo)}</button>` : ""}
           </div>
         </div>
         ${MSGS.length ? `<div class="mh-kpis">
@@ -1650,7 +1648,7 @@
           <option value="">Toda la pieza</option>
           ${placasDe(m).map((p, n) => `<option value="${n + 1}" ${(PLACA[m.id] || 0) === n ? "selected" : ""}>Placa ${n + 1}${p.pie ? " · " + esc(p.pie.slice(0, 22)) : ""}</option>`).join("")}
         </select>` : ""}
-        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o un ajuste… Con @ mencionás a alguien" rows="1"></textarea>
+        <textarea data-nuevo="${m.id}" placeholder="Escribí un comentario o un ajuste… Con @ mencionás a alguien · pegá o arrastrá capturas" rows="1"></textarea>
         <button class="btn-mini" data-enviar="${m.id}">Enviar</button>
       </div>
     </div>`;
@@ -2174,6 +2172,7 @@
   async function enviarComentario(id) {
     const ta = document.querySelector(`[data-nuevo="${id}"]`); if (!ta) return;
     const texto = ta.value.trim(); if (!texto) return;
+    if (window.LK_IMG && LK_IMG.esperar()) return;
     // En un carrusel el comentario apunta a una placa: es lo que traba SU aprobación.
     const selP = document.querySelector(`[data-nuevoplaca="${id}"]`);
     const variante = selP && selP.value ? +selP.value : null;
@@ -2253,10 +2252,16 @@
     if (a === "exportar-pdf") return exportarPDF();
 
     if (a === "importar") {
-      // El input vive DENTRO del contenedor del canal: con los dos canales en el
-      // DOM, un id global agarraba el de la página escondida.
-      const f = caja() && caja().querySelector(".ct-file"); if (!f) return;
-      f.onchange = () => { const file = f.files[0]; if (file) importar(file); f.value = ""; };
+      // Un input propio, colgado del body y no de la vista: el refresco de cada 30 s
+      // repinta la vista y, si pasaba mientras elegías el archivo, se llevaba el input
+      // y la importación se perdía sin aviso (oct 2026).
+      const f = document.createElement("input");
+      f.type = "file"; f.accept = ".json,application/json"; f.hidden = true;
+      document.body.appendChild(f);
+      f.onchange = () => {
+        const file = f.files[0]; f.remove();
+        if (file) importar(file).catch(e => lkAviso("No se pudo importar el mes: " + e.message));
+      };
       f.click(); return;
     }
   }
@@ -2601,10 +2606,11 @@
   // Texto de comentario → HTML escapado con las menciones resaltadas (la tuya, en otro color).
   function conMenciones(texto) {
     const h = esc(texto), re = reMenciones(true);
-    return re ? h.replace(re, (m, n) => {
+    const out = re ? h.replace(re, (m, n) => {
       const p = equipo().find(x => esc(lowC(x.nombre)) === lowC(n));
       return `<span class="ct-arroba ${p && lowC(p.email) === yoC() ? "yo" : ""}">${m}</span>`;
     }) : h;
+    return window.LK_IMG ? LK_IMG.html(out) : out;   // [img:…] → miniatura (comentarios-img.js)
   }
   const meNombra = c => !!yoC() && lowC(c.autor_email) !== yoC() && mencionesEn(c.texto).includes(yoC());
 
@@ -2857,7 +2863,7 @@
     if (menc.length) cuerpo += `<h5>Te mencionaron</h5>` +
       menc.map(c => linea(c.contenido_id, nuevo(c.creado), "@",
         `${esc(c.autor || "Alguien")} en <b>${esc(c._m.criterio || "algo del mes")}</b>`,
-        esc((c.texto || "").slice(0, 60)), c._m.canal)).join("");
+        esc((window.LK_IMG ? LK_IMG.plano(c.texto || "") : (c.texto || "")).slice(0, 60)), c._m.canal)).join("");
     if (ed) {
       if (AVISOS.tarde.length) cuerpo += `<h5>Ya tendrían que haber salido</h5>` +
         AVISOS.tarde.map(m => linea(m.id, " urgente", "!", esc(m.criterio || "Sin título"),
@@ -2885,7 +2891,7 @@
       if (coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
         coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
           `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "algo del mes")}</b>`,
-          esc((c.texto || "").slice(0, 60)), (c._m || {}).canal)).join("");
+          esc((window.LK_IMG ? LK_IMG.plano(c.texto || "") : (c.texto || "")).slice(0, 60)), (c._m || {}).canal)).join("");
     }
     if (!ed && AVISOS.mias.length) {
       cuerpo += `<h5>Tus sugerencias</h5>` +

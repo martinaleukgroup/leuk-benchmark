@@ -496,6 +496,7 @@
     const campo = caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`);
     const texto = campo ? campo.value.trim() : "";
     if (!texto) return;
+    if (window.LK_IMG && LK_IMG.esperar()) return;
     campo.disabled = true;
     try {
       const r = await fetch(url("acciones_comentarios"), {
@@ -784,14 +785,14 @@
     if (!abierto) return `<div class="ac-hilo">${boton}</div>`;
     return `<div class="ac-hilo abierto">${boton}
       ${coms.length ? `<div class="ac-coms">${coms.map(comHTML).join("")}</div>` : ""}
-      <textarea class="ac-com-nuevo" data-hito="${h.id}" rows="1" placeholder="Comentá esta ${esc(low(hitoTipo(h.tipo).t))}… Con @ mencionás a alguien  (⌘/Ctrl + Enter)">${esc(BORR_COM[h.id] || "")}</textarea>
+      <textarea class="ac-com-nuevo" data-hito="${h.id}" rows="1" placeholder="Comentá esta ${esc(low(hitoTipo(h.tipo).t))}… Con @ mencionás a alguien · pegá o arrastrá capturas  (⌘/Ctrl + Enter)">${esc(BORR_COM[h.id] || "")}</textarea>
       <div class="ac-com-acc"><button class="btn-ghost" data-accion="comentar" data-id="${h.id}">Comentar</button></div>
     </div>`;
   }
   const comHTML = x => `<div class="ac-com">
       <div class="ac-com-h">${avatarHTML(x.autor_email)}<b>${esc(x.autor || nombreDe(x.autor_email))}</b><span>${hace(x.creado)}</span>
         ${esAdmin() || low(x.autor_email) === yo() ? `<button class="ac-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
-      <p>${linkear(x.texto)}</p>
+      <p>${window.LK_IMG ? LK_IMG.html(linkear(x.texto)) : linkear(x.texto)}</p>
     </div>`;
   // Comentarios de antes de que colgaran de una entrada: se muestran aparte, sólo si hay.
   function pintarComentarios() {

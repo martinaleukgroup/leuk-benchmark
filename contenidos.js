@@ -2171,8 +2171,8 @@
 
   async function enviarComentario(id) {
     const ta = document.querySelector(`[data-nuevo="${id}"]`); if (!ta) return;
-    const texto = ta.value.trim(); if (!texto) return;
-    if (window.LK_IMG && LK_IMG.esperar()) return;
+    if (window.LK_IMG && LK_IMG.esperar(ta)) return;
+    const texto = window.LK_IMG ? LK_IMG.texto(ta) : ta.value.trim(); if (!texto) return;   // + imágenes adjuntas
     // En un carrusel el comentario apunta a una placa: es lo que traba SU aprobación.
     const selP = document.querySelector(`[data-nuevoplaca="${id}"]`);
     const variante = selP && selP.value ? +selP.value : null;
@@ -2185,6 +2185,7 @@
     ta.disabled = false;
     if (!r.ok) { lkAviso("No se pudo publicar el comentario."); return; }
     ta.value = "";
+    if (window.LK_IMG) LK_IMG.limpiar(ta);
     await traerMes(MES); pintar();
   }
 

@@ -494,9 +494,9 @@
   async function comentar(hid) {
     const id = ABIERTA; if (!id || id === "nueva" || !hid) return;
     const campo = caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`);
-    const texto = campo ? campo.value.trim() : "";
+    if (campo && window.LK_IMG && LK_IMG.esperar(campo)) return;
+    const texto = !campo ? "" : window.LK_IMG ? LK_IMG.texto(campo) : campo.value.trim();   // + imágenes adjuntas
     if (!texto) return;
-    if (window.LK_IMG && LK_IMG.esperar()) return;
     campo.disabled = true;
     try {
       const r = await fetch(url("acciones_comentarios"), {
@@ -507,6 +507,7 @@
       if (!d.length) throw new Error(r.status === 404 ? "sql" : r.status === 400 ? "col" : "sin fila");
       (COMS[id] = COMS[id] || []).push(d[0]);
       delete BORR_COM[hid];
+      if (window.LK_IMG) LK_IMG.limpiar(campo);
       marcarVisto(id);
       pintarTimeline();
       const n = caja().querySelector(`.ac-com-nuevo[data-hito="${hid}"]`); if (n) n.focus();

@@ -391,9 +391,9 @@
 
   async function comentar(id) {
     const campo = caja().querySelector(".tk-com-nuevo");
-    const texto = campo ? campo.value.trim() : "";
+    if (campo && window.LK_IMG && LK_IMG.esperar(campo)) return;
+    const texto = !campo ? "" : window.LK_IMG ? LK_IMG.texto(campo) : campo.value.trim();   // + imágenes adjuntas
     if (!texto) return;
-    if (window.LK_IMG && LK_IMG.esperar()) return;
     campo.disabled = true;
     try {
       const r = await fetch(url("tareas_comentarios"), {
@@ -403,6 +403,7 @@
       const d = r.ok ? await r.json() : [];
       if (!d.length) throw new Error("sin fila");
       (COMS[id] = COMS[id] || []).push(d[0]);
+      if (window.LK_IMG) LK_IMG.limpiar(campo);
       pintarPanel(); pintarCuerpo();
     } catch (e) {
       campo.disabled = false;
@@ -766,7 +767,7 @@
                 ${miCom(x) ? `<button class="tk-mini" data-accion="com-del" data-id="${x.id}" title="Borrar comentario" aria-label="Borrar comentario">✕</button>` : ""}</div>
               <p>${conMenciones(x.texto)}</p>
             </div>`).join("") || `<p class="tk-vacio-mini">Todavía no hay comentarios.</p>`}</div>
-          <textarea class="tk-com-nuevo" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien · pegá o arrastrá capturas  (⌘/Ctrl + Enter para enviar)"></textarea>
+          <textarea class="tk-com-nuevo" data-tarea="${esc(t.id)}" rows="2" placeholder="Escribí un comentario… Con @ mencionás a alguien · pegá o arrastrá capturas  (⌘/Ctrl + Enter para enviar)"></textarea>
           <div class="tk-com-acc"><button class="btn-ghost" data-accion="comentar">Comentar</button></div>
         </div>
         <div class="tk-p-pie">

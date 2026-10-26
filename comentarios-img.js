@@ -2,8 +2,10 @@
    Imágenes en los comentarios (oct 2026)
    En cualquier caja de comentario (Contenidos, Tareas, Acciones) se puede PEGAR
    una captura (⌘/Ctrl+V) o ARRASTRAR un .jpg/.png. La imagen se sube al bucket
-   PRIVADO `comentarios` (supabase/sql/2026-10-26-comentarios-imagenes.sql) y en
-   el texto del comentario queda sólo una marca: [img:tareas/2026-10/abc.jpg].
+   PRIVADO `comentarios` (supabase/sql/2026-10-26-comentarios-imagenes.sql).
+   Mientras se escribe, la imagen se ve como miniatura sobre la caja (con ✕ para
+   sacarla), no como texto. Al enviar, el módulo pide LK_IMG.texto(caja) y al
+   final del comentario se agrega una marca por imagen: [img:tareas/2026-10/abc.jpg].
    Así ninguna tabla cambia: cada módulo pasa su HTML por LK_IMG.html() y la
    marca se dibuja como miniatura con una URL firmada de una hora.
 
@@ -21,13 +23,22 @@
   const LADO_MAX = 2000;      // las fotos grandes se achican a esto (px del lado mayor)
   const RE = /\[img:([\w\-./]+)\]/g;
 
-  // Caja de comentario → carpeta del módulo. Sólo estas reciben imágenes.
+  // Caja de comentario → carpeta del módulo, a qué hilo pertenece y dónde va la
+  // bandeja de miniaturas. Sólo estas cajas reciben imágenes.
   const CAJAS = [
-    ["textarea[data-nuevo]", "contenidos"],
-    ["textarea.tk-com-nuevo", "tareas"],
-    ["textarea.ac-com-nuevo", "acciones"],
+    { sel: "textarea[data-nuevo]", modulo: "contenidos", hilo: ta => ta.dataset.nuevo,
+      // la caja está en una fila con el selector de placa y "Enviar": la bandeja va arriba de la fila
+      ancla: ta => ta.closest(".ct-com-alta") || ta },
+    { sel: "textarea.tk-com-nuevo", modulo: "tareas",   hilo: ta => ta.dataset.tarea || "", ancla: ta => ta },
+    { sel: "textarea.ac-com-nuevo", modulo: "acciones", hilo: ta => ta.dataset.hito || "", ancla: ta => ta },
   ];
-  const moduloDe = el => { for (const [s, m] of CAJAS) if (el && el.matches && el.matches(s)) return m; return null; };
+  const cajaDe = el => el && el.matches ? CAJAS.find(c => el.matches(c.sel)) || null : null;
+  const moduloDe = el => { const c = cajaDe(el); return c ? c.modulo : null; };
+  const claveDe = ta => { const c = cajaDe(ta); return c ? `${c.modulo}:${c.hilo(ta)}` : null; };
+
+  // Imágenes a medio escribir, por hilo: sobreviven a los repintados de la vista.
+  // clave → [{ id, prev (blob local para la miniatura), path (null mientras sube) }]
+  const ADJ = {};
 
   let SUBIENDO = 0;
 
@@ -65,42 +76,55 @@
     return path;
   }
 
-  // Inserta en el cursor un "subiendo…" y lo cambia por la marca al terminar.
-  // Dispara "input" para que los módulos que guardan el borrador se enteren.
-  function insertar(ta, txt) {
-    const a = ta.selectionStart ?? ta.value.length, b = ta.selectionEnd ?? a;
-    const antes = ta.value.slice(0, a), sep = antes && !/\s$/.test(antes) ? " " : "";
-    ta.value = antes + sep + txt + ta.value.slice(b);
-    const p = (antes + sep + txt).length;
-    ta.setSelectionRange(p, p);
-    ta.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-  function reemplazar(ta, de, a) {
-    // El textarea pudo repintarse mientras subía: se busca el vigente con el mismo selector.
-    const vivo = document.body.contains(ta) ? ta : null;
-    if (!vivo || !vivo.value.includes(de)) return false;
-    vivo.value = vivo.value.replace(de, a);
-    vivo.dispatchEvent(new Event("input", { bubbles: true }));
-    return true;
-  }
   async function recibir(ta, archivos) {
-    const modulo = moduloDe(ta);
+    const modulo = moduloDe(ta), clave = claveDe(ta);
     const imgs = [...archivos].filter(f => /^image\//.test(f.type));
     if (!modulo || !imgs.length) return false;
-    for (const f of imgs) {
-      const marca = `[subiendo imagen ${Math.random().toString(36).slice(2, 6)}…]`;
-      insertar(ta, marca);
-      SUBIENDO++;
+    await Promise.all(imgs.map(async f => {
+      const it = { id: Math.random().toString(36).slice(2, 9), prev: URL.createObjectURL(f), path: null };
+      (ADJ[clave] = ADJ[clave] || []).push(it);
+      SUBIENDO++; pintarBandejas();
       try {
-        const path = await subir(modulo, f);
-        reemplazar(ta, marca, `[img:${path}]`);
+        it.path = await subir(modulo, f);
       } catch (e) {
-        reemplazar(ta, marca, "");
+        quitar(clave, it.id);
         (window.lkAviso || alert)(e.message || "No se pudo subir la imagen.");
-      } finally { SUBIENDO--; }
-    }
+      } finally { SUBIENDO--; pintarBandejas(); }
+    }));
     return true;
   }
+  function quitar(clave, id) {
+    const it = (ADJ[clave] || []).find(x => x.id === id); if (!it) return;
+    ADJ[clave] = ADJ[clave].filter(x => x !== it);
+    if (!ADJ[clave].length) delete ADJ[clave];
+    URL.revokeObjectURL(it.prev);
+    // Ya subida y descartada: se borra del bucket (si falla, queda huérfana y no molesta).
+    if (it.path) fetch(sto(`object/${BUCKET}`), { method: "DELETE", headers: head(), body: JSON.stringify({ prefixes: [it.path] }) }).catch(() => {});
+  }
+
+  // Bandeja de miniaturas sobre cada caja con imágenes pendientes. Se vuelve a
+  // colocar después de cada repintado (lo llama el MutationObserver de abajo).
+  function pintarBandejas() {
+    CAJAS.forEach(c => document.querySelectorAll(c.sel).forEach(ta => {
+      const clave = claveDe(ta), its = ADJ[clave] || [];
+      const ancla = c.ancla(ta);
+      let b = ancla.previousElementSibling;
+      if (!(b && b.classList.contains("lk-adj-bandeja"))) b = null;
+      if (!its.length) { if (b) b.remove(); return; }
+      const firma = its.map(x => x.id + (x.path ? "+" : "")).join(",");
+      if (b && b.dataset.firma === firma) return;
+      if (!b) { b = document.createElement("div"); b.className = "lk-adj-bandeja"; ancla.parentNode.insertBefore(b, ancla); }
+      b.dataset.firma = firma; b.dataset.clave = clave;
+      b.innerHTML = its.map(x => `<span class="lk-adj ${x.path ? "" : "sube"}">
+        <img src="${x.prev}" alt="Imagen adjunta">
+        ${x.path ? `<button type="button" data-quitaradj="${x.id}" title="Sacar la imagen" aria-label="Sacar la imagen">✕</button>` : `<i>Subiendo…</i>`}</span>`).join("");
+    }));
+  }
+  document.addEventListener("click", ev => {
+    const q = ev.target.closest && ev.target.closest("[data-quitaradj]"); if (!q) return;
+    ev.preventDefault(); ev.stopPropagation();
+    quitar(q.closest(".lk-adj-bandeja").dataset.clave, q.dataset.quitaradj); pintarBandejas();
+  }, true);
 
   document.addEventListener("paste", ev => {
     const ta = ev.target;
@@ -153,7 +177,7 @@
       else { i.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw="; i.parentNode.classList.add("rota"); i.parentNode.title = "No se pudo cargar la imagen"; }
     });
   }
-  new MutationObserver(() => { if (!pendiente) pendiente = setTimeout(firmar, 60); })
+  new MutationObserver(() => { if (!pendiente) pendiente = setTimeout(() => { pintarBandejas(); firmar(); }, 60); })
     .observe(document.documentElement, { childList: true, subtree: true });
 
   // Click → la imagen en grande, encima de todo. Esc o click afuera la cierra.
@@ -176,7 +200,14 @@
   window.LK_IMG = {
     html, plano,
     ocupado: () => SUBIENDO > 0,
-    // Los módulos lo llaman antes de mandar: con una imagen a medio subir no se publica.
-    esperar: () => { if (SUBIENDO) { (window.lkAviso || alert)("Esperá a que termine de subir la imagen."); return true; } return false; },
+    // Los módulos lo llaman antes de mandar: con una imagen de ESA caja a medio subir no se publica.
+    esperar: ta => {
+      if ((ADJ[claveDe(ta)] || []).some(x => !x.path)) { (window.lkAviso || alert)("Esperá a que termine de subir la imagen."); return true; }
+      return false;
+    },
+    // Texto a guardar: lo escrito + una marca por imagen adjunta (cada una en su línea).
+    texto: ta => [ta.value.trim(), ...(ADJ[claveDe(ta)] || []).filter(x => x.path).map(x => `[img:${x.path}]`)].filter(Boolean).join("\n"),
+    // Después de guardar bien: se vacía la bandeja (las imágenes ya quedaron en el comentario).
+    limpiar: ta => { const k = claveDe(ta); (ADJ[k] || []).forEach(x => URL.revokeObjectURL(x.prev)); delete ADJ[k]; pintarBandejas(); },
   };
 })();

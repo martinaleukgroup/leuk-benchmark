@@ -699,7 +699,7 @@
   /* Objetivo, recursos y cadencia del mes (oct 2026). En el .json vienen arriba de
      todo, al lado del título; en la base viven como cuadrantes del brief con ese
      título (así ya estaban armados los meses viejos y no hace falta SQL). Los que
-     se llaman así se muestran abiertos debajo de la bajada; el resto, plegado.  */
+     se llaman así van primeros dentro del desplegable del brief.  */
   const CLAVES_MES = [["objetivo", "Objetivo"], ["recursos", "Recursos"], ["cadencia", "Cadencia"]];
   const claveDe = b => { const h = sinTildesE(b && b.h); return (CLAVES_MES.find(([k]) => k === h) || [])[0] || ""; };
   // Texto o lista de renglones → el texto del cuadrante.
@@ -716,18 +716,19 @@
     const cuadrante = (b, i) => `
             <section data-cabi="brief.${i}"><h4${e} data-cabc="brief.${i}.h">${esc(b.h || "")}</h4>
                      <p${e} data-cabc="brief.${i}.p">${esc(b.p || "")}</p></section>`;
-    // El brief y las obras son material de consulta, no lo que venís a hacer: van
-    // plegados para que los mensajes queden arriba de todo.
+    // El brief (objetivo, recursos y cadencia primero) y las obras son material de
+    // consulta, no lo que venís a hacer: van plegados para que los mensajes queden
+    // arriba de todo.
     const resto = brief.some((b, i) => !vacia(b) && !claveDe(b));
-    const hayDetalle = resto || obras.some(o => !vacia(o));
+    const hayDetalle = claves.length || resto || obras.some(o => !vacia(o));
     return `
       <div class="ct-head">
         <p class="ct-eyebrow"${e} data-cabc="eyebrow">${esc(CAB.eyebrow || "")}</p>
         <h2 class="ct-titulo"${e} data-cabc="titulo">${esc(CAB.titulo || "")}</h2>
         <p class="ct-dek"${e} data-cabc="dek">${esc(CAB.dek || "")}</p>
-        ${claves.length ? `<div class="ct-brief ct-claves">${claves.map(x => cuadrante(x.b, x.i)).join("")}</div>` : ""}
         ${hayDetalle ? `<details class="ct-detalle">
           <summary>Brief y obras del mes${obras.length ? ` · ${obras.length} obras asignadas` : ""}</summary>
+          ${claves.length ? `<div class="ct-brief ct-claves">${claves.map(x => cuadrante(x.b, x.i)).join("")}</div>` : ""}
           ${resto ? `<div class="ct-brief">${brief.map((b, i) => vacia(b) || claveDe(b) ? "" : cuadrante(b, i)).join("")}</div>` : ""}
           ${obras.length ? `<div class="ct-scroll"><table class="ct-obras">
             <thead><tr><th>Tipología</th><th>Obra</th><th>Productos</th></tr></thead>

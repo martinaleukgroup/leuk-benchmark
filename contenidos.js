@@ -63,6 +63,23 @@
   // en UNA sola página: un selector arriba cambia de perfil. Sumar otro perfil = una entrada acá y en PERFILES.
   const PERFILES = [{ k: "instagram", t: "Leuk" }, { k: "instagram_laftdren", t: "Laftdren" }];
   const esIG = c => PERFILES.some(p => p.k === c);
+  /* La cabecera del Feed copia el perfil real. Los números NO salen de la API:
+     se copian a mano del perfil cuando cambian (oct 2026: 890 / 44,7 mil / 947).
+     Lo que falte (null) simplemente no se dibuja. */
+  const PERFIL_IG = {
+    instagram: {
+      usuario: "leukiluminacion", nombre: "Leuk Iluminación", logo: "assets/logo-leuk-ilum.png",
+      publicaciones: "890", seguidores: "44,7 mil", seguidos: "947",
+      bio: ["El punto exacto entre diseño, tecnología y arquitectura.", "Leuk iluminación | Luz con intención.", "Atención a profesionales…"],
+      direccion: "Av. Juan B. Justo 3330, Buenos Aires, Argentina", web: "www.leukiluminacion.com",
+      destacadas: [["OBRAS", "Obras"], ["⌂", "Arq. Interior"], ["INFO", "Info"], ["▯", "Arq. Exterior"],
+        ["LUZ EN ACCIÓN", "Luz en acción"], ["WORK SHOP", "Workshop"], ["LEUK TALKS", "Leuk Talks"]],
+    },
+    instagram_laftdren: {
+      usuario: "laftdren", nombre: "Laftdren", logo: "",
+      publicaciones: null, seguidores: null, seguidos: null, bio: [], direccion: "", web: "", destacadas: [],
+    },
+  };
   // A quién va cada mail (se guarda en la columna `tipo`). Cada destino tiene su propia conversión
   // en Resultados. Un mail que sale a los dos públicos se carga como dos envíos.
   const DESTINOS = { profesionales: "Profesionales", distribuidores: "Distribuidores" };
@@ -92,6 +109,7 @@
   let MOVIENDO = "";     // pieza "levantada" a mano: el próximo día que se toque es su fecha nueva
   let RENDER = {};       // "archivo|nodo" -> URL del render de Figma (vive lo que dure la pestaña)
   let SINRENDER = {};    // "archivo|nodo" -> 1 si Figma contestó sin imagen (frame vacío, oculto o borrado)
+  let FEEDLIMPIO = (() => { try { return localStorage.getItem("ct-feed-limpio") === "1"; } catch (e) { return false; } })();
   let FEEDPL = {};       // contenido_id -> placa que se ve en la baldosa del feed (carrusel)
   let CONGELADAS = {};   // path en Storage -> URL firmada del PNG congelado
   // Por qué un estado y no un try/catch suelto: mientras no esté desplegada la
@@ -853,25 +871,25 @@
     const { vienen, salieron, contexto } = ordenFeed();
 
     const grilla = vienen.map(m => baldosaHTML(m, ed, false)).join("") +
-      (salieron.length || contexto.length
+      (!FEEDLIMPIO && (salieron.length || contexto.length)
         ? `<div class="ct-feed-corte"><span>↑ lo que viene · ↓ ya publicado</span></div>` : "") +
       salieron.map(m => baldosaHTML(m, ed, false)).join("") +
       contexto.map(m => baldosaHTML(m, ed, true)).join("");
 
     const aprob = enFeed.filter(yaAprobado).length;
     return `
-      <div class="ct-feed">
-        <div class="ct-feed-perfil">
-          <span class="av">L</span>
-          <div>
-            <b>leukiluminacion</b>
-            <small>${esc(cap(mesLabel(MES)))} · ${enFeed.length} ${enFeed.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas${historias ? ` · ${historias} historia${historias > 1 ? "s" : ""} aparte` : ""}</small>
-          </div>
-          ${ed ? `<span class="ct-feed-tip">Tocá una pieza para verla en grande y bajar a las siguientes. Arrastrala para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
+      <div class="ct-feed${FEEDLIMPIO ? " limpio" : ""}">
+        <div class="ct-feed-barra">
+          <small>${esc(cap(mesLabel(MES)))} · ${enFeed.length} ${enFeed.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas${historias ? ` · ${historias} historia${historias > 1 ? "s" : ""} aparte` : ""}</small>
+          <button class="btn-mini${FEEDLIMPIO ? " on" : ""}" data-feedlimpio title="Saca fechas, estados y la franja: la grilla como la ve cualquiera">${FEEDLIMPIO ? "◉ Como lo ve la gente" : "○ Como lo ve la gente"}</button>
+          ${ed && !FEEDLIMPIO ? `<span class="ct-feed-tip">Tocá una pieza para verla en grande y bajar a las siguientes. Arrastrala para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
         </div>
         ${FEEDNOTA ? `<p class="ct-feed-nota">${esc(FEEDNOTA)}</p>` : ""}
-        <div class="ct-grid">${grilla}</div>
-        <div class="ct-feed-ley">
+        <div class="ct-ig">
+          ${perfilIGHTML()}
+          <div class="ct-grid">${grilla}</div>
+        </div>
+        ${FEEDLIMPIO ? "" : `<div class="ct-feed-ley">
           <span><i class="borrador"></i>Borrador</span>
           <span><i class="revision"></i>Precisa feedback</span>
           <span><i class="cambios"></i>Con ajustes</span>
@@ -879,8 +897,40 @@
           <span><i class="calendarizado"></i>Calendarizado</span>
           <span><i class="publicado"></i>Publicado</span>
           <span class="ct-feed-ley-nota">El punto es el estado de la pieza.</span>
-        </div>
+        </div>`}
       </div>`;
+  }
+
+  // Íconos de Instagram, dibujados acá: sin fuentes ni imágenes de terceros.
+  const IG_ICO = {
+    ajustes: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5l2 2.6 3.2-.6.9 3.1 3 1.4-1.3 3 1.3 3-3 1.4-.9 3.1-3.2-.6-2 2.6-2-2.6-3.2.6-.9-3.1-3-1.4 1.3-3-1.3-3 3-1.4.9-3.1 3.2.6z" stroke-linejoin="round"/></svg>`,
+    link: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.2-1.2"/></svg>`,
+    grilla: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`,
+    reels: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M9 3l3 5.5M14.5 3l3 5.5"/><path d="M10 12v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>`,
+    etiquetas: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4H5a2 2 0 00-2 2v13a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-4l-3-2z"/><circle cx="12" cy="10.5" r="3"/><path d="M6.5 20a5.5 5.5 0 0111 0"/></svg>`,
+  };
+
+  // La cabecera del perfil, como se ve en Instagram desde la compu.
+  function perfilIGHTML() {
+    const p = PERFIL_IG[CANAL] || PERFIL_IG.instagram;
+    const num = (v, t) => v == null ? "" : `<span><b>${esc(v)}</b> ${t}</span>`;
+    return `<header class="ct-ig-cab">
+        <div class="ct-ig-av">${p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span>${esc(p.nombre.charAt(0))}</span>`}</div>
+        <div class="ct-ig-datos">
+          <div class="ct-ig-usr"><h2>${esc(p.usuario)}</h2><span class="ct-ig-ico">${IG_ICO.ajustes}</span></div>
+          <div class="ct-ig-nombre">${esc(p.nombre)}</div>
+          ${p.publicaciones || p.seguidores || p.seguidos ? `<div class="ct-ig-nums">${num(p.publicaciones, "publicaciones")}${num(p.seguidores, "seguidores")}${num(p.seguidos, "seguidos")}</div>` : ""}
+        </div>
+        <div class="ct-ig-txt">
+          ${p.bio.length ? `<div class="ct-ig-bio">${p.bio.map(esc).join("<br>")} <span class="gris">más</span></div>` : ""}
+          ${p.direccion ? `<div class="ct-ig-dir">${esc(p.direccion)}</div>` : ""}
+          ${p.web ? `<div class="ct-ig-web">${IG_ICO.link}<span>${esc(p.web)}</span></div>` : ""}
+        </div>
+      </header>
+      <div class="ct-ig-btns"><span>Editar perfil</span><span>Ver archivo</span></div>
+      ${p.destacadas.length ? `<div class="ct-ig-dest">${p.destacadas.map(([tapa, nombre]) =>
+        `<div><span class="ct-ig-dest-aro"><span class="ct-ig-dest-tapa">${esc(tapa)}</span></span><small>${esc(nombre)}</small></div>`).join("")}</div>` : ""}
+      <div class="ct-ig-tabs"><span class="on">${IG_ICO.grilla}</span><span>${IG_ICO.reels}</span><span>${IG_ICO.etiquetas}</span></div>`;
   }
 
   // Orden de Instagram: descendente por fecha. `orden` desempata dentro del día.
@@ -1814,6 +1864,11 @@
       const fl = t.closest("[data-filtro]");
       if (fl) { FILTRO = fl.dataset.filtro; if (VISTA === "resultados") VISTA = "fichas"; pintar(); return; }
 
+      if (t.closest("[data-feedlimpio]")) {
+        FEEDLIMPIO = !FEEDLIMPIO;
+        try { localStorage.setItem("ct-feed-limpio", FEEDLIMPIO ? "1" : "0"); } catch (e) { }
+        pintar(); return;
+      }
       const fp = t.closest("[data-feedpl]");
       if (fp) { const [pid, paso] = fp.dataset.feedpl.split(":"); pasarPlacaFeed(pid, +paso); return; }
       const bd = t.closest(".ct-bald[data-bald]");

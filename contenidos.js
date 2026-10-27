@@ -298,6 +298,18 @@
     if (i === 0 && esURL((m.meta || {}).imagen)) return m.meta.imagen;
     return "";
   }
+  // Por qué una placa con link no tiene imagen. "" si la tiene o si no hay nada que decir.
+  function sinImagenPor(m, i) {
+    const pl = placasDe(m)[i];
+    if (!pl || !conFigma(m, pl) || imagenDe(m, i)) return "";
+    if (FIGMA.estado === "sin-token") return "Falta cargar el token de Figma en Supabase.";
+    if (FIGMA.estado === "sin-funcion") return "Falta desplegar la función figma-render en Supabase.";
+    if (FIGMA.estado === "error") return FIGMA.msg || "No se pudo traer la imagen de Figma.";
+    if (SINRENDER[archivoDe(m, pl) + "|" + pl.nodo])
+      return "Figma no devolvió imagen para este frame: revisá que el link sea de un frame con contenido y que no esté oculto ni borrado.";
+    if (FIGMA.msg) return FIGMA.msg;
+    return "Trayendo la imagen de Figma…";
+  }
   // Comentarios sin resolver de UNA placa (1..n) o de la pieza entera (null).
   // Reusa `variante`, que existía para las variantes de WhatsApp y no se usaba.
   const comsPlaca = (m, n) => (COMS[m.id] || []).filter(c =>
@@ -444,7 +456,8 @@
       const d = await fnFigma({ accion: "render", file_key: fk, forzar: !!forzar,
         nodos: [...porArchivo[fk]] });
       if (d) for (const [nodo, u] of Object.entries(d.urls || {})) { RENDER[fk + "|" + nodo] = u; delete SINRENDER[fk + "|" + nodo]; }
-      if (d) (d.sin_render || []).forEach(nodo => { SINRENDER[fk + "|" + nodo] = 1; });
+      // Pedido que volvió sin imagen y sin corte = Figma no tiene qué mostrar de ese frame.
+      if (d && !d.error) [...porArchivo[fk]].forEach(nodo => { if (!(d.urls || {})[nodo]) SINRENDER[fk + "|" + nodo] = 1; });
     });
     if (paths.length) tareas.push((async () => {
       const d = await fnFigma({ accion: "ver", file_key: "-", paths: [...new Set(paths)] });
@@ -900,7 +913,9 @@
         ${ed && !ajena ? 'draggable="true"' : ""} title="${esc(m.criterio || "")}">
       ${img ? `<img src="${esc(img)}" alt="" loading="lazy">`
             : `<span class="ct-bald-ph"><span>${esc(m.criterio || "Sin título")}</span>${
-                !ajena && esIG(CANAL) && faltaFigma(m) ? `<small class="ct-bald-falta">Falta el link de Figma</small>` : ""}</span>`}
+                ajena || !esIG(CANAL) ? "" : faltaFigma(m) ? `<small class="ct-bald-falta">Falta el link de Figma</small>`
+                : sinImagenPor(m, k) && !sinImagenPor(m, k).endsWith("…")
+                  ? `<small class="ct-bald-falta" title="${esc(sinImagenPor(m, k))}">Figma no mandó la imagen</small>` : ""}</span>`}
       ${ajena ? "" : `<span class="ct-bald-est ${esc(m.estado)}"></span>`}
       ${badge ? `<span class="ct-bald-tipo">${badge}</span>` : ""}
       <span class="ct-bald-dia">${fecha}${ajena ? " · " + esc(mesLabel(m.mes).slice(0, 3)) : ""}</span>
@@ -935,7 +950,9 @@
       const fotos = Array.from({ length: n }, (_, j) => {
         const img = imagenDe(m, j);
         return `<div class="ct-vs-foto">${img ? `<img src="${esc(img)}" alt="" loading="lazy">`
-          : `<span class="ct-vs-ph">${esc(m.criterio || "Sin título")}${!ajena && faltaFigma(m) ? `<small>Falta el link de Figma</small>` : ""}</span>`}</div>`;
+          : `<span class="ct-vs-ph">${esc(m.criterio || "Sin título")}${
+              ajena ? "" : faltaFigma(m) ? `<small>Falta el link de Figma</small>`
+              : sinImagenPor(m, j) ? `<small>${esc(sinImagenPor(m, j))}</small>` : ""}</span>`}</div>`;
       }).join("");
       return `<article class="ct-vs-post" data-vspost="${m.id}">
         <header><span class="av">${esc(perfil[0])}</span>
@@ -1456,13 +1473,7 @@
           <span class="tenue">${
             act.png && !esURL(act.png)
               ? `Imagen congelada${act.png_ts ? " el " + String(act.png_ts).slice(8, 10) + "/" + String(act.png_ts).slice(5, 7) : ""}: esto es lo que se aprobó, aunque el frame haya cambiado después.`
-            : FIGMA.estado === "sin-token" ? "Falta cargar el token de Figma en Supabase para ver la imagen acá."
-            : FIGMA.estado === "sin-funcion" ? "Falta desplegar la función figma-render en Supabase para ver la imagen acá."
-            : FIGMA.estado === "error" ? esc(FIGMA.msg || "No se pudo traer la imagen de Figma.")
-            : imagenDe(m, i) ? "La imagen se trae de Figma y se congela al aprobar esta placa."
-            : SINRENDER[archivoDe(m, act) + "|" + act.nodo] ? "Figma no devolvió imagen para este frame: revisá que el link sea de un frame con contenido y que no esté oculto ni borrado."
-            : (FIGMA.estado === "ok" && FIGMA.msg) ? esc(FIGMA.msg)
-            : "Trayendo la imagen de Figma…"
+            : esc(sinImagenPor(m, i) || "La imagen se trae de Figma y se congela al aprobar esta placa.")
           }</span></p>`
         : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 

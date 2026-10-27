@@ -43,7 +43,7 @@
 .tk-prio{font-size:11.5px;font-weight:600;color:var(--gray-soft);white-space:nowrap}
 .tk-prio.alta{color:var(--no)}
 .tk-prio.media{color:var(--warn)}
-.tk-card-tags .tk-prio.alta{background:#f6e7e4;padding:1px 8px;border-radius:999px}
+.tk-card-tags .tk-prio.alta{background:#FDEBEC;padding:1px 8px;border-radius:999px}
 .tk-vence{font-size:12px;color:var(--gray-soft);white-space:nowrap}
 .tk-vence.pronto{color:var(--warn);font-weight:600}
 .tk-vence.hoy{color:var(--no);font-weight:600}
@@ -63,10 +63,10 @@
   width:28px;height:28px;border-radius:8px}
 .tk-col-mas:hover{background:var(--card)}
 .tk-col-cuerpo{display:flex;flex-direction:column;gap:8px;min-height:64px;border-radius:10px;transition:background .15s}
-.tk-col-cuerpo.sobre{background:rgba(103,107,85,.12);outline:2px dashed var(--olive-soft);outline-offset:2px}
+.tk-col-cuerpo.sobre{background:rgba(0,0,0,.12);outline:2px dashed var(--olive-soft);outline-offset:2px}
 .tk-col-vacia{font-size:12.5px;color:var(--gray-soft);text-align:center;padding:18px 8px;border:1.5px dashed var(--olive-soft);border-radius:10px}
 .tk-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive-soft);border-radius:10px;
-  padding:10px 11px;cursor:pointer;box-shadow:0 1px 2px rgba(40,42,34,.05);transition:box-shadow .15s,transform .15s}
+  padding:10px 11px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05);transition:box-shadow .15s,transform .15s}
 .tk-card:hover{box-shadow:var(--shadow)}
 .tk-card:focus-visible,.tk-fila:focus-visible,.tk-cal-chip:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
 .tk-card.p-alta{border-left-color:var(--no)}
@@ -138,7 +138,7 @@
 .tk-cal-chip .tk-avatar{width:17px;height:17px;font-size:8px}
 .tk-cal-chip.p-alta{border-left-color:var(--no)}
 .tk-cal-chip.p-media{border-left-color:var(--warn)}
-.tk-cal-chip.vencida{background:#f6e7e4}
+.tk-cal-chip.vencida{background:#FDEBEC}
 .tk-cal-chip.hecha{opacity:.6}
 .tk-cal-chip.hecha > span:last-child{text-decoration:line-through}
 .tk-cal-chip.abierta{box-shadow:0 0 0 2px var(--olive)}
@@ -151,9 +151,9 @@
 .tk-sinfecha-l .tk-cal-chip{max-width:260px}
 
 /* ---- Panel de la tarea ---- */
-.tk-velo{position:fixed;inset:0;background:rgba(43,44,38,.25);z-index:40}
+.tk-velo{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:40}
 .tk-panel{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--card);z-index:41;
-  box-shadow:-10px 0 40px rgba(40,42,34,.15);overflow-y:auto;padding:16px 22px 28px;
+  box-shadow:-10px 0 40px rgba(0,0,0,.15);overflow-y:auto;padding:16px 22px 28px;
   animation:tk-entra .18s ease-out}
 .tk-panel.quieto,.tk-velo.quieto{animation:none}
 @keyframes tk-entra{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
@@ -163,9 +163,9 @@
 /* Hito: la estrellita marca las tareas que son hitos del plan */
 .tk-estrella{border:1px solid var(--line);background:var(--card);color:var(--gray);padding:4px 11px;border-radius:999px;font-size:12.5px}
 .tk-estrella:hover{border-color:var(--warn);color:var(--warn)}
-.tk-estrella.on{background:#f7efdf;border-color:var(--warn);color:#8a6424;font-weight:600}
+.tk-estrella.on{background:#FBF3DB;border-color:var(--warn);color:#A8741A;font-weight:600}
 .tk-hito{color:var(--warn);margin-right:4px;font-size:1.05em}
-.tk-card.hito{background:linear-gradient(#fffaf0,#fff 60%)}
+.tk-card.hito{background:linear-gradient(#FBF8EF,#fff 60%)}
 .tk-cal-chip .tk-hito{margin:0}
 .tk-chip.hitos:not(.on) .c{color:var(--warn)}
 .tk-eyebrow{font-family:var(--font-title);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--olive-mid)}
@@ -223,7 +223,7 @@
 .tk-check-fx:hover{background:var(--no)}
 @media (hover:hover){.tk-check-f:hover .tk-check-fx{display:block}}
 .tk-mini{border:0;background:transparent;color:var(--gray-soft);font-size:12px;width:26px;height:26px;border-radius:6px;flex:none}
-.tk-mini:hover{background:#f6e7e4;color:var(--no)}
+.tk-mini:hover{background:#FDEBEC;color:var(--no)}
 .tk-coms{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
 .tk-com{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .tk-com-h{display:flex;align-items:center;gap:7px;font-size:12.5px}
@@ -237,7 +237,7 @@
 .tk-p-pie{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;
   justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--gray-soft)}
 .tk-borrar{border:1px solid transparent;background:transparent;color:var(--no);font-size:12.5px;padding:6px 10px;border-radius:8px}
-.tk-borrar:hover{border-color:var(--no);background:#f6e7e4}
+.tk-borrar:hover{border-color:var(--no);background:#FDEBEC}
 
 /* ---- Celular ---- */
 @media (max-width:900px){
@@ -275,9 +275,9 @@
 
 /* ---- Menciones (@) ---- */
 .tk-arroba{color:var(--olive);font-weight:600;background:var(--olive-pale);padding:0 4px;border-radius:5px}
-.tk-arroba.yo{background:#f7efdf;color:#8a6424}
+.tk-arroba.yo{background:#FBF3DB;color:#A8741A}
 .tk-menc{position:fixed;z-index:60;width:250px;max-width:calc(100vw - 16px);background:var(--card);border:1px solid var(--line);
-  border-radius:10px;box-shadow:0 10px 30px rgba(40,42,34,.18);padding:4px;display:flex;flex-direction:column}
+  border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:4px;display:flex;flex-direction:column}
 .tk-menc button{display:flex;align-items:center;gap:9px;border:0;background:transparent;text-align:left;
   padding:6px 8px;border-radius:7px;font-size:14px;color:var(--ink)}
 .tk-menc button.on,.tk-menc button:hover{background:var(--olive-pale)}

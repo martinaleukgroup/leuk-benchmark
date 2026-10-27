@@ -462,7 +462,7 @@
     const pasa = pasos.map((x, i) => i && x.v != null && pasos[i - 1].v ? x.v / pasos[i - 1].v : null);
     const validos = pasa.filter(x => x != null && x <= 1);
     const peor = validos.length > 1 ? pasa.indexOf(Math.min(...validos)) : -1;
-    const tonos = ["var(--olive-pale)", "var(--olive-soft)", "var(--olive-mid)", "var(--olive)", "#4d5040", "#3b3d31"];
+    const tonos = ["var(--olive-pale)", "var(--olive-soft)", "var(--olive-mid)", "var(--olive)", "#4D4D4D", "#333333"];
     const txtOsc = i => i >= 2;
     let y = 0, svg = "";
     pasos.forEach((x, i) => {

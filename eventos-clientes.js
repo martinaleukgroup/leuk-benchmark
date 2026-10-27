@@ -425,7 +425,7 @@
   }
 
   /* ---- Gráficos (SVG propio, mismo criterio que Resultados) ---- */
-  const COL = { main: "var(--olive)", soft: "var(--olive-soft)", gris: "#b9b8ad", warn: "var(--warn)", neg: "#c98f84" };
+  const COL = { main: "var(--olive)", soft: "var(--olive-soft)", gris: "#B8B8B8", warn: "var(--warn)", neg: "#E16F64" };
   const corta = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
   function leyenda(items) {
     return `<div class="ec-ley">${items.map(([t, c, dash]) => `<span><i style="background:${c}${dash ? ";height:2px;border-top:2px dashed " + c + ";background:none" : ""}"></i>${esc(t)}</span>`).join("")}</div>`;

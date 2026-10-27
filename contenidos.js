@@ -31,28 +31,28 @@
      Sumar LinkedIn = una entrada acá + la página en app.js e index.html.     */
   const CANALES = {
     whatsapp: {
-      label: "Comunidad de WhatsApp", corto: "WhatsApp", icono: "💬",
+      label: "Comunidad de WhatsApp", corto: "WhatsApp", icono: "chat",
       caja: "#contenidos", pagina: "contenidos",
       unidad: "mensaje", art: "un", unidadPl: "mensajes", nuevo: "Nuevo mensaje",
       eyebrow: m => `Comunidad profesional de WhatsApp · ${cap(mesLabel(m))}`,
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada mensaje con «Con ajustes» o «Listo para publicar».",
     },
     instagram: {
-      label: "Instagram", corto: "Instagram", icono: "📸",
+      label: "Instagram", corto: "Instagram", icono: "photo_camera",
       caja: "#contenidos-ig", pagina: "contenidos-ig",
       unidad: "pieza", art: "una", unidadPl: "piezas", nuevo: "Pieza nueva",
       eyebrow: m => `Instagram · ${cap(mesLabel(m))}`,
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
     },
     instagram_laftdren: {
-      label: "Instagram", corto: "Instagram Laftdren", icono: "📸",
+      label: "Instagram", corto: "Instagram Laftdren", icono: "photo_camera",
       caja: "#contenidos-ig", pagina: "contenidos-ig",
       unidad: "pieza", art: "una", unidadPl: "piezas", nuevo: "Pieza nueva",
       eyebrow: m => `Instagram Laftdren · ${cap(mesLabel(m))}`,
       lectura: "Podés leer todo el mes y dejar comentarios o sugerencias. Si revisás este canal, decidís en cada pieza con «Con ajustes» o «Listo para publicar».",
     },
     mailing: {
-      label: "Mailing", corto: "Mailing", icono: "✉️",
+      label: "Mailing", corto: "Mailing", icono: "mail",
       caja: "#contenidos-mail", pagina: "contenidos-mail",
       unidad: "envío", art: "un", unidadPl: "envíos", nuevo: "Nuevo envío",
       eyebrow: m => `Mailing · ${cap(mesLabel(m))}`,
@@ -566,7 +566,7 @@
     if (!MESES.length) {
       cont.innerHTML = `
         <div class="empty">
-          <div class="big">🗓</div>
+          <div class="big"><span class="msi">calendar_month</span></div>
           <p>Todavía no hay ningún mes cargado.</p>
           ${ed ? `<div class="ct-acc" style="justify-content:center;margin-top:14px">
                     <button class="btn-primary" data-acc="nuevo-mes">Crear un mes</button>
@@ -631,9 +631,9 @@
             <button data-acc="importar">⬆ Importar un mes (.json)</button>
             <button data-acc="exportar">⬇ Bajar este mes (.json)</button>` : "",
       `<button data-acc="exportar-pdf">⬇ Bajar el calendario (PDF)</button>`,
-      esAdminC() && RESP ? `<button data-acc="responsables">👥 Responsables del canal</button>` : "",
+      esAdminC() && RESP ? `<button data-acc="responsables"><span class="msi">group</span> Responsables del canal</button>` : "",
       // Borrar un mes: sólo admin, que es lo que deja la base (cm_del). Al final, aparte.
-      esAdminC() && CAB ? `<button data-acc="borrar-mes" class="peligro">🗑 Eliminar este mes…</button>` : "",
+      esAdminC() && CAB ? `<button data-acc="borrar-mes" class="peligro"><span class="msi">delete</span> Eliminar este mes…</button>` : "",
     ].join("");
 
     return `
@@ -661,11 +661,11 @@
             ${ed ? `<option disabled>──────────</option><option value="__nuevo">＋ Nuevo mes…</option>` : ""}
           </select>
           <div class="ct-vistas">
-            <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}">📅 Calendario</button>
-            <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}">☰ Fichas</button>
+            <button data-vista="calendario" class="${VISTA === "calendario" ? "on" : ""}"><span class="msi">calendar_month</span> Calendario</button>
+            <button data-vista="fichas" class="${VISTA === "fichas" ? "on" : ""}"><span class="msi">view_list</span> Fichas</button>
             ${esIG(CANAL) ? `<button data-vista="feed" class="${VISTA === "feed" ? "on" : ""}"
               title="Cómo va a quedar la grilla del perfil">▦ Feed</button>` : ""}
-            ${window.LeukResultados ? `<button data-vista="resultados" class="${VISTA === "resultados" ? "on" : ""}" title="KPIs del canal">📈 Resultados</button>` : ""}
+            ${window.LeukResultados ? `<button data-vista="resultados" class="${VISTA === "resultados" ? "on" : ""}" title="KPIs del canal"><span class="msi">trending_up</span> Resultados</button>` : ""}
           </div>
           ${VISTA === "fichas" && MSGS.length ? `<input class="ct-busca" type="search" placeholder="Buscar ${esc(C().unidad)}…" value="${esc(BUSCA)}" autocomplete="off" aria-label="Buscar">` : ""}
         </div>
@@ -818,7 +818,7 @@
             <span class="marcas">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado}
               ${ig ? ` · ${{ carrusel: "Carrusel", reel: "Reel", historia: "Historia" }[m.tipo] || "Post"}` : ""}
               ${CANAL === "mailing" ? ` · ${DESTINOS[destinoDe(m)] || "Sin destino"}` : ""}
-              ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · 💬 ${nc}` : ""}</span>
+              ${nv ? ` · ${nv} variantes` : ""}${ns ? ` · ✎ ${ns}` : ""}${nc ? ` · <span class="msi">chat_bubble</span>${nc}` : ""}</span>
           </div>`;
     }
 
@@ -860,7 +860,7 @@
      nueva se mira en el vacío y no se ve que van tres fotos oscuras seguidas.  */
   function feedHTML(ed) {
     if (!MSGS.length) {
-      return `<div class="empty"><div class="big">📸</div><p>Este mes todavía no tiene piezas.</p>
+      return `<div class="empty"><div class="big"><span class="msi">photo_camera</span></div><p>Este mes todavía no tiene piezas.</p>
         ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">Agregar la primera</button>` : ""}</div>`;
     }
     const hoy = hoyISO();
@@ -870,7 +870,7 @@
     const enFeed = MSGS.filter(m => m.tipo !== "historia" && m.fecha);
     const historias = MSGS.length - enFeed.length;
     if (!enFeed.length) {
-      return `<div class="empty"><div class="big">📸</div>
+      return `<div class="empty"><div class="big"><span class="msi">photo_camera</span></div>
         <p>Este mes son todas historias: no dejan baldosa en el perfil.</p>
         ${historiasDelMes().length ? `<button class="btn-mini on" data-historias style="margin-top:10px">▶ Verlas como en Instagram</button>` : ""}
         <button class="btn-mini" data-vista="calendario" style="margin-top:10px">Verlas en el calendario</button></div>`;
@@ -1337,7 +1337,7 @@
   let VER_PANEL = false;     // celular: true = se muestra el panel en vez de la lista
   function fichasHTML(ed) {
     if (!MSGS.length) {
-      return `<div class="empty"><div class="big">✍️</div><p>Este mes todavía no tiene ${C().unidadPl}.</p>
+      return `<div class="empty"><div class="big"><span class="msi">edit</span></div><p>Este mes todavía no tiene ${C().unidadPl}.</p>
         ${ed ? `<button class="btn-primary" data-acc="nuevo-msg" style="margin-top:12px">＋ Agregar ${C().art === "una" ? "una nueva" : "un nuevo"} ${C().unidad}</button>` : ""}</div>`;
     }
     const norm = x => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1372,7 +1372,7 @@
       <span class="ct-fila-f">${f ? `<b>${String(f.getDate()).padStart(2, "0")}/${String(f.getMonth() + 1).padStart(2, "0")}</b><small>${DIA_CORTO[f.getDay()].slice(0, 3)}</small>`
         : `<b class="sin">—/—</b><small>Sin fecha</small>`}</span>
       <span class="ct-fila-t"><b>${esc(m.criterio || "Sin título")}</b>
-        <small>${CANAL === "mailing" ? esc(DESTINOS[destinoDe(m)] || "Sin destino") + (t || pend ? " · " : "") : ""}${t ? esc(t) : ""}${pend ? `${t ? " · " : ""}💬 ${pend}` : ""}</small></span>
+        <small>${CANAL === "mailing" ? esc(DESTINOS[destinoDe(m)] || "Sin destino") + (t || pend ? " · " : "") : ""}${t ? esc(t) : ""}${pend ? `${t ? " · " : ""}<span class="msi">chat_bubble</span>${pend}` : ""}</small></span>
       <span class="ct-est ${m.estado}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>
     </button>`;
   }
@@ -1449,8 +1449,8 @@
         <div class="ct-mail-cab">
           <h5>El mail</h5>
           ${hay ? `<span class="ct-mail-vista" role="group" aria-label="Cómo se ve">
-            <button data-mailvista="${m.id}:escritorio" class="${vista === "escritorio" ? "on" : ""}">🖥 Escritorio</button>
-            <button data-mailvista="${m.id}:celular" class="${vista === "celular" ? "on" : ""}">📱 Celular</button></span>` : ""}
+            <button data-mailvista="${m.id}:escritorio" class="${vista === "escritorio" ? "on" : ""}"><span class="msi">desktop_windows</span> Escritorio</button>
+            <button data-mailvista="${m.id}:celular" class="${vista === "celular" ? "on" : ""}"><span class="msi">smartphone</span> Celular</button></span>` : ""}
           ${h ? `<button class="btn-mini" data-mailcopiar="${m.id}" title="Copiar el código para pegarlo en Odoo">⧉ Copiar el HTML</button>` : ""}
           ${ed ? `<label class="btn-mini on ct-mail-subir">⬆ ${hay ? "Subir otro archivo" : "Subir el mail"}
             <input type="file" hidden multiple accept=".html,.htm,text/html,image/*" data-mailfile="${m.id}"></label>` : ""}
@@ -1579,7 +1579,7 @@
           <small>${DIA_CORTO[f.getDay()]}</small>
           ${ed ? `<input type="date" class="ct-fecha-input" value="${m.fecha}" data-fechainput="${m.id}">` : ""}</span>
         <span class="ct-cuando ${cuando(m.fecha).c}">${cuando(m.fecha).t}</span>`
-        : `<span class="ct-fecha sin ${ed ? "editable" : ""}" title="${ed ? "Elegir el día" : ""}">${ed ? "📅 Poner fecha" : "Sin fecha"}
+        : `<span class="ct-fecha sin ${ed ? "editable" : ""}" title="${ed ? "Elegir el día" : ""}">${ed ? '<span class="msi">calendar_month</span> Poner fecha' : "Sin fecha"}
           ${ed ? `<input type="date" class="ct-fecha-input" value="" data-fechainput="${m.id}">` : ""}</span>`}
         <span class="ct-crit"${e} data-ph="Título" data-c="criterio">${esc(m.criterio || "")}</span>
         <span class="ct-obj"${e} data-ph="Objetivo" data-c="objetivo">${esc(m.objetivo || "")}</span>
@@ -1605,8 +1605,8 @@
       <div class="ct-pie">
         <button class="btn-mini ${ABIERTOS[m.id] ? "on" : ""}" data-coms="${m.id}">
           ${pendSug ? `<span class="ct-badge sug">✎ ${pendSug}</span>` : ""}
-          ${pendCom ? `<span class="ct-badge">💬 ${pendCom}</span>` : ""}
-          ${!pendSug && !pendCom ? `💬 Comentarios${coms.length ? ` (${coms.length})` : ""}` : "sin resolver"}</button>
+          ${pendCom ? `<span class="ct-badge"><span class="msi">chat_bubble</span>${pendCom}</span>` : ""}
+          ${!pendSug && !pendCom ? `<span class="msi">chat_bubble</span> Comentarios${coms.length ? ` (${coms.length})` : ""}` : "sin resolver"}</button>
         <button class="btn-mini" data-copiar="${m.id}" title="${CANAL === "mailing" ? "Copiar el asunto y el preheader" : "Copiar el mensaje listo para pegar en WhatsApp"}">⧉ ${CANAL === "mailing" ? "Copiar el asunto" : "Copiar"}</button>
         <span class="ct-guardado" data-guardado="${m.id}"></span>
         <div class="ct-acciones">${accionesHTML(m, ed)}</div>
@@ -1744,7 +1744,7 @@
       ${sugs.length ? `<p class="ct-sug-aviso">✎ ${sugs.length} sugerencia${sugs.length > 1 ? "s" : ""} sin resolver — el copy se desbloquea al aceptarlas o descartarlas.</p>` : ""}
       <div class="ct-meta">
         ${enc ? encuestaHTML(enc, pre, ed)
-          : ed && CANAL === "whatsapp" ? `<button class="btn-mini ct-poll-add" data-encadd="${pre}">📊 Agregar encuesta</button>` : ""}
+          : ed && CANAL === "whatsapp" ? `<button class="btn-mini ct-poll-add" data-encadd="${pre}"><span class="msi">poll</span> Agregar encuesta</button>` : ""}
         <dl>
           ${campo("Imagen", "imagen")}
           ${meta.link || ed ? `<div><dt>Link</dt><dd${e} data-c="${pre}meta.link">${esc(meta.link || "")}</dd></div>` : ""}
@@ -1763,7 +1763,7 @@
     const e = ed ? ' contenteditable="true" spellcheck="false"' : "";
     const ops = Array.isArray(enc.opciones) ? enc.opciones : [];
     return `<div class="ct-poll" data-enc="${pre}">
-      <div class="ct-poll-top"><span class="ct-poll-tit">📊 Encuesta</span>
+      <div class="ct-poll-top"><span class="ct-poll-tit"><span class="msi">poll</span> Encuesta</span>
         ${ed ? `<span class="ct-poll-ctrl"><label class="ct-poll-multi"><input type="checkbox" data-encmulti="${pre}" ${enc.multiple ? "checked" : ""}> Varias respuestas</label>
                <button class="ct-poll-x" data-encdel="${pre}" title="Quitar la encuesta">✕</button></span>`
              : `<span class="ct-poll-multi">${enc.multiple ? "Varias respuestas" : "Una sola respuesta"}</span>`}</div>
@@ -1823,7 +1823,7 @@
       return puedoHacer()
         ? `<button class="btn-mini" data-paso="borrador" title="Volver a editarla (pide feedback de nuevo)">Volver a editar</button>
            ${esIG(CANAL)
-             ? `<button class="btn-mini on" data-paso="calendarizado" title="Ya quedó programada en Instagram">📅 Marcar calendarizado</button>`
+             ? `<button class="btn-mini on" data-paso="calendarizado" title="Ya quedó programada en Instagram"><span class="msi">event_available</span> Marcar calendarizado</button>`
              : `<button class="btn-mini on" data-paso="publicado">✓ Marcar publicado</button>`}`
         : espera(turno(m));
     // Instagram: entre "listo" y "publicado" está "calendarizado" (ya programada en la red).
@@ -1863,7 +1863,7 @@
             <div class="accs">
               ${(!c.decision && ed && !suelta) ? `<button class="acep" data-acepta="${c.id}" title="Aplicar este cambio al copy">✓</button>` : ""}
               ${(!c.decision && ed) ? `<button data-descarta="${c.id}" title="Descartar la sugerencia">✗</button>` : ""}
-              ${mio && !c.decision ? `<button data-delcom="${c.id}" title="Eliminar">🗑</button>` : ""}
+              ${mio && !c.decision ? `<button data-delcom="${c.id}" title="Eliminar"><span class="msi">delete</span></button>` : ""}
             </div>
           </div>`;
         }
@@ -2547,7 +2547,7 @@
     const ov = document.createElement("div"); ov.className = "detail";
     ov.innerHTML = `<div class="detail-inner ct-nm" role="dialog" aria-label="Nuevo mes">
       <button class="detail-close" data-x aria-label="Cerrar">✕</button>
-      <p class="ct-eyebrow">${esc(C().icono)} ${esc(C().corto)}</p>
+      <p class="ct-eyebrow"><span class="msi">${esc(C().icono)}</span> ${esc(C().corto)}</p>
       <h2>Nuevo mes</h2>
       <div class="ct-nm-sec">
         <div class="ct-nm-anio"><button type="button" data-anio="-1" aria-label="Año anterior">‹</button><b data-anio-t></b><button type="button" data-anio="1" aria-label="Año siguiente">›</button></div>
@@ -2711,7 +2711,7 @@
     document.body.appendChild(hoja);
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      const cv = await html2canvas(hoja, { scale: 2, backgroundColor: "#fbfbf9", logging: false,
+      const cv = await html2canvas(hoja, { scale: 2, backgroundColor: "#FAFAFA", logging: false,
         windowWidth: ANCHO + 40 });
       const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
       // Entra entero en una hoja: se achica por el lado que primero toque el borde.
@@ -3097,8 +3097,8 @@
     // el click cambia de solapa antes de llevarte a la pieza.
     const linea = (id, cls, ic, txt, sub, canal) => {
       const cn = canal || CANAL;
-      const otro = cn !== CANAL && CANALES[cn] ? ` <span class="ct-aviso-canal">${CANALES[cn].icono} ${esc(CANALES[cn].corto)}</span>` : "";
-      return `<button class="ct-aviso${cls}" data-ir-aviso="${id}" data-ir-canal="${esc(cn)}"><span class="ic">${ic}</span>
+      const otro = cn !== CANAL && CANALES[cn] ? ` <span class="ct-aviso-canal"><span class="msi">${CANALES[cn].icono}</span> ${esc(CANALES[cn].corto)}</span>` : "";
+      return `<button class="ct-aviso${cls}" data-ir-aviso="${id}" data-ir-canal="${esc(cn)}"><span class="ic"><span class="msi">${ic}</span></span>
         <span class="tx">${txt}${otro}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
     };
     const cuando2 = f => { const c = cuando(f); return c.t; };
@@ -3115,7 +3115,7 @@
           `${m.fecha.slice(8)}/${m.fecha.slice(5, 7)} · ${ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado} · ${cuando2(m.fecha)}`,
           m.canal)).join("");
       if (AVISOS.sale.length) cuerpo += `<h5>Sale hoy</h5>` +
-        AVISOS.sale.map(m => linea(m.id, "", "📤", esc(m.criterio || "Sin título"),
+        AVISOS.sale.map(m => linea(m.id, "", "send", esc(m.criterio || "Sin título"),
           ESTADOS[m.estado] ? ESTADOS[m.estado].t : m.estado, m.canal)).join("");
 
       // Las sugerencias se agrupan por día: un bloque, no un aviso por cada una.
@@ -3134,7 +3134,7 @@
       }
       const coms = AVISOS.coms.filter(c => !meNombra(c));   // las que te nombran ya están arriba
       if (coms.length) cuerpo += `<h5>Comentarios sin resolver</h5>` +
-        coms.map(c => linea(c.contenido_id, nuevo(c.creado), "💬",
+        coms.map(c => linea(c.contenido_id, nuevo(c.creado), "chat_bubble",
           `${esc(c.autor || "Alguien")} en <b>${esc((c._m || {}).criterio || "algo del mes")}</b>`,
           esc((window.LK_IMG ? LK_IMG.plano(c.texto || "") : (c.texto || "")).slice(0, 60)), (c._m || {}).canal)).join("");
     }

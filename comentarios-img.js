@@ -149,8 +149,8 @@
   // Se aplica sobre HTML YA escapado: la marca sólo admite [\w-./], así que no hay nada que escapar.
   const html = h => String(h == null ? "" : h).replace(RE, (m, p) =>
     `<button type="button" class="lk-cimg" data-cimg="${p}" title="Ver la imagen"><img alt="Imagen del comentario"></button>`);
-  // Para vistas de una línea (avisos, resúmenes): la marca se lee como "📷 imagen".
-  const plano = t => String(t == null ? "" : t).replace(RE, "📷 imagen").replace(/\s+/g, " ").trim();
+  // Para vistas de una línea (avisos, resúmenes): la marca se lee como "[imagen]".
+  const plano = t => String(t == null ? "" : t).replace(RE, "[imagen]").replace(/\s+/g, " ").trim();
 
   // Las miniaturas se firman en lote apenas aparecen en pantalla. Caché de 50 min (firmas de 1 h).
   const FIRMAS = {};

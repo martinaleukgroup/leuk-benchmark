@@ -51,13 +51,13 @@
 .ec-cli tr.no td b{color:var(--gray)}
 .ec-personas{width:58px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;font-family:var(--font-body);text-align:center}
 .ec-tag{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;vertical-align:1px;text-transform:uppercase;letter-spacing:.03em}
-.ec-tag.nuevo{background:#e3eedc;color:var(--ok)}
-.ec-tag.reactivado{background:#f4ead8;color:var(--warn)}
+.ec-tag.nuevo{background:#EDF3EC;color:var(--ok)}
+.ec-tag.reactivado{background:#FBF3DB;color:var(--warn)}
 
 /* ---- Ficha del evento ---- */
 .ec-d-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .ec-d-top .ec-nota{flex:1}
-.ec-borrar{color:var(--no);border-color:#e3c9c4}
+.ec-borrar{color:var(--no);border-color:#FFE2DD}
 .ec-datos{display:flex;flex-direction:column;gap:10px}
 .ec-titulo{font-family:var(--font-title);font-size:24px;font-weight:600;border:0;border-bottom:1.5px solid transparent;padding:2px 0;color:var(--ink);background:transparent;outline:none}
 .ec-titulo:focus{border-bottom-color:var(--olive-soft)}
@@ -113,7 +113,7 @@
 .ec-veredicto.warn{border-left-color:var(--warn)} .ec-veredicto.warn > b{color:var(--warn)}
 .ec-veredicto.no{border-left-color:var(--no)} .ec-veredicto.no > b{color:var(--no)}
 .ec-ver{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--olive-pale);color:var(--gray);white-space:nowrap}
-.ec-ver.ok{background:#e3eedc;color:var(--ok)} .ec-ver.warn{background:#f4ead8;color:var(--warn)} .ec-ver.no{background:#f3e1dd;color:var(--no)}
+.ec-ver.ok{background:#EDF3EC;color:var(--ok)} .ec-ver.warn{background:#FBF3DB;color:var(--warn)} .ec-ver.no{background:#FDEBEC;color:var(--no)}
 .ec-sug-vacio{margin:0;padding:8px 10px;font-size:13px;color:var(--gray-soft)}
 
 /* ---- Impacto de acciones (2026-10-20): pestañas, estados, oportunidades, audiencia, campañas ---- */
@@ -127,8 +127,8 @@
 .ec-tabla td .ec-estado{display:block;margin:3px 0 0}
 .ec-estado.evaluado{color:var(--ok)} .ec-estado.provisorio{color:var(--warn)} .ec-estado.esperando{color:var(--olive)} .ec-estado.faltan{color:var(--no)}
 .ec-veredicto.op{border-left-color:var(--olive)} .ec-veredicto.op > b{color:var(--olive)}
-.ec-ver.op{background:#e6e8d8;color:var(--olive)}
-.ec-tag.partner{background:#e3eedc;color:var(--ok)}
+.ec-ver.op{background:#E0E0E0;color:var(--olive)}
+.ec-tag.partner{background:#EDF3EC;color:var(--ok)}
 .ec-tag.nopartner{background:var(--olive-pale);color:var(--gray)}
 .ec-partner{font-family:var(--font-body);font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink)}
 
@@ -147,7 +147,7 @@
 .ec-ops-lista .ec-link{margin-right:4px}
 .ec-op-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:var(--olive-pale);color:var(--ink);padding:3px 10px;border-radius:999px}
 .ec-op-chip small{font-size:10.5px;color:var(--gray-soft);text-transform:uppercase;letter-spacing:.03em}
-.ec-op-chip.ok{background:#e3eedc} .ec-op-chip.ok small{color:var(--ok)}
+.ec-op-chip.ok{background:#EDF3EC} .ec-op-chip.ok small{color:var(--ok)}
 .ec-op-chip .ac-mini{padding:0 4px;min-width:0;border:0;background:transparent}
 
 .ec-op{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;display:flex;flex-direction:column;gap:8px}

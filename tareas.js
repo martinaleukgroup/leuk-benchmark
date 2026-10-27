@@ -472,7 +472,7 @@
       <div class="tk-bar">
         <div class="mh-bar">
           <div class="tk-vistas" role="tablist">
-            ${[["tablero", "▦ Tablero"], ["lista", "☰ Lista"], ["calendario", "📅 Calendario"]].map(([k, t]) =>
+            ${[["tablero", '<span class="msi">view_kanban</span> Tablero'], ["lista", '<span class="msi">view_list</span> Lista'], ["calendario", '<span class="msi">calendar_month</span> Calendario']].map(([k, t]) =>
               `<button data-accion="vista" data-k="${k}" role="tab">${t}</button>`).join("")}
           </div>
           <input class="tk-busca" type="search" placeholder="Buscar tarea…" autocomplete="off" aria-label="Buscar tarea">
@@ -526,7 +526,7 @@
   function pintarCuerpo() {
     const c = caja() && caja().querySelector(".tk-cuerpo"); if (!c) return;
     if (ERROR === "sql") {
-      c.innerHTML = `<div class="empty"><div class="big">🗂</div>Faltan las tablas de Tareas en Supabase.<br>
+      c.innerHTML = `<div class="empty"><div class="big"><span class="msi">folder_open</span></div>Faltan las tablas de Tareas en Supabase.<br>
         <small>Corré <code>supabase/sql/2026-09-15-tareas.sql</code> en el SQL Editor y recargá la página.</small></div>`;
       return;
     }
@@ -560,8 +560,8 @@
       <h4 class="tk-card-t">${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</h4>
       <div class="tk-card-pie">
         ${v ? `<span class="tk-vence ${v.c}">${esc(v.t)}</span>` : ""}
-        ${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}" title="Checklist">☑ ${ok}/${n}</span>` : ""}
-        ${nc ? `<span class="tk-meta" title="Comentarios">💬 ${nc}</span>` : ""}
+        ${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}" title="Checklist"><span class="msi">checklist</span>${ok}/${n}</span>` : ""}
+        ${nc ? `<span class="tk-meta" title="Comentarios"><span class="msi">chat_bubble</span>${nc}</span>` : ""}
         ${abierta(t) && meMencionan(t) ? `<span class="tk-meta tk-arrobado ${mencionNueva(t) ? "nueva" : ""}" title="${mencionNueva(t) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}
         ${avatarHTML(t.responsable_email)}
       </div>
@@ -635,7 +635,7 @@
         title="${abierta(t) ? "Marcar como hecha" : "Volver a abrir"}" aria-label="Marcar como hecha">
       <div class="tk-fila-t">
         <b>${t.hito ? `<span class="tk-hito" title="Hito" aria-label="Hito">★</span>` : ""}${esc(t.titulo) || "<i>Sin título</i>"}</b>
-        <span class="tk-fila-meta">${areaHTML(t.area)}${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}">☑ ${ok}/${n}</span>` : ""}${nc ? `<span class="tk-meta">💬 ${nc}</span>` : ""}${abierta(t) && meMencionan(t) ? `<span class="tk-meta tk-arrobado ${mencionNueva(t) ? "nueva" : ""}" title="${mencionNueva(t) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}</span>
+        <span class="tk-fila-meta">${areaHTML(t.area)}${n ? `<span class="tk-meta ${ok === n ? "completo" : ""}"><span class="msi">checklist</span>${ok}/${n}</span>` : ""}${nc ? `<span class="tk-meta"><span class="msi">chat_bubble</span>${nc}</span>` : ""}${abierta(t) && meMencionan(t) ? `<span class="tk-meta tk-arrobado ${mencionNueva(t) ? "nueva" : ""}" title="${mencionNueva(t) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}</span>
       </div>
       <span class="tk-estado e-${esc(t.estado)}"><span class="tk-dot e-${esc(t.estado)}"></span>${estadoT(t.estado)}</span>
       <span class="tk-prio ${esc(t.prioridad)}">${prio.t}</span>
@@ -747,7 +747,7 @@
             <input class="tk-check-t" data-check-i="${i}" value="${esc(x.t)}" aria-label="Paso">
             ${mencionesEn(x.t).length ? `<span class="tk-check-menc">${mencionesEn(x.t).map(avatarHTML).join("")}</span>` : ""}
             <span class="tk-check-f ${fp ? "con " + fp.c : ""}" title="${fp ? `Fecha del paso: ${esc(fp.l)}` : "Ponerle fecha a este paso"}">
-              <span aria-hidden="true">${fp ? esc(fp.t) : "📅"}</span>
+              <span aria-hidden="true">${fp ? esc(fp.t) : '<span class="msi">calendar_month</span>'}</span>
               <input type="date" data-check-f="${i}" value="${esc(x.f || "")}" aria-label="Fecha del paso">
               ${fp ? `<button class="tk-check-fx" data-accion="check-f-del" data-i="${i}" title="Quitar la fecha" aria-label="Quitar la fecha del paso">✕</button>` : ""}
             </span>

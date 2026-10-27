@@ -383,16 +383,16 @@ function toSurveyRespondents(headerRow, dataRows) {
 }
 const PROP_COLORS = {
   "Fernando Mazzetti": {
-    bg: "#e6edf5",
-    text: "#3a6ea5"
+    bg: "#E7F3F8",
+    text: "#337EA9"
   },
   "Marketing Leuk": {
-    bg: "#e7f0e1",
-    text: "#4f7a3f"
+    bg: "#EDF3EC",
+    text: "#448361"
   },
   "Asistente Agencia Paulo Lucia": {
-    bg: "#efe6f7",
-    text: "#7a54b0"
+    bg: "#F6F3F9",
+    text: "#9065B0"
   }
 };
 function Badge({
@@ -400,8 +400,8 @@ function Badge({
 }) {
   if (!name) return null;
   const c = PROP_COLORS[name] || {
-    bg: "#e4e6dd",
-    text: "#8a8c82"
+    bg: "#E6E6E6",
+    text: "#808080"
   };
   const short = name === "Asistente Agencia Paulo Lucia" ? "Agencia P.L." : name;
   return /*#__PURE__*/React.createElement("span", {
@@ -409,7 +409,7 @@ function Badge({
       background: c.bg,
       color: c.text,
       fontSize: 10,
-      fontFamily: "'Barlow',monospace",
+      fontFamily: "'Hanken Grotesk',monospace",
       padding: "2px 8px",
       borderRadius: 4,
       whiteSpace: "nowrap",
@@ -703,7 +703,7 @@ function App() {
   // ─── styles ───────────────────────────────────────────────────────────
   const card = {
     background: "#ffffff",
-    border: "1px solid #e4e6dd",
+    border: "1px solid #E6E6E6",
     borderRadius: 12,
     padding: wide ? "24px 28px" : "18px 16px"
   };
@@ -712,62 +712,66 @@ function App() {
     borderRadius: 8,
     padding: "10px 20px",
     cursor: "pointer",
-    fontFamily: "'Barlow',sans-serif",
+    fontFamily: "'Hanken Grotesk',sans-serif",
     fontSize: 13,
     fontWeight: 600,
-    background: grad ? "linear-gradient(135deg,#676b55,#565a45)" : "#eef0e8",
-    color: grad ? "#fff" : "#8a8c82"
+    background: grad ? "linear-gradient(135deg,#000000,#505050)" : "#F0F0F0",
+    color: grad ? "#fff" : "#808080"
   });
   const inp = {
     width: "100%",
-    background: "#fbfbf9",
-    border: "1px solid #e4e6dd",
+    background: "#FAFAFA",
+    border: "1px solid #E6E6E6",
     borderRadius: 8,
     padding: "9px 13px",
-    color: "#2b2c26",
+    color: "#1A1A1A",
     fontSize: 13,
-    fontFamily: "'Barlow',sans-serif",
+    fontFamily: "'Hanken Grotesk',sans-serif",
     outline: "none"
   };
   const stateBtn = (active, activeBg, activeBorder) => ({
     width: 34,
     height: 34,
     borderRadius: 8,
-    border: `1px solid ${active ? activeBorder : "#e4e6dd"}`,
+    border: `1px solid ${active ? activeBorder : "#E6E6E6"}`,
     cursor: "pointer",
     flexShrink: 0,
     fontSize: 13,
     fontWeight: 700,
-    background: active ? activeBg : "#eef0e8",
-    color: active ? "#fff" : "#a2a498",
+    background: active ? activeBg : "#F0F0F0",
+    color: active ? "#fff" : "#9E9E9E",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontFamily: "'Barlow',monospace"
+    fontFamily: "'Hanken Grotesk',monospace"
   });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
-      background: "#fbfbf9",
-      color: "#2b2c26",
-      fontFamily: "'Barlow',sans-serif"
+      background: "#FAFAFA",
+      color: "#1A1A1A",
+      fontFamily: "'Hanken Grotesk',sans-serif"
     }
   }, /*#__PURE__*/React.createElement("link", {
-    href: "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap",
+    rel: "stylesheet"
+  }), /*#__PURE__*/React.createElement("link", {
+    href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0&icon_names=celebration,confirmation_number&display=block",
     rel: "stylesheet"
   }), /*#__PURE__*/React.createElement("style", null, `
 *{box-sizing:border-box}
+.msi{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-feature-settings:"liga";color:#808080}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pop{0%{transform:scale(.7);opacity:0}65%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
 .row:hover{background:rgba(0,0,0,.035)!important}
 .chk{transition:all .15s}.chk:hover{transform:scale(1.08);opacity:.85}
-input:focus,textarea:focus{border-color:#676b55!important;outline:none}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#d6d8cd;border-radius:99px}
+input:focus,textarea:focus{border-color:#000000!important;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#D2D2D2;border-radius:99px}
 `), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#ffffff",
-      borderBottom: "1px solid #e4e6dd",
+      borderBottom: "1px solid #E6E6E6",
       padding: "0 20px",
       position: "sticky",
       top: 0,
@@ -812,13 +816,13 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       background: "none",
       border: "none",
-      borderBottom: tab === t.k ? "2px solid #676b55" : "2px solid transparent",
+      borderBottom: tab === t.k ? "2px solid #000000" : "2px solid transparent",
       cursor: "pointer",
       padding: "14px 16px",
       fontSize: 13,
       fontWeight: 500,
-      fontFamily: "'Barlow',sans-serif",
-      color: tab === t.k ? "#676b55" : "#8a8c82",
+      fontFamily: "'Hanken Grotesk',sans-serif",
+      color: tab === t.k ? "#000000" : "#808080",
       whiteSpace: "nowrap",
       transition: "all .2s",
       flexShrink: 0
@@ -833,44 +837,44 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, syncMsg && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#4f7a3f",
-      fontFamily: "'Barlow',monospace",
+      color: "#448361",
+      fontFamily: "'Hanken Grotesk',monospace",
       animation: "fadeUp .2s"
     }
   }, syncMsg), [{
     v: elegibles.length,
     l: "EN SORTEO",
-    c: "#4f7a3f"
+    c: "#448361"
   }, {
     v: presentes.length,
     l: "PRESENTES",
-    c: "#676b55"
+    c: "#000000"
   }, {
     v: attendees.length,
     l: "INSCRIPTOS",
-    c: "#8a8c82"
+    c: "#808080"
   }].map(s => /*#__PURE__*/React.createElement("div", {
     key: s.l,
     style: {
       textAlign: "center",
       padding: "3px 12px",
-      background: "#eef0e8",
+      background: "#F0F0F0",
       borderRadius: 8,
-      border: "1px solid #e4e6dd"
+      border: "1px solid #E6E6E6"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 17,
       fontWeight: 700,
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       color: s.c,
       lineHeight: 1.1
     }
   }, s.v), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
-      color: "#a2a498",
-      fontFamily: "'Barlow',monospace"
+      color: "#9E9E9E",
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, s.l))))))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -885,12 +889,12 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#eef3ea",
-      border: "1px solid #cfe0d2",
+      border: "1px solid #DBEDDB",
       borderRadius: 10,
       padding: "10px 14px",
       marginBottom: 12,
       fontSize: 12,
-      color: "#4f7a3f",
+      color: "#448361",
       display: "flex",
       alignItems: "center",
       gap: 8,
@@ -898,25 +902,25 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      ...stateBtn(true, "linear-gradient(135deg,#676b55,#565a45)", "#676b5520"),
+      ...stateBtn(true, "linear-gradient(135deg,#000000,#505050)", "#00000020"),
       width: 24,
       height: 24,
       fontSize: 11
     }
   }, "✓"), /*#__PURE__*/React.createElement("span", null, "Presente (a mano)"), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: "#a2a498"
+      color: "#9E9E9E"
     }
   }, "+"), /*#__PURE__*/React.createElement("span", {
     style: {
-      ...stateBtn(true, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f30"),
+      ...stateBtn(true, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f30"),
       width: 24,
       height: 24,
       fontSize: 11
     }
   }, "F"), /*#__PURE__*/React.createElement("span", null, "Encuesta (automático)"), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: "#a2a498",
+      color: "#9E9E9E",
       marginLeft: "auto"
     }
   }, "=\xA0entra al sorteo")), /*#__PURE__*/React.createElement("div", {
@@ -942,19 +946,19 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace"
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, "Asistencia"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: "#676b55",
-      fontFamily: "'Barlow',monospace"
+      color: "#000000",
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, pct, "% · ", presentes.length, "/", attendees.length)), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 4,
-      background: "#e4e6dd",
+      background: "#E6E6E6",
       borderRadius: 99,
       overflow: "hidden"
     }
@@ -962,15 +966,15 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       height: "100%",
       width: `${pct}%`,
-      background: "linear-gradient(90deg,#565a45,#676b55)",
+      background: "linear-gradient(90deg,#505050,#000000)",
       borderRadius: 99,
       transition: "width .5s"
     }
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#4f7a3f",
-      fontFamily: "'Barlow',monospace",
+      color: "#448361",
+      fontFamily: "'Hanken Grotesk',monospace",
       marginTop: 6
     }
   }, elegibles.length, " habilitado", elegibles.length !== 1 ? "s" : "", " para el sorteo (presente + encuesta)"))), /*#__PURE__*/React.createElement("div", {
@@ -990,7 +994,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       left: 11,
       top: "50%",
       transform: "translateY(-50%)",
-      color: "#a2a498",
+      color: "#9E9E9E",
       fontSize: 15,
       pointerEvents: "none"
     }
@@ -1022,10 +1026,10 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       gridTemplateColumns: "34px 1.7fr 1.6fr 1.8fr 84px",
       gap: 12,
       padding: "9px 20px",
-      borderBottom: "1px solid #e4e6dd",
+      borderBottom: "1px solid #E6E6E6",
       fontSize: 10,
-      color: "#a2a498",
-      fontFamily: "'Barlow',monospace",
+      color: "#9E9E9E",
+      fontFamily: "'Hanken Grotesk',monospace",
       letterSpacing: ".05em",
       alignItems: "center"
     }
@@ -1037,7 +1041,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       padding: 40,
       textAlign: "center",
-      color: "#a2a498",
+      color: "#9E9E9E",
       fontSize: 13
     }
   }, "Sin resultados"), filtered.map((a, i) => {
@@ -1061,15 +1065,15 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
         height: 34,
         borderRadius: 8,
         flexShrink: 0,
-        background: eleg ? "linear-gradient(135deg,#565a45,#676b55)" : "#eef0e8",
+        background: eleg ? "linear-gradient(135deg,#505050,#000000)" : "#F0F0F0",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 11,
         fontWeight: 700,
-        color: eleg ? "#fff" : "#a2a498",
-        fontFamily: "'Barlow',monospace",
-        border: `1px solid ${eleg ? "#676b5520" : "#e4e6dd"}`
+        color: eleg ? "#fff" : "#9E9E9E",
+        fontFamily: "'Hanken Grotesk',monospace",
+        border: `1px solid ${eleg ? "#00000020" : "#E6E6E6"}`
       }
     }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1079,7 +1083,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       style: {
         fontSize: 13,
         fontWeight: 500,
-        color: a.presente ? "#2b2c26" : "#6b6d62",
+        color: a.presente ? "#1A1A1A" : "#666666",
         display: "flex",
         alignItems: "center",
         gap: 5,
@@ -1088,31 +1092,31 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }, a.nombre, " ", a.apellidos, a.manual && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9,
-        background: "#e7f0e1",
-        color: "#4f7a3f",
+        background: "#EDF3EC",
+        color: "#448361",
         padding: "1px 5px",
         borderRadius: 3,
-        fontFamily: "'Barlow',monospace"
+        fontFamily: "'Hanken Grotesk',monospace"
       }
     }, "walk-in"), eleg && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9,
-        background: "#efe7d2",
-        color: "#676b55",
+        background: "#FBF3DB",
+        color: "#000000",
         padding: "1px 5px",
         borderRadius: 3,
-        fontFamily: "'Barlow',monospace"
+        fontFamily: "'Hanken Grotesk',monospace"
       }
     }, "en sorteo")), !wide && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
-        color: "#8a8c82",
+        color: "#808080",
         marginTop: 1
       }
     }, a.empresa, a.mail ? ` · ${a.mail}` : "")), wide && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
-        color: "#6b6d62",
+        color: "#666666",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
@@ -1120,7 +1124,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }, a.empresa || "—"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
-        color: "#8a8c82",
+        color: "#808080",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
@@ -1136,12 +1140,12 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       className: "chk",
       title: "Presente en el evento (manual)",
       onClick: () => toggle(a.id),
-      style: stateBtn(a.presente, "linear-gradient(135deg,#676b55,#565a45)", "#676b5530")
+      style: stateBtn(a.presente, "linear-gradient(135deg,#000000,#505050)", "#00000030")
     }, a.presente ? "✓" : "○"), /*#__PURE__*/React.createElement("button", {
       className: "chk",
       title: "Encuesta completada (auto, o toggle manual)",
       onClick: () => toggleForm(a.id),
-      style: stateBtn(a.formulario, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f40")
+      style: stateBtn(a.formulario, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f40")
     }, a.formulario ? "✓" : "F")));
   }))), tab === "eligibles" && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1156,36 +1160,36 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 17,
       fontWeight: 700,
-      color: "#2b2c26",
+      color: "#1A1A1A",
       marginBottom: 4
     }
   }, "Habilitados para el sorteo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#8a8c82",
+      color: "#808080",
       lineHeight: 1.7
     }
   }, "Cruce automático: solo aparece quien ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#676b55"
+      color: "#000000"
     }
   }, "asistió"), " (marcado a mano) y además ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#4f7a3f"
+      color: "#448361"
     }
   }, "completó la encuesta"), " (matcheado por mail o nombre). Son ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#4f7a3f"
+      color: "#448361"
     }
   }, elegibles.length), " persona", elegibles.length !== 1 ? "s" : "", ".")), elegibles.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
       textAlign: "center",
       padding: "54px 24px",
-      color: "#8a8c82",
+      color: "#808080",
       fontSize: 14
     }
   }, "Todavía no hay nadie que cumpla las dos condiciones.") : /*#__PURE__*/React.createElement("div", {
@@ -1209,14 +1213,14 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       height: 32,
       borderRadius: 8,
       flexShrink: 0,
-      background: "linear-gradient(135deg,#565a45,#676b55)",
+      background: "linear-gradient(135deg,#505050,#000000)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 11,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'Barlow',monospace"
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1227,18 +1231,18 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       fontSize: 13,
       fontWeight: 500,
-      color: "#2b2c26"
+      color: "#1A1A1A"
     }
   }, a.nombre, " ", a.apellidos), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#8a8c82"
+      color: "#808080"
     }
   }, a.empresa, a.mail ? ` · ${a.mail}` : "")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
-      color: "#4f7a3f",
-      fontFamily: "'Barlow',monospace"
+      color: "#448361",
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, "✓ habilitado")))), elegibles.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1268,24 +1272,24 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       fontSize: 40,
       marginBottom: 10
     }
-  }, "🎟"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", { className: "msi" }, "confirmation_number")), /*#__PURE__*/React.createElement("div", {
     style: {
-      color: "#8a8c82",
+      color: "#808080",
       fontSize: 14,
       lineHeight: 1.6
     }
   }, "Para entrar al sorteo cada persona tiene que estar", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#676b55"
+      color: "#000000"
     }
   }, "presente"), " y haber ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#4f7a3f"
+      color: "#448361"
     }
   }, "completado la encuesta"), ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "linear-gradient(160deg,#ffffff,#eef0e8)",
-      border: "1px solid #d6d8cd",
+      background: "linear-gradient(160deg,#ffffff,#F0F0F0)",
+      border: "1px solid #D2D2D2",
       borderRadius: 16,
       padding: wide ? "56px 48px" : "40px 20px",
       textAlign: "center",
@@ -1301,7 +1305,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       transform: "translateX(-50%)",
       width: 200,
       height: 1,
-      background: "linear-gradient(90deg,transparent,#676b55,transparent)"
+      background: "linear-gradient(90deg,transparent,#000000,transparent)"
     }
   }), raffleState === "idle" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1310,31 +1314,31 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, "✦"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: wide ? 28 : 22,
       fontWeight: 700,
-      color: "#676b55",
+      color: "#000000",
       marginBottom: 6
     }
   }, "Sorteo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#8a8c82",
+      color: "#808080",
       marginBottom: 32
     }
   }, restantes.length, " participante", restantes.length !== 1 ? "s" : "", " habilitado", restantes.length !== 1 ? "s" : "", " en juego", winners.length > 0 && ` · ${winners.length} ya sorteado${winners.length !== 1 ? "s" : ""}`), /*#__PURE__*/React.createElement("button", {
     onClick: doRaffle,
     disabled: restantes.length === 0,
     style: {
-      background: restantes.length === 0 ? "#eef0e8" : "linear-gradient(135deg,#676b55,#565a45)",
+      background: restantes.length === 0 ? "#F0F0F0" : "linear-gradient(135deg,#000000,#505050)",
       border: "none",
       borderRadius: 10,
       padding: "14px 48px",
-      color: restantes.length === 0 ? "#8a8c82" : "#fff",
+      color: restantes.length === 0 ? "#808080" : "#fff",
       cursor: restantes.length === 0 ? "not-allowed" : "pointer",
       fontSize: 15,
       fontWeight: 700,
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       letterSpacing: ".03em"
     }
   }, restantes.length === 0 ? "NO QUEDAN PARTICIPANTES" : "INICIAR SORTEO")), raffleState === "spinning" && winner && /*#__PURE__*/React.createElement("div", {
@@ -1344,8 +1348,8 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       marginBottom: 14
     }
   }, "SORTEANDO…"), /*#__PURE__*/React.createElement("div", {
@@ -1354,21 +1358,21 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       height: 68,
       borderRadius: 12,
       margin: "0 auto 14px",
-      background: "linear-gradient(135deg,#565a45,#676b55)",
+      background: "linear-gradient(135deg,#505050,#000000)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 22,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'Barlow',monospace"
+      fontFamily: "'Hanken Grotesk',monospace"
     }
   }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: wide ? 28 : 22,
       fontWeight: 700,
-      color: "#676b55"
+      color: "#000000"
     }
   }, winner.nombre, " ", winner.apellidos)), raffleState === "winner" && winner && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1379,11 +1383,11 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       fontSize: 34,
       marginBottom: 8
     }
-  }, "🎉"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", { className: "msi" }, "celebration")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#676b55",
-      fontFamily: "'Barlow',monospace",
+      color: "#000000",
+      fontFamily: "'Hanken Grotesk',monospace",
       letterSpacing: ".12em",
       marginBottom: 14
     }
@@ -1393,34 +1397,34 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       height: 78,
       borderRadius: 14,
       margin: "0 auto 18px",
-      background: "linear-gradient(135deg,#676b55,#9aa07a)",
+      background: "linear-gradient(135deg,#000000,#8D8D8D)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontSize: 26,
       fontWeight: 700,
       color: "#fff",
-      fontFamily: "'Barlow',monospace",
+      fontFamily: "'Hanken Grotesk',monospace",
       boxShadow: "0 0 48px rgba(103,107,85,.5)"
     }
   }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: wide ? 32 : 24,
       fontWeight: 700,
-      color: "#2b2c26",
+      color: "#1A1A1A",
       marginBottom: 4
     }
   }, winner.nombre, " ", winner.apellidos), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
-      color: "#676b55",
+      color: "#000000",
       marginBottom: 4
     }
   }, winner.empresa), winner.mail && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
-      color: "#8a8c82",
+      color: "#808080",
       marginBottom: 10
     }
   }, winner.mail), /*#__PURE__*/React.createElement("div", {
@@ -1441,8 +1445,8 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, "Reiniciar")))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#a2a498",
-      fontFamily: "'Barlow',monospace",
+      color: "#9E9E9E",
+      fontFamily: "'Hanken Grotesk',monospace",
       marginBottom: 8,
       letterSpacing: ".05em"
     }
@@ -1461,15 +1465,15 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
         borderRadius: 6,
         fontSize: 12,
         background: won ? "#ffffff" : "rgba(103,107,85,.08)",
-        border: `1px solid ${won ? "#eef0e8" : "rgba(103,107,85,.2)"}`,
-        color: won ? "#c0c2b7" : "#8a8c82",
+        border: `1px solid ${won ? "#F0F0F0" : "rgba(103,107,85,.2)"}`,
+        color: won ? "#C2C2C2" : "#808080",
         textDecoration: won ? "line-through" : "none"
       }
     }, p.nombre, " ", p.apellidos, won && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 10,
         marginLeft: 4,
-        color: "#676b55"
+        color: "#000000"
       }
     }, "✓"));
   })))), tab === "config" && /*#__PURE__*/React.createElement("div", {
@@ -1495,7 +1499,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       width: 22,
       height: 22,
       borderRadius: 6,
-      background: "linear-gradient(135deg,#676b55,#565a45)",
+      background: "linear-gradient(135deg,#000000,#505050)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -1505,15 +1509,15 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, "1"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 16,
       fontWeight: 700,
-      color: "#2b2c26"
+      color: "#1A1A1A"
     }
   }, "Lista de inscriptos")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#8a8c82",
+      color: "#808080",
       lineHeight: 1.7,
       marginBottom: 16
     }
@@ -1521,8 +1525,8 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       display: "flex",
       gap: 6,
-      background: "#fbfbf9",
-      border: "1px solid #e4e6dd",
+      background: "#FAFAFA",
+      border: "1px solid #E6E6E6",
       borderRadius: 9,
       padding: 4,
       marginBottom: 16
@@ -1539,17 +1543,17 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       borderRadius: 6,
       padding: "8px 10px",
       cursor: "pointer",
-      fontFamily: "'Barlow',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 13,
       fontWeight: 600,
-      background: listMode === k ? "linear-gradient(135deg,#676b55,#565a45)" : "transparent",
-      color: listMode === k ? "#fff" : "#8a8c82"
+      background: listMode === k ? "linear-gradient(135deg,#000000,#505050)" : "transparent",
+      color: listMode === k ? "#fff" : "#808080"
     }
   }, l))), listMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       display: "block",
       marginBottom: 6
     }
@@ -1559,7 +1563,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
     style: {
       ...inp,
-      fontFamily: "'Barlow',monospace",
+      fontFamily: "'Hanken Grotesk',monospace",
       fontSize: 11,
       marginBottom: 10
     }
@@ -1585,13 +1589,13 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       marginTop: 14,
       paddingTop: 14,
-      borderTop: "1px solid #eef0e8"
+      borderTop: "1px solid #F0F0F0"
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       display: "block",
       marginBottom: 6
     }
@@ -1606,21 +1610,21 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#a2a498",
+      color: "#9E9E9E",
       marginTop: 6
     }
   }, "Si la hoja acumula varios eventos, poné la fecha del evento actual para traer solo a los nuevos.")), listSt && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontSize: 12,
-      fontFamily: "'Barlow',monospace",
-      color: listSt.startsWith("✓") ? "#4f7a3f" : listSt.startsWith("Error") ? "#c0392b" : "#676b55"
+      fontFamily: "'Hanken Grotesk',monospace",
+      color: listSt.startsWith("✓") ? "#448361" : listSt.startsWith("Error") ? "#C4423D" : "#000000"
     }
   }, listSt)), /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
       marginBottom: 16,
-      border: "1px solid #cfe0d2"
+      border: "1px solid #DBEDDB"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1634,7 +1638,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       width: 22,
       height: 22,
       borderRadius: 6,
-      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
+      background: "linear-gradient(135deg,#448361,#448361)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -1644,21 +1648,21 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, "2"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 16,
       fontWeight: 700,
-      color: "#2b2c26"
+      color: "#1A1A1A"
     }
   }, "Respuestas de la encuesta")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: "#8a8c82",
+      color: "#808080",
       lineHeight: 1.7,
       marginBottom: 16
     }
   }, "La encuesta post-evento (la del QR). Al cargarla, se marca el formulario ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: "#4f7a3f"
+      color: "#448361"
     }
   }, "automáticamente"), " cruzando por ", /*#__PURE__*/React.createElement("strong", {
     style: {
@@ -1668,8 +1672,8 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       display: "flex",
       gap: 6,
-      background: "#fbfbf9",
-      border: "1px solid #e4e6dd",
+      background: "#FAFAFA",
+      border: "1px solid #E6E6E6",
       borderRadius: 9,
       padding: 4,
       marginBottom: 16
@@ -1686,17 +1690,17 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       borderRadius: 6,
       padding: "8px 10px",
       cursor: "pointer",
-      fontFamily: "'Barlow',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 13,
       fontWeight: 600,
-      background: surveyMode === k ? "linear-gradient(135deg,#4f7a3f,#3d6130)" : "transparent",
-      color: surveyMode === k ? "#fff" : "#8a8c82"
+      background: surveyMode === k ? "linear-gradient(135deg,#448361,#448361)" : "transparent",
+      color: surveyMode === k ? "#fff" : "#808080"
     }
   }, l))), surveyMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       display: "block",
       marginBottom: 6
     }
@@ -1706,7 +1710,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
     style: {
       ...inp,
-      fontFamily: "'Barlow',monospace",
+      fontFamily: "'Hanken Grotesk',monospace",
       fontSize: 11,
       marginBottom: 10
     }
@@ -1714,7 +1718,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     onClick: loadSurveySheets,
     style: {
       ...btn(false),
-      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
+      background: "linear-gradient(135deg,#448361,#448361)",
       color: "#fff"
     }
   }, "Cruzar encuesta desde Sheets")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
@@ -1730,7 +1734,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     htmlFor: "survey-file",
     style: {
       ...btn(false),
-      background: "linear-gradient(135deg,#4f7a3f,#3d6130)",
+      background: "linear-gradient(135deg,#448361,#448361)",
       color: "#fff",
       display: "inline-block"
     }
@@ -1738,13 +1742,13 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     style: {
       marginTop: 14,
       paddingTop: 14,
-      borderTop: "1px solid #cfe0d2"
+      borderTop: "1px solid #DBEDDB"
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       display: "block",
       marginBottom: 6
     }
@@ -1759,26 +1763,26 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#a2a498",
+      color: "#9E9E9E",
       marginTop: 6
     }
   }, "Como la hoja acumula eventos, poné la fecha del evento para no arrastrar encuestas viejas.")), surveySt && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontSize: 12,
-      fontFamily: "'Barlow',monospace",
-      color: surveySt.startsWith("✓") ? "#4f7a3f" : surveySt.startsWith("Error") ? "#c0392b" : "#676b55"
+      fontFamily: "'Hanken Grotesk',monospace",
+      color: surveySt.startsWith("✓") ? "#448361" : surveySt.startsWith("Error") ? "#C4423D" : "#000000"
     }
   }, surveySt)), /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,
-      border: "1px solid #e8cdc9"
+      border: "1px solid #FFE2DD"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: "#c0392b",
-      fontFamily: "'Barlow',monospace",
+      color: "#C4423D",
+      fontFamily: "'Hanken Grotesk',monospace",
       marginBottom: 14,
       letterSpacing: ".05em"
     }
@@ -1797,9 +1801,9 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     onClick: clearMarks,
     style: {
       ...btn(false),
-      border: "1px solid #d9a9a4",
-      color: "#c0392b",
-      background: "#f7eae8"
+      border: "1px solid #FFE2DD",
+      color: "#C4423D",
+      background: "#FDEBEC"
     }
   }, "Confirmar: limpiar tildados"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setConfirmReset(null),
@@ -1810,13 +1814,13 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, "Limpiar tildados (mantener lista actual)"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#8a8c82",
+      color: "#808080",
       marginTop: 8
     }
   }, "Borra presentes, encuestas y ganadores, pero conserva la lista cargada. Es el reseteo de cada evento.")), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 1,
-      background: "#eeddda",
+      background: "#FDEBEC",
       marginBottom: 18
     }
   }), /*#__PURE__*/React.createElement("div", null, confirmReset === "base" ? /*#__PURE__*/React.createElement("div", {
@@ -1830,9 +1834,9 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     onClick: resetToBase,
     style: {
       ...btn(false),
-      border: "1px solid #d9a9a4",
-      color: "#c0392b",
-      background: "#f7eae8"
+      border: "1px solid #FFE2DD",
+      color: "#C4423D",
+      background: "#FDEBEC"
     }
   }, "Confirmar: volver a lista base"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setConfirmReset(null),
@@ -1841,12 +1845,12 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     onClick: () => setConfirmReset("base"),
     style: {
       ...btn(false),
-      border: "1px solid #e8cdc9"
+      border: "1px solid #FFE2DD"
     }
   }, "Volver a la lista base"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#a2a498",
+      color: "#9E9E9E",
       marginTop: 8
     }
   }, "Descarta lo importado y restaura los contactos originales del sistema."))))), showAdd && /*#__PURE__*/React.createElement("div", {
@@ -1863,7 +1867,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#ffffff",
-      border: "1px solid #d6d8cd",
+      border: "1px solid #D2D2D2",
       borderRadius: 14,
       padding: 28,
       width: "100%",
@@ -1872,11 +1876,11 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Barlow Condensed',sans-serif",
+      fontFamily: "'Hanken Grotesk',sans-serif",
       fontSize: 16,
       fontWeight: 700,
       marginBottom: 20,
-      color: "#2b2c26"
+      color: "#1A1A1A"
     }
   }, "Agregar walk-in"), [["nombre", "Nombre *"], ["apellidos", "Apellido"], ["mail", "Mail"], ["empresa", "Empresa"], ["cargo", "Perfil / cargo"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
     key: k,
@@ -1886,8 +1890,8 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 10,
-      color: "#8a8c82",
-      fontFamily: "'Barlow',monospace",
+      color: "#808080",
+      fontFamily: "'Hanken Grotesk',monospace",
       display: "block",
       marginBottom: 4
     }
@@ -1909,13 +1913,13 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
       gap: 10,
       marginTop: 6,
       padding: "10px 12px",
-      background: "#fbfbf9",
-      border: `1px solid ${newP.formulario ? "#4f7a3f40" : "#e4e6dd"}`,
+      background: "#FAFAFA",
+      border: `1px solid ${newP.formulario ? "#4f7a3f40" : "#E6E6E6"}`,
       borderRadius: 8,
       cursor: "pointer"
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: stateBtn(newP.formulario, "linear-gradient(135deg,#4f7a3f,#3d6130)", "#4f7a3f40")
+    style: stateBtn(newP.formulario, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f40")
   }, newP.formulario ? "✓" : "F"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
@@ -1925,7 +1929,7 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
   }, "Ya completó la encuesta"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#8a8c82"
+      color: "#808080"
     }
   }, "Necesario para entrar al sorteo"))), /*#__PURE__*/React.createElement("div", {
     style: {

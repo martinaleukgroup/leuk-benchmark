@@ -82,13 +82,13 @@
     { k: "descartar",   t: "Descartar" },
   ];
   const HITO_TIPOS = [
-    { k: "nota",            t: "Nota",            ic: "📝" },
-    { k: "propuesta",       t: "Propuesta",       ic: "📄" },
-    { k: "contrapropuesta", t: "Contrapropuesta", ic: "↩︎" },
-    { k: "reunion",         t: "Reunión",         ic: "🤝" },
-    { k: "resultado",       t: "Resultado",       ic: "📈" },
+    { k: "nota",            t: "Nota",            ic: "edit_note" },
+    { k: "propuesta",       t: "Propuesta",       ic: "description" },
+    { k: "contrapropuesta", t: "Contrapropuesta", ic: "reply" },
+    { k: "reunion",         t: "Reunión",         ic: "handshake" },
+    { k: "resultado",       t: "Resultado",       ic: "trending_up" },
   ];
-  const hitoTipo = k => HITO_TIPOS.find(h => h.k === k) || { k: "estado", t: "Cambio de estado", ic: "•" };
+  const hitoTipo = k => HITO_TIPOS.find(h => h.k === k) || { k: "estado", t: "Cambio de estado", ic: "swap_horiz" };
   // Rubros de la inversión. "Otro" + detalle cubre lo que no entre acá.
   const RUBROS = ["Producto (canje)", "Material / impresión", "Espacio / fee", "Producción / montaje",
                   "Logística / traslados", "Catering", "Honorarios", "Pauta / publicidad", "Otro"];
@@ -532,7 +532,7 @@
   function pintar() {
     const c = caja(); if (!c) return;
     if (ERROR === "sql") {
-      c.innerHTML = `<div class="empty"><div class="big">🗂</div>Faltan las tablas de Acciones en Supabase.<br>
+      c.innerHTML = `<div class="empty"><div class="big"><span class="msi">folder_open</span></div>Faltan las tablas de Acciones en Supabase.<br>
         <small>Corré <code>supabase/sql/2026-09-18-acciones.sql</code> en el SQL Editor y recargá la página.</small></div>`;
       return;
     }
@@ -614,9 +614,9 @@
           <span>${r.medidas ? `${pct(r.prom)} · ${r.llegaron}/${r.total} cumplidas${r.medidas < r.total ? ` · ${r.total - r.medidas} sin medir` : ""}` : `${r.total} métrica${r.total === 1 ? "" : "s"} esperada${r.total === 1 ? "" : "s"}`}</span>
         </div>` : `<div class="ac-card-met vacia">Sin métricas definidas</div>`}
       <div class="ac-card-pie">
-        ${n ? `<span title="Entradas en la línea de tiempo">🕓 ${n}</span>` : ""}
-        ${nArch ? `<span title="Archivos">📎 ${nArch}</span>` : ""}
-        ${(COMS[a.id] || []).length ? `<span title="Comentarios">💬 ${COMS[a.id].length}</span>` : ""}
+        ${n ? `<span title="Entradas en la línea de tiempo"><span class="msi">schedule</span>${n}</span>` : ""}
+        ${nArch ? `<span title="Archivos"><span class="msi">attach_file</span>${nArch}</span>` : ""}
+        ${(COMS[a.id] || []).length ? `<span title="Comentarios"><span class="msi">chat_bubble</span>${COMS[a.id].length}</span>` : ""}
         ${meMencionan(a) ? `<span class="ac-arrobado ${mencionNueva(a) ? "nueva" : ""}" title="${mencionNueva(a) ? "Te mencionaron (nuevo)" : "Te mencionaron"}">@</span>` : ""}
         ${ult ? `<span class="ac-ult">últ. mov. ${hace(ult.creado)}</span>` : ""}
         ${avatarHTML(a.responsable_email)}
@@ -708,14 +708,14 @@
     w.classList.toggle("subiendo", SUBIENDO);
     w.innerHTML = `
       <div class="ac-comp-tipos" role="group" aria-label="Tipo de entrada">
-        ${HITO_TIPOS.map(h => `<button class="${COMP.tipo === h.k ? "on" : ""} h-${h.k}" data-accion="comp-tipo" data-k="${h.k}">${h.ic} ${h.t}</button>`).join("")}
+        ${HITO_TIPOS.map(h => `<button class="${COMP.tipo === h.k ? "on" : ""} h-${h.k}" data-accion="comp-tipo" data-k="${h.k}"><span class="msi">${h.ic}</span> ${h.t}</button>`).join("")}
       </div>
       <textarea class="ac-comp-texto" rows="2" placeholder="${COMP.tipo === "propuesta" ? "Qué propone el socio: condiciones, contraprestaciones, montos…" : COMP.tipo === "contrapropuesta" ? "Qué le contrapropusimos y por qué…" : COMP.tipo === "reunion" ? "Con quién, qué se habló, próximos pasos…" : COMP.tipo === "resultado" ? "Cómo salió: números, repercusión, feedback…" : "Escribí una nota…"} Con @ mencionás a alguien  (⌘/Ctrl + Enter para agregar)" ${SUBIENDO ? "disabled" : ""}>${esc(COMP.texto)}</textarea>
       <label class="ac-drop" tabindex="0">
         <input type="file" multiple class="ac-file" hidden ${SUBIENDO ? "disabled" : ""}>
-        <span>📎 Arrastrá archivos acá o <u>elegilos</u> <small>· PDF, imágenes, Word, Excel… hasta ${MAX_MB} MB c/u</small></span>
+        <span><span class="msi">attach_file</span> Arrastrá archivos acá o <u>elegilos</u> <small>· PDF, imágenes, Word, Excel… hasta ${MAX_MB} MB c/u</small></span>
       </label>
-      ${PEND.length ? `<ul class="ac-pend">${PEND.map((f, i) => `<li><span class="ac-file-ic">${iconoArchivo(f.name)}</span><span class="n">${esc(f.name)}</span><span class="t">${pesoArchivo(f.size)}</span>
+      ${PEND.length ? `<ul class="ac-pend">${PEND.map((f, i) => `<li><span class="ac-file-ic msi">${iconoArchivo(f.name)}</span><span class="n">${esc(f.name)}</span><span class="t">${pesoArchivo(f.size)}</span>
         <button class="ac-mini" data-accion="pend-del" data-i="${i}" aria-label="Quitar archivo" ${SUBIENDO ? "disabled" : ""}>✕</button></li>`).join("")}</ul>` : ""}
       <div class="ac-comp-acc">
         <label class="ac-comp-fecha"><span>Fecha</span><input type="date" class="ac-comp-f" value="${esc(COMP.fecha)}" max="${hoyISO()}" ${SUBIENDO ? "disabled" : ""}></label>
@@ -726,14 +726,14 @@
 
   function iconoArchivo(nombre) {
     const ext = low(String(nombre).split(".").pop());
-    if (ext === "pdf") return "📕";
-    if (["png", "jpg", "jpeg", "gif", "webp", "heic", "svg"].includes(ext)) return "🖼";
-    if (["xls", "xlsx", "csv", "numbers"].includes(ext)) return "📊";
-    if (["doc", "docx", "pages", "txt", "rtf"].includes(ext)) return "📃";
-    if (["ppt", "pptx", "key"].includes(ext)) return "📽";
-    if (["mp4", "mov", "m4v"].includes(ext)) return "🎞";
-    if (["zip", "rar"].includes(ext)) return "🗜";
-    return "📎";
+    if (ext === "pdf") return "picture_as_pdf";
+    if (["png", "jpg", "jpeg", "gif", "webp", "heic", "svg"].includes(ext)) return "image";
+    if (["xls", "xlsx", "csv", "numbers"].includes(ext)) return "table_chart";
+    if (["doc", "docx", "pages", "txt", "rtf"].includes(ext)) return "article";
+    if (["ppt", "pptx", "key"].includes(ext)) return "slideshow";
+    if (["mp4", "mov", "m4v"].includes(ext)) return "movie";
+    if (["zip", "rar"].includes(ext)) return "folder_zip";
+    return "attach_file";
   }
 
   function pintarTimeline() {
@@ -753,7 +753,7 @@
           <div class="ac-tl-estado">${esc(h.texto)} <span>· ${fechaCorta(h.fecha)} · ${esc(h.autor || nombreDe(h.autor_email))}</span></div>
         </div>`;
       return sep + `<div class="ac-tl-it h-${esc(h.tipo)}">
-        <span class="ac-tl-dot">${ht.ic}</span>
+        <span class="ac-tl-dot"><span class="msi">${ht.ic}</span></span>
         <div class="ac-tl-card">
           <div class="ac-tl-h">
             <span class="ac-tl-tipo">${ht.t}</span>
@@ -764,7 +764,7 @@
           ${h.texto ? `<p class="ac-tl-txt">${linkear(h.texto)}</p>` : ""}
           ${h.archivos.length ? `<div class="ac-tl-files">${h.archivos.map(f =>
             `<button class="ac-file-chip" data-accion="archivo" data-path="${esc(f.path)}" title="Abrir ${esc(f.nombre)}">
-              <span class="ac-file-ic">${iconoArchivo(f.nombre)}</span><span class="n">${esc(f.nombre)}</span><span class="t">${pesoArchivo(f.tam)}</span></button>`).join("")}</div>` : ""}
+              <span class="ac-file-ic msi">${iconoArchivo(f.nombre)}</span><span class="n">${esc(f.nombre)}</span><span class="t">${pesoArchivo(f.tam)}</span></button>`).join("")}</div>` : ""}
           ${hiloHTML(h)}
         </div>
       </div>`;
@@ -782,7 +782,7 @@
     const abierto = HILOS.has(h.id);
     const nuevo = coms.some(c => meNombra(c) && tms(c.creado) > tms(VISTO[ABIERTA]));
     const boton = `<button class="ac-hilo-btn ${nuevo ? "nueva" : ""}" data-accion="hilo" data-id="${h.id}" aria-expanded="${abierto}">
-      💬 ${coms.length ? `${coms.length} comentario${coms.length === 1 ? "" : "s"}` : "Comentar"}${abierto && coms.length ? " · ocultar" : ""}</button>`;
+      <span class="msi">chat_bubble</span> ${coms.length ? `${coms.length} comentario${coms.length === 1 ? "" : "s"}` : "Comentar"}${abierto && coms.length ? " · ocultar" : ""}</button>`;
     if (!abierto) return `<div class="ac-hilo">${boton}</div>`;
     return `<div class="ac-hilo abierto">${boton}
       ${coms.length ? `<div class="ac-coms">${coms.map(comHTML).join("")}</div>` : ""}

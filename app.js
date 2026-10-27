@@ -1,4 +1,4 @@
-/* Leuk Marketing — plataforma interna (vanilla JS). Módulos: Benchmark y Fichas técnicas.
+/* Leuk Group · Marketing — plataforma interna (vanilla JS). Módulos: Benchmark y Fichas técnicas.
    Matching en vivo (3 señales) generado por el pipeline. Autorización en localStorage. */
 (function () {
   // Los datos ya NO vienen de un archivo público: se descargan de Supabase DESPUÉS del login
@@ -870,7 +870,7 @@
     // --- Marcar "sin producto comparable" (oportunidad de monopolio) ---
     const monoOn = isMono(p.sku);
     const monoBox = el("div", "mono-box" + (monoOn ? " on" : ""));
-    monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? "🏆 Sin producto comparable" : "¿No existe un producto comparable en el mercado?"}</b>
+    monoBox.innerHTML = `<div class="mono-txt"><b>${monoOn ? '<span class="msi">workspace_premium</span> Sin producto comparable' : "¿No existe un producto comparable en el mercado?"}</b>
       <span>${monoOn ? "Marcado como sin competencia — aparece en Insights." : "Marcalo si Leuk no tiene equivalente en la competencia: queda mapeado en Insights para captar leads siendo la única opción."}</span></div>
       <button class="btn-ghost mono-btn ${monoOn ? "on" : ""}">${monoOn ? "Quitar marca" : "Marcar sin competencia"}</button>`;
     monoBox.querySelector(".mono-btn").onclick = () => { toggleMono(p); selectProduct(p, true); };
@@ -1077,7 +1077,7 @@
   const esc2 = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   // Diverging: verde (Leuk más barato) ← gris neutro → rojo (Leuk más caro). La intensidad sigue a |dif|; el número siempre va escrito.
   const tinteDif = d => d == null ? "transparent" : Math.abs(d) <= 3 ? "var(--line)" : `color-mix(in srgb, var(${d > 0 ? "--ok" : "--no"}) ${Math.round(18 + Math.min(Math.abs(d), 100) / 100 * 50)}%, var(--card))`;
-  const tonoVar = t => ({ no: "var(--no)", no2: "color-mix(in srgb, var(--no) 55%, var(--card))", sim: "#b9b4a6", ok2: "color-mix(in srgb, var(--ok) 55%, var(--card))", ok: "var(--ok)" }[t]);
+  const tonoVar = t => ({ no: "var(--no)", no2: "color-mix(in srgb, var(--no) 55%, var(--card))", sim: "#B3B3B3", ok2: "color-mix(in srgb, var(--ok) 55%, var(--card))", ok: "var(--ok)" }[t]);
   // un solo tooltip para todo el tablero
   function tip(html, ev) {
     let t = document.getElementById("cdTip");
@@ -1151,11 +1151,11 @@
       <text class="cd-zona" x="${L + 8}" y="${T + 14}">↑ Leuk más caro</text><text class="cd-zona" x="${W - R - 8}" y="${H - B - 8}" text-anchor="end">Leuk más barato ↓</text>
       <text class="cd-ax cd-tit" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Precio neto del competidor (US$)</text>
       <text class="cd-ax cd-tit" transform="translate(11 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">Precio neto Leuk (US$)</text>`;
-    const col = c => c === "p-cheap" ? "var(--ok)" : c === "p-exp" ? "var(--no)" : "#8a8c82";
+    const col = c => c === "p-cheap" ? "var(--ok)" : c === "p-exp" ? "var(--no)" : "#808080";
     g += pts.map((x, i) => `<g class="cd-pt" data-i="${i}"><circle r="11" cx="${X(x.pi.compNet)}" cy="${Y(x.pi.leukNet)}" fill="transparent"/><circle class="cd-dot" r="5" cx="${X(x.pi.compNet)}" cy="${Y(x.pi.leukNet)}" fill="${col(x.pi.cls)}"/></g>`).join("");
     const n = c => pts.filter(x => x.pi.cls === c).length;
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Precio neto de Leuk contra el del competidor, un punto por comparación">${g}</svg>
-      <div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato (${n("p-cheap")})</span><span><i style="background:#8a8c82"></i>similar (${n("p-sim")})</span><span><i style="background:var(--no)"></i>Leuk más caro (${n("p-exp")})</span><em>Escala logarítmica · lo que se aleja de la diagonal es lo más distinto</em></div>`;
+      <div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato (${n("p-cheap")})</span><span><i style="background:#808080"></i>similar (${n("p-sim")})</span><span><i style="background:var(--no)"></i>Leuk más caro (${n("p-exp")})</span><em>Escala logarítmica · lo que se aleja de la diagonal es lo más distinto</em></div>`;
     const svg = box.querySelector("svg");
     const ptDe = ev => { const gp = ev.target.closest(".cd-pt"); return gp ? pts[+gp.dataset.i] : null; };
     svg.onmousemove = ev => { const x = ptDe(ev); if (!x) return tip(null); const a = x.a;
@@ -1327,11 +1327,11 @@
       return `<div class="ficha-row"><span class="k">Precio neto${ed}</span><span>${fmtUsd(net)}${extra}</span></div>`;
     };
     const señales = (m.tecnico || m.etiquetacion || m.visual) ? `<div class="signal-box"><h3>Nivel de match — 3 señales</h3>
-        ${_sig("🔧 Técnica", m.tecnico, m.tecnico ? `<span class="leuk-fam">score ${m.tecnico.score}</span>` : "")}
+        ${_sig('<span class="msi">build</span> Técnica', m.tecnico, m.tecnico ? `<span class="leuk-fam">score ${m.tecnico.score}</span>` : "")}
         ${m.tecnico ? `<div class="chips">${_chips(m.tecnico.coinciden, "ok")}${_chips(m.tecnico.difieren, "no")}</div>` : ""}
-        ${_sig("🏷️ Etiquetación", m.etiquetacion, m.etiquetacion ? `<span class="leuk-fam">${(m.etiquetacion.score * 100).toFixed(0)}%</span>` : "")}
+        ${_sig('<span class="msi">sell</span> Etiquetación', m.etiquetacion, m.etiquetacion ? `<span class="leuk-fam">${(m.etiquetacion.score * 100).toFixed(0)}%</span>` : "")}
         ${m.etiquetacion ? `<div class="chips">${_chips(m.etiquetacion.coinciden, "ok")}${_chips(m.etiquetacion.difieren, "no")}</div>` : ""}
-        ${_sig("👁️ Visual", m.visual, m.visual ? `<span class="leuk-fam">sim ${m.visual.similitud}</span>` : "")}</div>` : "";
+        ${_sig('<span class="msi">visibility</span> Visual', m.visual, m.visual ? `<span class="leuk-fam">sim ${m.visual.similitud}</span>` : "")}</div>` : "";
     // Margen (sólo admin/líder con costo cargado): con tu precio neto y si igualás al competidor.
     const vNet = netLeuk(p.precio_usd);
     const cNet = cLista != null ? netComp(cLista, e.marca) : null;
@@ -1396,7 +1396,7 @@
   function monoSection(monos) {
     monos = monos.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const sec = el("div", "dash-sec");
-    sec.innerHTML = `<h3>🏆 Productos sin competencia <span class="leuk-fam">· ${monos.length}</span></h3>
+    sec.innerHTML = `<h3><span class="msi">workspace_premium</span> Productos sin competencia <span class="leuk-fam">· ${monos.length}</span></h3>
       <div class="fam-hint">Productos Leuk marcados como <b>sin producto comparable</b> en el mercado — para captar leads siendo la única opción. Marcalos desde <b>Catálogo</b>, en cada producto.</div>
       <div class="mono-list">${monos.map(m => `
         <div class="mono-item" data-sku="${m.sku}">
@@ -1443,7 +1443,7 @@
   const inBar = (lbl, frac, txt, tono) => `<div class="in-bar"><span class="in-bl">${esc2(lbl)}</span><span class="in-bt"><i style="width:${Math.max(frac * 100, frac > 0 ? 2 : 0)}%;background:${tonoVar(tono || "sim")}"></i></span><b>${txt}</b></div>`;
   const inStack = (b, s, c, tit) => { const t = b + s + c || 1;
     const seg = (n, col, l) => n ? `<i style="flex:${n};background:${col}" title="${l}: ${n}">${n / t > .12 ? n : ""}</i>` : "";
-    return `<div class="in-stack" title="${esc2(tit || "")}">${seg(c, "var(--no)", "Leuk más caro")}${seg(s, "#b9b4a6", "Similar")}${seg(b, "var(--ok)", "Leuk más barato")}</div>`; };
+    return `<div class="in-stack" title="${esc2(tit || "")}">${seg(c, "var(--no)", "Leuk más caro")}${seg(s, "#B3B3B3", "Similar")}${seg(b, "var(--ok)", "Leuk más barato")}</div>`; };
 
   /* ---- Insights v2: tablero visual. Cada tarjeta tiene su propio gráfico y un número protagonista ---- */
   const cuantil = (arr, q) => { const s = [...arr].sort((a, b) => a - b); if (!s.length) return null; const p = (s.length - 1) * q, i = Math.floor(p); return s[i] + (s[Math.min(i + 1, s.length - 1)] - s[i]) * (p - i); };
@@ -1451,12 +1451,12 @@
   const bigNum = (n, l, tono) => `<div class="in-big ${tono || ""}"><b>${n}</b><span>${l}</span></div>`;
   function inCard(cls, ic, tit, sub) {
     const c = el("article", "in-card " + cls);
-    c.innerHTML = `<header><span class="in-ic">${ic}</span><div><h3>${tit}</h3>${sub ? `<p>${sub}</p>` : ""}</div></header><div class="in-cb"></div>`;
+    c.innerHTML = `<header><span class="in-ic"><span class="msi">${ic}</span></span><div><h3>${tit}</h3>${sub ? `<p>${sub}</p>` : ""}</div></header><div class="in-cb"></div>`;
     return c;
   }
   const cbDe = c => c.querySelector(".in-cb");
   const donut = (frac, tono, centro, sub) => { const C = 2 * Math.PI * 40;
-    return `<div class="in-donut"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#f2f0ea" stroke-width="13"/><circle cx="50" cy="50" r="40" fill="none" stroke="${tonoVar(tono)}" stroke-width="13" stroke-dasharray="${frac * C} ${C}" transform="rotate(-90 50 50)" stroke-linecap="butt"/></svg><div><b>${centro}</b><small>${sub}</small></div></div>`; };
+    return `<div class="in-donut"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#F2F2F2" stroke-width="13"/><circle cx="50" cy="50" r="40" fill="none" stroke="${tonoVar(tono)}" stroke-width="13" stroke-dasharray="${frac * C} ${C}" transform="rotate(-90 50 50)" stroke-linecap="butt"/></svg><div><b>${centro}</b><small>${sub}</small></div></div>`; };
 
   // 0. Lectura general: veredicto + histograma de la diferencia de precio
   function cardHero(xs) {
@@ -1470,15 +1470,15 @@
     const bins = Array.from({ length: NB }, () => []);
     xs.forEach(x => { bins[Math.min(NB - 1, Math.floor((clampD(x.pi.diff) + 100) / 10))].push(x); });
     const mx = Math.max(1, ...bins.map(b => b.length)), X = v => L + (clampD(v) + 100) / 200 * (W - L - R);
-    let g = `<rect x="${X(-3)}" y="${H - B}" width="${X(3) - X(-3)}" height="5" rx="2" fill="#b9b4a6"><title>Precio similar (±3%)</title></rect>`;
+    let g = `<rect x="${X(-3)}" y="${H - B}" width="${X(3) - X(-3)}" height="5" rx="2" fill="#B3B3B3"><title>Precio similar (±3%)</title></rect>`;
     g += bins.map((b, i) => { const h = b.length / mx * (H - T - B), lo = -100 + i * 10, hi = lo + 10, mid = lo + 5;
-      return `<g class="in-bin" data-b="${i}"><rect x="${L + i * bw}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/><rect x="${L + i * bw + 1}" y="${H - B - h}" width="${bw - 2}" height="${h}" rx="3" fill="${Math.abs(mid) <= 3 ? "#b9b4a6" : mid > 0 ? "var(--ok)" : "var(--no)"}" opacity="${b.length ? 1 : 0}"/>${b.length ? `<text class="cd-ax" x="${L + i * bw + bw / 2}" y="${H - B - h - 4}" text-anchor="middle">${b.length}</text>` : ""}</g>`; }).join("");
+      return `<g class="in-bin" data-b="${i}"><rect x="${L + i * bw}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/><rect x="${L + i * bw + 1}" y="${H - B - h}" width="${bw - 2}" height="${h}" rx="3" fill="${Math.abs(mid) <= 3 ? "#B3B3B3" : mid > 0 ? "var(--ok)" : "var(--no)"}" opacity="${b.length ? 1 : 0}"/>${b.length ? `<text class="cd-ax" x="${L + i * bw + bw / 2}" y="${H - B - h - 4}" text-anchor="middle">${b.length}</text>` : ""}</g>`; }).join("");
     g += [-100, -50, 0, 50, 100].map(v => `<text class="cd-ax" x="${X(v)}" y="${H - B + 14}" text-anchor="${v === -100 ? "start" : v === 100 ? "end" : "middle"}">${v === -100 ? "≤ −100%" : v === 100 ? "≥ +100%" : (v > 0 ? "+" : "") + v + "%"}</text>`).join("");
     g += `<line x1="${X(med)}" x2="${X(med)}" y1="${T - 6}" y2="${H - B}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 3"/><text class="in-med" x="${X(med)}" y="${T - 9}" text-anchor="middle">mediana ${fmtDif(pct0(med))}</text>`;
     g += `<text class="cd-zona" x="${L}" y="${H - 2}">← Leuk más caro</text><text class="cd-zona" x="${W - R}" y="${H - 2}" text-anchor="end">Leuk más barato →</text>`;
     cbDe(c).innerHTML = `<div class="in-hero-g">
       <div class="in-hero-l"><span class="in-kick">Lectura general</span><div class="in-hero-n ${med > 3 ? "ok" : med < -3 ? "no" : ""}">${fmtDif(pct0(med))}</div><p>${frase}.</p>
-        ${inStack(nB, nS, nC)}<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>${nB} más baratos</span><span><i style="background:#b9b4a6"></i>${nS} similar</span><span><i style="background:var(--no)"></i>${nC} más caros</span></div>
+        ${inStack(nB, nS, nC)}<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>${nB} más baratos</span><span><i style="background:#B3B3B3"></i>${nS} similar</span><span><i style="background:var(--no)"></i>${nC} más caros</span></div>
         <small class="in-nota">El promedio es ${fmtDif(pct0(prom))}${raros ? `: lo mueven ${raros} comparaciones extremas (otra gama o dato mal cargado). Por eso uso la mediana.` : "."}</small></div>
       <div class="in-hero-r"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribución de la diferencia de precio">${g}</svg><small class="in-nota">Cada barra: cuántas comparaciones caen en ese rango de diferencia. Tocá una barra para verlas.</small></div></div>`;
     const svg = c.querySelector("svg"), binDe = ev => { const gb = ev.target.closest(".in-bin"); return gb ? +gb.dataset.b : null; };
@@ -1496,7 +1496,7 @@
     const CORTE = 40, ymax = Math.max(80, ...fs.map(r => r.iqr)) * 1.1;
     const subir = fs.filter(r => r.med > UMBRAL && r.iqr <= CORTE), bajar = fs.filter(r => r.med < -UMBRAL && r.iqr <= CORTE), partida = fs.filter(r => r.iqr > CORTE);
     const lista = a => a.map(r => esc2(r.f)).join(", ");
-    const c = inCard("", "🗺️", "Mapa de acción por familia", `${subir.length ? `<b>Subir precio:</b> ${lista(subir)}. ` : ""}${bajar.length ? `<b>Bajar o justificar:</b> ${lista(bajar)}. ` : ""}${partida.length ? `<b>Revisar de a uno:</b> ${lista(partida)}.` : ""}` || "Cada burbuja es una familia; el tamaño es la cantidad de comparaciones.");
+    const c = inCard("", "map", "Mapa de acción por familia", `${subir.length ? `<b>Subir precio:</b> ${lista(subir)}. ` : ""}${bajar.length ? `<b>Bajar o justificar:</b> ${lista(bajar)}. ` : ""}${partida.length ? `<b>Revisar de a uno:</b> ${lista(partida)}.` : ""}` || "Cada burbuja es una familia; el tamaño es la cantidad de comparaciones.");
     const W = 520, H = 330, L = 14, R = 14, T = 14, B = 34, X = v => L + (clampD(v) + 100) / 200 * (W - L - R), Y = v => H - B - v / ymax * (H - B - T);
     let g = `<rect x="${X(UMBRAL)}" y="${Y(CORTE)}" width="${X(100) - X(UMBRAL)}" height="${H - B - Y(CORTE)}" fill="color-mix(in srgb, var(--ok) 9%, var(--card))"/><rect x="${X(-100)}" y="${Y(CORTE)}" width="${X(-UMBRAL) - X(-100)}" height="${H - B - Y(CORTE)}" fill="color-mix(in srgb, var(--no) 9%, var(--card))"/>`;
     g += `<line class="cd-gl" x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${H - B}"/><line class="cd-diag" x1="${L}" x2="${W - R}" y1="${Y(CORTE)}" y2="${Y(CORTE)}"/>`;
@@ -1504,7 +1504,7 @@
     g += [-100, -50, 0, 50, 100].map(v => `<text class="cd-ax" x="${X(v)}" y="${H - B + 14}" text-anchor="${v === -100 ? "start" : v === 100 ? "end" : "middle"}">${v > 0 ? "+" : ""}${v}%</text>`).join("");
     g += `<text class="cd-ax cd-tit" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Diferencia típica (mediana) · ← más caro · más barato →</text>`;
     const rad = n => Math.min(30, 9 + Math.sqrt(n) * 3.2);
-    g += [...fs].sort((a, b) => b.n - a.n).map((r, i) => { const cx = X(r.med), cy = Y(r.iqr), col = r.med > 3 ? "var(--ok)" : r.med < -3 ? "var(--no)" : "#8a8c82";
+    g += [...fs].sort((a, b) => b.n - a.n).map((r, i) => { const cx = X(r.med), cy = Y(r.iqr), col = r.med > 3 ? "var(--ok)" : r.med < -3 ? "var(--no)" : "#808080";
       return `<g class="in-bub" data-i="${fs.indexOf(r)}"><circle cx="${cx}" cy="${cy}" r="${rad(r.n)}" fill="${col}" fill-opacity=".78" stroke="var(--card)" stroke-width="2"/><text class="in-bl2" x="${cx}" y="${cy + rad(r.n) + 12}" text-anchor="middle">${esc2(r.f)}</text></g>`; }).join("");
     cbDe(c).innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de acción por familia">${g}</svg><div class="cd-leyenda"><em>Altura: qué tan dispareja es la línea (rango entre cuartiles). Tamaño: cantidad de comparaciones. Tocá una burbuja para ver la familia.</em></div>`;
     const svg = cbDe(c).querySelector("svg"), bDe = ev => { const gb = ev.target.closest(".in-bub"); return gb ? fs[+gb.dataset.i] : null; };
@@ -1520,7 +1520,7 @@
     const pts = Array.from({ length: 51 }, (_, d) => ({ d, ...cnt(d) })), n = xs.length;
     const P = pts[CFG.leukPartner] || cnt(CFG.leukPartner), Cl = pts[CFG.leukCliente] || cnt(CFG.leukCliente);
     const dP = CFG.leukPartner, dC = CFG.leukCliente, por5 = dP !== dC ? (P.b - Cl.b) / (dP - dC) * 5 : 0;
-    const c = inCard("", "🏷️", por5 >= 0.5 ? `Cada 5 puntos de descuento valen ~${fmtN(por5)} ventajas` : "Tu ventaja casi no depende del descuento", `Con precio Partner (−${dP}%) sos más barato en <b>${P.b}</b> productos; con precio Cliente (−${dC}%), en <b>${Cl.b}</b>.`);
+    const c = inCard("", "sell", por5 >= 0.5 ? `Cada 5 puntos de descuento valen ~${fmtN(por5)} ventajas` : "Tu ventaja casi no depende del descuento", `Con precio Partner (−${dP}%) sos más barato en <b>${P.b}</b> productos; con precio Cliente (−${dC}%), en <b>${Cl.b}</b>.`);
     const W = 520, H = 300, L = 36, R = 16, T = 16, B = 36, X = d => L + d / 50 * (W - L - R), Y = v => H - B - v / (n || 1) * (H - B - T);
     const line = k => pts.map((p, i) => `${i ? "L" : "M"}${X(p.d).toFixed(1)} ${Y(p[k]).toFixed(1)}`).join(" ");
     let g = [0, .25, .5, .75, 1].map(f => `<line class="cd-gl" x1="${L}" x2="${W - R}" y1="${Y(n * f)}" y2="${Y(n * f)}"/><text class="cd-ax" x="${L - 6}" y="${Y(n * f) + 4}" text-anchor="end">${Math.round(n * f)}</text>`).join("");
@@ -1540,7 +1540,7 @@
   function cardMargen(xs) {
     const U = UMBRAL, base = xs.filter(x => x.pi.diff >= U && x.pi.diff <= PRICE_HI), extremos = xs.filter(x => x.pi.diff > PRICE_HI).length;
     if (base.length < 2) return null;
-    const c = inCard("in-full in-ok", "💰", "Margen sin explotar", `Productos ≥${U}% por debajo de su equivalente. Movés la ventaja que querés mantener y ves hasta dónde podría subir cada precio.${extremos ? ` (No cuento ${extremos} con más de ${PRICE_HI}% de diferencia: parecen de otra gama.)` : ""}`);
+    const c = inCard("in-full in-ok", "savings", "Margen sin explotar", `Productos ≥${U}% por debajo de su equivalente. Movés la ventaja que querés mantener y ves hasta dónde podría subir cada precio.${extremos ? ` (No cuento ${extremos} con más de ${PRICE_HI}% de diferencia: parecen de otra gama.)` : ""}`);
     cbDe(c).innerHTML = `<div class="in-marg"><div class="in-marg-l"><label>Ventaja que querés mantener<b id="mgV"></b></label><input type="range" id="mgR" min="0" max="25" step="1" value="${GAP_OBJ.v}"><small>0% = igualar al competidor · 25% = quedar muy por debajo</small><div class="in-bigs" id="mgBig"></div><button class="btn-ghost in-go" id="mgGo"></button></div><div class="in-marg-r"><div class="in-mg-head"><span>hoy → posible</span><span>precio de Leuk como % del competidor</span></div><div id="mgRows"></div><div class="cd-leyenda"><span><i style="background:var(--card);border:2.5px solid var(--olive);border-radius:50%"></i>hoy</span><span><i style="background:var(--ok);border-radius:50%"></i>posible</span><span><i style="width:2px;height:12px;background:var(--ink);opacity:.6"></i>precio del competidor</span></div></div></div>`;
     const pintar = () => {
       const g = GAP_OBJ.v, meta = 100 - g;
@@ -1566,10 +1566,10 @@
     if (ms.length < 2) return null;
     ms.sort((a, b) => b.b / b.n - a.b / a.n);
     const mejor = ms[0], peor = [...ms].sort((a, b) => b.c / b.n - a.c / a.n)[0];
-    const c = inCard("", "⚔️", `Contra ${esc2(mejor.m)} ganás; contra ${esc2(peor.m)} te cuesta`, "El argumento de precio cambia según con quién te compare el cliente.");
+    const c = inCard("", "swords", `Contra ${esc2(mejor.m)} ganás; contra ${esc2(peor.m)} te cuesta`, "El argumento de precio cambia según con quién te compare el cliente.");
     cbDe(c).innerHTML = `<div class="in-bigs">${bigNum(pct0(mejor.b / mejor.n * 100) + "%", `más barato vs ${esc2(mejor.m)}`, "ok")}${bigNum(pct0(peor.c / peor.n * 100) + "%", `más caro vs ${esc2(peor.m)}`, "no")}</div>` +
       ms.map(r => `<button class="in-mrow" data-m="${esc2(r.m)}"><span class="in-bl">${esc2(r.m)}</span>${inStack(r.b, r.s, r.c, `${r.n} comparaciones`)}<b>${r.n}</b></button>`).join("") +
-      `<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato</span><span><i style="background:#b9b4a6"></i>similar</span><span><i style="background:var(--no)"></i>Leuk más caro</span></div>`;
+      `<div class="cd-leyenda"><span><i style="background:var(--ok)"></i>Leuk más barato</span><span><i style="background:#B3B3B3"></i>similar</span><span><i style="background:var(--no)"></i>Leuk más caro</span></div>`;
     c.querySelectorAll(".in-mrow").forEach(b => b.onclick = () => verEnComparaciones({ marca: b.dataset.m }));
     return c;
   }
@@ -1579,7 +1579,7 @@
     const caros = xs.filter(x => x.pi.diff <= -UMBRAL).map(x => ({ x, cut: (x.pi.leukNet - x.pi.compNet) / x.pi.leukNet * 100 }));
     if (caros.length < 2) return null;
     const atiro = caros.filter(r => r.cut <= 15), cerca = [...caros].sort((a, b) => a.cut - b.cut).slice(0, 5);
-    const c = inCard("in-no", "⚠️", `Estás más caro en ${caros.length} productos`, `Igualar te pide bajar ${pct0(medianaDe(caros.map(r => r.cut)))}% en el caso típico. ${atiro.length ? "Los que están a tiro son los más fáciles de corregir." : "Ninguno está cerca: probablemente compitan en otra gama."}`);
+    const c = inCard("in-no", "warning", `Estás más caro en ${caros.length} productos`, `Igualar te pide bajar ${pct0(medianaDe(caros.map(r => r.cut)))}% en el caso típico. ${atiro.length ? "Los que están a tiro son los más fáciles de corregir." : "Ninguno está cerca: probablemente compitan en otra gama."}`);
     cbDe(c).innerHTML = `<div class="in-bigs">${bigNum(atiro.length, "a menos de 15% de igualarse", atiro.length ? "ok" : "")}${bigNum(caros.length - atiro.length, "lejos del competidor", "no")}</div>
       <div class="in-t">${cerca.map(r => `<div class="in-tr"><span class="in-n"><b>${esc2(r.x.a.leukNombre)}</b><small>vs ${esc2(r.x.a.marca)}</small></span><span>US$ ${fmtN(r.x.pi.leukNet)} → ${fmtN(r.x.pi.compNet)}</span><span class="cd-pill ${r.cut <= 15 ? "sim" : "no"}">−${pct0(r.cut)}%</span></div>`).join("")}</div>
       <button class="btn-ghost in-go">Ver los ${caros.length} en Comparaciones →</button>`;
@@ -1592,7 +1592,7 @@
     const ex = xs.filter(x => x.a.veredicto === "Equivalente"), pa = xs.filter(x => x.a.veredicto !== "Equivalente");
     if (xs.length < 5 || !ex.length || !pa.length) return null;
     const me = medianaDe(ex.map(x => x.pi.diff)), mp = medianaDe(pa.map(x => x.pi.diff)), dist = Math.abs(me - mp) >= 15;
-    const c = inCard(dist ? "in-warn" : "", "🔎", `${pct0(pa.length / xs.length * 100)}% de las comparaciones son parciales`, dist ? "Y cambian la conclusión: confirmá a mano los parciales antes de mover precios." : "Las dos lecturas van en la misma dirección.");
+    const c = inCard(dist ? "in-warn" : "", "search", `${pct0(pa.length / xs.length * 100)}% de las comparaciones son parciales`, dist ? "Y cambian la conclusión: confirmá a mano los parciales antes de mover precios." : "Las dos lecturas van en la misma dirección.");
     cbDe(c).innerHTML = `<div class="in-two">${donut(ex.length / xs.length, "ok", ex.length, "exactos")}<div class="in-cmp"><div><small>Típico con exactos</small><b class="${me > 3 ? "ok" : me < -3 ? "no" : ""}">${fmtDif(pct0(me))}</b></div><div><small>Típico con parciales</small><b class="${mp > 3 ? "ok" : mp < -3 ? "no" : ""}">${fmtDif(pct0(mp))}</b></div></div></div><button class="btn-ghost in-go">Ver los parciales →</button>`;
     cbDe(c).querySelector(".in-go").onclick = () => verEnComparaciones({ nivel: "Comparable parcial" });
     return c;
@@ -1605,7 +1605,7 @@
     const tot = P.length, cub = P.filter(p => conComp.has(p.sku)).length;
     if (!tot || cub / tot >= .6) return null;
     const vl = Object.entries(vs).map(([v, o]) => ({ v, ...o })).filter(o => o.v !== "—" || o.c).sort((a, b) => a.c / a.t - b.c / b.t);
-    const c = inCard("", "🧭", `Sólo ${pct0(cub / tot * 100)}% del catálogo está comparado`, `Lo que ves describe esa parte. ${Object.keys(MONO).length ? `Además hay ${Object.keys(MONO).length} productos marcados sin competencia.` : ""}`);
+    const c = inCard("", "explore", `Sólo ${pct0(cub / tot * 100)}% del catálogo está comparado`, `Lo que ves describe esa parte. ${Object.keys(MONO).length ? `Además hay ${Object.keys(MONO).length} productos marcados sin competencia.` : ""}`);
     cbDe(c).innerHTML = `<div class="in-two">${donut(cub / tot, "ok", pct0(cub / tot * 100) + "%", `${cub} de ${tot}`)}<div class="in-cmp">${vl.slice(0, 3).map(o => inBar(o.v, o.c / o.t, `${o.c}/${o.t}`, "ok")).join("")}</div></div><button class="btn-ghost in-go">Ir al Catálogo →</button>`;
     cbDe(c).querySelector(".in-go").onclick = () => goToPage("comparaciones");
     return c;
@@ -1620,7 +1620,7 @@
     const xs = A.map(a => ({ a, pi: posInfo(a) })).filter(x => x.pi.has);
     if (!xs.length) {
       head("Se calculan a partir de tus comparaciones <b>seleccionadas</b>.");
-      if (!secMono && !secDesc) dash.innerHTML = `<div class="empty"><div class="big">📊</div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
+      if (!secMono && !secDesc) dash.innerHTML = `<div class="empty"><div class="big"><span class="msi">bar_chart</span></div>Todavía no hay insights para mostrar.<br>Seleccioná comparaciones o marcá productos <b>sin competencia</b> (desde <b>Catálogo</b>) y acá se arma el panorama.</div>`;
       alFinal(); return;
     }
     head(`Calculado sobre <b>${xs.length}</b> comparaciones seleccionadas · precio neto · Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`);
@@ -1633,9 +1633,9 @@
     const gana = xs.filter(x => x.pi.diff >= 10).sort((a, b) => b.pi.diff - a.pi.diff), pierde = xs.filter(x => x.pi.diff <= -10).sort((a, b) => a.pi.diff - b.pi.diff);
     if (gana.length || pierde.length) {
       const d = el("details", "dash-sec in-args");
-      d.innerHTML = `<summary><h3>🗣️ Argumentos de venta <span class="leuk-fam">(${gana.length + pierde.length})</span></h3><button class="btn-ghost" id="argExport">⬇ Exportar</button></summary>
+      d.innerHTML = `<summary><h3><span class="msi">record_voice_over</span> Argumentos de venta <span class="leuk-fam">(${gana.length + pierde.length})</span></h3><button class="btn-ghost" id="argExport">⬇ Exportar</button></summary>
         <div class="fam-hint">✅ Leuk equivale y es <b>más barato</b> — argumento directo de precio.</div><div class="arg-list">${gana.slice(0, 40).map(x => `<div class="arg-item">${esc2(argumento(x.a, x.pi))}</div>`).join("") || `<div class="empty-mini">Sin casos por ahora.</div>`}</div>
-        <div class="fam-hint" style="margin-top:18px">💬 Leuk es <b>más caro</b> — diferencias técnicas para defender el precio.</div><div class="arg-list">${pierde.slice(0, 40).map(x => `<div class="arg-item">${esc2(argumentoCaro(x.a, x.pi))}</div>`).join("") || `<div class="empty-mini">Sin casos por ahora.</div>`}</div>`;
+        <div class="fam-hint" style="margin-top:18px"><span class="msi">chat_bubble</span> Leuk es <b>más caro</b> — diferencias técnicas para defender el precio.</div><div class="arg-list">${pierde.slice(0, 40).map(x => `<div class="arg-item">${esc2(argumentoCaro(x.a, x.pi))}</div>`).join("") || `<div class="empty-mini">Sin casos por ahora.</div>`}</div>`;
       d.querySelector("#argExport").onclick = ev => { ev.preventDefault(); dl(new Blob(["﻿LEUK MÁS BARATO (argumento de precio)\n" + gana.map(x => argumento(x.a, x.pi)).join("\n") + "\n\nLEUK MÁS CARO (defensa del precio)\n" + pierde.map(x => argumentoCaro(x.a, x.pi)).join("\n")], { type: "text/plain;charset=utf-8" }), "argumentos_venta_leuk.txt"); };
       dash.appendChild(d);
     }
@@ -1644,7 +1644,7 @@
 
   /* ===================== DESCUENTOS (modal editable) ===================== */
   function updateDescBtn() {
-    const b = $("#btnDesc"); if (b) b.textContent = `⚙ Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`;
+    const b = $("#btnDesc"); if (b) b.innerHTML = `<span class="msi">tune</span> Leuk ${CFG.leukTier === "cliente" ? "Cliente" : "Partner"} −${descLeuk()}%`;
   }
   function rerenderActive() {
     updateNavCount(); updateDescBtn();
@@ -1692,7 +1692,7 @@
     const b = $("#btnAuth"); if (!b) return;
     // El nombre real (de `perfiles`); si todavía no cargó, la parte del mail.
     const quien = NOMBRE || (AUTHSES.email() || "").split("@")[0] || "cuenta";
-    b.textContent = `👤 ${quien}`;
+    b.innerHTML = `<span class="msi">person</span> ${esc2(quien)}`;
     b.title = `${quien} · ${AUTHSES.email()} — clic para ver tu cuenta`;
   }
   function lock() {
@@ -1812,7 +1812,7 @@
     const gen = meta.generado ? new Date(meta.generado) : null;
     const dias = gen ? Math.floor((Date.now() - gen.getTime()) / 864e5) : null;
     const fecha = gen ? gen.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
-    const vejez = dias == null ? "" : dias > 30 ? ` ⚠️ hace ${dias} días — pedir actualización` : dias > 0 ? ` (hace ${dias} día${dias > 1 ? "s" : ""})` : " (hoy)";
+    const vejez = dias == null ? "" : dias > 30 ? ` ⚠ hace ${dias} días — pedir actualización` : dias > 0 ? ` (hace ${dias} día${dias > 1 ? "s" : ""})` : " (hoy)";
     const abrev = m => m === "World Leds Go" ? "WLG" : m;
     const descTxt = MARCAS.map(m => `${abrev(m)} −${DEF_DISC[m] != null ? DEF_DISC[m] : 0}%`).join(" · ");
     // Pie del Benchmark (TC, descuentos, frescura): sólo aplica a ese módulo. Se guarda
@@ -1846,8 +1846,8 @@
     PAGES.forEach(p => { const el = $("#page-" + p); if (el) el.classList.toggle("hidden", p !== "inicio"); });
     $("#subbar").classList.add("hidden");
     $("#inicio").innerHTML = `<div class="home-hero">
-      <img src="assets/logo-leuk-ilum.png" alt="Leuk Iluminación" class="home-logo">
-      <span class="brand-sub home-tag">Leuk Marketing</span>
+      <img src="assets/leukgroup-logo.svg?v=1" alt="Leuk Group" class="home-logo">
+      <span class="brand-sub home-tag">Marketing</span>
       <h1>Tu cuenta todavía no tiene acceso</h1>
       <p>Ya podés entrar, pero un administrador tiene que asignarte un rol para que veas
       el contenido. Escribile a quien administra la plataforma con este mail:
@@ -1888,9 +1888,9 @@
   function pantallaRecuperar(token) {
     history.replaceState(null, "", location.pathname);      // limpiar el token de la barra
     const card = document.querySelector("#gate .gate-card");
-    card.innerHTML = `<img src="assets/logo-leuk-ilum.png" alt="Leuk Iluminación" class="gate-logo">
+    card.innerHTML = `<img src="assets/leukgroup-logo.svg?v=1" alt="Leuk Group" class="gate-logo">
       <h1>Elegí tu contraseña</h1>
-      <p class="gate-sub">Poné una contraseña nueva para entrar a Leuk Marketing.</p>
+      <p class="gate-sub">Poné una contraseña nueva para entrar a la plataforma de Leuk Group.</p>
       <input id="rcPass1" type="password" placeholder="Contraseña nueva (mín. 8)" class="lg-in" autocomplete="new-password">
       <input id="rcPass2" type="password" placeholder="Repetila" class="lg-in" autocomplete="new-password">
       <div id="rcErr" class="lg-err"></div>
@@ -2288,7 +2288,7 @@
         crear.textContent = "Subir lista"; crear.disabled = false;
       }
     };
-    const EST = { pendiente: ["ci-b-wait", "⏳ En cola"], procesando: ["ci-b-run", "⚙ Procesando…"], listo: ["ci-b-ok", "✓ Listo"], error: ["ci-b-err", "✕ Error"] };
+    const EST = { pendiente: ["ci-b-wait", "En cola"], procesando: ["ci-b-run", "⚙ Procesando…"], listo: ["ci-b-ok", "✓ Listo"], error: ["ci-b-err", "✕ Error"] };
     async function renderLista() {
       const jobs = await traerJobsIntegracion();
       if (!jobs.length) { lista.innerHTML = `<div class="empty-mini">Todavía no se cargó ninguna lista.</div>`; return; }
@@ -2439,7 +2439,7 @@
           <div class="intg-info"><b>${(p.nombre || "—").replace(/[<>]/g, "")}</b> <span class="leuk-fam">${(p.familia || "").replace(/[<>]/g, "")}</span>
             <div class="leuk-fam intg-specs">${fmtUsd(p.precio_usd)}${specs ? " · " + specs : ""}</div></div>
           <div class="intg-acts">
-            <button class="intg-b intg-ficha-b" data-act="ficha" data-id="${p.id}">📋 Ficha</button>
+            <button class="intg-b intg-ficha-b" data-act="ficha" data-id="${p.id}"><span class="msi">description</span> Ficha</button>
             <button class="intg-b intg-ok ${p.aprobado === true ? "on" : ""}" data-act="ok" data-id="${p.id}">✓ Aprobar</button>
             <button class="intg-b intg-no ${p.aprobado === false ? "on" : ""}" data-act="no" data-id="${p.id}">✕ Descartar</button>
           </div></div>`;
@@ -2576,9 +2576,9 @@
     // cuatro líneas: acá, en PAGES, en index.html y en CANALES de contenidos.js.
     contenidos: {
       label: "Contenidos",
-      pages: [{ p: "contenidos", t: "💬 Comunidad de WhatsApp" },
-              { p: "contenidos-ig", t: "📸 Instagram" },
-              { p: "contenidos-mail", t: "✉️ Mailing" }],
+      pages: [{ p: "contenidos", t: "Comunidad de WhatsApp" },
+              { p: "contenidos-ig", t: "Instagram" },
+              { p: "contenidos-mail", t: "Mailing" }],
     },
     // Sólo el equipo de marketing (ver esMarketing): no está en ROLES.mods a propósito.
     tareas: {
@@ -2719,7 +2719,7 @@
       "Los equivalentes <b>sin precio o marcados con ⚠</b> pueden ser de otra gama: revisalos antes de seleccionarlos.",
       "<b>Seleccioná</b> las válidas con “＋ Seleccionar”: quedan <b>compartidas con todo el equipo</b> en <b>Comparaciones</b>, donde las filtrás y las exportás a Excel.",
       "En <b>Insights</b> ves la posición de precio y las oportunidades sobre lo seleccionado.",
-      "Con <b>⚙ Descuentos</b> (arriba a la derecha) simulás el precio neto con otros descuentos. Es sólo para vos: no cambia lo que ve el resto."] },
+      "Con <b><span class='msi'>tune</span> Descuentos</b> (arriba a la derecha) simulás el precio neto con otros descuentos. Es sólo para vos: no cambia lo que ve el resto."] },
     { t: "Carga de datos", ic: "upload", pages: ["integraciones", "manual"], pasos: [
       ["<b>Subir precios</b> (en Administración): subís la lista de una marca en Excel, con una columna de código o SKU y una de precio.", () => puedePrecios()],
       ["<b>Subir costos</b>: Excel con <b>SKU y Costo en US$</b>. Los ven sólo Admin y Líder y nunca quedan en un archivo público.", () => puedeCostos()],
@@ -2755,22 +2755,22 @@
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
       "Elegí el canal en el menú (<b>Comunidad WhatsApp</b>, <b>Instagram</b> o <b>Mailing</b>) y el <b>mes</b> arriba. Debajo ves quién <b>hace</b> y quién <b>revisa</b> ese canal.",
-      "Para armar un mes nuevo elegí <b>＋ Nuevo mes…</b> al final del selector de mes: marcás el mes en la grilla, le ponés título y elegís si el brief arranca en blanco o con el del mes anterior. Todo mes nace con una pieza en blanco y <b>sin fecha</b>: completás la fecha (📅 Poner fecha) y el contenido en la ficha, y sumás más con <b>＋ Agregar una nueva pieza</b> abajo de la lista. Las que todavía no tienen fecha aparecen arriba del calendario.",
+      "Para armar un mes nuevo elegí <b>＋ Nuevo mes…</b> al final del selector de mes: marcás el mes en la grilla, le ponés título y elegís si el brief arranca en blanco o con el del mes anterior. Todo mes nace con una pieza en blanco y <b>sin fecha</b>: completás la fecha (<span class='msi'>calendar_month</span> Poner fecha) y el contenido en la ficha, y sumás más con <b>＋ Agregar una nueva pieza</b> abajo de la lista. Las que todavía no tienen fecha aparecen arriba del calendario.",
       "En <b>Instagram</b> elegís el perfil arriba (<b>Leuk</b> o <b>Laftdren</b>): cada uno tiene su propio cronograma, feed, Resultados y avisos.",
       "En <b>Fichas</b> tenés la lista del mes a la izquierda (fecha, estado y a quién le toca) y la pieza abierta a la derecha. También está el <b>Calendario</b> y, en Instagram, el <b>Feed</b>.",
       "El recorrido: <b>Borrador → Precisa feedback → Con ajustes / Listo para publicar → Publicado</b>. Quien hace toca <b>Pedir feedback</b>; quien revisa decide <b>Con ajustes</b> o <b>Listo para publicar</b>; cuando sale, quien hace la marca <b>Publicado</b>. A cada uno le llega el aviso cuando le toca.",
       "Para cambiar la fecha, <b>arrastrá la pieza</b> a otro día del calendario (en el celular: tocá ✥ y después el día).",
-      "Dejá <b>comentarios</b> en 💬, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
+      "Dejá <b>comentarios</b> en <span class='msi'>chat_bubble</span>, o seleccioná un tramo del copy para <b>sugerir un cambio</b>: queda marcado hasta que alguien lo acepta o descarta.",
       "Con sugerencias sin resolver no se puede marcar <b>Listo para publicar</b>. Los ajustes se van tildando como resueltos en los comentarios.",
-      "En la <b>Comunidad de WhatsApp</b> un mensaje puede llevar <b>📊 encuesta</b>: tocá <b>Agregar encuesta</b> en la ficha, escribí la pregunta y las opciones (de 2 a 12) y marcá si acepta <b>varias respuestas</b>.",
+      "En la <b>Comunidad de WhatsApp</b> un mensaje puede llevar <b><span class='msi'>poll</span> encuesta</b>: tocá <b>Agregar encuesta</b> en la ficha, escribí la pregunta y las opciones (de 2 a 12) y marcá si acepta <b>varias respuestas</b>.",
       "Con <b>⧉ Copiar</b> te llevás el mensaje listo para pegar; los <b>*asteriscos*</b> son la negrita de WhatsApp y van tal cual.",
       "En <b>Mailing</b> cada envío es un <b>archivo</b>: subí el <b>.html</b> (o las imágenes en orden) y lo ves en la ficha, en escritorio y en celular. Elegí el <b>destino</b> (Profesionales o Distribuidores): de eso depende qué conversión se mide.",
-      "En <b>📈 Resultados</b> ves el embudo, la evolución de cada KPI y el histórico del canal. Quien hace el canal carga los números crudos abajo (a las 48 h de cada pieza, y los del mes); los % y totales los calcula la plataforma."] },
+      "En <b><span class='msi'>trending_up</span> Resultados</b> ves el embudo, la evolución de cada KPI y el histórico del canal. Quien hace el canal carga los números crudos abajo (a las 48 h de cada pieza, y los del mes); los % y totales los calcula la plataforma."] },
     { t: "Tareas", ic: "view_kanban", pages: ["tareas"], pasos: [
       "Creá una tarea con <b>＋ Nueva tarea</b> y asignale <b>responsable, fecha, prioridad y área</b>. Si es un hito, marcale la <b>★</b>.",
       "En <b>▦ Tablero</b> la arrastrás de columna a medida que avanza: <b>por hacer → en curso → en revisión → hecha</b>.",
-      "En <b>☰ Lista</b> ves todo agrupado por vencimiento, y en <b>📅 Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
-      "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo. Cada paso puede tener <b>su propia fecha</b> (el 📅 al lado), aparte del vencimiento de la tarea.",
+      "En <b><span class='msi'>view_list</span> Lista</b> ves todo agrupado por vencimiento, y en <b><span class='msi'>calendar_month</span> Calendario</b> arrastrás una tarea a otro día para moverle la fecha.",
+      "Abrí cualquier tarea para sumarle un <b>checklist</b> de pasos y dejar <b>comentarios</b> al equipo. Cada paso puede tener <b>su propia fecha</b> (el <span class='msi'>calendar_month</span> al lado), aparte del vencimiento de la tarea.",
       "Escribí <b>@</b> en un comentario o en un paso del checklist para <b>mencionar</b> a alguien del equipo.",
       "El número al lado de <b>Tareas</b> en el menú son las tuyas que vencen hoy o ya vencieron, más las menciones nuevas."] },
     { t: "Acciones", ic: "campaign", pages: ["acciones"], pasos: [
@@ -2847,15 +2847,15 @@
     // La arma fichas-panel.js uniendo fichas-ui.js (dibujo) con 06_API.gs (estado).
     if (page === "fichas" && window.renderFichas) window.renderFichas();
     // Firmas de mail: app autocontenida embebida. Se carga el iframe recién al entrar.
-    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=159"; }
+    if (page === "firmas") { const f = $("#firmasFrame"); if (f && !f.src) f.src = "firmas-mail.html?v=160"; }
     // Stock diario: app autocontenida embebida.
-    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=10"; }
+    if (page === "stock") { const f = $("#stockFrame"); if (f && !f.src) f.src = "stock-diario.html?v=11"; }
     // Reingresos: app autocontenida embebida.
-    if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=3"; }
+    if (page === "reingresos") { const f = $("#reingresosFrame"); if (f && !f.src) f.src = "reingresos.html?v=4"; }
     // Liquidación: app autocontenida embebida (trae fuentes y fotos adentro: pesa ~13 MB).
-    if (page === "liquidacion") { const f = $("#liquidacionFrame"); if (f && !f.src) f.src = "liquidacion.html?v=1"; }
+    if (page === "liquidacion") { const f = $("#liquidacionFrame"); if (f && !f.src) f.src = "liquidacion.html?v=2"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
-    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=139"; }
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=142"; }
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
     // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {
@@ -2930,7 +2930,7 @@
     const rolLabel = r => (ROLES[ROL_ALIAS[r] || r] || {}).label || r;
 
     cont.innerHTML = `
-      <div class="res-intro">Gestioná quién entra a <b>Leuk Marketing</b> y qué ve cada uno.
+      <div class="res-intro">Gestioná quién entra a la plataforma de <b>Leuk Group</b> y qué ve cada uno.
         Los cambios de rol se aplican la próxima vez que la persona entre.</div>
       <div class="us-add">
         <h3>Agregar persona</h3>
@@ -2959,7 +2959,7 @@
             <td class="leuk-fam">${[...(cfg.mods || []), ...(p.marketing || (ROL_ALIAS[p.rol] || p.rol) === "admin" ? ["tareas"] : [])]
               .map(m => (MODULOS[m] || {}).label || m).join(" · ") || "—"}</td>
             <td class="us-acc">${soyYo ? "" :
-              `<button class="btn-ghost us-pass" title="Asignar una contraseña nueva">🔑</button>
+              `<button class="btn-ghost us-pass" title="Asignar una contraseña nueva"><span class="msi">key</span></button>
                <button class="btn-ghost us-del" title="Quitar acceso">✕</button>`}</td>
           </tr>`;
         }).join("")}</tbody>
@@ -3004,7 +3004,7 @@
       $("#usAdd").disabled = true; msg("Creando…", true);
       try {
         await llamarFn("crear", { email, nombre, rol, password: pass });
-        msg(`✓ Listo. Pasale a ${nombre || email} su mail y esta contraseña; puede cambiarla desde 👤 Mi cuenta.`, true);
+        msg(`✓ Listo. Pasale a ${nombre || email} su mail y esta contraseña; puede cambiarla desde Mi cuenta.`, true);
         renderUsuarios();
       } catch (e) {
         msg(e.message === "FALTA_FN"

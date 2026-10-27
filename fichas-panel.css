@@ -13,12 +13,12 @@
    Solicitada rojo suave · A actualizar amarillo · Finalizada verde ·
    Listo para publicar olive (lo marcó una persona, no el bot) ·
    Discontinuada gris. */
-.fe-solicitada     { --fe-c: var(--no);         --fe-bg: #f4e2df; }
-.fe-actualizar     { --fe-c: var(--warn);       --fe-bg: #f6ecd8; }
+.fe-solicitada     { --fe-c: var(--no);         --fe-bg: #FDEBEC; }
+.fe-actualizar     { --fe-c: var(--warn);       --fe-bg: #FBF3DB; }
 /* Legado: "Listo para publicar" era otro nombre de Finalizada. Mismo color,
    porque es el mismo estado. Desaparece cuando el bot normalice las filas. */
-.fe-listo          { --fe-c: var(--ok);         --fe-bg: #e7f0e1; }
-.fe-finalizada     { --fe-c: var(--ok);         --fe-bg: #e7f0e1; }
+.fe-listo          { --fe-c: var(--ok);         --fe-bg: #EDF3EC; }
+.fe-finalizada     { --fe-c: var(--ok);         --fe-bg: #EDF3EC; }
 .fe-discontinuada  { --fe-c: var(--gray-soft);  --fe-bg: #f1f2ee; }  /* BANDA_PAR del bot (00_Comun.gs) */
 .fe-sinestado      { --fe-c: var(--olive-soft); --fe-bg: var(--olive-pale); }
 
@@ -111,7 +111,7 @@
 .fp-modal-caja span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
                     color:var(--gray-soft);margin-bottom:4px}
 .fp-modal-caja div{font-size:13px;color:var(--ink);line-height:1.5}
-.fp-conflicto{background:rgba(183,137,59,.12);border-left:3px solid var(--warn);
+.fp-conflicto{background:rgba(224,169,62,.12);border-left:3px solid var(--warn);
               border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.55}
 .fp-conflicto b{color:var(--warn);display:block;margin-bottom:5px}
 .fp-conflicto div b{display:inline;color:inherit}

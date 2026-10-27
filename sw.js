@@ -1,4 +1,4 @@
-/* Service worker de Leuk Marketing — SÓLO para las notificaciones del sistema (push).
+/* Service worker de Leuk Group · Marketing — SÓLO para las notificaciones del sistema (push).
    No cachea nada: la app se sigue cargando siempre de la red, como antes.
    · push              → muestra el aviso que manda la Edge Function `push`
    · notificationclick → trae al frente la plataforma (o la abre) y la lleva a lo avisado */
@@ -9,7 +9,7 @@ self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Leuk Marketing", {
+  e.waitUntil(self.registration.showNotification(d.title || "Leuk Group", {
     body: d.body || "",
     icon: "assets/icon-192.png",
     badge: "assets/favicon-32.png",

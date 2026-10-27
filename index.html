@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leuk Marketing</title>
-<link rel="icon" href="assets/favicon.ico?v=1" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1">
+<title>Leuk Group · Marketing</title>
+<link rel="icon" href="assets/favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=2">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <!-- íconos del menú (sólo los que se usan; la lista va en orden alfabético) -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&icon_names=alternate_email,assignment_ind,assignment_return,campaign,cancel,chat,check_circle,close,compare_arrows,confirmation_number,description,edit,event_upcoming,group,group_add,handshake,home,insights,inventory_2,mail,menu,menu_book,monitoring,move_to_inbox,notifications,payments,photo_camera,rate_review,search,sell,signature,sync,upload,view_kanban&display=block">
-<link rel="stylesheet" href="styles.css?v=266">
-<link rel="stylesheet" href="fichas.css?v=256">
-<link rel="stylesheet" href="fichas-panel.css?v=249">
-<link rel="stylesheet" href="contenidos.css?v=269">
-<link rel="stylesheet" href="resultados.css?v=3">
-<link rel="stylesheet" href="tareas.css?v=6">
-<link rel="stylesheet" href="acciones.css?v=6">
-<link rel="stylesheet" href="eventos-clientes.css?v=5">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300,0,0&icon_names=alternate_email,article,assignment_ind,assignment_return,attach_file,bar_chart,build,calendar_month,campaign,cancel,chat,chat_bubble,check_circle,checklist,close,compare_arrows,confirmation_number,delete,description,desktop_windows,edit,edit_note,event_available,event_upcoming,explore,folder_open,folder_zip,group,group_add,handshake,home,image,insights,inventory_2,key,mail,map,menu,menu_book,monitoring,move_to_inbox,movie,notifications,payments,person,photo_camera,picture_as_pdf,poll,rate_review,record_voice_over,reply,savings,schedule,search,sell,send,signature,slideshow,smartphone,swap_horiz,swords,sync,table_chart,trending_up,tune,upload,view_kanban,view_list,visibility,warning,workspace_premium&display=block">
+<link rel="stylesheet" href="styles.css?v=269">
+<link rel="stylesheet" href="fichas.css?v=259">
+<link rel="stylesheet" href="fichas-panel.css?v=251">
+<link rel="stylesheet" href="contenidos.css?v=272">
+<link rel="stylesheet" href="resultados.css?v=5">
+<link rel="stylesheet" href="tareas.css?v=9">
+<link rel="stylesheet" href="acciones.css?v=9">
+<link rel="stylesheet" href="eventos-clientes.css?v=7">
 </head>
 <body class="locked">
 
 <!-- PANTALLA DE INGRESO (cubre toda la app hasta iniciar sesión) -->
 <div id="gate" class="gate">
   <div class="gate-card">
-    <img src="assets/logo-leuk-ilum.png?v=249" alt="Leuk Iluminación" class="gate-logo">
-    <h1>Leuk Marketing</h1>
+    <img src="assets/leukgroup-logo.svg?v=1" alt="Leuk Group" class="gate-logo">
+    <h1>Plataforma de marketing</h1>
     <p class="gate-sub">Ingresá con tu usuario para acceder.</p>
     <input id="gateEmail" type="email" placeholder="Email" autocomplete="username" class="lg-in">
     <input id="gatePass" type="password" placeholder="Contraseña" autocomplete="current-password" class="lg-in">
@@ -43,13 +43,15 @@
 <div class="shell">
 <aside id="side" class="side" aria-label="Menú principal">
   <div class="side-brand">
-    <img src="assets/isologo-uk.png?v=249" alt="Ukelele" class="logo">
-    <span class="side-name">Leuk Marketing</span>
+    <div class="side-marca">
+      <img src="assets/leukgroup-horizontal.svg?v=1" alt="Leuk Group" class="side-logo">
+      <span class="side-name">Marketing</span>
+    </div>
     <button id="navClose" class="side-close" aria-label="Cerrar menú"><span class="ms">close</span></button>
   </div>
   <nav id="nav" class="side-nav"></nav>
   <div class="side-foot">
-    <button id="btnAuth" class="side-user" title="Tu cuenta">👤</button>
+    <button id="btnAuth" class="side-user" title="Tu cuenta"><span class="msi">person</span></button>
   </div>
 </aside>
 <div id="sideScrim" class="side-scrim"></div>
@@ -59,7 +61,7 @@
 <!-- barra superior: sólo en celular/tablet (hamburguesa + dónde estás) -->
 <header class="topbar">
   <button id="navOpen" class="tb-menu" aria-label="Abrir menú"><span class="ms">menu</span></button>
-  <img src="assets/isologo-uk.png?v=249" alt="" class="logo">
+  <img src="assets/leukgroup-isotipo.svg?v=1" alt="Leuk Group" class="logo">
   <span id="tbTitle" class="tb-title">Mi día</span>
 </header>
 <!-- barra de la página: título + herramientas propias (hoy sólo Benchmark: Descuentos) -->
@@ -67,7 +69,7 @@
   <span class="pb-grp" id="sbLabel"></span>
   <h2 class="pb-title" id="sbTitle"></h2>
   <div class="sb-tools" id="sbTools">
-    <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto">⚙ Descuentos</button>
+    <button id="btnDesc" class="btn-desc" title="Editar descuentos / precio neto"><span class="msi">tune</span> Descuentos</button>
   </div>
 </div>
 </div>
@@ -194,18 +196,18 @@
 <script src="vendor/html2canvas.min.js?v=249"></script>
 <script src="vendor/jspdf.umd.min.js?v=249"></script>
 <script src="vendor/jszip.min.js?v=249"></script>
-<script src="selector.js?v=1"></script>
-<script src="dialogos.js?v=1"></script>
-<script src="comentarios-img.js?v=2"></script>
-<script src="app.js?v=282"></script>
+<script src="selector.js?v=2"></script>
+<script src="dialogos.js?v=2"></script>
+<script src="comentarios-img.js?v=3"></script>
+<script src="app.js?v=285"></script>
 <script src="fichas-data.js?v=256"></script>
-<script src="fichas-ui.js?v=256"></script>
-<script src="fichas-panel.js?v=249"></script>
-<script src="contenidos.js?v=279"></script>
-<script src="resultados.js?v=7"></script>
-<script src="tareas.js?v=12"></script>
-<script src="acciones.js?v=11"></script>
-<script src="eventos-clientes.js?v=9"></script>
+<script src="fichas-ui.js?v=257"></script>
+<script src="fichas-panel.js?v=251"></script>
+<script src="contenidos.js?v=282"></script>
+<script src="resultados.js?v=10"></script>
+<script src="tareas.js?v=14"></script>
+<script src="acciones.js?v=13"></script>
+<script src="eventos-clientes.js?v=12"></script>
 
 <!-- Mantiene --appbar-h igual al alto real de la barra (topbar + sub-barra),
      para que las mini-apps embebidas llenen exacto el alto de pantalla. -->

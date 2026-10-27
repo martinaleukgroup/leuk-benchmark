@@ -11,24 +11,24 @@
 /* --- Barra de controles --- */
 .fichas-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:14px 18px;background:#f4f5f2;border:1px solid #e2e4de;border-radius:12px;margin-bottom:20px}
 .fichas-bar .fb-field{display:flex;flex-direction:column;gap:3px}
-.fichas-bar label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8a8f82}
-.fichas-bar select,.fichas-bar input{padding:8px 11px;border:1px solid #c9ccc2;border-radius:8px;font-size:13px;min-width:240px;background:#fff}
+.fichas-bar label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#808080}
+.fichas-bar select,.fichas-bar input{padding:8px 11px;border:1px solid #CCCCCC;border-radius:8px;font-size:13px;min-width:240px;background:#fff}
 /* buscador con autocompletar */
 .fb-combo{position:relative}
 .fb-combo input{min-width:320px}
-.fb-list{position:absolute;top:100%;left:0;right:0;z-index:30;background:#fff;border:1px solid #c9ccc2;border-radius:8px;margin-top:5px;max-height:360px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+.fb-list{position:absolute;top:100%;left:0;right:0;z-index:30;background:#fff;border:1px solid #CCCCCC;border-radius:8px;margin-top:5px;max-height:360px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.16)}
 .fb-list[hidden]{display:none}
-.fb-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #f0f1ec}
+.fb-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #F0F0F0}
 .fb-item:last-child{border-bottom:none}
 .fb-item:hover{background:#f3f4ef}
-.fb-badge{font-size:10px;color:#6c7a3f;background:#eef0e6;border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:600}
-.fb-empty{padding:11px 12px;color:#8a8f82;font-size:13px}
-.fichas-bar .fb-btn{margin-left:auto;background:#676B55;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
-.fichas-bar .fb-btn:hover{background:#565a45}
-.fichas-bar .fb-btn-alt{margin-left:10px;background:#fff;color:#676B55;border:1.5px solid #676B55}
-.fichas-bar .fb-btn-alt:hover{background:#f0f1ec}
-.fichas-note{font-size:12px;color:#8a8f82;width:100%}
-.fichas-note b{color:#c08a2e}
+.fb-badge{font-size:10px;color:#5D5D5D;background:#eef0e6;border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:600}
+.fb-empty{padding:11px 12px;color:#808080;font-size:13px}
+.fichas-bar .fb-btn{margin-left:auto;background:#000000;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
+.fichas-bar .fb-btn:hover{background:#505050}
+.fichas-bar .fb-btn-alt{margin-left:10px;background:#fff;color:#000000;border:1.5px solid #000000}
+.fichas-bar .fb-btn-alt:hover{background:#F0F0F0}
+.fichas-note{font-size:12px;color:#808080;width:100%}
+.fichas-note b{color:#A8741A}
 
 #ficha-stage{display:flex;flex-direction:column;align-items:center;gap:24px}
 
@@ -37,7 +37,7 @@
 #ficha-export .f-page{box-shadow:none!important;margin:0!important}
 
 /* --- La ficha A4 --- */
-.f-host .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#2c4a9a;--red:#e2231a;--mag:#b5299b;
+.f-host .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#337EA9;--red:#e2231a;--mag:#b5299b;
   width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:11mm 12mm 7mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
 .f-host .f-page *{box-sizing:border-box}
 /* imprimir/PDF respetando fondos (cebra, swatch, fondo de imagen, punto) */

@@ -16,25 +16,25 @@
   if (window.lkConfirmar) return;
 
   const css = `
-  .lk-dlg{position:fixed;inset:0;background:rgba(40,42,34,.45);z-index:1100;display:flex;
+  .lk-dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:flex;
     align-items:center;justify-content:center;padding:20px;animation:lkDlgIn .12s ease-out}
-  .lk-dlg-inner{background:var(--bg,#fbfbf9);width:100%;max-width:440px;border-radius:var(--radius,14px);
+  .lk-dlg-inner{background:var(--bg,#FAFAFA);width:100%;max-width:440px;border-radius:var(--radius,14px);
     padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:calc(100vh - 40px);overflow-y:auto;
-    font-family:var(--font-body,"Barlow",system-ui,sans-serif);color:var(--ink,#2b2c26)}
+    font-family:var(--font-body,"Hanken Grotesk",system-ui,sans-serif);color:var(--ink,#1A1A1A)}
   .lk-dlg-tit{font-size:16px;font-weight:600;line-height:1.35;margin:0;white-space:pre-line;overflow-wrap:anywhere}
   .lk-dlg-txt{font-size:14px;line-height:1.45;color:var(--gray,#4D4D4D);margin:8px 0 0;white-space:pre-line;overflow-wrap:anywhere}
   .lk-dlg-in{display:block;width:100%;box-sizing:border-box;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;
-    color:var(--ink,#2b2c26);background:var(--card,#fff);border:1px solid var(--line,#e4e6dd);border-radius:10px;outline:0}
-  .lk-dlg-in:focus{border-color:var(--olive-mid,#8B9174);box-shadow:0 0 0 3px var(--olive-pale,#EEF0E8)}
+    color:var(--ink,#1A1A1A);background:var(--card,#fff);border:1px solid var(--line,#E6E6E6);border-radius:10px;outline:0}
+  .lk-dlg-in:focus{border-color:var(--olive-mid,#4D4D4D);box-shadow:0 0 0 3px var(--olive-pale,#F0F0F0)}
   .lk-dlg-bot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;flex-wrap:wrap}
   .lk-dlg-bot button{font-family:inherit;font-size:14px;padding:9px 18px;border-radius:10px;cursor:pointer;line-height:1.2}
-  .lk-dlg-no{border:1px solid var(--olive-soft,#B6BAA4);background:var(--card,#fff);color:var(--olive,#676B55)}
-  .lk-dlg-no:hover{background:var(--olive-pale,#EEF0E8)}
-  .lk-dlg-si{border:0;background:var(--olive,#676B55);color:#fff;font-weight:600}
-  .lk-dlg-si:hover{background:var(--olive-mid,#8B9174)}
+  .lk-dlg-no{border:1px solid var(--olive-soft,#CCCCCC);background:var(--card,#fff);color:var(--olive,#000000)}
+  .lk-dlg-no:hover{background:var(--olive-pale,#F0F0F0)}
+  .lk-dlg-si{border:0;background:var(--olive,#000000);color:#fff;font-weight:600}
+  .lk-dlg-si:hover{background:var(--olive-mid,#4D4D4D)}
   .lk-dlg-si.peligro{background:var(--no,#b25b4e)}
   .lk-dlg-si.peligro:hover{background:#9c4c40}
-  .lk-dlg-bot button:focus-visible{outline:0;box-shadow:0 0 0 3px var(--olive-pale,#EEF0E8),0 0 0 4.5px var(--olive-mid,#8B9174)}
+  .lk-dlg-bot button:focus-visible{outline:0;box-shadow:0 0 0 3px var(--olive-pale,#F0F0F0),0 0 0 4.5px var(--olive-mid,#4D4D4D)}
   @keyframes lkDlgIn{from{opacity:0}to{opacity:1}}`;
   const st = document.createElement("style"); st.id = "lk-dialogos-css"; st.textContent = css;
   (document.head || document.documentElement).appendChild(st);

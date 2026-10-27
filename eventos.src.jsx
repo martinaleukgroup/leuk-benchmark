@@ -109,16 +109,16 @@ return dataRows.map(c => ({ nombre: get(c,d.n), apellidos: get(c,d.a), mail: get
 }
 
 const PROP_COLORS = {
-"Fernando Mazzetti": { bg:"#e6edf5", text:"#3a6ea5" },
-"Marketing Leuk": { bg:"#e7f0e1", text:"#4f7a3f" },
-"Asistente Agencia Paulo Lucia": { bg:"#efe6f7", text:"#7a54b0" },
+"Fernando Mazzetti": { bg:"#E7F3F8", text:"#337EA9" },
+"Marketing Leuk": { bg:"#EDF3EC", text:"#448361" },
+"Asistente Agencia Paulo Lucia": { bg:"#F6F3F9", text:"#9065B0" },
 };
 function Badge({ name }) {
 if (!name) return null;
-const c = PROP_COLORS[name] || { bg:"#e4e6dd", text:"#8a8c82" };
+const c = PROP_COLORS[name] || { bg:"#E6E6E6", text:"#808080" };
 const short = name === "Asistente Agencia Paulo Lucia" ? "Agencia P.L." : name;
 return (
-<span style={{ background:c.bg, color:c.text, fontSize:10, fontFamily:"'Barlow',monospace",
+<span style={{ background:c.bg, color:c.text, fontSize:10, fontFamily:"'Hanken Grotesk',monospace",
 padding:"2px 8px", borderRadius:4, whiteSpace:"nowrap", fontWeight:500 }}>{short}</span>
 );
 }
@@ -313,34 +313,36 @@ const filtered = attendees
 const pct = attendees.length ? Math.round(presentes.length/attendees.length*100) : 0;
 
 // ─── styles ───────────────────────────────────────────────────────────
-const card = { background:"#ffffff", border:"1px solid #e4e6dd", borderRadius:12, padding:wide?"24px 28px":"18px 16px" };
+const card = { background:"#ffffff", border:"1px solid #E6E6E6", borderRadius:12, padding:wide?"24px 28px":"18px 16px" };
 const btn = (grad=true) => ({ border:"none", borderRadius:8, padding:"10px 20px", cursor:"pointer",
-fontFamily:"'Barlow',sans-serif", fontSize:13, fontWeight:600,
-background: grad ? "linear-gradient(135deg,#676b55,#565a45)" : "#eef0e8", color: grad ? "#fff" : "#8a8c82" });
-const inp = { width:"100%", background:"#fbfbf9", border:"1px solid #e4e6dd", borderRadius:8,
-padding:"9px 13px", color:"#2b2c26", fontSize:13, fontFamily:"'Barlow',sans-serif", outline:"none" };
+fontFamily:"'Hanken Grotesk',sans-serif", fontSize:13, fontWeight:600,
+background: grad ? "linear-gradient(135deg,#000000,#505050)" : "#F0F0F0", color: grad ? "#fff" : "#808080" });
+const inp = { width:"100%", background:"#FAFAFA", border:"1px solid #E6E6E6", borderRadius:8,
+padding:"9px 13px", color:"#1A1A1A", fontSize:13, fontFamily:"'Hanken Grotesk',sans-serif", outline:"none" };
 const stateBtn = (active, activeBg, activeBorder) => ({
-width:34, height:34, borderRadius:8, border:`1px solid ${active?activeBorder:"#e4e6dd"}`,
+width:34, height:34, borderRadius:8, border:`1px solid ${active?activeBorder:"#E6E6E6"}`,
 cursor:"pointer", flexShrink:0, fontSize:13, fontWeight:700,
-background: active?activeBg:"#eef0e8", color: active?"#fff":"#a2a498",
-display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Barlow',monospace" });
+background: active?activeBg:"#F0F0F0", color: active?"#fff":"#9E9E9E",
+display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Hanken Grotesk',monospace" });
 
 return (
-<div style={{ minHeight:"100vh", background:"#fbfbf9", color:"#2b2c26", fontFamily:"'Barlow',sans-serif" }}>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet"/>
+<div style={{ minHeight:"100vh", background:"#FAFAFA", color:"#1A1A1A", fontFamily:"'Hanken Grotesk',sans-serif" }}>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0&icon_names=celebration,confirmation_number&display=block" rel="stylesheet"/>
 <style>{`
 *{box-sizing:border-box}
+.msi{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-feature-settings:"liga";color:#808080}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pop{0%{transform:scale(.7);opacity:0}65%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
 .row:hover{background:rgba(0,0,0,.035)!important}
 .chk{transition:all .15s}.chk:hover{transform:scale(1.08);opacity:.85}
-input:focus,textarea:focus{border-color:#676b55!important;outline:none}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#d6d8cd;border-radius:99px}
+input:focus,textarea:focus{border-color:#000000!important;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#D2D2D2;border-radius:99px}
 `}</style>
 
 {/* HEADER */}
-<div style={{ background:"#ffffff", borderBottom:"1px solid #e4e6dd", padding:"0 20px", position:"sticky", top:0, zIndex:100 }}>
+<div style={{ background:"#ffffff", borderBottom:"1px solid #E6E6E6", padding:"0 20px", position:"sticky", top:0, zIndex:100 }}>
 <div style={{ maxWidth:"100%", margin:"0 auto" }}>
 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:44, gap:16 }}>
 <div style={{ display:"flex", gap:0, overflowX:"auto", flexShrink:1, minWidth:0 }}>
@@ -351,23 +353,23 @@ input:focus,textarea:focus{border-color:#676b55!important;outline:none}
 { k:"config", l:"⚙ Configuración" },
 ].map(t => (
 <button key={t.k} onClick={()=>setTab(t.k)} style={{
-background:"none", border:"none", borderBottom: tab===t.k?"2px solid #676b55":"2px solid transparent",
+background:"none", border:"none", borderBottom: tab===t.k?"2px solid #000000":"2px solid transparent",
 cursor:"pointer", padding:"14px 16px", fontSize:13, fontWeight:500,
-fontFamily:"'Barlow',sans-serif", color: tab===t.k?"#676b55":"#8a8c82",
+fontFamily:"'Hanken Grotesk',sans-serif", color: tab===t.k?"#000000":"#808080",
 whiteSpace:"nowrap", transition:"all .2s", flexShrink:0
 }}>{t.l}</button>
 ))}
 </div>
 <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-{syncMsg && <span style={{ fontSize:11, color:"#4f7a3f", fontFamily:"'Barlow',monospace", animation:"fadeUp .2s" }}>{syncMsg}</span>}
+{syncMsg && <span style={{ fontSize:11, color:"#448361", fontFamily:"'Hanken Grotesk',monospace", animation:"fadeUp .2s" }}>{syncMsg}</span>}
 {[
-{v:elegibles.length,l:"EN SORTEO",c:"#4f7a3f"},
-{v:presentes.length,l:"PRESENTES",c:"#676b55"},
-{v:attendees.length,l:"INSCRIPTOS",c:"#8a8c82"},
+{v:elegibles.length,l:"EN SORTEO",c:"#448361"},
+{v:presentes.length,l:"PRESENTES",c:"#000000"},
+{v:attendees.length,l:"INSCRIPTOS",c:"#808080"},
 ].map(s=>(
-<div key={s.l} style={{ textAlign:"center", padding:"3px 12px", background:"#eef0e8", borderRadius:8, border:"1px solid #e4e6dd" }}>
-<div style={{ fontSize:17, fontWeight:700, fontFamily:"'Barlow Condensed',sans-serif", color:s.c, lineHeight:1.1 }}>{s.v}</div>
-<div style={{ fontSize:9, color:"#a2a498", fontFamily:"'Barlow',monospace" }}>{s.l}</div>
+<div key={s.l} style={{ textAlign:"center", padding:"3px 12px", background:"#F0F0F0", borderRadius:8, border:"1px solid #E6E6E6" }}>
+<div style={{ fontSize:17, fontWeight:700, fontFamily:"'Hanken Grotesk',sans-serif", color:s.c, lineHeight:1.1 }}>{s.v}</div>
+<div style={{ fontSize:9, color:"#9E9E9E", fontFamily:"'Hanken Grotesk',monospace" }}>{s.l}</div>
 </div>
 ))}
 </div>
@@ -380,26 +382,26 @@ whiteSpace:"nowrap", transition:"all .2s", flexShrink:0
 {/* ════ INSCRIPTOS ════ */}
 {tab==="checkin" && (
 <div style={{ animation:"fadeUp .3s" }}>
-<div style={{ background:"#eef3ea", border:"1px solid #cfe0d2", borderRadius:10, padding:"10px 14px",
-marginBottom:12, fontSize:12, color:"#4f7a3f", display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-<span style={{ ...stateBtn(true,"linear-gradient(135deg,#676b55,#565a45)","#676b5520"), width:24, height:24, fontSize:11 }}>✓</span>
+<div style={{ background:"#eef3ea", border:"1px solid #DBEDDB", borderRadius:10, padding:"10px 14px",
+marginBottom:12, fontSize:12, color:"#448361", display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+<span style={{ ...stateBtn(true,"linear-gradient(135deg,#000000,#505050)","#00000020"), width:24, height:24, fontSize:11 }}>✓</span>
 <span>Presente (a mano)</span>
-<span style={{ color:"#a2a498" }}>+</span>
-<span style={{ ...stateBtn(true,"linear-gradient(135deg,#4f7a3f,#3d6130)","#4f7a3f30"), width:24, height:24, fontSize:11 }}>F</span>
+<span style={{ color:"#9E9E9E" }}>+</span>
+<span style={{ ...stateBtn(true,"linear-gradient(135deg,#448361,#448361)","#4f7a3f30"), width:24, height:24, fontSize:11 }}>F</span>
 <span>Encuesta (automático)</span>
-<span style={{ color:"#a2a498", marginLeft:"auto" }}>=&nbsp;entra al sorteo</span>
+<span style={{ color:"#9E9E9E", marginLeft:"auto" }}>=&nbsp;entra al sorteo</span>
 </div>
 
 <div style={{ ...card, marginBottom:14, display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
 <div style={{ flex:1, minWidth:180 }}>
 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-<span style={{ fontSize:11, color:"#8a8c82", fontFamily:"'Barlow',monospace" }}>Asistencia</span>
-<span style={{ fontSize:11, color:"#676b55", fontFamily:"'Barlow',monospace" }}>{pct}% · {presentes.length}/{attendees.length}</span>
+<span style={{ fontSize:11, color:"#808080", fontFamily:"'Hanken Grotesk',monospace" }}>Asistencia</span>
+<span style={{ fontSize:11, color:"#000000", fontFamily:"'Hanken Grotesk',monospace" }}>{pct}% · {presentes.length}/{attendees.length}</span>
 </div>
-<div style={{ height:4, background:"#e4e6dd", borderRadius:99, overflow:"hidden" }}>
-<div style={{ height:"100%", width:`${pct}%`, background:"linear-gradient(90deg,#565a45,#676b55)", borderRadius:99, transition:"width .5s" }}/>
+<div style={{ height:4, background:"#E6E6E6", borderRadius:99, overflow:"hidden" }}>
+<div style={{ height:"100%", width:`${pct}%`, background:"linear-gradient(90deg,#505050,#000000)", borderRadius:99, transition:"width .5s" }}/>
 </div>
-<div style={{ fontSize:11, color:"#4f7a3f", fontFamily:"'Barlow',monospace", marginTop:6 }}>
+<div style={{ fontSize:11, color:"#448361", fontFamily:"'Hanken Grotesk',monospace", marginTop:6 }}>
 {elegibles.length} habilitado{elegibles.length!==1?"s":""} para el sorteo (presente + encuesta)
 </div>
 </div>
@@ -407,7 +409,7 @@ marginBottom:12, fontSize:12, color:"#4f7a3f", display:"flex", alignItems:"cente
 
 <div style={{ display:"flex", gap:8, marginBottom:12 }}>
 <div style={{ flex:1, position:"relative" }}>
-<span style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)", color:"#a2a498", fontSize:15, pointerEvents:"none" }}>⌕</span>
+<span style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)", color:"#9E9E9E", fontSize:15, pointerEvents:"none" }}>⌕</span>
 <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar nombre, apellido, empresa o mail…" style={{ ...inp, paddingLeft:32 }}/>
 </div>
 <button onClick={()=>setShowAdd(true)} style={{ ...btn(true), whiteSpace:"nowrap", flexShrink:0, padding:"9px 16px" }}>+ Walk-in</button>
@@ -416,12 +418,12 @@ marginBottom:12, fontSize:12, color:"#4f7a3f", display:"flex", alignItems:"cente
 <div style={{ ...card, padding:0, overflow:"hidden" }}>
 {wide && (
 <div style={{ display:"grid", gridTemplateColumns:"34px 1.7fr 1.6fr 1.8fr 84px",
-gap:12, padding:"9px 20px", borderBottom:"1px solid #e4e6dd",
-fontSize:10, color:"#a2a498", fontFamily:"'Barlow',monospace", letterSpacing:".05em", alignItems:"center" }}>
+gap:12, padding:"9px 20px", borderBottom:"1px solid #E6E6E6",
+fontSize:10, color:"#9E9E9E", fontFamily:"'Hanken Grotesk',monospace", letterSpacing:".05em", alignItems:"center" }}>
 <div/><div>NOMBRE</div><div>EMPRESA</div><div>MAIL</div><div style={{ textAlign:"center" }}>P · F</div>
 </div>
 )}
-{filtered.length===0 && <div style={{ padding:40, textAlign:"center", color:"#a2a498", fontSize:13 }}>Sin resultados</div>}
+{filtered.length===0 && <div style={{ padding:40, textAlign:"center", color:"#9E9E9E", fontSize:13 }}>Sin resultados</div>}
 {filtered.map((a,i) => {
 const eleg = a.presente && a.formulario;
 return (
@@ -432,28 +434,28 @@ borderBottom: i<filtered.length-1?"1px solid #edeee7":"none",
 background: eleg?"rgba(103,107,85,.06)":a.presente?"rgba(103,107,85,.02)":"transparent", transition:"background .12s"
 }}>
 <div style={{ width:34, height:34, borderRadius:8, flexShrink:0,
-background: eleg?"linear-gradient(135deg,#565a45,#676b55)":"#eef0e8",
+background: eleg?"linear-gradient(135deg,#505050,#000000)":"#F0F0F0",
 display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700,
-color:eleg?"#fff":"#a2a498", fontFamily:"'Barlow',monospace", border:`1px solid ${eleg?"#676b5520":"#e4e6dd"}` }}>
+color:eleg?"#fff":"#9E9E9E", fontFamily:"'Hanken Grotesk',monospace", border:`1px solid ${eleg?"#00000020":"#E6E6E6"}` }}>
 {getInitials(a.nombre,a.apellidos)}
 </div>
 <div style={{ minWidth:0 }}>
-<div style={{ fontSize:13, fontWeight:500, color:a.presente?"#2b2c26":"#6b6d62", display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
+<div style={{ fontSize:13, fontWeight:500, color:a.presente?"#1A1A1A":"#666666", display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
 {a.nombre} {a.apellidos}
-{a.manual && <span style={{ fontSize:9, background:"#e7f0e1", color:"#4f7a3f", padding:"1px 5px", borderRadius:3, fontFamily:"'Barlow',monospace" }}>walk-in</span>}
-{eleg && <span style={{ fontSize:9, background:"#efe7d2", color:"#676b55", padding:"1px 5px", borderRadius:3, fontFamily:"'Barlow',monospace" }}>en sorteo</span>}
+{a.manual && <span style={{ fontSize:9, background:"#EDF3EC", color:"#448361", padding:"1px 5px", borderRadius:3, fontFamily:"'Hanken Grotesk',monospace" }}>walk-in</span>}
+{eleg && <span style={{ fontSize:9, background:"#FBF3DB", color:"#000000", padding:"1px 5px", borderRadius:3, fontFamily:"'Hanken Grotesk',monospace" }}>en sorteo</span>}
 </div>
-{!wide && <div style={{ fontSize:11, color:"#8a8c82", marginTop:1 }}>{a.empresa}{a.mail?` · ${a.mail}`:""}</div>}
+{!wide && <div style={{ fontSize:11, color:"#808080", marginTop:1 }}>{a.empresa}{a.mail?` · ${a.mail}`:""}</div>}
 </div>
 {wide && <>
-<div style={{ fontSize:13, color:"#6b6d62", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.empresa||"—"}</div>
-<div style={{ fontSize:12, color:"#8a8c82", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.mail||"—"}</div>
+<div style={{ fontSize:13, color:"#666666", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.empresa||"—"}</div>
+<div style={{ fontSize:12, color:"#808080", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.mail||"—"}</div>
 </>}
 <div style={{ display:"flex", gap:6, flexShrink:0, justifyContent:"center" }}>
 <button className="chk" title="Presente en el evento (manual)" onClick={()=>toggle(a.id)}
-style={stateBtn(a.presente,"linear-gradient(135deg,#676b55,#565a45)","#676b5530")}>{a.presente?"✓":"○"}</button>
+style={stateBtn(a.presente,"linear-gradient(135deg,#000000,#505050)","#00000030")}>{a.presente?"✓":"○"}</button>
 <button className="chk" title="Encuesta completada (auto, o toggle manual)" onClick={()=>toggleForm(a.id)}
-style={stateBtn(a.formulario,"linear-gradient(135deg,#4f7a3f,#3d6130)","#4f7a3f40")}>{a.formulario?"✓":"F"}</button>
+style={stateBtn(a.formulario,"linear-gradient(135deg,#448361,#448361)","#4f7a3f40")}>{a.formulario?"✓":"F"}</button>
 </div>
 </div>
 );})}
@@ -465,13 +467,13 @@ style={stateBtn(a.formulario,"linear-gradient(135deg,#4f7a3f,#3d6130)","#4f7a3f4
 {tab==="eligibles" && (
 <div style={{ animation:"fadeUp .3s", maxWidth:820, margin:"0 auto" }}>
 <div style={{ ...card, marginBottom:14 }}>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:17, fontWeight:700, color:"#2b2c26", marginBottom:4 }}>Habilitados para el sorteo</div>
-<div style={{ fontSize:13, color:"#8a8c82", lineHeight:1.7 }}>
-Cruce automático: solo aparece quien <strong style={{color:"#676b55"}}>asistió</strong> (marcado a mano) y además <strong style={{color:"#4f7a3f"}}>completó la encuesta</strong> (matcheado por mail o nombre). Son <strong style={{color:"#4f7a3f"}}>{elegibles.length}</strong> persona{elegibles.length!==1?"s":""}.
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:17, fontWeight:700, color:"#1A1A1A", marginBottom:4 }}>Habilitados para el sorteo</div>
+<div style={{ fontSize:13, color:"#808080", lineHeight:1.7 }}>
+Cruce automático: solo aparece quien <strong style={{color:"#000000"}}>asistió</strong> (marcado a mano) y además <strong style={{color:"#448361"}}>completó la encuesta</strong> (matcheado por mail o nombre). Son <strong style={{color:"#448361"}}>{elegibles.length}</strong> persona{elegibles.length!==1?"s":""}.
 </div>
 </div>
 {elegibles.length===0 ? (
-<div style={{ ...card, textAlign:"center", padding:"54px 24px", color:"#8a8c82", fontSize:14 }}>
+<div style={{ ...card, textAlign:"center", padding:"54px 24px", color:"#808080", fontSize:14 }}>
 Todavía no hay nadie que cumpla las dos condiciones.
 </div>
 ) : (
@@ -479,15 +481,15 @@ Todavía no hay nadie que cumpla las dos condiciones.
 {elegibles.sort((a,b)=>(a.apellidos||"").localeCompare(b.apellidos||"")).map((a,i)=>(
 <div key={a.id} style={{ display:"flex", alignItems:"center", gap:12,
 padding: wide?"11px 20px":"10px 14px", borderBottom: i<elegibles.length-1?"1px solid #edeee7":"none" }}>
-<div style={{ width:32, height:32, borderRadius:8, flexShrink:0, background:"linear-gradient(135deg,#565a45,#676b55)",
-display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff", fontFamily:"'Barlow',monospace" }}>
+<div style={{ width:32, height:32, borderRadius:8, flexShrink:0, background:"linear-gradient(135deg,#505050,#000000)",
+display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff", fontFamily:"'Hanken Grotesk',monospace" }}>
 {getInitials(a.nombre,a.apellidos)}
 </div>
 <div style={{ flex:1, minWidth:0 }}>
-<div style={{ fontSize:13, fontWeight:500, color:"#2b2c26" }}>{a.nombre} {a.apellidos}</div>
-<div style={{ fontSize:11, color:"#8a8c82" }}>{a.empresa}{a.mail?` · ${a.mail}`:""}</div>
+<div style={{ fontSize:13, fontWeight:500, color:"#1A1A1A" }}>{a.nombre} {a.apellidos}</div>
+<div style={{ fontSize:11, color:"#808080" }}>{a.empresa}{a.mail?` · ${a.mail}`:""}</div>
 </div>
-<span style={{ fontSize:10, color:"#4f7a3f", fontFamily:"'Barlow',monospace" }}>✓ habilitado</span>
+<span style={{ fontSize:10, color:"#448361", fontFamily:"'Hanken Grotesk',monospace" }}>✓ habilitado</span>
 </div>
 ))}
 </div>
@@ -505,54 +507,54 @@ display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontW
 <div style={{ animation:"fadeUp .3s", maxWidth:680, margin:"0 auto" }}>
 {elegibles.length===0 ? (
 <div style={{ ...card, textAlign:"center", padding:"64px 24px" }}>
-<div style={{ fontSize:40, marginBottom:10 }}>🎟</div>
-<div style={{ color:"#8a8c82", fontSize:14, lineHeight:1.6 }}>
+<div style={{ fontSize:40, marginBottom:10 }}><span className="msi">confirmation_number</span></div>
+<div style={{ color:"#808080", fontSize:14, lineHeight:1.6 }}>
 Para entrar al sorteo cada persona tiene que estar<br/>
-<strong style={{ color:"#676b55" }}>presente</strong> y haber <strong style={{ color:"#4f7a3f" }}>completado la encuesta</strong>.
+<strong style={{ color:"#000000" }}>presente</strong> y haber <strong style={{ color:"#448361" }}>completado la encuesta</strong>.
 </div>
 </div>
 ) : (
 <>
-<div style={{ background:"linear-gradient(160deg,#ffffff,#eef0e8)", border:"1px solid #d6d8cd",
+<div style={{ background:"linear-gradient(160deg,#ffffff,#F0F0F0)", border:"1px solid #D2D2D2",
 borderRadius:16, padding: wide?"56px 48px":"40px 20px", textAlign:"center", marginBottom:20, position:"relative", overflow:"hidden" }}>
-<div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:200, height:1, background:"linear-gradient(90deg,transparent,#676b55,transparent)" }}/>
+<div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:200, height:1, background:"linear-gradient(90deg,transparent,#000000,transparent)" }}/>
 {raffleState==="idle" && (
 <div>
 <div style={{ fontSize:44, marginBottom:10 }}>✦</div>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:wide?28:22, fontWeight:700, color:"#676b55", marginBottom:6 }}>Sorteo</div>
-<div style={{ fontSize:13, color:"#8a8c82", marginBottom:32 }}>
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:wide?28:22, fontWeight:700, color:"#000000", marginBottom:6 }}>Sorteo</div>
+<div style={{ fontSize:13, color:"#808080", marginBottom:32 }}>
 {restantes.length} participante{restantes.length!==1?"s":""} habilitado{restantes.length!==1?"s":""} en juego
 {winners.length>0&&` · ${winners.length} ya sorteado${winners.length!==1?"s":""}`}
 </div>
 <button onClick={doRaffle} disabled={restantes.length===0} style={{
-background: restantes.length===0?"#eef0e8":"linear-gradient(135deg,#676b55,#565a45)", border:"none", borderRadius:10,
-padding:"14px 48px", color: restantes.length===0?"#8a8c82":"#fff", cursor: restantes.length===0?"not-allowed":"pointer",
-fontSize:15, fontWeight:700, fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:".03em" }}>
+background: restantes.length===0?"#F0F0F0":"linear-gradient(135deg,#000000,#505050)", border:"none", borderRadius:10,
+padding:"14px 48px", color: restantes.length===0?"#808080":"#fff", cursor: restantes.length===0?"not-allowed":"pointer",
+fontSize:15, fontWeight:700, fontFamily:"'Hanken Grotesk',sans-serif", letterSpacing:".03em" }}>
 {restantes.length===0?"NO QUEDAN PARTICIPANTES":"INICIAR SORTEO"}
 </button>
 </div>
 )}
 {raffleState==="spinning" && winner && (
 <div style={{ animation:"flash .4s ease infinite" }}>
-<div style={{ fontSize:11, color:"#8a8c82", fontFamily:"'Barlow',monospace", marginBottom:14 }}>SORTEANDO…</div>
-<div style={{ width:68, height:68, borderRadius:12, margin:"0 auto 14px", background:"linear-gradient(135deg,#565a45,#676b55)",
-display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:700, color:"#fff", fontFamily:"'Barlow',monospace" }}>
+<div style={{ fontSize:11, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", marginBottom:14 }}>SORTEANDO…</div>
+<div style={{ width:68, height:68, borderRadius:12, margin:"0 auto 14px", background:"linear-gradient(135deg,#505050,#000000)",
+display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:700, color:"#fff", fontFamily:"'Hanken Grotesk',monospace" }}>
 {getInitials(winner.nombre,winner.apellidos)}
 </div>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:wide?28:22, fontWeight:700, color:"#676b55" }}>{winner.nombre} {winner.apellidos}</div>
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:wide?28:22, fontWeight:700, color:"#000000" }}>{winner.nombre} {winner.apellidos}</div>
 </div>
 )}
 {raffleState==="winner" && winner && (
 <div style={{ animation:"pop .5s cubic-bezier(.175,.885,.32,1.275) both" }}>
-<div style={{ fontSize:34, marginBottom:8 }}>🎉</div>
-<div style={{ fontSize:10, color:"#676b55", fontFamily:"'Barlow',monospace", letterSpacing:".12em", marginBottom:14 }}>¡GANADOR/A!</div>
-<div style={{ width:78, height:78, borderRadius:14, margin:"0 auto 18px", background:"linear-gradient(135deg,#676b55,#9aa07a)",
-display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontWeight:700, color:"#fff", fontFamily:"'Barlow',monospace", boxShadow:"0 0 48px rgba(103,107,85,.5)" }}>
+<div style={{ fontSize:34, marginBottom:8 }}><span className="msi">celebration</span></div>
+<div style={{ fontSize:10, color:"#000000", fontFamily:"'Hanken Grotesk',monospace", letterSpacing:".12em", marginBottom:14 }}>¡GANADOR/A!</div>
+<div style={{ width:78, height:78, borderRadius:14, margin:"0 auto 18px", background:"linear-gradient(135deg,#000000,#8D8D8D)",
+display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontWeight:700, color:"#fff", fontFamily:"'Hanken Grotesk',monospace", boxShadow:"0 0 48px rgba(103,107,85,.5)" }}>
 {getInitials(winner.nombre,winner.apellidos)}
 </div>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:wide?32:24, fontWeight:700, color:"#2b2c26", marginBottom:4 }}>{winner.nombre} {winner.apellidos}</div>
-<div style={{ fontSize:14, color:"#676b55", marginBottom:4 }}>{winner.empresa}</div>
-{winner.mail&&<div style={{ fontSize:12, color:"#8a8c82", marginBottom:10 }}>{winner.mail}</div>}
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:wide?32:24, fontWeight:700, color:"#1A1A1A", marginBottom:4 }}>{winner.nombre} {winner.apellidos}</div>
+<div style={{ fontSize:14, color:"#000000", marginBottom:4 }}>{winner.empresa}</div>
+{winner.mail&&<div style={{ fontSize:12, color:"#808080", marginBottom:10 }}>{winner.mail}</div>}
 <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
 <button onClick={doRaffle} style={btn(true)}>Otro sorteo</button>
 <button onClick={()=>{setRS("idle");setWinner(null);}} style={btn(false)}>Reiniciar</button>
@@ -560,15 +562,15 @@ display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontW
 </div>
 )}
 </div>
-<div style={{ fontSize:10, color:"#a2a498", fontFamily:"'Barlow',monospace", marginBottom:8, letterSpacing:".05em" }}>PARTICIPANTES HABILITADOS</div>
+<div style={{ fontSize:10, color:"#9E9E9E", fontFamily:"'Hanken Grotesk',monospace", marginBottom:8, letterSpacing:".05em" }}>PARTICIPANTES HABILITADOS</div>
 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
 {elegibles.map(p=>{
 const won=winners.find(w=>w.id===p.id);
 return (
 <div key={p.id} style={{ padding:"4px 12px", borderRadius:6, fontSize:12,
-background:won?"#ffffff":"rgba(103,107,85,.08)", border:`1px solid ${won?"#eef0e8":"rgba(103,107,85,.2)"}`,
-color:won?"#c0c2b7":"#8a8c82", textDecoration:won?"line-through":"none" }}>
-{p.nombre} {p.apellidos}{won&&<span style={{fontSize:10,marginLeft:4,color:"#676b55"}}>✓</span>}
+background:won?"#ffffff":"rgba(103,107,85,.08)", border:`1px solid ${won?"#F0F0F0":"rgba(103,107,85,.2)"}`,
+color:won?"#C2C2C2":"#808080", textDecoration:won?"line-through":"none" }}>
+{p.nombre} {p.apellidos}{won&&<span style={{fontSize:10,marginLeft:4,color:"#000000"}}>✓</span>}
 </div>
 );
 })}
@@ -585,25 +587,25 @@ color:won?"#c0c2b7":"#8a8c82", textDecoration:won?"line-through":"none" }}>
 {/* 1. LISTA DE INSCRIPTOS */}
 <div style={{ ...card, marginBottom:16 }}>
 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
-<span style={{ width:22, height:22, borderRadius:6, background:"linear-gradient(135deg,#676b55,#565a45)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff" }}>1</span>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:16, fontWeight:700, color:"#2b2c26" }}>Lista de inscriptos</div>
+<span style={{ width:22, height:22, borderRadius:6, background:"linear-gradient(135deg,#000000,#505050)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff" }}>1</span>
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:16, fontWeight:700, color:"#1A1A1A" }}>Lista de inscriptos</div>
 </div>
-<div style={{ fontSize:13, color:"#8a8c82", lineHeight:1.7, marginBottom:16 }}>
+<div style={{ fontSize:13, color:"#808080", lineHeight:1.7, marginBottom:16 }}>
 Las respuestas del formulario de inscripción. Publicá esa hoja como CSV (Archivo → Compartir → Publicar en la web → CSV) y pegá el link, o subí un Excel.
 </div>
 
-<div style={{ display:"flex", gap:6, background:"#fbfbf9", border:"1px solid #e4e6dd", borderRadius:9, padding:4, marginBottom:16 }}>
+<div style={{ display:"flex", gap:6, background:"#FAFAFA", border:"1px solid #E6E6E6", borderRadius:9, padding:4, marginBottom:16 }}>
 {[["sheets","Google Sheets"],["excel","Excel / CSV"]].map(([k,l])=>(
 <button key={k} onClick={()=>{setListMode(k);setListSt("");}} style={{ flex:1, border:"none", borderRadius:6, padding:"8px 10px", cursor:"pointer",
-fontFamily:"'Barlow',sans-serif", fontSize:13, fontWeight:600, background: listMode===k?"linear-gradient(135deg,#676b55,#565a45)":"transparent", color: listMode===k?"#fff":"#8a8c82" }}>{l}</button>
+fontFamily:"'Hanken Grotesk',sans-serif", fontSize:13, fontWeight:600, background: listMode===k?"linear-gradient(135deg,#000000,#505050)":"transparent", color: listMode===k?"#fff":"#808080" }}>{l}</button>
 ))}
 </div>
 
 {listMode==="sheets" ? (
 <div>
-<label style={{ fontSize:10, color:"#8a8c82", fontFamily:"'Barlow',monospace", display:"block", marginBottom:6 }}>URL publicada (CSV)</label>
+<label style={{ fontSize:10, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", display:"block", marginBottom:6 }}>URL publicada (CSV)</label>
 <input value={listUrl} onChange={e=>setListUrl(e.target.value)} placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv"
-style={{ ...inp, fontFamily:"'Barlow',monospace", fontSize:11, marginBottom:10 }}/>
+style={{ ...inp, fontFamily:"'Hanken Grotesk',monospace", fontSize:11, marginBottom:10 }}/>
 <button onClick={loadListSheets} style={btn(true)}>Cargar inscriptos desde Sheets</button>
 </div>
 ) : (
@@ -613,82 +615,82 @@ style={{ ...inp, fontFamily:"'Barlow',monospace", fontSize:11, marginBottom:10 }
 </div>
 )}
 
-<div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid #eef0e8" }}>
-<label style={{ fontSize:10, color:"#8a8c82", fontFamily:"'Barlow',monospace", display:"block", marginBottom:6 }}>
+<div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid #F0F0F0" }}>
+<label style={{ fontSize:10, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", display:"block", marginBottom:6 }}>
 Mostrar inscriptos desde (opcional · usa la columna "Marca temporal")
 </label>
 <input type="date" value={listSince} onChange={e=>setListSince(e.target.value)} style={{ ...inp, maxWidth:220 }}/>
-<div style={{ fontSize:11, color:"#a2a498", marginTop:6 }}>Si la hoja acumula varios eventos, poné la fecha del evento actual para traer solo a los nuevos.</div>
+<div style={{ fontSize:11, color:"#9E9E9E", marginTop:6 }}>Si la hoja acumula varios eventos, poné la fecha del evento actual para traer solo a los nuevos.</div>
 </div>
 
-{listSt && <div style={{ marginTop:12, fontSize:12, fontFamily:"'Barlow',monospace", color: listSt.startsWith("✓")?"#4f7a3f":listSt.startsWith("Error")?"#c0392b":"#676b55" }}>{listSt}</div>}
+{listSt && <div style={{ marginTop:12, fontSize:12, fontFamily:"'Hanken Grotesk',monospace", color: listSt.startsWith("✓")?"#448361":listSt.startsWith("Error")?"#C4423D":"#000000" }}>{listSt}</div>}
 </div>
 
 {/* 2. ENCUESTA POST-EVENTO */}
-<div style={{ ...card, marginBottom:16, border:"1px solid #cfe0d2" }}>
+<div style={{ ...card, marginBottom:16, border:"1px solid #DBEDDB" }}>
 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
-<span style={{ width:22, height:22, borderRadius:6, background:"linear-gradient(135deg,#4f7a3f,#3d6130)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff" }}>2</span>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:16, fontWeight:700, color:"#2b2c26" }}>Respuestas de la encuesta</div>
+<span style={{ width:22, height:22, borderRadius:6, background:"linear-gradient(135deg,#448361,#448361)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff" }}>2</span>
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:16, fontWeight:700, color:"#1A1A1A" }}>Respuestas de la encuesta</div>
 </div>
-<div style={{ fontSize:13, color:"#8a8c82", lineHeight:1.7, marginBottom:16 }}>
-La encuesta post-evento (la del QR). Al cargarla, se marca el formulario <strong style={{color:"#4f7a3f"}}>automáticamente</strong> cruzando por <strong style={{color:"#3a3b34"}}>mail</strong> (o nombre + apellido) contra la lista. Importante: la encuesta tiene que pedir el mail.
+<div style={{ fontSize:13, color:"#808080", lineHeight:1.7, marginBottom:16 }}>
+La encuesta post-evento (la del QR). Al cargarla, se marca el formulario <strong style={{color:"#448361"}}>automáticamente</strong> cruzando por <strong style={{color:"#3a3b34"}}>mail</strong> (o nombre + apellido) contra la lista. Importante: la encuesta tiene que pedir el mail.
 </div>
 
-<div style={{ display:"flex", gap:6, background:"#fbfbf9", border:"1px solid #e4e6dd", borderRadius:9, padding:4, marginBottom:16 }}>
+<div style={{ display:"flex", gap:6, background:"#FAFAFA", border:"1px solid #E6E6E6", borderRadius:9, padding:4, marginBottom:16 }}>
 {[["sheets","Google Sheets"],["excel","Excel / CSV"]].map(([k,l])=>(
 <button key={k} onClick={()=>{setSurveyMode(k);setSurveySt("");}} style={{ flex:1, border:"none", borderRadius:6, padding:"8px 10px", cursor:"pointer",
-fontFamily:"'Barlow',sans-serif", fontSize:13, fontWeight:600, background: surveyMode===k?"linear-gradient(135deg,#4f7a3f,#3d6130)":"transparent", color: surveyMode===k?"#fff":"#8a8c82" }}>{l}</button>
+fontFamily:"'Hanken Grotesk',sans-serif", fontSize:13, fontWeight:600, background: surveyMode===k?"linear-gradient(135deg,#448361,#448361)":"transparent", color: surveyMode===k?"#fff":"#808080" }}>{l}</button>
 ))}
 </div>
 
 {surveyMode==="sheets" ? (
 <div>
-<label style={{ fontSize:10, color:"#8a8c82", fontFamily:"'Barlow',monospace", display:"block", marginBottom:6 }}>URL publicada (CSV) de la hoja de la encuesta</label>
+<label style={{ fontSize:10, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", display:"block", marginBottom:6 }}>URL publicada (CSV) de la hoja de la encuesta</label>
 <input value={surveyUrl} onChange={e=>setSurveyUrl(e.target.value)} placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv"
-style={{ ...inp, fontFamily:"'Barlow',monospace", fontSize:11, marginBottom:10 }}/>
-<button onClick={loadSurveySheets} style={{ ...btn(false), background:"linear-gradient(135deg,#4f7a3f,#3d6130)", color:"#fff" }}>Cruzar encuesta desde Sheets</button>
+style={{ ...inp, fontFamily:"'Hanken Grotesk',monospace", fontSize:11, marginBottom:10 }}/>
+<button onClick={loadSurveySheets} style={{ ...btn(false), background:"linear-gradient(135deg,#448361,#448361)", color:"#fff" }}>Cruzar encuesta desde Sheets</button>
 </div>
 ) : (
 <div>
 <input ref={surveyFileRef} type="file" accept=".xlsx,.xls,.csv" onChange={e=>loadSurveyExcel(e.target.files && e.target.files[0])} style={{ display:"none" }} id="survey-file"/>
-<label htmlFor="survey-file" style={{ ...btn(false), background:"linear-gradient(135deg,#4f7a3f,#3d6130)", color:"#fff", display:"inline-block" }}>Elegir archivo de encuesta…</label>
+<label htmlFor="survey-file" style={{ ...btn(false), background:"linear-gradient(135deg,#448361,#448361)", color:"#fff", display:"inline-block" }}>Elegir archivo de encuesta…</label>
 </div>
 )}
 
-<div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid #cfe0d2" }}>
-<label style={{ fontSize:10, color:"#8a8c82", fontFamily:"'Barlow',monospace", display:"block", marginBottom:6 }}>Contar respuestas desde (opcional)</label>
+<div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid #DBEDDB" }}>
+<label style={{ fontSize:10, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", display:"block", marginBottom:6 }}>Contar respuestas desde (opcional)</label>
 <input type="date" value={surveySince} onChange={e=>setSurveySince(e.target.value)} style={{ ...inp, maxWidth:220 }}/>
-<div style={{ fontSize:11, color:"#a2a498", marginTop:6 }}>Como la hoja acumula eventos, poné la fecha del evento para no arrastrar encuestas viejas.</div>
+<div style={{ fontSize:11, color:"#9E9E9E", marginTop:6 }}>Como la hoja acumula eventos, poné la fecha del evento para no arrastrar encuestas viejas.</div>
 </div>
 
-{surveySt && <div style={{ marginTop:12, fontSize:12, fontFamily:"'Barlow',monospace", color: surveySt.startsWith("✓")?"#4f7a3f":surveySt.startsWith("Error")?"#c0392b":"#676b55" }}>{surveySt}</div>}
+{surveySt && <div style={{ marginTop:12, fontSize:12, fontFamily:"'Hanken Grotesk',monospace", color: surveySt.startsWith("✓")?"#448361":surveySt.startsWith("Error")?"#C4423D":"#000000" }}>{surveySt}</div>}
 </div>
 
 {/* RESET */}
-<div style={{ ...card, border:"1px solid #e8cdc9" }}>
-<div style={{ fontSize:10, color:"#c0392b", fontFamily:"'Barlow',monospace", marginBottom:14, letterSpacing:".05em" }}>ZONA DE RESETEO</div>
+<div style={{ ...card, border:"1px solid #FFE2DD" }}>
+<div style={{ fontSize:10, color:"#C4423D", fontFamily:"'Hanken Grotesk',monospace", marginBottom:14, letterSpacing:".05em" }}>ZONA DE RESETEO</div>
 <div style={{ marginBottom:18 }}>
 {confirmReset==="clear" ? (
 <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-<button onClick={clearMarks} style={{ ...btn(false), border:"1px solid #d9a9a4", color:"#c0392b", background:"#f7eae8" }}>Confirmar: limpiar tildados</button>
+<button onClick={clearMarks} style={{ ...btn(false), border:"1px solid #FFE2DD", color:"#C4423D", background:"#FDEBEC" }}>Confirmar: limpiar tildados</button>
 <button onClick={()=>setConfirmReset(null)} style={btn(false)}>Cancelar</button>
 </div>
 ) : (
 <button onClick={()=>setConfirmReset("clear")} style={btn(true)}>Limpiar tildados (mantener lista actual)</button>
 )}
-<div style={{ fontSize:11, color:"#8a8c82", marginTop:8 }}>Borra presentes, encuestas y ganadores, pero conserva la lista cargada. Es el reseteo de cada evento.</div>
+<div style={{ fontSize:11, color:"#808080", marginTop:8 }}>Borra presentes, encuestas y ganadores, pero conserva la lista cargada. Es el reseteo de cada evento.</div>
 </div>
-<div style={{ height:1, background:"#eeddda", marginBottom:18 }}/>
+<div style={{ height:1, background:"#FDEBEC", marginBottom:18 }}/>
 <div>
 {confirmReset==="base" ? (
 <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-<button onClick={resetToBase} style={{ ...btn(false), border:"1px solid #d9a9a4", color:"#c0392b", background:"#f7eae8" }}>Confirmar: volver a lista base</button>
+<button onClick={resetToBase} style={{ ...btn(false), border:"1px solid #FFE2DD", color:"#C4423D", background:"#FDEBEC" }}>Confirmar: volver a lista base</button>
 <button onClick={()=>setConfirmReset(null)} style={btn(false)}>Cancelar</button>
 </div>
 ) : (
-<button onClick={()=>setConfirmReset("base")} style={{ ...btn(false), border:"1px solid #e8cdc9" }}>Volver a la lista base</button>
+<button onClick={()=>setConfirmReset("base")} style={{ ...btn(false), border:"1px solid #FFE2DD" }}>Volver a la lista base</button>
 )}
-<div style={{ fontSize:11, color:"#a2a498", marginTop:8 }}>Descarta lo importado y restaura los contactos originales del sistema.</div>
+<div style={{ fontSize:11, color:"#9E9E9E", marginTop:8 }}>Descarta lo importado y restaura los contactos originales del sistema.</div>
 </div>
 </div>
 </div>
@@ -698,20 +700,20 @@ style={{ ...inp, fontFamily:"'Barlow',monospace", fontSize:11, marginBottom:10 }
 {/* ADD MODAL */}
 {showAdd && (
 <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.78)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:200, padding:20 }}>
-<div style={{ background:"#ffffff", border:"1px solid #d6d8cd", borderRadius:14, padding:28, width:"100%", maxWidth:420, animation:"fadeUp .2s" }}>
-<div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:16, fontWeight:700, marginBottom:20, color:"#2b2c26" }}>Agregar walk-in</div>
+<div style={{ background:"#ffffff", border:"1px solid #D2D2D2", borderRadius:14, padding:28, width:"100%", maxWidth:420, animation:"fadeUp .2s" }}>
+<div style={{ fontFamily:"'Hanken Grotesk',sans-serif", fontSize:16, fontWeight:700, marginBottom:20, color:"#1A1A1A" }}>Agregar walk-in</div>
 {[["nombre","Nombre *"],["apellidos","Apellido"],["mail","Mail"],["empresa","Empresa"],["cargo","Perfil / cargo"]].map(([k,l])=>(
 <div key={k} style={{ marginBottom:11 }}>
-<label style={{ fontSize:10, color:"#8a8c82", fontFamily:"'Barlow',monospace", display:"block", marginBottom:4 }}>{l}</label>
+<label style={{ fontSize:10, color:"#808080", fontFamily:"'Hanken Grotesk',monospace", display:"block", marginBottom:4 }}>{l}</label>
 <input value={newP[k]} onChange={e=>setNewP(p=>({...p,[k]:e.target.value}))} style={inp}/>
 </div>
 ))}
 <div onClick={()=>setNewP(p=>({...p,formulario:!p.formulario}))} style={{ display:"flex", alignItems:"center", gap:10, marginTop:6, padding:"10px 12px",
-background:"#fbfbf9", border:`1px solid ${newP.formulario?"#4f7a3f40":"#e4e6dd"}`, borderRadius:8, cursor:"pointer" }}>
-<span style={stateBtn(newP.formulario,"linear-gradient(135deg,#4f7a3f,#3d6130)","#4f7a3f40")}>{newP.formulario?"✓":"F"}</span>
+background:"#FAFAFA", border:`1px solid ${newP.formulario?"#4f7a3f40":"#E6E6E6"}`, borderRadius:8, cursor:"pointer" }}>
+<span style={stateBtn(newP.formulario,"linear-gradient(135deg,#448361,#448361)","#4f7a3f40")}>{newP.formulario?"✓":"F"}</span>
 <div>
 <div style={{ fontSize:13, color:"#3a3b34", fontWeight:500 }}>Ya completó la encuesta</div>
-<div style={{ fontSize:11, color:"#8a8c82" }}>Necesario para entrar al sorteo</div>
+<div style={{ fontSize:11, color:"#808080" }}>Necesario para entrar al sorteo</div>
 </div>
 </div>
 <div style={{ display:"flex", gap:8, marginTop:18 }}>

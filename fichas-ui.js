@@ -23,7 +23,7 @@
 
   window._fichaImgErr = function (img, label, fname) {
     const box = img.parentNode; box.classList.add("f-ph");
-    box.innerHTML = `<div class="f-ic">🖼️</div><div>${label}</div>` + (fname ? `<code>${fname}</code>` : "");
+    box.innerHTML = `<div class="f-ic"><span class="msi">image</span></div><div>${label}</div>` + (fname ? `<code>${fname}</code>` : "");
   };
 
   // Hoja de accesorios: grilla de 3 columnas con foto + SKUs (Chill / Rieles / Dyna)
@@ -34,7 +34,7 @@
         ? `<img src="${esc(it.foto_url)}" alt="" onerror="window._fichaImgErr(this,'SIN FOTO','')">`
         : "";
       const box = it.foto_url ? `<div class="f-acc-img">${img}</div>`
-        : `<div class="f-acc-img f-ph"><div class="f-ic">🖼️</div><div>SIN FOTO</div></div>`;
+        : `<div class="f-acc-img f-ph"><div class="f-ic"><span class="msi">image</span></div><div>SIN FOTO</div></div>`;
       const caps = (it.lineas || []).map(l => `<div>SKU ${esc(l.sku)} - ${esc(l.nombre)}</div>`).join("");
       return `<div class="f-acc-cell">${box}<div class="f-acc-cap">${caps}</div></div>`;
     }).join("");
@@ -88,7 +88,7 @@
     const rows = f.filas.map(r => `<div class="f-row"><div class="k">${r.k}</div><div class="v">${esc(r.v)}</div></div>`).join("");
 
     const a = f.assets || {};
-    const ph = (label, fname) => `<div class="f-ic">🖼️</div><div>${label}</div>${fname ? `<code>${esc(fname)}</code>` : ""}`;
+    const ph = (label, fname) => `<div class="f-ic"><span class="msi">image</span></div><div>${label}</div>${fname ? `<code>${esc(fname)}</code>` : ""}`;
     const media = (url, cls, label, fname) => url
       ? `<div class="f-imgbox ${cls}"><img src="${esc(url)}" alt="" onerror="window._fichaImgErr(this,'${label}','${esc(fname || "")}')"></div>`
       : `<div class="f-imgbox ${cls} f-ph">${ph(label, fname)}</div>`;

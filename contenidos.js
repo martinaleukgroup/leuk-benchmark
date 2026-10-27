@@ -872,6 +872,7 @@
     if (!enFeed.length) {
       return `<div class="empty"><div class="big">📸</div>
         <p>Este mes son todas historias: no dejan baldosa en el perfil.</p>
+        ${historiasDelMes().length ? `<button class="btn-mini on" data-historias style="margin-top:10px">▶ Verlas como en Instagram</button>` : ""}
         <button class="btn-mini" data-vista="calendario" style="margin-top:10px">Verlas en el calendario</button></div>`;
     }
     const { vienen, salieron, contexto } = ordenFeed();
@@ -887,6 +888,7 @@
       <div class="ct-feed${FEEDLIMPIO ? " limpio" : ""}">
         <div class="ct-feed-barra">
           <small>${esc(cap(mesLabel(MES)))} · ${enFeed.length} ${enFeed.length === 1 ? "pieza" : "piezas"} · ${aprob} aprobadas${historias ? ` · ${historias} historia${historias > 1 ? "s" : ""} aparte` : ""}</small>
+          ${historiasDelMes().length ? `<button class="btn-mini" data-historias>▶ Historias (${historiasDelMes().length})</button>` : ""}
           <button class="btn-mini${FEEDLIMPIO ? " on" : ""}" data-feedlimpio title="Saca fechas, estados y la franja: la grilla como la ve cualquiera">${FEEDLIMPIO ? "◉ Como lo ve la gente" : "○ Como lo ve la gente"}</button>
           ${ed && !FEEDLIMPIO ? `<span class="ct-feed-tip">Tocá una pieza para verla en grande y bajar a las siguientes. Arrastrala para cambiarle el lugar en la grilla: las fechas se quedan quietas y las piezas se acomodan a ellas.</span>` : ""}
         </div>
@@ -931,9 +933,11 @@
   // La cabecera del perfil, como se ve en Instagram desde la compu.
   function perfilIGHTML() {
     const p = PERFIL_IG[CANAL] || PERFIL_IG.instagram;
+    const hayHist = historiasDelMes().length > 0;
     const num = (v, t) => v == null ? "" : `<span><b>${esc(v)}</b> ${t}</span>`;
     return `<header class="ct-ig-cab">
-        <div class="ct-ig-av ${p.avatar || "oscuro"}">${p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span>${esc(p.nombre.charAt(0))}</span>`}</div>
+        <div class="ct-ig-av ${p.avatar || "oscuro"}${hayHist ? " con-hist" : ""}" ${hayHist ? `data-historias title="Ver las historias del mes"` : ""}>
+          <span class="ct-ig-av-in">${p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span>${esc(p.nombre.charAt(0))}</span>`}</span></div>
         <div class="ct-ig-datos">
           <div class="ct-ig-usr"><h2>${esc(p.usuario)}</h2><span class="ct-ig-ico">${p.icono === "mas" ? IG_ICO.mas : IG_ICO.ajustes}</span></div>
           <div class="ct-ig-nombre">${esc(p.nombre)}</div>
@@ -1111,6 +1115,131 @@
       const fi = t.closest("[data-vsficha]");
       if (fi) { cerrar(); FOCO = fi.dataset.vsficha; VISTA = "fichas"; pintar(); }
     });
+  }
+
+  /* ---- Historias: el visor de pantalla completa, como en el celular ----
+     Una barrita por placa de la historia; se avanza sola, tocar a la derecha o a la
+     izquierda pasa de placa, mantener apretado pausa, deslizar de costado cambia de
+     historia y deslizar para abajo cierra. Lo nuestro (criterio, estado, ficha) va
+     debajo, afuera de la pantalla, para que la historia se vea tal cual.        */
+  const HIST_SEG = 6000;   // lo que dura cada placa, como Instagram con una imagen
+  const historiasDelMes = () => MSGS.filter(m => m.tipo === "historia" && m.fecha)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.orden || 0) - (b.orden || 0));
+
+  function abrirHistorias(id) {
+    const lista = historiasDelMes();
+    if (!lista.length || document.querySelector(".ct-hist")) return;   // ya hay uno abierto
+    const pf = PERFIL_IG[CANAL] || PERFIL_IG.instagram;
+    const hoy = hoyISO();
+    let hi = id ? Math.max(0, lista.findIndex(m => m.id === id))
+      : Math.max(0, lista.findIndex(m => m.fecha >= hoy));
+    let pj = 0, transcurrido = 0, pausa = false, ultimo = 0, raf = 0;
+
+    const ov = document.createElement("div");
+    ov.className = "ct-hist";
+    document.body.appendChild(ov);
+    document.body.classList.add("ct-visor-abierto");
+
+    const total = () => Math.max(1, placasDe(lista[hi]).length);
+    const pintarH = () => {
+      const m = lista[hi], n = total(), f = aFecha(m.fecha);
+      const img = imagenDe(m, pj);
+      const motivo = faltaFigma(m) ? "Falta el link de Figma" : sinImagenPor(m, pj);
+      ov.innerHTML = `
+        <button class="ct-hist-lado izq" data-hpaso="-1" ${hi === 0 && pj === 0 ? "hidden" : ""} title="Anterior">‹</button>
+        <div class="ct-hist-col">
+          <div class="ct-hist-pantalla" data-hpant>
+            ${img ? `<img src="${esc(img)}" alt="">`
+              : `<div class="ct-hist-ph"><span>${esc(m.criterio || "Sin título")}</span>${motivo && !motivo.endsWith("…") ? `<small>${esc(motivo)}</small>` : ""}</div>`}
+            <div class="ct-hist-arriba">
+              <div class="ct-hist-barras">${Array.from({ length: n }, (_, j) =>
+                `<i><b style="width:${j < pj ? 100 : 0}%"></b></i>`).join("")}</div>
+              <div class="ct-hist-cab">
+                <span class="ct-vs-av ${pf.avatar || "oscuro"}">${pf.logo ? `<img src="${esc(pf.logo)}" alt="">` : esc(pf.nombre.charAt(0))}</span>
+                <b>${esc(pf.usuario)}</b>
+                <span class="ct-hist-cuando">${esc(f.getDate() + " de " + MES_NOMBRE[f.getMonth()])}</span>
+                <span class="ct-hist-mas">${IG_ICO.mas}</span>
+                <button class="ct-hist-x" data-hx title="Cerrar (Esc)">✕</button>
+              </div>
+            </div>
+            <div class="ct-hist-abajo">
+              <span class="ct-hist-msj">Enviar mensaje…</span>${IG_ICO.corazon}${IG_ICO.compartir}
+            </div>
+            ${pausa ? `<span class="ct-hist-pausa">❚❚</span>` : ""}
+          </div>
+          <div class="ct-hist-trabajo">
+            <div><b>${esc(m.criterio || "Sin título")}</b>
+              <small>Historia ${hi + 1} de ${lista.length}${n > 1 ? ` · placa ${pj + 1} de ${n}` : ""}</small></div>
+            ${`<span class="ct-est ${esc(m.estado)}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>`}
+            <button class="btn-mini on" data-hficha="${m.id}">Abrir la ficha</button>
+          </div>
+        </div>
+        <button class="ct-hist-lado der" data-hpaso="1" ${hi === lista.length - 1 && pj === n - 1 ? "hidden" : ""} title="Siguiente">›</button>`;
+    };
+    // Sólo se mueve el ancho de la barrita actual: repintar todo 60 veces por segundo
+    // haría parpadear la imagen.
+    const barra = () => { const b = ov.querySelectorAll(".ct-hist-barras b")[pj]; if (b) b.style.width = Math.min(100, transcurrido / HIST_SEG * 100) + "%"; };
+    const ir = (nh, np) => {
+      if (nh < 0) { nh = 0; np = 0; }
+      if (nh >= lista.length) { cerrar(); return; }
+      hi = nh; pj = np; transcurrido = 0; pintarH();
+    };
+    const paso = d => {
+      const n = total();
+      if (d > 0) { if (pj < n - 1) ir(hi, pj + 1); else ir(hi + 1, 0); }
+      else if (pj > 0) ir(hi, pj - 1);
+      else if (hi > 0) ir(hi - 1, Math.max(1, placasDe(lista[hi - 1]).length) - 1);
+      else { transcurrido = 0; barra(); }
+    };
+    const historia = d => ir(hi + d, 0);
+    const tic = t => {
+      if (!ultimo) ultimo = t;
+      if (!pausa && !document.hidden) { transcurrido += t - ultimo; if (transcurrido >= HIST_SEG) paso(1); else barra(); }
+      ultimo = t;
+      if (ov.isConnected) raf = requestAnimationFrame(tic);
+    };
+    const tecla = e => {
+      if (e.key === "Escape") cerrar();
+      else if (e.key === "ArrowRight") paso(1);
+      else if (e.key === "ArrowLeft") paso(-1);
+      else if (e.key === "ArrowDown") historia(1);
+      else if (e.key === "ArrowUp") historia(-1);
+      else if (e.key === " ") { e.preventDefault(); pausa = !pausa; pintarH(); barra(); }
+    };
+    function cerrar() {
+      cancelAnimationFrame(raf); ov.remove();
+      document.body.classList.remove("ct-visor-abierto"); document.removeEventListener("keydown", tecla);
+    }
+
+    // Toque corto = pasar placa (según el lado); mantener = pausa; deslizar = cambiar
+    // de historia o cerrar. Todo con pointer, así anda igual con el dedo y el mouse.
+    let ini = null;
+    ov.addEventListener("pointerdown", e => {
+      if (!e.target.closest("[data-hpant]") || e.target.closest("button")) return;
+      ini = { x: e.clientX, y: e.clientY, t: Date.now() };
+      pausa = true;
+    });
+    ov.addEventListener("pointerup", e => {
+      if (!ini) return;
+      const dx = e.clientX - ini.x, dy = e.clientY - ini.y, dt = Date.now() - ini.t;
+      const pant = ov.querySelector("[data-hpant]").getBoundingClientRect();
+      ini = null; pausa = false;
+      if (dy > 90 && Math.abs(dy) > Math.abs(dx)) { cerrar(); return; }
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) { historia(dx < 0 ? 1 : -1); return; }
+      if (dt < 300) paso(e.clientX - pant.left < pant.width / 3 ? -1 : 1);
+    });
+    ov.addEventListener("pointercancel", () => { ini = null; pausa = false; });
+    ov.addEventListener("click", e => {
+      const t = e.target;
+      if (t === ov || t.closest("[data-hx]")) { cerrar(); return; }
+      const hp = t.closest("[data-hpaso]");
+      if (hp) { paso(+hp.dataset.hpaso); return; }
+      const fi = t.closest("[data-hficha]");
+      if (fi) { cerrar(); FOCO = fi.dataset.hficha; VISTA = "fichas"; pintar(); }
+    });
+    document.addEventListener("keydown", tecla);
+    pintarH();
+    raf = requestAnimationFrame(tic);
   }
 
   /* Arrastrar = cambiar el lugar en la grilla. Las FECHAS se quedan donde
@@ -1898,6 +2027,7 @@
       const fl = t.closest("[data-filtro]");
       if (fl) { FILTRO = fl.dataset.filtro; if (VISTA === "resultados") VISTA = "fichas"; pintar(); return; }
 
+      if (t.closest("[data-historias]")) { abrirHistorias(); return; }
       if (t.closest("[data-feedlimpio]")) {
         FEEDLIMPIO = !FEEDLIMPIO;
         try { localStorage.setItem("ct-feed-limpio", FEEDLIMPIO ? "1" : "0"); } catch (e) { }

@@ -911,6 +911,10 @@
   const IG_ICO = {
     ajustes: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5l2 2.6 3.2-.6.9 3.1 3 1.4-1.3 3 1.3 3-3 1.4-.9 3.1-3.2-.6-2 2.6-2-2.6-3.2.6-.9-3.1-3-1.4 1.3-3-1.3-3 3-1.4.9-3.1 3.2.6z" stroke-linejoin="round"/></svg>`,
     mas: `<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>`,
+    corazon: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20.5s-8-4.8-8-10.4A4.6 4.6 0 0112 7.3a4.6 4.6 0 018 2.8c0 5.6-8 10.4-8 10.4z" stroke-linejoin="round"/></svg>`,
+    comentar: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20.7 16.4A9 9 0 103 12a9 9 0 0013.6 7.7L21 21z"/></svg>`,
+    compartir: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M22 3L9.2 10.1M22 3l-7 18-4-8.8L2 9.4z"/></svg>`,
+    guardar: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M19 21l-7-6.5L5 21V3h14z"/></svg>`,
     link: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.2-1.2"/></svg>`,
     grilla: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`,
     reels: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M9 3l3 5.5M14.5 3l3 5.5"/><path d="M10 12v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>`,
@@ -1006,7 +1010,10 @@
   function abrirVisor(id) {
     const lista = ordenFeed().todas;
     if (!lista.length) return;
-    const perfil = (PERFILES.find(p => p.k === CANAL) || {}).t || "Instagram";
+    const pf = PERFIL_IG[CANAL] || PERFIL_IG.instagram;
+    const av = `<span class="ct-vs-av ${pf.avatar || "oscuro"}">${pf.logo ? `<img src="${esc(pf.logo)}" alt="">` : esc(pf.nombre.charAt(0))}</span>`;
+    // El texto como lo muestra Instagram: el usuario en negrita adelante y los # y @ en azul.
+    const pie = txt => esc(txt).replace(/(^|[\s(])([#@][\p{L}\p{N}_.]+)/gu, '$1<span class="ct-vs-tag">$2</span>');
     const chip = est => `<span class="ct-est ${esc(est)}">${ESTADOS[est] ? ESTADOS[est].t : esc(est)}</span>`;
     const post = ({ m, ajena }) => {
       const pls = placasDe(m);
@@ -1021,10 +1028,18 @@
               ajena ? "" : faltaFigma(m) ? `<small>Falta el link de Figma</small>`
               : sinImagenPor(m, j) ? `<small>${esc(sinImagenPor(m, j))}</small>` : ""}</span>`}</div>`;
       }).join("");
+      const copy = String(m.copy || "").trim();
+      const largo = copy.split("\n").length > 2 || copy.length > 120;
+      // Arriba, una franja NUESTRA (estado, criterio, ficha); de ahí para abajo, el post
+      // tal cual lo va a ver la gente en Instagram.
       return `<article class="ct-vs-post" data-vspost="${m.id}">
-        <header><span class="av">${esc(perfil[0])}</span>
-          <div><b>${esc(perfil)}</b><small>${esc(fecha)}${ajena ? " · ya publicado" : ""}</small></div>
-          ${ajena ? "" : chip(m.estado)}</header>
+        <div class="ct-vs-trabajo">
+          <div><b>${esc(m.criterio || "Sin título")}</b><small>${esc(fecha)}${ajena ? " · ya publicado" : ""}</small></div>
+          ${ajena ? "" : chip(m.estado)}
+          ${m.tipo === "reel" && esURL(video) ? `<a class="btn-mini" href="${esc(video)}" target="_blank" rel="noopener">▶ Video</a>` : ""}
+          ${ajena ? "" : `<button class="btn-mini on" data-vsficha="${m.id}">Abrir la ficha</button>`}
+        </div>
+        <header class="ct-vs-cab">${av}<b>${esc(pf.usuario)}</b><span class="ct-vs-mas">${IG_ICO.mas}</span></header>
         <div class="ct-vs-media">
           <div class="ct-vs-tira" data-vstira>${fotos}</div>
           ${n > 1 ? `<button class="ct-vs-fl izq" data-vsfl="-1" title="Anterior" hidden>‹</button>
@@ -1032,14 +1047,15 @@
             <span class="ct-vs-n">1/${n}</span>` : ""}
           ${m.tipo === "reel" ? `<span class="ct-vs-reel">▶ Reel</span>` : ""}
         </div>
-        ${n > 1 ? `<div class="ct-vs-pts">${Array.from({ length: n }, (_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>` : ""}
+        <div class="ct-vs-iconos">
+          <span>${IG_ICO.corazon}${IG_ICO.comentar}${IG_ICO.compartir}</span>
+          ${n > 1 ? `<div class="ct-vs-pts">${Array.from({ length: n }, (_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>` : ""}
+          <span>${IG_ICO.guardar}</span>
+        </div>
         <div class="ct-vs-txt">
-          <h4>${esc(m.criterio || "Sin título")}</h4>
-          ${m.copy ? `<div class="ct-vs-copy">${copyHTML(m.copy)}</div>` : ""}
-          <div class="ct-vs-accs">
-            ${m.tipo === "reel" && esURL(video) ? `<a class="btn-mini" href="${esc(video)}" target="_blank" rel="noopener">▶ Ver el video en Drive</a>` : ""}
-            ${ajena ? "" : `<button class="btn-mini on" data-vsficha="${m.id}">Abrir la ficha</button>`}
-          </div>
+          ${copy ? `<div class="ct-vs-copy${largo ? " corto" : ""}"><b>${esc(pf.usuario)}</b> ${pie(copy)}</div>
+            ${largo ? `<button class="ct-vs-vermas" data-vsmas>más</button>` : ""}` : ""}
+          <div class="ct-vs-fecha">${esc(f.getDate() + " de " + MES_NOMBRE[f.getMonth()])}</div>
         </div>
       </article>`;
     };
@@ -1090,6 +1106,8 @@
       if (t === ov || t.closest("[data-vsx]")) { cerrar(); return; }
       const fl = t.closest("[data-vsfl]");
       if (fl) { correr(fl.parentElement.querySelector("[data-vstira]"), +fl.dataset.vsfl); return; }
+      const vm = t.closest("[data-vsmas]");
+      if (vm) { vm.previousElementSibling.classList.remove("corto"); vm.remove(); return; }
       const fi = t.closest("[data-vsficha]");
       if (fi) { cerrar(); FOCO = fi.dataset.vsficha; VISTA = "fichas"; pintar(); }
     });

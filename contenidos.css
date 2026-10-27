@@ -457,6 +457,8 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-ig-av{width:clamp(86px,22vw,150px);aspect-ratio:1;border-radius:50%;background:#000;flex:none;
   display:grid;place-items:center;overflow:hidden}
 .ct-ig-av img{width:56%;filter:invert(1);display:block}
+.ct-ig-av.claro{background:#fff;border:1px solid #dbdbdb}
+.ct-ig-av.claro img{width:94%;filter:none}
 .ct-ig-av span{color:#fff;font-size:44px;font-weight:600}
 .ct-ig-datos{min-width:0;flex:1;font-size:14px;line-height:1.45}
 .ct-ig-usr{display:flex;align-items:center;gap:12px}
@@ -482,6 +484,9 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
   overflow:hidden;position:relative;isolation:isolate;padding:0 25%;
   font-family:var(--font-title);font-size:13px;line-height:.95;color:#fff;text-align:center;letter-spacing:.02em}
 .ct-ig-dest-tapa::before{content:"";position:absolute;inset:22%;background:#8e9474;z-index:-1}
+.ct-ig-dest-tapa.icono{padding:0;background:radial-gradient(circle at 40% 35%,#c9c6bd,#8f8d87)}
+.ct-ig-dest-tapa.icono::before{display:none}
+.ct-ig-dest-tapa.icono svg{width:100%;height:100%;display:block}
 .ct-ig-dest small{font-size:12px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ct-ig-tabs{display:flex;justify-content:space-around;border-top:1px solid #dbdbdb;margin-top:18px}
 .ct-ig-tabs span{display:flex;justify-content:center;flex:1;padding:11px 0;color:#737373;

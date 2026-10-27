@@ -68,16 +68,22 @@
      Lo que falte (null) simplemente no se dibuja. */
   const PERFIL_IG = {
     instagram: {
-      usuario: "leukiluminacion", nombre: "Leuk Iluminación", logo: "assets/logo-leuk-ilum.png",
+      usuario: "leukiluminacion", nombre: "Leuk Iluminación", logo: "assets/logo-leuk-ilum.png", avatar: "oscuro",
+      icono: "ajustes", botones: ["Editar perfil", "Ver archivo"],
       publicaciones: "890", seguidores: "44,7 mil", seguidos: "947",
       bio: ["El punto exacto entre diseño, tecnología y arquitectura.", "Leuk iluminación | Luz con intención.", "Atención a profesionales…"],
       direccion: "Av. Juan B. Justo 3330, Buenos Aires, Argentina", web: "www.leukiluminacion.com",
       destacadas: [["OBRAS", "Obras"], ["⌂", "Arq. Interior"], ["INFO", "Info"], ["▯", "Arq. Exterior"],
         ["LUZ EN ACCIÓN", "Luz en acción"], ["WORK SHOP", "Workshop"], ["LEUK TALKS", "Leuk Talks"]],
     },
+    // Copiado del perfil visto desde la cuenta de Leuk (por eso "Siguiendo"): oct 2026.
     instagram_laftdren: {
-      usuario: "laftdren", nombre: "Laftdren", logo: "",
-      publicaciones: null, seguidores: null, seguidos: null, bio: [], direccion: "", web: "", destacadas: [],
+      usuario: "laftdren.latam", nombre: "LAFTDREN", logo: "assets/logo-laftdren.png", avatar: "claro",
+      icono: "mas", botones: ["Siguiendo ⌄", "Enviar mensaje"],
+      publicaciones: "344", seguidores: "23,3 mil", seguidos: "0",
+      bio: [], direccion: "", web: "laftdren.com.ar",
+      // Las tapas de Laftdren son íconos de línea sobre gris: la tapa es un ícono de IG_TAPA.
+      destacadas: [["@espacios", "Espacios"], ["@productos", "Productos"], ["@tecnologia", "Tecnologia"]],
     },
   };
   // A quién va cada mail (se guarda en la columna `tipo`). Cada destino tiene su propia conversión
@@ -904,10 +910,18 @@
   // Íconos de Instagram, dibujados acá: sin fuentes ni imágenes de terceros.
   const IG_ICO = {
     ajustes: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5l2 2.6 3.2-.6.9 3.1 3 1.4-1.3 3 1.3 3-3 1.4-.9 3.1-3.2-.6-2 2.6-2-2.6-3.2.6-.9-3.1-3-1.4 1.3-3-1.3-3 3-1.4.9-3.1 3.2.6z" stroke-linejoin="round"/></svg>`,
+    mas: `<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>`,
     link: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.2-1.2"/></svg>`,
     grilla: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`,
     reels: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M9 3l3 5.5M14.5 3l3 5.5"/><path d="M10 12v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>`,
     etiquetas: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4H5a2 2 0 00-2 2v13a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-4l-3-2z"/><circle cx="12" cy="10.5" r="3"/><path d="M6.5 20a5.5 5.5 0 0111 0"/></svg>`,
+  };
+
+  // Tapas de destacadas de Laftdren: trazos finos claros, como las reales.
+  const IG_TAPA = {
+    espacios: `<svg viewBox="0 0 40 40" fill="none" stroke="#eee" stroke-width=".9"><path d="M0 11h40M20 11v8M14 24c0-4 2.7-5 6-5s6 1 6 5zM6 24h28"/></svg>`,
+    productos: `<svg viewBox="0 0 40 40" fill="none" stroke="#eee" stroke-width=".9" stroke-linecap="round"><path d="M20 8c-1.5 0-1.5 3 0 4v9M20 21l-8 6M20 21l9 3M20 21l-1 0"/><circle cx="20" cy="21" r="1.2"/></svg>`,
+    tecnologia: `<svg viewBox="0 0 40 40" fill="none" stroke="#eee" stroke-width=".9" stroke-linecap="round"><path d="M20 9l9 5v4M31 22v4l-9 5M18 31l-9-5v-4M9 18v-4l9-5"/><path d="M16 14l-3 2v8l3 2M24 14l3 2v8l-3 2"/><circle cx="20" cy="9" r=".9"/><circle cx="31" cy="22" r=".9"/><circle cx="9" cy="18" r=".9"/><circle cx="20" cy="31" r=".9"/></svg>`,
   };
 
   // La cabecera del perfil, como se ve en Instagram desde la compu.
@@ -915,9 +929,9 @@
     const p = PERFIL_IG[CANAL] || PERFIL_IG.instagram;
     const num = (v, t) => v == null ? "" : `<span><b>${esc(v)}</b> ${t}</span>`;
     return `<header class="ct-ig-cab">
-        <div class="ct-ig-av">${p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span>${esc(p.nombre.charAt(0))}</span>`}</div>
+        <div class="ct-ig-av ${p.avatar || "oscuro"}">${p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span>${esc(p.nombre.charAt(0))}</span>`}</div>
         <div class="ct-ig-datos">
-          <div class="ct-ig-usr"><h2>${esc(p.usuario)}</h2><span class="ct-ig-ico">${IG_ICO.ajustes}</span></div>
+          <div class="ct-ig-usr"><h2>${esc(p.usuario)}</h2><span class="ct-ig-ico">${p.icono === "mas" ? IG_ICO.mas : IG_ICO.ajustes}</span></div>
           <div class="ct-ig-nombre">${esc(p.nombre)}</div>
           ${p.publicaciones || p.seguidores || p.seguidos ? `<div class="ct-ig-nums">${num(p.publicaciones, "publicaciones")}${num(p.seguidores, "seguidores")}${num(p.seguidos, "seguidos")}</div>` : ""}
         </div>
@@ -927,9 +941,11 @@
           ${p.web ? `<div class="ct-ig-web">${IG_ICO.link}<span>${esc(p.web)}</span></div>` : ""}
         </div>
       </header>
-      <div class="ct-ig-btns"><span>Editar perfil</span><span>Ver archivo</span></div>
+      <div class="ct-ig-btns">${p.botones.map(b => `<span>${esc(b)}</span>`).join("")}</div>
       ${p.destacadas.length ? `<div class="ct-ig-dest">${p.destacadas.map(([tapa, nombre]) =>
-        `<div><span class="ct-ig-dest-aro"><span class="ct-ig-dest-tapa">${esc(tapa)}</span></span><small>${esc(nombre)}</small></div>`).join("")}</div>` : ""}
+        `<div><span class="ct-ig-dest-aro">${tapa.startsWith("@") && IG_TAPA[tapa.slice(1)]
+          ? `<span class="ct-ig-dest-tapa icono">${IG_TAPA[tapa.slice(1)]}</span>`
+          : `<span class="ct-ig-dest-tapa">${esc(tapa)}</span>`}</span><small>${esc(nombre)}</small></div>`).join("")}</div>` : ""}
       <div class="ct-ig-tabs"><span class="on">${IG_ICO.grilla}</span><span>${IG_ICO.reels}</span><span>${IG_ICO.etiquetas}</span></div>`;
   }
 

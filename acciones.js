@@ -45,6 +45,22 @@
   const fechaCorta = s => { if (!s) return ""; const d = aFecha(s); return `${d.getDate()} ${MES_CORTO[d.getMonth()]}`; };
   const fechaLarga = s => { if (!s) return ""; const d = aFecha(s); return `${d.getDate()} ${MES_CORTO[d.getMonth()]} ${d.getFullYear()}`; };
   const num = v => (v === "" || v == null || isNaN(Number(v))) ? null : Number(v);
+  // Montos con punto de miles mientras se tipea (coma = decimales, como en es-AR).
+  const montoTxt = v => v == null ? "" : Number(v).toLocaleString("es-AR", { maximumFractionDigits: 2 });
+  const leerMonto = s => num(String(s).replace(/\./g, "").replace(",", ".").trim());
+  function formatearMonto(el) {
+    const v = el.value, pos = el.selectionStart;
+    const antes = v.slice(0, pos).replace(/[^\d,]/g, "").length;   // dígitos (y coma) antes del cursor
+    const limpio = v.replace(/[^\d,]/g, ""), c = limpio.indexOf(",");
+    const ent = (c < 0 ? limpio : limpio.slice(0, c)).replace(/^0+(?=\d)/, "");
+    const dec = c < 0 ? null : limpio.slice(c + 1).replace(/,/g, "").slice(0, 2);
+    const nuevo = ent.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (dec == null ? "" : "," + dec);
+    if (nuevo === v) return;
+    el.value = nuevo;
+    let i = 0, n = 0;
+    while (i < nuevo.length && n < antes) { if (/[\d,]/.test(nuevo[i])) n++; i++; }
+    el.setSelectionRange(i, i);
+  }
   const plata = (v, mon) => v == null ? "—" : `${mon === "USD" ? "US$" : "$"} ${Math.round(v).toLocaleString("es-AR")}`;
   const pesoArchivo = b => b == null ? "" : b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1)} MB`;
   const tms = x => Date.parse(x) || 0;
@@ -818,8 +834,8 @@
         ${ms.map((m, i) => { const c = cumpl(m); return `<div class="ac-met-f">
           <input data-met="${i}" data-k="n" value="${esc(m.n)}" placeholder="Qué se mide" aria-label="Métrica">
           <input data-met="${i}" data-k="u" value="${esc(m.u)}" placeholder="unidad" aria-label="Unidad">
-          <input data-met="${i}" data-k="esp" type="number" step="any" inputmode="decimal" value="${esc(m.esp == null ? "" : m.esp)}" placeholder="esperada" aria-label="Esperada">
-          <input data-met="${i}" data-k="real" type="number" step="any" inputmode="decimal" value="${esc(m.real == null ? "" : m.real)}" placeholder="real" aria-label="Real" class="${a.estado === "finalizada" && num(m.real) == null ? "falta" : ""}">
+          <input data-met="${i}" data-k="esp" class="ac-monto" inputmode="decimal" value="${montoTxt(num(m.esp))}" placeholder="esperada" aria-label="Esperada">
+          <input data-met="${i}" data-k="real" inputmode="decimal" value="${montoTxt(num(m.real))}" placeholder="real" aria-label="Real" class="ac-monto ${a.estado === "finalizada" && num(m.real) == null ? "falta" : ""}">
           <span class="ac-met-c ${tonoCumpl(c)}" title="${m.menos ? "Menos es mejor: esperada ÷ real" : "Real ÷ esperada"}">${pct(c)}</span>
           <span class="ac-met-acc">
             <button class="ac-mini ac-menos ${m.menos ? "on" : ""}" data-accion="met-menos" data-i="${i}" title="${m.menos ? "Menos es mejor (ej: costo por lead). Tocá para cambiar" : "Más es mejor. Tocá si en esta métrica menos es mejor (ej: costo por lead)"}" aria-pressed="${!!m.menos}">${m.menos ? "↓" : "↑"}</button>
@@ -850,7 +866,6 @@
     const a = accionAbierta(); if (!a) return;
     const items = itemsDe(a);
     const usados = new Set(items.map(x => x.cat));
-    const val = v => esc(v == null ? "" : v);
     w.innerHTML = `
       <h4 class="ac-box-h">Inversión
         <select data-campo="moneda" class="ac-mon" aria-label="Moneda">
@@ -863,8 +878,8 @@
           <select data-inv="${i}" data-k="cat" aria-label="Rubro">${[...new Set([...RUBROS, x.cat].filter(Boolean))].map(r =>
             `<option ${x.cat === r ? "selected" : ""}>${esc(r)}</option>`).join("")}</select>
           <input data-inv="${i}" data-k="det" value="${esc(x.det)}" placeholder="detalle" aria-label="Detalle">
-          <input data-inv="${i}" data-k="est" type="number" step="any" inputmode="decimal" value="${val(x.est)}" placeholder="estimada" aria-label="Estimada">
-          <input data-inv="${i}" data-k="real" type="number" step="any" inputmode="decimal" value="${val(x.real)}" placeholder="real" aria-label="Real">
+          <input data-inv="${i}" data-k="est" class="ac-monto" inputmode="decimal" value="${montoTxt(num(x.est))}" placeholder="estimada" aria-label="Estimada">
+          <input data-inv="${i}" data-k="real" class="ac-monto" inputmode="decimal" value="${montoTxt(num(x.real))}" placeholder="real" aria-label="Real">
           <button class="ac-mini" data-accion="inv-del" data-i="${i}" title="Quitar rubro" aria-label="Quitar rubro">✕</button>
         </div>`).join("")}
         <div class="ac-inv-tot"></div>
@@ -1045,7 +1060,7 @@
       if (el.classList.contains("ac-comp-f")) { COMP.fecha = el.value || hoyISO(); return; }
       if (el.dataset.met != null) {
         const i = +el.dataset.met, k = el.dataset.k;
-        const v = (k === "esp" || k === "real") ? num(el.value) : el.value.trim();
+        const v = (k === "esp" || k === "real") ? leerMonto(el.value) : el.value.trim();
         // Sin re-pintar las filas (se perdería el foco al saltar con Tab): sólo el % y el total.
         cambiarMetricas(l => { if (l[i]) l[i][k] = v; }, false);
         const a = accionAbierta(), fila = el.closest(".ac-met-f"), cc = fila && fila.querySelector(".ac-met-c");
@@ -1060,7 +1075,7 @@
       }
       if (el.dataset.inv != null) {
         const i = +el.dataset.inv, k = el.dataset.k;
-        const v = (k === "est" || k === "real") ? num(el.value) : el.value.trim();
+        const v = (k === "est" || k === "real") ? leerMonto(el.value) : el.value.trim();
         cambiarInversion(l => { if (l[i]) l[i][k] = v; }, k === "cat");   // el rubro cambia las sugerencias
         return;
       }
@@ -1084,6 +1099,7 @@
         const b = caja().querySelector(".ac-busca"); if (b) { b.focus(); b.setSelectionRange(pos, pos); }
         return;
       }
+      if (el.classList.contains("ac-monto")) return formatearMonto(el);
       if (el.classList.contains("ac-comp-texto")) COMP.texto = el.value;
       if (el.classList.contains("ac-com-nuevo")) BORR_COM[el.dataset.hito] = el.value;
       if (el.tagName === "TEXTAREA") crecer(el);

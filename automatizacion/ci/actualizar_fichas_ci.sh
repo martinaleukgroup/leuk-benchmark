@@ -144,7 +144,7 @@ git commit -q -m "Fichas al día (automático, GitHub Actions)" || { log "· nad
 
 # Otra persona puede haber publicado mientras corría: traer y reintentar.
 for intento in 1 2 3; do
-  git pull -q --rebase origin main && git push -q origin HEAD:main && break
+  git pull -q --rebase --autostash origin main && git push -q origin HEAD:main && break
   log "⚠ push falló (intento $intento); reintento"
   sleep 10
   [ "$intento" -eq 3 ] && { log "⛔ no pude publicar. Revisar a mano."; resumen "⛔ No se pudo publicar (push)."; exit 1; }

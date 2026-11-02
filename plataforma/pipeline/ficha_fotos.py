@@ -12,6 +12,10 @@ compara cada archivo (id + fecha de modificación que muestra Drive) contra lo q
   · Los archivos se nombran por SKU ("4169FotoProducto0.png", "7279.png"). Si hay varios de la
     misma SKU gana la toma principal; los "detalle" y las "copia" quedan últimos.
   · Los ZIP de la carpeta se ignoran (antes las fotos salían de uno, importado a mano).
+  · Se bajan TODAS las SKU de la carpeta, no sólo las del catálogo: el Stock diario también las
+    usa (pedido de la usuaria, 16/10/2026: el Stock saca las fotos siempre de esta carpeta).
+  · Deja app/assets/ficha/fotos/indice.json = {SKU: versión}: el Stock lo lee para saber qué
+    fotos hay y romper la caché cuando una cambia.
   · Una foto que se borra de la carpeta NO se borra de la app.
   · Si Drive no contesta o corta a mitad de camino, lo que falta se baja en la próxima corrida.
 
@@ -130,6 +134,8 @@ def bajar(fid):
 
 def guardar(estado):
     ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    indice = {sku: e.get("v", "") for sku, e in estado.items() if (DEST / f"{sku}.png").exists()}
+    (DEST / "indice.json").write_text(json.dumps(indice, sort_keys=True, separators=(",", ":")), encoding="utf-8")
 
 
 def main():
@@ -158,7 +164,7 @@ def main():
 
     skus = catalog_skus()
     pendientes = []
-    for sku in sorted(skus & set(elegida)):
+    for sku in sorted(elegida):
         e, ant = elegida[sku], estado.get(sku) or {}
         if todo or ant.get("id") != e["id"] or ant.get("mod") != e["mod"] or not (DEST / f"{sku}.png").exists():
             pendientes.append(sku)

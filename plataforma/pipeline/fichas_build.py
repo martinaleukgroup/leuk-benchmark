@@ -166,6 +166,62 @@ DL = lambda fid: (f"https://drive.google.com/uc?export=download&id={fid}" if fid
 VIEW = lambda fid: (f"https://drive.google.com/file/d/{fid}/view" if fid else "")  # abre el PDF en Drive
 
 
+# Una celda de assets del Hub puede nombrar VARIOS archivos separados por coma
+# ("SINTRA.ldt,YORK.ldt"; los tres ángulos de CHILL). Antes se buscaba la celda entera
+# en el índice de Drive: no matcheaba y el botón desaparecía sin que nadie se enterara.
+SIN_RESOLVER = []          # (SKU, tipo, nombre) de lo que el Hub nombra y no está en Drive
+# En el Hub cada asset se carga como "chip" de archivo: la celda trae el nombre Y el link al
+# archivo en Drive. El link es el dato más confiable — no depende de en qué carpeta esté
+# guardado ni de cómo se llame — así que manda sobre la búsqueda por nombre. Antes se tiraba:
+# los LDT y CAD de LUVA, EKO, AXIS y los POCKET estaban subidos pero fuera de las carpetas
+# que se indexan, y la ficha salía sin el botón (reporte de Mati, 20/10/2026).
+# OJO: si la celda tiene VARIOS chips (los tres LDT de CHILL), el export trae sólo el link
+# del primero; del segundo en adelante se sigue resolviendo por nombre.
+COLS_CON_LINK = ("Archivos LDT", "Archivo CAD", "Dibujo técnico")
+RESUELTOS = {"link": 0, "nombre": 0, "sku": 0}
+
+
+def id_de_link(url):
+    """ID del archivo de Drive adentro de un link de chip (…/file/d/<id>/view)."""
+    u = str(url or "")
+    m = re.search(r"/d/([A-Za-z0-9_-]{20,})", u) or re.search(r"[?&]id=([A-Za-z0-9_-]{20,})", u)
+    return m.group(1) if m else None
+
+
+def resolver_archivos(celda, byname, sku="", tipo="", link=None):
+    """[(nombre, fileId), …] de los archivos que el Hub nombra en `celda`.
+
+    1. por nombre exacto, como está en la carpeta de Drive;
+    2. si no está, por SKU: al Hub le suman SKU al nombre y el archivo de Drive sigue
+       con el nombre viejo ('6742-6743-7303-cad.dwg' en el Hub, '6742-6743-cad.dwg' en
+       la carpeta). Vale el archivo de la misma extensión cuyos SKU se crucen.
+    Lo que no resuelve queda en SIN_RESOLVER y se avisa al final de la corrida.
+    """
+    salida = []
+    for i, nombre in enumerate([n.strip() for n in fmt(celda).split(",") if n.strip()]):
+        fid = id_de_link(link) if i == 0 else None     # el chip de la celda manda
+        if fid:
+            RESUELTOS["link"] += 1
+            salida.append((nombre, fid))
+            continue
+        fid = byname.get(nombre.lower())
+        if fid:
+            RESUELTOS["nombre"] += 1
+        if not fid and "." in nombre:
+            ext = "." + nombre.rsplit(".", 1)[-1].lower()
+            skus = set(re.findall(r"\d{4}", nombre))
+            if skus:
+                fid = next((i for n, i in byname.items()
+                            if n.endswith(ext) and skus & set(re.findall(r"\d{4}", n))), None)
+                if fid:
+                    RESUELTOS["sku"] += 1
+        if fid:
+            salida.append((nombre, fid))
+        else:
+            SIN_RESOLVER.append((sku, tipo, nombre))
+    return salida
+
+
 def is_blue(cell):
     c = cell.font.color
     return c is not None and c.type == "theme" and c.theme == 4
@@ -347,7 +403,13 @@ def build_ficha(variants, blue, MAN):
     dib_fn = fmt(p.get("Dibujo técnico"))
     ldt_fn = fmt(p.get("Archivos LDT"))
     cad_fn = fmt(p.get("Archivo CAD"))
-    dib_id = MAN.get("dibujo_by_sku", {}).get(sku) or byname.get(dib_fn.lower())
+    links = p.get("_links") or {}
+    # para el dibujo sigue ganando el índice por SKU: evita el "dibujo prestado" que a veces
+    # queda cargado en la fila (ver foreign_dib). El link entra como segunda opción.
+    dib_id = (MAN.get("dibujo_by_sku", {}).get(sku) or id_de_link(links.get("Dibujo técnico"))
+              or byname.get(dib_fn.lower()))
+    ldts = resolver_archivos(ldt_fn, byname, sku, "LDT", links.get("Archivos LDT"))
+    cads = resolver_archivos(cad_fn, byname, sku, "CAD", links.get("Archivo CAD"))
     cur = MAN.get("curva_by_sku", {}).get(sku, {})
     nombre = fix_roman(strip_color(fmt(p.get("Nombre"))))   # 'MATT ll' → 'MATT II'
     # Renombres puntuales que todavía no están cargados en el maestro
@@ -453,9 +515,12 @@ def build_ficha(variants, blue, MAN):
             "curva_polar_url": IMG(cur.get("polar") or byname.get(next((c for c in curvas if re.search(r"polar", c, re.I)), "").lower())),
             "curva_cono_url": IMG(cur.get("cono") or byname.get(next((c for c in curvas if re.search(r"cono", c, re.I)), "").lower())),
             "ldt": ldt_fn,
-            "ldt_url": DL(byname.get(ldt_fn.lower())),
+            "ldt_url": DL(ldts[0][1]) if ldts else "",
+            # una ficha puede tener varios LDT (CHILL: uno por ángulo) → un botón por archivo
+            "ldt_files": [{"n": n, "url": DL(i)} for n, i in ldts],
             "cad": cad_fn,
-            "cad_url": DL(byname.get(cad_fn.lower())),
+            "cad_url": DL(cads[0][1]) if cads else "",
+            "cad_files": [{"n": n, "url": DL(i)} for n, i in cads],
             "manual_url": VIEW(manual_id),
         },
     }
@@ -694,6 +759,9 @@ def main():
     rows = []
     for row in ws.iter_rows(min_row=2):
         obj = {headers[c.column]: c.value for c in row if c.column in headers}
+        obj["_links"] = {headers[c.column]: c.hyperlink.target for c in row
+                         if c.column in headers and headers[c.column] in COLS_CON_LINK
+                         and c.hyperlink and c.hyperlink.target}
         for _n, _v in ALIAS_HUB.items():
             if _v in obj and _n not in obj:
                 obj[_n] = obj[_v]
@@ -753,7 +821,7 @@ def main():
 
     # dedupe por (SKU, Color): quedarnos con la fila que tenga MÁS datos (padre o hija según el caso)
     def richness(o):
-        return sum(1 for v in o.values() if not EMPTY(v))
+        return sum(1 for k, v in o.items() if not k.startswith("_") and not EMPTY(v))
 
     def foreign_dib(o):
         # fila con un dibujo "prestado" de otro modelo (su SKU no está en el nombre del archivo).
@@ -774,8 +842,15 @@ def main():
     # agrupar por (base + firma de specs SIN color) → fusiona variantes de color
     blue_sig = sorted(h for h in blue if h != "Color producto")
 
+    def _celda(o, h):
+        """Valor de una spec para comparar. 'N/A' y '-' son los dos "sin dato", pero
+        comparados como texto son distintos y partían la ficha en dos hojas (MUST, y
+        la mitad de los casos en que una variante de color se carga con otro guion)."""
+        v = o.get(h)
+        return "" if EMPTY(v) else fmt(v)
+
     def spec_sig(o):
-        return tuple(fmt(o.get(h)) for h in blue_sig)
+        return tuple(_celda(o, h) for h in blue_sig)
 
     # Variantes de color cargadas SIN "SKU Padre": quedaban como hoja aparte del documento
     # en vez de sumarse como una columna de color a la tabla de su hermana (pedido de
@@ -815,7 +890,7 @@ def main():
     def gkey(o):
         padre = fmt(o.get("SKU Padre"))
         base = padre if not EMPTY(padre) else fmt(o.get("SKU"))
-        return (base,) + tuple(fmt(o.get(h)) for h in blue_sig)
+        return (base,) + tuple(_celda(o, h) for h in blue_sig)
 
     groups, order = {}, []
     for o in uniq:
@@ -916,6 +991,20 @@ def main():
             continue
         fichas.append({**hoja, "sku": "", "skus": [], "agrupacion": ag,
                        "filas": [], "colores": [], "assets": {}})
+
+    # Lo que el Hub nombra y no está en la carpeta de Drive: la ficha sale sin ese botón.
+    # Antes pasaba en silencio; así queda en el log de actualizar_fichas.sh.
+    if SIN_RESOLVER:
+        por_archivo = {}
+        for s, tipo, nombre in SIN_RESOLVER:
+            por_archivo.setdefault((tipo, nombre), set()).add(s)
+        print(f"  (aviso) {len(por_archivo)} archivo(s) que el Hub nombra y NO están en la "
+              f"carpeta de Drive → esas fichas salen sin el botón:")
+        for (tipo, nombre), skus in sorted(por_archivo.items()):
+            print(f"      {tipo}: {nombre}  (SKU {', '.join(sorted(skus)[:6])})")
+
+    print(f"  assets resueltos: {RESUELTOS['link']} por el link del Hub · "
+          f"{RESUELTOS['nombre']} por nombre en la carpeta · {RESUELTOS['sku']} por SKU")
 
     OUT.write_text("window.FICHAS = " + json.dumps(fichas, ensure_ascii=False) + ";\n", encoding="utf-8")
     print(f"✓ fichas.js: {len(fichas)} fichas ({unificadas} unificadas por color) · {len(blue)} columnas azules · foto resuelta en {con_foto} ({de_drive} de la carpeta de fotos de Drive)")

@@ -1,0 +1,119 @@
+[02/11/2026 19:39:07] ──────── arranca (modo prueba) ────────
+dibujo: 288 archivos
+ldt: 188 archivos
+cad: 259 archivos
+curva: 445 archivos
+manual: 77 archivos
+✓ manifest: 1255 archivos · 612 SKU dibujo · 414 SKU curva · 77 manuales
+  → /home/runner/work/_temp/leuk-root/pipeline/ficha_assets_manifest.json
+[02/11/2026 19:41:24] ✓ índice de Drive actualizado
+  (aviso) no pude leer data.js del benchmark: [Errno 2] No such file or directory: '/home/runner/work/_temp/leuk-root/app/data.js'
+carpeta: 718 archivos · 714 SKU con foto · a bajar: 0
+✓ Fotos: 0 nuevas · 0 actualizadas · 0 sin bajar todavía. SKU del catálogo sin foto en la carpeta: 4
+  faltan en la carpeta: 7008 7009 7235 7236
+[02/11/2026 19:41:25] ✓ fotos al día con la carpeta de Drive
+  Base: leída del Google Sheet (export xlsx)
+  (sin color en la fuente → uso las 29 columnas técnicas por config)
+  (aviso) no pude leer benchmark_data.json: [Errno 2] No such file or directory: '/home/runner/work/_temp/leuk-root/data/benchmark_data.json'
+  sin ficha por decisión de producto: 3 hoja(s) (DYNA DRIVERS, RIELES 2EF 2NEUTROS)
+  accesorio compartido «KIT SUSPENSIÓN SINTRA/YORK» → 4 documentos
+  accesorio compartido «KIT SUSPENSIÓN 3 TENSORES + ALIMENTACIÓN» → 15 documentos
+  accesorio compartido «COBERTOR RIEL 1MT» → 1 documentos
+  accesorio compartido «FLORON LINEAL» → 2 documentos
+  accesorios discontinuados fuera de la grilla: 2
+  hojas de accesorios: RIELES 1EF, RIELES 3EF, DYNA, CHILL, DYNA EM, REN
+  (aviso) 2 archivo(s) que el Hub nombra y NO están en la carpeta de Drive → esas fichas salen sin el botón:
+      LDT: NUMA LENTE 8W 24°.ldt  (SKU 7528, 7529)
+      LDT: POCKET IV.ldt  (SKU 7717, 7718)
+  assets resueltos: 765 por el link del Hub · 49 por nombre en la carpeta · 0 por SKU
+✓ fichas.js: 607 fichas (216 unificadas por color) · 29 columnas azules · foto resuelta en 383 (383 de la carpeta de fotos de Drive)
+  → /home/runner/work/_temp/leuk-root/app/fichas-data.js
+[02/11/2026 19:41:33] ✓ fichas regeneradas desde el Hub
+[02/11/2026 19:41:33] · fichas: 374 → 607
+· agrupaciones: 180 → 234
+· nuevas: 54 (DYNA FIELTRO, LOOP, BILUNE, POCKET MODULO III BLBL 2CCT, POCKET MODULO III 2CCT, POCKET MODULO IV BLBL 2CCT, POCKET MODULO IV 2CCT, POCKET IV AP, POCKET MODULO VI BLBL 2CCT, POCKET MODULO VI 2CCT, POCKET MODULO XII BLBL 2CCT, POCKET MODULO XII 2CCT, GALIA, SUNSET, LAIVA AP…)
+· con datos distintos: 11 (MOLY, RIELES 1EF, LAIVA, CATEN, FORTE, POCKET III, POCKET IV, POCKET VI, LIV, POCKET XII, LUVA)
+· con foto nueva: 0
+· forzadas a mano: MOLY
+→ PDF a generar: 65
+  ─ MOLY: 2 → 2 hojas
+     hoja 1 · descripcion:
+        antes: ""
+        ahora: "Luminaria de exterior diseñada para brindar iluminación eficiente y resistente.\n Fabricado en aluminio. Su estructura robusta la hace ideal para realzar espac
+     hoja 1 · filas:
+        antes: [{"k": "SKU", "v": "4169"}, {"k": "Material", "v": "Aluminio"}, {"k": "Difusor", "v": "Vidrio"}, {"k": "Color producto", "v": "Negro Mate"}, {"k": "Fuente Lumín
+        ahora: [{"k": "SKU", "v": "4169"}, {"k": "Material", "v": "Aluminio"}, {"k": "Difusor", "v": "Vidrio"}, {"k": "Color producto", "v": "Negro Mate"}, {"k": "Fuente Lumín
+     hoja 1 · titulo:
+        antes: "MOLY I"
+        ahora: "MOLY"
+  ─ RIELES 1EF: 11 → 11 hojas
+  ─ LAIVA: 3 → 6 hojas
+  ─ CATEN: 2 → 8 hojas
+  ✓ Ficha Técnica - DYNA FIELTRO.pdf (337 KB)
+  ✓ Ficha Técnica - LOOP.pdf (1182 KB)
+  ✓ Ficha Técnica - BILUNE.pdf (286 KB)
+  ✓ Ficha Técnica - POCKET MODULO III BLBL 2CCT.pdf (124 KB)
+  ✓ Ficha Técnica - POCKET MODULO III 2CCT.pdf (144 KB)
+  ✓ Ficha Técnica - POCKET MODULO IV BLBL 2CCT.pdf (125 KB)
+  ✓ Ficha Técnica - POCKET MODULO IV 2CCT.pdf (145 KB)
+  ✓ Ficha Técnica - POCKET IV AP.pdf (164 KB)
+  ✓ Ficha Técnica - POCKET MODULO VI BLBL 2CCT.pdf (125 KB)
+  ✓ Ficha Técnica - POCKET MODULO VI 2CCT.pdf (145 KB)
+  ✓ Ficha Técnica - POCKET MODULO XII BLBL 2CCT.pdf (125 KB)
+  ✓ Ficha Técnica - POCKET MODULO XII 2CCT.pdf (145 KB)
+  ✓ Ficha Técnica - GALIA.pdf (461 KB)
+  ✓ Ficha Técnica - SUNSET.pdf (473 KB)
+  ✓ Ficha Técnica - LAIVA AP.pdf (452 KB)
+  ✓ Ficha Técnica - TRAZO.pdf (447 KB)
+  ✓ Ficha Técnica - WINSOR.pdf (577 KB)
+  ✓ Ficha Técnica - AURA.pdf (550 KB)
+  ✓ Ficha Técnica - DROP.pdf (579 KB)
+  ✓ Ficha Técnica - NUMA POINT.pdf (624 KB)
+  ✓ Ficha Técnica - MINI POCKET.pdf (1144 KB)
+  ✓ Ficha Técnica - PIN.pdf (473 KB)
+  ✓ Ficha Técnica - PETRA LINE.pdf (533 KB)
+  ✓ Ficha Técnica - DOT.pdf (525 KB)
+  ✓ Ficha Técnica - ORBIS.pdf (509 KB)
+  ✓ Ficha Técnica - NODO.pdf (43 KB)
+  ✓ Ficha Técnica - KOKO.pdf (43 KB)
+  ✓ Ficha Técnica - MINI SPY.pdf (590 KB)
+  ✓ Ficha Técnica - SPY.pdf (583 KB)
+  ✓ Ficha Técnica - SPY AP.pdf (540 KB)
+  ✓ Ficha Técnica - SPY EM.pdf (589 KB)
+  ✓ Ficha Técnica - NANO CHILL.pdf (582 KB)
+  ✓ Ficha Técnica - NUMA.pdf (1819 KB)
+  ✓ Ficha Técnica - NUMA MODULO.pdf (1039 KB)
+  ✓ Ficha Técnica - POLAR.pdf (566 KB)
+  ✓ Ficha Técnica - POLAR y REN.pdf (38 KB)
+  ✓ Ficha Técnica - POLAR LINE.pdf (1076 KB)
+  ✓ Ficha Técnica - POLAR GRID.pdf (1712 KB)
+  ✓ Ficha Técnica - POLAR GRID MOVIL.pdf (687 KB)
+  ✓ Ficha Técnica - POLAR MEX.pdf (1475 KB)
+  ✓ Ficha Técnica - POLAR BEAM.pdf (612 KB)
+  ✓ Ficha Técnica - POLAR SOUND.pdf (181 KB)
+  ✓ Ficha Técnica - POLAR FOCUS.pdf (543 KB)
+  ✓ Ficha Técnica - TERRA.pdf (170 KB)
+  ✓ Ficha Técnica - TERRA POINT.pdf (526 KB)
+  ✓ Ficha Técnica - TERRA CHILL.pdf (563 KB)
+  ✓ Ficha Técnica - TERRA GRID.pdf (357 KB)
+  ✓ Ficha Técnica - VALIJA LINEA POCKET.pdf (43 KB)
+  ✓ Ficha Técnica - RISE.pdf (367 KB)
+  ✓ Ficha Técnica - POCKET III y IV.pdf (65 KB)
+  ✓ Ficha Técnica - POCKET DRIVER ON-OFF VI.pdf (52 KB)
+  ✓ Ficha Técnica - POCKET DRIVER TRIAC VI.pdf (52 KB)
+  ✓ Ficha Técnica - POCKET DRIVER ON-OFF XII.pdf (52 KB)
+  ✓ Ficha Técnica - POCKET DRIVER TRIAC XII.pdf (52 KB)
+  ✓ Ficha Técnica - MOLY.pdf (240 KB)
+  ✓ Ficha Técnica - RIELES 1EF.pdf (2869 KB)
+  ✓ Ficha Técnica - LAIVA.pdf (1331 KB)
+  ✓ Ficha Técnica - CATEN.pdf (2365 KB)
+  ✓ Ficha Técnica - FORTE.pdf (2709 KB)
+  ✓ Ficha Técnica - POCKET III.pdf (702 KB)
+  ✓ Ficha Técnica - POCKET IV.pdf (560 KB)
+  ✓ Ficha Técnica - POCKET VI.pdf (1941 KB)
+  ✓ Ficha Técnica - LIV.pdf (3364 KB)
+  ✓ Ficha Técnica - POCKET XII.pdf (1671 KB)
+  ✓ Ficha Técnica - LUVA.pdf (759 KB)
+→ PDF generados: 65 de 65
+[02/11/2026 19:43:06] · modo prueba: hay cambios, pero no se commitea ni se publica.
+[02/11/2026 19:43:06] ──────── listo ────────

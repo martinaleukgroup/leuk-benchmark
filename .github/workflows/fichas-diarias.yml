@@ -1,0 +1,75 @@
+name: Fichas técnicas · actualización diaria
+
+# Reemplaza la corrida de la Mac (launchd 7:30). Lee el Hub de marketing, regenera las
+# fichas de la plataforma, imprime a PDF solo las que cambiaron y (en modo real) publica.
+# Los PDF quedan como "artifact" de cada corrida (Actions → la corrida → Artifacts).
+#
+# Modo de la corrida programada: variable del repo FICHAS_MODO (Settings → Secrets and
+# variables → Actions → Variables). Si no existe, corre en "prueba" (no publica nada).
+
+on:
+  schedule:
+    # lun–vie 7:12 Buenos Aires (10:12 UTC): después del Proceso 1 (7:00) y antes del 2 (7:30)
+    - cron: "12 10 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "prueba = no publica · real = publica en la plataforma"
+        type: choice
+        options: [prueba, real]
+        default: prueba
+      solo:
+        description: "Agrupaciones a imprimir sí o sí, separadas por coma (opcional)"
+        required: false
+        default: ""
+      max_pdfs:
+        description: "Freno: máximo de fichas a imprimir"
+        required: false
+        default: "30"
+  # SOLO PARA LA PRUEBA INICIAL: se saca antes de pasar a main
+  push:
+    branches: [fichas-en-github]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: fichas-diarias
+  cancel-in-progress: false
+
+jobs:
+  fichas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: automatizacion/ci/requirements.txt
+
+      - name: Dependencias
+        run: pip install -r automatizacion/ci/requirements.txt
+
+      - name: Actualizar fichas
+        env:
+          MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || (github.event_name == 'push' && 'prueba') || vars.FICHAS_MODO || 'prueba' }}
+          SOLO: ${{ github.event_name == 'workflow_dispatch' && inputs.solo || (github.event_name == 'push' && 'MOLY') || '' }}
+          MAX_PDFS: ${{ inputs.max_pdfs || '30' }}
+          SALIDA: ${{ runner.temp }}/salida
+          GH_TOKEN: ${{ github.token }}
+        run: bash automatizacion/ci/actualizar_fichas_ci.sh
+
+      - name: Guardar PDF y log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fichas-${{ github.run_number }}
+          path: ${{ runner.temp }}/salida
+          retention-days: 30
+          if-no-files-found: ignore

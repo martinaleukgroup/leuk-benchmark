@@ -2,6 +2,8 @@
 # Copia al repo la parte "de atrás" de la plataforma (pipeline, worker, Supabase,
 # skill de alta y documentación) desde ~/leuk-benchmark, para que quede versionada.
 # Uso:  bash ~/leuk-benchmark/app/plataforma/sincronizar.sh   (y después ./publicar.sh)
+# NO copia el estado de las fichas (ficha_assets_manifest.json, ficha_fotos_estado.json):
+# desde 11/2026 lo mantiene el workflow de GitHub (automatizacion/ci).
 # NO copia: secretos (no viven en estos archivos), cachés de imágenes, logs, data/ ni contenidos/.
 set -e
 SRC="$HOME/leuk-benchmark"
@@ -9,7 +11,8 @@ DST="$(cd "$(dirname "$0")" && pwd)"
 ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/📊 | Comercial/Automatización - Pricing"
 EXCL=(--exclude='.DS_Store' --exclude='__pycache__' --exclude='*.pyc' --exclude='*.zip'
       --exclude='*.log' --exclude='*.bak' --exclude='*.PRUEBA.*' --exclude='.*_thumb*'
-      --exclude='.artelum_tmp' --exclude='embed_*.txt' --exclude='batch_log.txt' --exclude='build_log.txt')
+      --exclude='.artelum_tmp'
+      --exclude='ficha_assets_manifest.json' --exclude='ficha_fotos_estado.json' --exclude='embed_*.txt' --exclude='batch_log.txt' --exclude='build_log.txt')
 for d in pipeline worker supabase skills handoff-fable5; do
   rsync -a --delete "${EXCL[@]}" "$SRC/$d/" "$DST/$d/"
 done

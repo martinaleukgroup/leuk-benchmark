@@ -28,6 +28,14 @@ Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos f
 3. Al terminar (~4 min): la corrida muestra el resumen (qué fichas cambiaron, pendientes de foto) y
    los PDF en **Artifacts**.
 
+### Etiquetas del panel de Fichas
+
+Desde el 02/11/2026 ya no hay estados manuales (Solicitada / A actualizar / Finalizada).
+Cada corrida actualiza `fichas-historial.json` (lo escribe `ci/fichas_cambiadas.py`) y el panel
+muestra: **Nueva** (creada en los últimos 15 días), **Actualizada** (cambió en los últimos 15
+días, con qué cambió), **Falta foto** (alguna hoja de producto sin foto; su PDF no se sube) y
+**Discontinuada**. El bot de Apps Script que calculaba los estados quedó apagado.
+
 ### Desde la plataforma (botón)
 
 Fichas → **⟳ Regenerar fichas** (barra de arriba) o **⟳ Reimprimir** (en cada ficha). Elegís

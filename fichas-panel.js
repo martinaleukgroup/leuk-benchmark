@@ -26,6 +26,7 @@
   // Orden de los chips y prioridad del color en la lista (la primera que aplique)
   const ETIQUETAS = [
     { k: "foto", txt: "Falta foto", cls: "fe-foto" },
+    { k: "drive", txt: "Sin carpeta en Drive", cls: "fe-foto" },
     { k: "nueva", txt: "Nueva", cls: "fe-nueva" },
     { k: "actualizada", txt: "Actualizada", cls: "fe-actualizada" },
     { k: "discontinuada", txt: "Discontinuada", cls: "fe-discontinuada" },
@@ -60,6 +61,8 @@
       const h = HIST[d.ag] || {};
       const etq = [];
       if ((h.falta_foto || []).length) etq.push("foto");
+      const dv = h.drive || {};
+      if (["sin_carpeta", "ambigua", "error"].indexOf(dv.estado) !== -1) etq.push("drive");
       if (diasDesde(h.creada) <= DIAS_RECIENTE) etq.push("nueva");
       else if (diasDesde(h.actualizada) <= DIAS_RECIENTE) etq.push("actualizada");
       const prod = d.fichas.filter(f => !f.tipo);
@@ -153,7 +156,7 @@
     const c = {}; ETIQUETAS.forEach(e => { c[e.k] = 0; });
     ITEMS.forEach(x => x.etq.forEach(k => { c[k]++; }));
     $("#fpChips").innerHTML = ETIQUETAS
-      .filter(e => c[e.k] > 0 || e.k !== "discontinuada")
+      .filter(e => c[e.k] > 0 || (e.k !== "discontinuada" && e.k !== "drive"))
       .map(e => `<button class="fe-chip ${e.cls} ${FILTRO === e.k ? "on" : ""}" data-etq="${e.k}"
           title="${e.k === "nueva" || e.k === "actualizada" ? `En los últimos ${DIAS_RECIENTE} días` : ""}">
           <b>${c[e.k]}</b> <span>${esc(e.txt)}</span></button>`).join("");
@@ -201,6 +204,9 @@
     const hojas = x.doc.fichas.length > 1 ? `${x.doc.fichas.length} hojas` : "";
     const lineas = [];
     if (h.creada) lineas.push(`Creada el ${esc(fecha(h.creada))}`);
+    const dv = h.drive || {};
+    if (dv.estado === "subida") lineas.push(`En Drive desde el ${esc(fecha(dv.fecha))}${
+      dv.url ? ` · <a href="${esc(dv.url)}" target="_blank" rel="noopener">abrir PDF</a>` : ""}`);
     if (h.actualizada) lineas.push(`Actualizada el ${esc(fecha(h.actualizada))}${
       (h.cambios || []).length ? ` · cambió: ${esc(h.cambios.join(", "))}` : ""}`);
 
@@ -216,6 +222,11 @@
         <a href="${CARPETA_FOTOS}" target="_blank" rel="noopener">carpeta de fotos de Drive</a>
         (nombrada con el SKU, ej. <i>${esc(h.falta_foto[0])}FotoProducto0.png</i>) y la ficha se completa
         sola en la próxima actualización. Mientras tanto su PDF no se sube a Drive.</div>` : ""}
+      ${["sin_carpeta", "ambigua", "error"].indexOf(dv.estado) !== -1 ? `<div class="fp-motivo fe-foto">${
+        dv.estado === "error" ? "No se pudo subir el PDF a Drive" : "El PDF no se subió a Drive: el producto no tiene carpeta en la carpeta oficial"}
+        (${esc(fecha(dv.fecha))}). ${esc(dv.aviso || dv.error || "")}
+        ${dv.estado === "error" ? "Se vuelve a intentar en la próxima actualización." :
+          "Creá la carpeta del producto (con sus fotos, nombradas con el SKU) y la ficha se sube sola en la próxima actualización."}</div>` : ""}
       ${lineas.length ? `<div class="fp-fecha">${lineas.join(" · ")}</div>` : ""}
       <div class="fp-acc">
         <button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>

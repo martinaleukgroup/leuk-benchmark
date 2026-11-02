@@ -34,12 +34,12 @@ resumen() { [ -n "${GITHUB_STEP_SUMMARY:-}" ] && echo "$*" >> "$GITHUB_STEP_SUMM
 
 # Resumen de una línea como anotación de la corrida: lo lee la plataforma
 # (función fichas-github) para mostrar el resultado del botón "Regenerar fichas".
-N=0; PLAT="sin terminar"; PLAT_FRENO=0
+N=0; PLAT="sin terminar"; PLAT_FRENO=0; DRIVE_RES=""
 anotar() {
   local listos pend
   listos=$(ls "$SALIDA/pdfs"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
   pend=$(grep -c . "$SALIDA/pendientes_foto.txt" 2>/dev/null); pend=${pend:-0}
-  echo "::notice title=Resumen fichas::modo $MODO · $N fichas cambiadas · $listos PDF listos · $pend pendientes de foto · plataforma: $PLAT$([ "$PLAT_FRENO" = 1 ] && echo " · ⚠ freno: más de $MAX_PDFS fichas, no se generaron PDF")"
+  echo "::notice title=Resumen fichas::modo $MODO · $N fichas cambiadas · $listos PDF listos · $pend pendientes de foto$([ -n "${DRIVE_RES:-}" ] && echo " · $DRIVE_RES") · plataforma: $PLAT$([ "$PLAT_FRENO" = 1 ] && echo " · ⚠ freno: más de $MAX_PDFS fichas, no se generaron PDF")"
 }
 trap anotar EXIT
 
@@ -119,6 +119,13 @@ elif [ "$N" -gt 0 ]; then
   python3 "$REPO/automatizacion/ci/exportar_pdfs.py" --repo "$REPO" \
     --lista "$SALIDA/cambiadas.txt" --salida "$SALIDA/pdfs" 2>&1 | tee -a "$LOG"
   [ -f "$SALIDA/pdf_fallidos.txt" ] && resumen "" && resumen "⚠ No se pudieron generar: $(paste -sd, "$SALIDA/pdf_fallidos.txt")"
+  # Drive: n8n (Proceso 5) sube los PDF listos a la carpeta "Ficha Técnica" de cada producto,
+  # mueve los viejos a Reemplazados y dispara el Proceso 2 (chip en el Hub).
+  python3 "$REPO/automatizacion/ci/subir_drive.py" --repo "$REPO" --pdfs "$SALIDA/pdfs" \
+    --historial "$REPO/fichas-historial.json" --modo "$MODO" \
+    --fecha "$(TZ=America/Buenos_Aires date +%F)" --corrida "${GITHUB_RUN_NUMBER:-}" 2>&1 | tee -a "$LOG" "$SALIDA/drive.txt"
+  DRIVE_RES=$(grep '^→ Drive' "$SALIDA/drive.txt" | tail -1 | sed 's/^→ //')
+  [ -n "$DRIVE_RES" ] && resumen "" && resumen "$DRIVE_RES"
   if [ -s "$SALIDA/pendientes_foto.txt" ]; then
     resumen ""
     resumen "◌ Pendientes de foto (no se suben hasta que haya foto en Drive): $(paste -sd, "$SALIDA/pendientes_foto.txt" | sed 's/,/, /g')"
@@ -126,7 +133,7 @@ elif [ "$N" -gt 0 ]; then
 fi
 
 # 4) publicar (solo en modo real y si cambió algo)
-if git diff --quiet -- fichas-data.js && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
+if git diff --quiet -- fichas-data.js fichas-historial.json && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
   log "· sin cambios en las fichas de la plataforma. No se publica."; PLAT="sin cambios"
   resumen ""
   resumen "Plataforma: sin cambios."

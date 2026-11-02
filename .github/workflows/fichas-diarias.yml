@@ -61,6 +61,8 @@ jobs:
           MAX_PDFS: ${{ inputs.max_pdfs || '30' }}
           SALIDA: ${{ runner.temp }}/salida
           GH_TOKEN: ${{ github.token }}
+          N8N_FICHAS_URL: ${{ secrets.N8N_FICHAS_URL }}
+          N8N_FICHAS_TOKEN: ${{ secrets.N8N_FICHAS_TOKEN }}
         run: bash automatizacion/ci/actualizar_fichas_ci.sh
 
       - name: Guardar PDF y log

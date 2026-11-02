@@ -170,6 +170,24 @@ def main():
             if skus & fotos:
                 por_foto.append(ag)
 
+    # Fichas nuevas o actualizadas que todavía no quedaron en Drive (sin carpeta, error, o la
+    # subida es anterior al último cambio) y que ya tienen foto: se vuelven a imprimir para subirlas.
+    pendientes_drive = []
+    if a.historial and Path(a.historial).exists():
+        try:
+            hist = json.loads(Path(a.historial).read_text(encoding="utf-8")).get("fichas", {})
+        except Exception:
+            hist = {}
+        for ag, e in hist.items():
+            if ag not in ahora or ag in nuevas or ag in cambiadas or ag in por_foto:
+                continue
+            ultimo = max(e.get("creada", ""), e.get("actualizada", ""))
+            if not ultimo or falta_foto(ahora[ag]):
+                continue
+            d = e.get("drive") or {}
+            if d.get("estado") != "subida" or d.get("fecha", "") < ultimo:
+                pendientes_drive.append(ag)
+
     forzadas = []
     for ag in [x.strip() for x in a.solo.split(",") if x.strip()]:
         encontrada = next((k for k in ahora if k.upper() == ag.upper()), None)
@@ -179,7 +197,7 @@ def main():
             print(f"  ⚠ --solo: no hay ninguna agrupación llamada {ag!r}")
 
     lista = []
-    for ag in nuevas + cambiadas + por_foto + forzadas:
+    for ag in nuevas + cambiadas + por_foto + pendientes_drive + forzadas:
         if ag not in lista:
             lista.append(ag)
 
@@ -194,6 +212,8 @@ def main():
     print(f"· nuevas: {len(nuevas)}" + (f" ({', '.join(nuevas[:15])}{'…' if len(nuevas) > 15 else ''})" if nuevas else ""))
     print(f"· con datos distintos: {len(cambiadas)}" + (f" ({', '.join(cambiadas[:15])}{'…' if len(cambiadas) > 15 else ''})" if cambiadas else ""))
     print(f"· con foto nueva: {len(por_foto)}" + (f" ({', '.join(por_foto[:15])})" if por_foto else ""))
+    if pendientes_drive:
+        print(f"· pendientes de subir a Drive: {len(pendientes_drive)} ({', '.join(pendientes_drive[:15])})")
     if forzadas:
         print(f"· forzadas a mano: {', '.join(forzadas)}")
     if bajas:

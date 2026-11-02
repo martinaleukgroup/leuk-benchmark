@@ -1924,7 +1924,7 @@
 
   window.renderEventosClientes = async function () {
     const c = caja(); if (!c) return;
-    if (!(SES().puedeVerAcciones && SES().puedeVerAcciones())) { c.innerHTML = ""; return; }
+    if (!(SES().puedeVerImpacto ? SES().puedeVerImpacto() : SES().puedeVerAcciones && SES().puedeVerAcciones())) { c.innerHTML = ""; return; }
     enganchar();
     if (CARGADO && (ABIERTO === "nuevo" || CAMP === "nueva")) return;     // no pisar algo a medio crear
     pintar();

@@ -226,6 +226,10 @@
   // así alguien puede ser Líder o Diseño Y del equipo de marketing. El admin entra siempre.
   const esMarketing = () => !SIN_PERFIL && (MARKETING || rolReal() === "admin");
   const puedeVer = mod => mod === "tareas" ? esMarketing() : rolCfg().mods.includes(mod);
+  // Impacto de acciones es del módulo Acciones (Admin y Líder), pero también lo ve quien tenga
+  // la marca `perfiles.impacto` (Usuarios): carga eventos sin ver Seguimiento ni costos.
+  // El permiso real lo da la RLS (ver supabase/sql/2026-11-02-acceso-impacto.sql).
+  const puedeVerImpacto = () => !SIN_PERFIL && (IMPACTO || puedeVer("acciones"));
   const esAdmin = () => rolReal() === "admin";                 // puede eliminar CUALQUIER comparación / marca
   const puedePrecios = () => rolCfg().precios;
   const puedeCostos = () => rolCfg().costos;                   // ve el costo interno / margen (sólo Admin y Líder)
@@ -270,16 +274,17 @@
   const margenTxt = mg => mg == null ? "—" : `US$ ${mg.usd.toLocaleString("es-AR")}${mg.pct != null ? ` · ${mg.pct}%` : ""}`;
   let SIN_PERFIL = false;                            // tiene cuenta pero nadie le asignó rol
   let MARKETING = false;                             // del equipo de marketing → ve Tareas
+  let IMPACTO = false;                               // marca aparte → ve Impacto de acciones
   async function fetchRol() {
     if (!sbOn() || !AUTHSES.logged()) return;
-    SIN_PERFIL = false; MARKETING = false;
+    SIN_PERFIL = false; MARKETING = false; IMPACTO = false;
     try {
       const email = encodeURIComponent(AUTHSES.email() || "");
       const r = await fetch(`${SB.url}/rest/v1/perfiles?select=*&email=ilike.${email}`, { headers: AUTHSES.head() });
       if (r.status === 404) ROL = "admin";             // sistema de roles no configurado aún → todos pueden todo (como antes)
       else if (r.ok) {
         const rows = await r.json();
-        if (rows.length) { ROL = rows[0].rol || "comercial"; NOMBRE = rows[0].nombre || ""; MARKETING = !!rows[0].marketing; }
+        if (rows.length) { ROL = rows[0].rol || "comercial"; NOMBRE = rows[0].nombre || ""; MARKETING = !!rows[0].marketing; IMPACTO = !!rows[0].impacto; }
         // El registro es abierto: tener cuenta NO da acceso. Sin perfil asignado, nada.
         else { ROL = ""; SIN_PERFIL = true; }
       }
@@ -455,6 +460,8 @@
     puedeVerTareas: () => AUTHSES.logged() && puedeVer("tareas"),
     // ---- lo que usa acciones.js ----
     puedeVerAcciones: () => AUTHSES.logged() && puedeVer("acciones"),
+    // ---- lo que usa eventos-clientes.js (Impacto de acciones) ----
+    puedeVerImpacto: () => AUTHSES.logged() && puedeVerImpacto(),
   };
 
   /* ---- Sin producto comparable (oportunidades de monopolio), compartido ---- */
@@ -2650,6 +2657,7 @@
   GRUPOS.forEach(g => g.items.forEach(i => { GRUPO_DE[i] = g.g || ""; }));
   function puedeVerPagina(page) {
     if (page === "inicio") return true;
+    if (page === "eventos-clientes") return puedeVerImpacto();
     const mod = MOD_DE[page];
     if (!mod || !puedeVer(mod)) return false;
     const pcfg = MODULOS[mod].pages.find(x => x.p === page);
@@ -2828,7 +2836,7 @@
     if (!PAGES.includes(page)) page = "inicio";
     let mod = MOD_DE[page] || "inicio";
     // sin permiso sobre ese módulo → a Inicio (la Home ya se filtra por rol)
-    if (mod !== "inicio" && !puedeVer(mod)) { page = "inicio"; mod = "inicio"; }
+    if (mod !== "inicio" && !(page === "eventos-clientes" ? puedeVerImpacto() : puedeVer(mod))) { page = "inicio"; mod = "inicio"; }
     // páginas con candado propio (ej: Nuevas integraciones = sólo puedeIntegrar())
     const pcfg = (MODULOS[mod] && MODULOS[mod].pages || []).find(x => x.p === page);
     if (pcfg && pcfg.gate && !pcfg.gate()) { page = "inicio"; mod = "inicio"; }
@@ -2944,7 +2952,7 @@
         <div id="usMsg" class="us-msg"></div>
       </div>
       <table class="us-tabla">
-        <thead><tr><th>Persona</th><th>Rol</th><th title="Equipo de marketing: ve el módulo Tareas">Marketing</th><th>Ve</th><th></th></tr></thead>
+        <thead><tr><th>Persona</th><th>Rol</th><th title="Equipo de marketing: ve el módulo Tareas">Marketing</th><th title="Ve y carga Impacto de acciones (sin ver Seguimiento de acciones ni costos)">Impacto</th><th>Ve</th><th></th></tr></thead>
         <tbody>${perfiles.map(p => {
           const cfg = ROLES[ROL_ALIAS[p.rol] || p.rol] || {};
           const soyYo = String(p.email).toLowerCase() === yo;
@@ -2956,8 +2964,11 @@
             </select></td>
             <td class="us-mkt"><input type="checkbox" class="us-marketing" ${p.marketing ? "checked" : ""}
               title="Del equipo de marketing: ve Tareas" aria-label="Equipo de marketing"></td>
+            <td class="us-mkt"><input type="checkbox" class="us-impacto" ${p.impacto ? "checked" : ""}
+              title="Ve y carga Impacto de acciones" aria-label="Impacto de acciones"></td>
             <td class="leuk-fam">${[...(cfg.mods || []), ...(p.marketing || (ROL_ALIAS[p.rol] || p.rol) === "admin" ? ["tareas"] : [])]
-              .map(m => (MODULOS[m] || {}).label || m).join(" · ") || "—"}</td>
+              .map(m => (MODULOS[m] || {}).label || m)
+              .concat(p.impacto && !(cfg.mods || []).includes("acciones") ? ["Impacto de acciones"] : []).join(" · ") || "—"}</td>
             <td class="us-acc">${soyYo ? "" :
               `<button class="btn-ghost us-pass" title="Asignar una contraseña nueva"><span class="msi">key</span></button>
                <button class="btn-ghost us-del" title="Quitar acceso">✕</button>`}</td>
@@ -2993,6 +3004,23 @@
       } else {
         chk.checked = !chk.checked;
         msg("No se pudo guardar (¿corriste el SQL 2026-09-15-tareas.sql?).", false);
+      }
+    });
+
+    // Impacto de acciones → columna `impacto` (ver 2026-11-02-acceso-impacto.sql)
+    cont.querySelectorAll(".us-impacto").forEach(chk => chk.onchange = async () => {
+      const email = chk.closest("tr").dataset.email;
+      const r = await fetch(`${SB.url}/rest/v1/perfiles?email=eq.${encodeURIComponent(email)}`, {
+        method: "PATCH", headers: Object.assign(AUTHSES.head(), { Prefer: "return=representation" }),
+        body: JSON.stringify({ impacto: chk.checked }),
+      });
+      const d = await r.json().catch(() => []);
+      if (r.ok && d.length) {
+        msg(chk.checked ? `Listo: ${email} ahora ve y carga Impacto de acciones.` : `Listo: ${email} ya no ve Impacto de acciones.`, true);
+        if (String(email).toLowerCase() === yo) { IMPACTO = chk.checked; aplicarRol(); }
+      } else {
+        chk.checked = !chk.checked;
+        msg("No se pudo guardar (¿corriste el SQL 2026-11-02-acceso-impacto.sql?).", false);
       }
     });
 

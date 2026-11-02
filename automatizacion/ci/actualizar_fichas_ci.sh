@@ -32,6 +32,17 @@ LOG="$SALIDA/actualizar_fichas.log"
 log() { echo "[$(TZ=America/Buenos_Aires date '+%d/%m/%Y %H:%M:%S')] $*" | tee -a "$LOG"; }
 resumen() { [ -n "${GITHUB_STEP_SUMMARY:-}" ] && echo "$*" >> "$GITHUB_STEP_SUMMARY"; true; }
 
+# Resumen de una línea como anotación de la corrida: lo lee la plataforma
+# (función fichas-github) para mostrar el resultado del botón "Regenerar fichas".
+N=0; PLAT="sin terminar"; PLAT_FRENO=0
+anotar() {
+  local listos pend
+  listos=$(ls "$SALIDA/pdfs"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
+  pend=$(grep -c . "$SALIDA/pendientes_foto.txt" 2>/dev/null); pend=${pend:-0}
+  echo "::notice title=Resumen fichas::modo $MODO · $N fichas cambiadas · $listos PDF listos · $pend pendientes de foto · plataforma: $PLAT$([ "$PLAT_FRENO" = 1 ] && echo " · ⚠ freno: más de $MAX_PDFS fichas, no se generaron PDF")"
+}
+trap anotar EXIT
+
 # Los scripts de pipeline esperan <ROOT>/app (este repo) y <ROOT>/pipeline.
 ROOT="${RUNNER_TEMP:-/tmp}/leuk-root"
 rm -rf "$ROOT"; mkdir -p "$ROOT"
@@ -46,7 +57,7 @@ resumen "## Fichas técnicas · modo **$MODO**"
 
 # 1) índice de Drive
 if ! python3 ficha_assets_manifest.py >>"$LOG" 2>&1; then
-  log "⛔ falló el índice de Drive. No se sigue."
+  log "⛔ falló el índice de Drive. No se sigue."; PLAT="⛔ falló el índice de Drive"
   resumen "⛔ Falló el índice de Drive. No se publicó nada."
   exit 1
 fi
@@ -63,7 +74,7 @@ fi
 python3 fichas_build.py >>"$LOG" 2>&1
 CODIGO=$?
 if [ "$CODIGO" -ne 0 ]; then
-  log "⛔ fichas_build.py falló (código $CODIGO): probablemente no pudo leer el Hub. No se publica."
+  log "⛔ fichas_build.py falló (código $CODIGO): probablemente no pudo leer el Hub. No se publica."; PLAT="⛔ no se pudo leer el Hub"
   resumen "⛔ No se pudo leer el Hub (código $CODIGO). No se publicó nada."
   git -C "$REPO" checkout -- fichas-data.js 2>/dev/null
   exit 1
@@ -78,7 +89,7 @@ AHORA=$(python3 -c "$CUENTA" < fichas-data.js 2>/dev/null || echo 0)
 if [ "$ANTES" -gt 0 ] && [ "$AHORA" -gt 0 ]; then
   MINIMO=$(( ANTES * 95 / 100 ))
   if [ "$AHORA" -lt "$MINIMO" ]; then
-    log "⛔ FRENO: las fichas caen de $ANTES a $AHORA (más del 5%). NO se publica."
+    log "⛔ FRENO: las fichas caen de $ANTES a $AHORA (más del 5%). NO se publica."; PLAT="⛔ freno: las fichas caen de $ANTES a $AHORA"
     log "   Suele ser que alguien borró filas del Hub sin querer (Archivo → Historial de versiones)."
     resumen "⛔ Freno: las fichas caen de $ANTES a $AHORA (más del 5%). No se publicó nada."
     git checkout -- fichas-data.js
@@ -100,7 +111,7 @@ fi
 
 # 3b) PDF de esas fichas
 if [ "$N" -gt "$MAX_PDFS" ]; then
-  log "⚠ FRENO: cambiaron $N fichas (más de $MAX_PDFS). No genero PDF; revisá el Hub y volvé a correr con un MAX_PDFS más alto si está bien."
+  PLAT_FRENO=1; log "⚠ FRENO: cambiaron $N fichas (más de $MAX_PDFS). No genero PDF; revisá el Hub y volvé a correr con un MAX_PDFS más alto si está bien."
   resumen ""
   resumen "⚠ Freno: cambiaron $N fichas (máximo $MAX_PDFS). No se generaron PDF."
 elif [ "$N" -gt 0 ]; then
@@ -115,7 +126,7 @@ fi
 
 # 4) publicar (solo en modo real y si cambió algo)
 if git diff --quiet -- fichas-data.js && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
-  log "· sin cambios en las fichas de la plataforma. No se publica."
+  log "· sin cambios en las fichas de la plataforma. No se publica."; PLAT="sin cambios"
   resumen ""
   resumen "Plataforma: sin cambios."
   log "──────── listo ────────"
@@ -123,7 +134,7 @@ if git diff --quiet -- fichas-data.js && [ -z "$(git status --porcelain -- asset
 fi
 
 if [ "$MODO" != "real" ]; then
-  log "· modo prueba: hay cambios, pero no se commitea ni se publica."
+  log "· modo prueba: hay cambios, pero no se commitea ni se publica."; PLAT="con cambios, no publicada (prueba)"
   resumen ""
   resumen "Plataforma: hay cambios, **no publicados** (modo prueba)."
   log "──────── listo ────────"
@@ -140,24 +151,24 @@ git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 git add fichas-data.js index.html assets/ficha/fotos \
   plataforma/pipeline/ficha_assets_manifest.json plataforma/pipeline/ficha_fotos_estado.json
-git commit -q -m "Fichas al día (automático, GitHub Actions)" || { log "· nada para commitear"; exit 0; }
+git commit -q -m "Fichas al día (automático, GitHub Actions)" || { log "· nada para commitear"; PLAT="sin cambios"; exit 0; }
 
 # Otra persona puede haber publicado mientras corría: traer y reintentar.
 for intento in 1 2 3; do
   git pull -q --rebase --autostash origin main && git push -q origin HEAD:main && break
   log "⚠ push falló (intento $intento); reintento"
   sleep 10
-  [ "$intento" -eq 3 ] && { log "⛔ no pude publicar. Revisar a mano."; resumen "⛔ No se pudo publicar (push)."; exit 1; }
+  [ "$intento" -eq 3 ] && { log "⛔ no pude publicar. Revisar a mano."; PLAT="⛔ no se pudo publicar"; resumen "⛔ No se pudo publicar (push)."; exit 1; }
 done
 log "✓ commit subido a main"
 
 # Un push hecho por el workflow no dispara Pages solo: hay que pedirlo.
 if gh workflow run pages.yml --ref main >>"$LOG" 2>&1; then
-  log "✓ publicación en GitHub Pages pedida"
+  log "✓ publicación en GitHub Pages pedida"; PLAT="publicada"
   resumen ""
   resumen "Plataforma: **publicada**."
 else
-  log "⚠ no pude disparar la publicación de Pages; correr 'Deploy static site to Pages' a mano."
+  log "⚠ no pude disparar la publicación de Pages; correr 'Deploy static site to Pages' a mano."; PLAT="⚠ subida, falta publicar Pages"
   resumen "⚠ Cambios subidos, pero no se pudo disparar Pages."
 fi
 log "──────── listo ────────"

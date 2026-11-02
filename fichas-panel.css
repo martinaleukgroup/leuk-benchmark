@@ -132,3 +132,11 @@
   .fp-side{max-height:240px}
   .fp-visor{max-height:none}
 }
+
+/* Estado de "⟳ Regenerar fichas" (corrida en GitHub) */
+.fp-gh{font-size:13px;line-height:1.45;padding:8px 12px;margin:0 0 8px;border-radius:10px;
+  background:var(--card,#fff);border:1px solid var(--line,#E6E6E6);color:var(--gray,#4D4D4D)}
+.fp-gh a{color:inherit;text-decoration:underline}
+.fp-gh.px-run{border-color:var(--olive-soft,#CCCCCC)}
+.fp-gh.px-ok{border-color:var(--ok,#6b8f5e)}
+.fp-gh.px-err{border-color:var(--no,#b25b4e);color:var(--no,#b25b4e)}

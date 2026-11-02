@@ -28,6 +28,21 @@ Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos f
 3. Al terminar (~4 min): la corrida muestra el resumen (qué fichas cambiaron, pendientes de foto) y
    los PDF en **Artifacts**.
 
+### Desde la plataforma (botón)
+
+Fichas → **⟳ Regenerar fichas** (barra de arriba) o **⟳ Reimprimir** (en cada ficha). Elegís
+*Solo probar* o *Publicar*; el recuadro de estado muestra el avance y el resumen al terminar.
+Sólo lo ven **admin, líder y coordinación**. Pasa por la Edge Function `fichas-github`
+(`plataforma/supabase/functions/fichas-github`), que guarda el token de GitHub como secreto.
+
+Puesta en marcha (una vez):
+1. GitHub → foto de perfil → Settings → Developer settings → Personal access tokens →
+   **Fine-grained tokens** → Generate new token. Repository access: *Only select repositories* →
+   `leuk-benchmark`. Permissions → Repository → **Actions: Read and write**. Copiar el token.
+2. Supabase → Edge Functions → **Secrets** → agregar `GITHUB_TOKEN` con ese valor.
+3. Supabase → Edge Functions → **Deploy a new function**, nombre `fichas-github`, pegar
+   `index.ts` y **desactivar "Verify JWT"** (la función valida sola).
+
 ### Pausarlo
 
 Settings → Secrets and variables → Actions → **Variables** → `FICHAS_MODO` = `prueba`.

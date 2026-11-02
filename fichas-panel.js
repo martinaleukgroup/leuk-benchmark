@@ -176,8 +176,10 @@
         <button id="fpReload" class="btn-desc" title="Volver a leer los estados de la planilla">↻ Estados</button>
         <button id="fpLote" class="btn-desc" title="Marca como Finalizada todo lo que estás viendo"></button>
         <button id="fpZip" class="btn-desc" title="Genera un ZIP con todas las fichas en PDF">⬇ Todas (ZIP)</button>
+        <button id="fpGH" class="btn-desc" hidden title="Vuelve a leer el Hub, regenera las fichas y sus PDF (corre en GitHub)">⟳ Regenerar fichas</button>
         <span class="intg-stat" id="fpMeta"></span>
       </div>
+      <div class="fp-gh" id="fpGHEstado" hidden></div>
       <div class="us-msg" id="fpAviso"></div>
       <div class="us-msg" id="fpMsg"></div>
       <div class="fp-split">
@@ -195,6 +197,8 @@
     $("#fpReload").onclick = async () => { await cargar(); pintarTodo(); };
     $("#fpZip").onclick = ev => window.FichasDoc.descargarTodas(ev.currentTarget, $("#fpMeta"));
     $("#fpLote").onclick = confirmarLote;
+    $("#fpGH").onclick = () => pedirGH("");
+    if (puedeGH()) { $("#fpGH").hidden = false; refrescarGH(); }
     $("#fpChips").onclick = ev => {
       const c = ev.target.closest("[data-estado]"); if (!c) return;
       FILTRO = (FILTRO === c.dataset.estado) ? "" : c.dataset.estado;
@@ -345,6 +349,8 @@
           ? `<button class="btn-primary" data-act="Finalizada"
                title="Marcá que ya la hiciste: la ficha pasa a «Finalizada»">Actualizar</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
+        ${x.doc && puedeGH() ? `<button class="btn-ghost" data-gh="1"
+               title="Vuelve a generar esta ficha desde el Hub y su PDF, aunque no haya cambiado">⟳ Reimprimir</button>` : ""}
         ${x.doc ? `<button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>` : ""}
       </div>
     </div>`;
@@ -408,6 +414,7 @@
     const x = sel ? item(sel) : null; if (!x) return;
     if (ev.target.closest("[data-pdf]")) { window.FichasDoc.imprimir(x.ag); return; }
     if (ev.target.closest("[data-ampliar]")) { ampliar(!AMPLIADO); return; }
+    if (ev.target.closest("[data-gh]")) { pedirGH(x.ag); return; }
     const b = ev.target.closest("[data-act]");
     if (b && x.ficha) confirmar(x.ficha, b.dataset.act);
   }
@@ -624,6 +631,115 @@
     m.className = "us-msg " + (ok ? "px-ok" : "px-err");
     m.textContent = texto;
     setTimeout(() => { if (m.textContent === texto) { m.textContent = ""; m.className = "us-msg"; } }, 6000);
+  }
+
+  /* ================= REGENERAR EN GITHUB =================
+     El botón dispara el workflow "Fichas técnicas · actualización diaria" (el mismo de
+     las 7:12) a través de la Edge Function `fichas-github`, que guarda el token de
+     GitHub y valida el rol. Ver supabase/functions/fichas-github y automatizacion/ci.
+     Sólo admin, líder y coordinación (Martina, 02/11/2026). */
+
+  const ROLES_GH = ["admin", "lider", "coordinacion"];
+  const puedeGH = () => ROLES_GH.includes(ses().rol ? ses().rol() : "");
+  let GH_TIMER = null, GH_PEDIDO = 0;
+
+  async function fnGH(body) {
+    try {
+      const r = await fetch(`${ses().sbUrl}/functions/v1/fichas-github`, {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, ses().head ? ses().head() : {}),
+        body: JSON.stringify(body)
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 404) return { error: "Falta desplegar la función fichas-github en Supabase." };
+      if (!r.ok) return Object.assign({ error: `Error ${r.status}` }, d);
+      return d;
+    } catch (e) { return { error: "No se pudo contactar al servidor." }; }
+  }
+
+  const hora = iso => iso ? new Date(iso).toLocaleString("es-AR",
+    { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+
+  function pintarGH(html, cls) {
+    const box = $("#fpGHEstado"); if (!box) return;
+    box.hidden = !html; box.className = "fp-gh " + (cls || ""); box.innerHTML = html || "";
+  }
+
+  async function refrescarGH() {
+    clearTimeout(GH_TIMER);
+    const d = await fnGH({ accion: "estado" });
+    // Sin función o sin token todavía: no ensuciar la pantalla; el aviso sale al tocar el botón
+    if (d.error) { pintarGH(/Falta/.test(d.error) || d.sin_token ? "" : esc(d.error), "px-err"); return; }
+    const c = d.corrida;
+    if (!c) { pintarGH(""); return; }
+    const link = c.url ? ` · <a href="${esc(c.url)}" target="_blank" rel="noopener">ver en GitHub</a>` : "";
+    const enCurso = c.estado === "queued" || c.estado === "in_progress";
+    // Recién pedida y GitHub todavía no la muestra: seguir esperando
+    const vieja = GH_PEDIDO && new Date(c.inicio).getTime() < GH_PEDIDO - 15000;
+    if (enCurso || vieja) {
+      pintarGH(`⟳ Regenerando fichas… ${enCurso ? `desde las ${esc(hora(c.inicio))}` : "arrancando"} (tarda unos 5 minutos)${enCurso ? link : ""}`, "px-run");
+      GH_TIMER = setTimeout(refrescarGH, 15000);
+      return;
+    }
+    const recien = !!GH_PEDIDO; GH_PEDIDO = 0;
+    const btn = $("#fpGH"); if (btn) btn.disabled = false;
+    if (c.resultado === "success") {
+      const publicada = /plataforma: publicada/.test(c.resumen || "");
+      pintarGH(`✓ Última corrida (${esc(c.origen)}, ${esc(hora(c.fin || c.inicio))}): ${esc(c.resumen || "terminó bien")}${link}${
+        recien && publicada ? "<br><b>Recargá la página en 1–2 minutos para ver las fichas nuevas.</b>" : ""}`, "px-ok");
+    } else {
+      pintarGH(`⛔ La última corrida (${esc(c.origen)}, ${esc(hora(c.fin || c.inicio))}) no terminó bien${
+        c.resumen ? `: ${esc(c.resumen)}` : ""}${link}`, "px-err");
+    }
+  }
+
+  function pedirGH(ag) {
+    if (!puedeGH()) return;
+    const ov = document.createElement("div");
+    ov.className = "detail"; ov.id = "fpModal";
+    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
+      <button class="detail-close" id="fpClose">✕</button>
+      <h2>${ag ? `Reimprimir ${esc(ag)}` : "Regenerar fichas"}</h2>
+      <div class="fp-conflicto"><div>${ag
+        ? `Vuelve a leer el Hub y genera de nuevo esta ficha y su PDF, aunque no haya cambiado.
+           También se actualizan las demás fichas que hayan cambiado.`
+        : `Vuelve a leer el Hub, actualiza las fichas que cambiaron y genera sus PDF.
+           Es lo mismo que corre solo de lunes a viernes a las 7:12.`}
+        Tarda unos 5 minutos.</div></div>
+      <div class="fp-modal-caja"><span>Solo probar</span><div>Muestra qué cambiaría y genera los PDF, sin publicar nada.</div></div>
+      <div class="fp-modal-caja"><span>Publicar</span><div>Actualiza las fichas en la plataforma para todo el equipo.</div></div>
+      <div class="us-msg" id="fpModalMsg"></div>
+      <div class="desc-actions">
+        <button class="btn-ghost" id="fpCancel">Cancelar</button>
+        <button class="btn-ghost" id="fpProbar">Solo probar</button>
+        <button class="btn-primary" id="fpPublicar">Publicar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelector("#fpClose").onclick = cerrar;
+    ov.querySelector("#fpCancel").onclick = cerrar;
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+
+    const correr = async modo => {
+      const msg = ov.querySelector("#fpModalMsg");
+      ov.querySelectorAll("button").forEach(b => b.disabled = true);
+      msg.className = "us-msg"; msg.textContent = "Pidiéndoselo a GitHub…";
+      const d = await fnGH({ accion: "correr", modo, solo: ag || "" });
+      if (d.error) {
+        ov.querySelectorAll("button").forEach(b => b.disabled = false);
+        msg.className = "us-msg px-err";
+        msg.innerHTML = esc(d.error) + (d.url ? ` · <a href="${esc(d.url)}" target="_blank" rel="noopener">ver la que está corriendo</a>` : "");
+        return;
+      }
+      cerrar();
+      GH_PEDIDO = Date.now();
+      const btn = $("#fpGH"); if (btn) btn.disabled = true;
+      pintarGH("⟳ Regenerando fichas… arrancando (tarda unos 5 minutos)", "px-run");
+      GH_TIMER = setTimeout(refrescarGH, 8000);
+    };
+    ov.querySelector("#fpProbar").onclick = () => correr("prueba");
+    ov.querySelector("#fpPublicar").onclick = () => correr("real");
   }
 
   // app.js la llama al entrar a la página (goToPage 'fichas').

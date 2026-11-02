@@ -22,6 +22,13 @@
 # El log queda en pipeline/actualizar_fichas.log
 # ============================================================
 set -u
+# DESACTIVADO EN LA MAC (02/11/2026): la corrida diaria ahora la hace GitHub Actions
+# (workflow "Fichas técnicas · actualización diaria", lun–vie 7:12). Si corrieran las dos,
+# publicarían cada una por su lado. Para forzarla igual a mano: FORZAR_MAC=1 ./actualizar_fichas.sh
+if [ "${FORZAR_MAC:-0}" != "1" ]; then
+  echo "[$(date '+%d/%m/%Y %H:%M:%S')] · desactivado: ahora corre en GitHub Actions" >> "$HOME/leuk-benchmark/pipeline/actualizar_fichas.log"
+  exit 0
+fi
 cd "$HOME/leuk-benchmark/pipeline" || exit 1
 export PATH="$HOME/.local/bin:/usr/local/bin:/opt/homebrew/bin:/Library/Frameworks/Python.framework/Versions/3.13/bin:$PATH"
 

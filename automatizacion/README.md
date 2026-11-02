@@ -1,7 +1,41 @@
 # Actualización automática de fichas
 
-Las fichas **no se regeneran solas** cuando alguien sube un archivo a Drive o
-edita BASE ÚNICA. Hay que correr el pipeline. Esto lo automatiza.
+> **Desde el 02/11/2026 corre en GitHub Actions, no en la Mac.**
+> Workflow: **"Fichas técnicas · actualización diaria"** (`.github/workflows/fichas-diarias.yml`),
+> lun–vie **7:12** (Buenos Aires), aunque la Mac esté apagada. Scripts en `automatizacion/ci/`.
+> La tarea de la Mac (launchd) quedó desactivada: `pipeline/actualizar_fichas.sh` sale sin hacer nada
+> salvo que se corra con `FORZAR_MAC=1`. Lo de abajo describe esa versión de la Mac, que es la base.
+
+## GitHub Actions (versión actual)
+
+Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos frenos) y además:
+
+- **Detecta qué fichas cambiaron** contra la versión publicada (datos o foto nueva) y genera
+  **solo esos PDF** (`Ficha Técnica - <AGRUPACIÓN>.pdf`, el nombre que usa el Proceso 2 del Hub).
+- **Fichas sin foto de producto:** el PDF se genera pero queda en `pdfs_pendientes_foto/` y no se
+  sube. Cuando aparece la foto en Drive, la ficha se detecta como cambiada y sale completa.
+- **Freno:** si cambian más de 30 fichas en una corrida, no genera PDF (avisa en el resumen).
+- Los PDF y el log quedan en cada corrida → **Artifacts** (30 días).
+- Publica la plataforma (commit como `github-actions[bot]` + dispara Pages).
+
+### Correrlo a mano
+
+1. GitHub → repo → pestaña **Actions** → **Fichas técnicas · actualización diaria**.
+2. **Run workflow** → elegir:
+   - **modo:** `prueba` (no publica nada, solo muestra qué cambiaría y genera los PDF) o `real` (publica).
+   - **solo:** agrupaciones a imprimir sí o sí, separadas por coma (ej. `MOLY, DYNA`). Opcional.
+   - **max_pdfs:** el freno; subirlo si cambiaron muchas fichas a propósito.
+3. Al terminar (~4 min): la corrida muestra el resumen (qué fichas cambiaron, pendientes de foto) y
+   los PDF en **Artifacts**.
+
+### Pausarlo
+
+Settings → Secrets and variables → Actions → **Variables** → `FICHAS_MODO` = `prueba`.
+La corrida programada sigue, pero sin publicar. Borrar la variable para volver a modo real.
+
+---
+
+## Versión de la Mac (desactivada)
 
 ## Qué hace
 

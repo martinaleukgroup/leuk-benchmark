@@ -4,8 +4,9 @@ name: Fichas técnicas · actualización diaria
 # fichas de la plataforma, imprime a PDF solo las que cambiaron y (en modo real) publica.
 # Los PDF quedan como "artifact" de cada corrida (Actions → la corrida → Artifacts).
 #
-# Modo de la corrida programada: variable del repo FICHAS_MODO (Settings → Secrets and
-# variables → Actions → Variables). Si no existe, corre en "prueba" (no publica nada).
+# La corrida programada publica (modo real). Para pausarla sin tocar este archivo: crear la
+# variable del repo FICHAS_MODO = prueba (Settings → Secrets and variables → Actions → Variables).
+# Correr a mano: Actions → "Fichas técnicas · actualización diaria" → Run workflow.
 
 on:
   schedule:
@@ -26,9 +27,6 @@ on:
         description: "Freno: máximo de fichas a imprimir"
         required: false
         default: "30"
-  # SOLO PARA LA PRUEBA INICIAL: se saca antes de pasar a main
-  push:
-    branches: [fichas-en-github]
 
 permissions:
   contents: write
@@ -58,21 +56,12 @@ jobs:
 
       - name: Actualizar fichas
         env:
-          MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || (github.event_name == 'push' && 'prueba') || vars.FICHAS_MODO || 'prueba' }}
-          SOLO: ${{ github.event_name == 'workflow_dispatch' && inputs.solo || (github.event_name == 'push' && 'MOLY') || '' }}
-          MAX_PDFS: ${{ inputs.max_pdfs || (github.event_name == 'push' && '80') || '30' }}
+          MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || vars.FICHAS_MODO || 'real' }}
+          SOLO: ${{ inputs.solo || '' }}
+          MAX_PDFS: ${{ inputs.max_pdfs || '30' }}
           SALIDA: ${{ runner.temp }}/salida
           GH_TOKEN: ${{ github.token }}
         run: bash automatizacion/ci/actualizar_fichas_ci.sh
-
-      # SOLO PARA LA PRUEBA INICIAL: deja los PDF en una rama temporal para revisarlos
-      - name: PDF de prueba a rama temporal
-        if: github.event_name == 'push'
-        run: |
-          cd "${{ runner.temp }}/salida"
-          git init -q -b prueba-pdfs && git add -A
-          git -c user.name=github-actions -c user.email=actions@github.com commit -q -m "PDF de prueba"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" prueba-pdfs
 
       - name: Guardar PDF y log
         if: always()

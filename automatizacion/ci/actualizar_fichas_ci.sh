@@ -107,6 +107,10 @@ elif [ "$N" -gt 0 ]; then
   python3 "$REPO/automatizacion/ci/exportar_pdfs.py" --repo "$REPO" \
     --lista "$SALIDA/cambiadas.txt" --salida "$SALIDA/pdfs" 2>&1 | tee -a "$LOG"
   [ -f "$SALIDA/pdf_fallidos.txt" ] && resumen "" && resumen "⚠ No se pudieron generar: $(paste -sd, "$SALIDA/pdf_fallidos.txt")"
+  if [ -s "$SALIDA/pendientes_foto.txt" ]; then
+    resumen ""
+    resumen "◌ Pendientes de foto (no se suben hasta que haya foto en Drive): $(paste -sd, "$SALIDA/pendientes_foto.txt" | sed 's/,/, /g')"
+  fi
 fi
 
 # 4) publicar (solo en modo real y si cambió algo)

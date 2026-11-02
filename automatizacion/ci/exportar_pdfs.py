@@ -50,6 +50,17 @@ def safe(name):
     return (re.sub(r"[^\w\- .]", "_", name).strip() or "ficha")[:80]
 
 
+# El recuadro "FOTO DE PRODUCTO" vacío lleva la clase f-ph (sin foto o la imagen no cargó)
+FOTO_VACIA = re.compile(r'class="[^"]*\bf-photo\b[^"]*\bf-ph\b|class="[^"]*\bf-ph\b[^"]*\bf-photo\b')
+
+
+def sin_foto(exe, extra, url):
+    """True si alguna hoja de la ficha quedó con el recuadro de foto vacío."""
+    r = subprocess.run([exe, "--headless=new", "--disable-gpu", *extra, "--virtual-time-budget=10000",
+                        "--dump-dom", url], capture_output=True, text=True, timeout=120)
+    return bool(FOTO_VACIA.search(r.stdout or ""))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True)
@@ -79,7 +90,8 @@ def main():
     time.sleep(1)
 
     extra = ["--no-sandbox"] if sys.platform.startswith("linux") else []
-    fallidas = []
+    fallidas, pendientes = [], []
+    pend = out.parent / "pdfs_pendientes_foto"
     try:
         for i, ag in enumerate(ags, 1):
             destino = out / f"Ficha Técnica - {safe(ag)}.pdf"
@@ -92,13 +104,20 @@ def main():
                 fallidas.append(ag)
                 destino.unlink(missing_ok=True)
                 print(f"  ✗ {ag}: no se pudo generar")
+            elif sin_foto(exe, extra, url):
+                pend.mkdir(parents=True, exist_ok=True)
+                destino.replace(pend / destino.name)
+                pendientes.append(ag)
+                print(f"  ◌ {destino.name}: sin foto de producto → pendiente (no se sube)")
             else:
                 print(f"  ✓ {destino.name} ({destino.stat().st_size // 1024} KB)")
     finally:
         httpd.shutdown()
         (repo / "_export.html").unlink(missing_ok=True)
 
-    print(f"→ PDF generados: {len(ags) - len(fallidas)} de {len(ags)}")
+    listos = len(ags) - len(fallidas) - len(pendientes)
+    print(f"→ PDF listos para subir: {listos} · pendientes de foto: {len(pendientes)} · fallidos: {len(fallidas)}")
+    (out.parent / "pendientes_foto.txt").write_text("\n".join(pendientes) + ("\n" if pendientes else ""), encoding="utf-8")
     if fallidas:
         (out.parent / "pdf_fallidos.txt").write_text("\n".join(fallidas) + "\n", encoding="utf-8")
         sys.exit(3)

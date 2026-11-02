@@ -100,7 +100,8 @@ fi
 
 # 3) qué fichas cambiaron
 python3 "$REPO/automatizacion/ci/fichas_cambiadas.py" --repo "$REPO" \
-  --salida "$SALIDA/cambiadas.txt" --solo "$SOLO" 2>&1 | tee -a "$LOG"
+  --salida "$SALIDA/cambiadas.txt" --solo "$SOLO" \
+  --historial "$REPO/fichas-historial.json" --fecha "$(TZ=America/Buenos_Aires date +%F)" 2>&1 | tee -a "$LOG"
 N=$(grep -c . "$SALIDA/cambiadas.txt" 2>/dev/null); N=${N:-0}
 resumen ""
 resumen "Fichas a imprimir: **$N**"
@@ -149,7 +150,7 @@ fi
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git add fichas-data.js index.html assets/ficha/fotos \
+git add fichas-data.js fichas-historial.json index.html assets/ficha/fotos \
   plataforma/pipeline/ficha_assets_manifest.json plataforma/pipeline/ficha_fotos_estado.json
 git commit -q -m "Fichas al día (automático, GitHub Actions)" || { log "· nada para commitear"; PLAT="sin cambios"; exit 0; }
 

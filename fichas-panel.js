@@ -1,164 +1,87 @@
 /* ===================== FICHAS TÉCNICAS · PANTALLA =====================
-   Una sola vista para las dos mitades del trabajo:
-     · qué fichas hay que hacer  → estado, desde la hoja "Fichas técnicas"
-       del Archivo de carga | Web, vía la Web App de Apps Script (06_API.gs)
-     · cómo quedó cada ficha     → el dibujo, vía window.FichasDoc (fichas-ui.js)
+   Desde el 02/11/2026 las fichas se generan solas (GitHub Actions, lun–vie 7:12, o el
+   botón "⟳ Regenerar fichas"), así que ya no hay estados que alguien marque a mano
+   (Solicitada / A actualizar / Finalizada): se apagaron, junto con la API de Apps Script
+   que los leía (Martina, 02/11/2026).
 
-   Estaban separadas y eso permitía cerrar una ficha sin haberla mirado.
-   Acá se aprueba viendo.
+   En su lugar, etiquetas automáticas que salen de lo que hizo el proceso
+   (fichas-historial.json, lo escribe automatizacion/ci/fichas_cambiadas.py):
+     · Nueva        la ficha se creó en los últimos DIAS_RECIENTE días
+     · Actualizada  cambió en los últimos DIAS_RECIENTE días (con qué cambió)
+     · Falta foto   alguna hoja de producto no tiene foto: lo único que pide trabajo
+     · Discontinuada  todos sus colores/variantes discontinuados (dato del Hub)
 
-   La lista es la UNIÓN de las dos fuentes: casi todas las agrupaciones están
-   en ambas (183 de 184), pero se contemplan las dos orillas — una ficha
-   dibujada que todavía no figura en la planilla, y una fila de la planilla
-   que todavía no tiene ficha generada.
-
-   Si la API se cae, la vista NO se rompe: se sigue viendo y descargando
-   fichas, sin la capa de estado. Eso es a propósito — el generador de PDF ya
-   se usa a diario y no puede depender de que el bot conteste.
+   Si el historial no carga, la vista NO se rompe: se ven y descargan las fichas igual.
    ==================================================================== */
 (function () {
-
-  /* ---------------------------------------------------------------
-     CONEXIÓN — ver app/apps-script/DESPLIEGUE.md
-     Ni la URL ni el token son secretos: este archivo se sirve desde una
-     página pública. La seguridad real la da el JWT de Supabase, que la API
-     le pregunta a Supabase en cada escritura.
-     --------------------------------------------------------------- */
-  const API = {
-    url: "https://script.google.com/macros/s/AKfycbx7Kfld3oy_bsZ0qMtfiwmUv8hBCrdSGpDmkpBjtAUo5q21QOKkz3hIxlbEQMc4-F0/exec",
-    token: "6e4b18716eba4d25abb90a8a4c2404be133e004a826241cd86d812aa8df6795c"
-  };
-  const configurada = () => /^https:\/\/script\.google\.com\//.test(API.url) && API.token.length > 20;
 
   const $ = s => document.querySelector(s);
   const esc = s => (s == null ? "" : String(s))
     .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  const ESTADOS = ["Solicitada", "A actualizar", "Listo para publicar", "Finalizada", "Discontinuada"];
-  const CLASE = {
-    "Solicitada": "fe-solicitada",
-    "A actualizar": "fe-actualizar",
-    "Listo para publicar": "fe-listo",
-    "Finalizada": "fe-finalizada",
-    "Discontinuada": "fe-discontinuada"
-  };
+  const DIAS_RECIENTE = 15;
+  const CARPETA_FOTOS = "https://drive.google.com/drive/folders/1OmHlMZ4sMK5890tNkRoeMoNZVgU15JLD";
   const ANCHO_A4 = 794;          // 210mm a 96dpi, el ancho fijo de .f-page
 
-  /* UN SOLO BOTÓN, a propósito.
-     El reparto de trabajo es: el BOT decide qué hay que hacer (Solicitada,
-     A actualizar, Discontinuada, leyendo el Maestro) y la PERSONA sólo declara
-     "ya la hice". Por eso hay una única acción — "Actualizar" — que lleva la
-     ficha a "Listo para publicar", desde cualquier estado abierto.
-
-     No hay botón para marcar algo como "A actualizar": eso es una conclusión
-     del bot, no una decisión de quien mira la pantalla. Y como no hay vuelta
-     atrás desde la pantalla, un clic equivocado se corrige editando la hoja
-     (o esperando al miércoles, si el Maestro cambió de verdad).
-
-     Estados cerrados: no se ofrece nada porque no hay nada que declarar.
-     "Listo para publicar" era un sinónimo de "Finalizada" que ya no se
-     escribe; sigue acá para las filas viejas, hasta que el bot las normalice
-     en su próxima corrida. */
-  const SIN_ACCIONES = ["Finalizada", "Listo para publicar"];
-
-  /* Agrupaciones que NO llevan ficha por decisión de producto, con el porqué.
-     Sin esto la pantalla dice "revisá cómo está escrita la agrupación", que
-     suena a error de tipeo y manda a alguien a arreglar algo que está bien.
-
-     OJO: tiene que coincidir con AGRUPACIONES_SIN_FICHA de
-     pipeline/fichas_build.py. Si allá se agrega una, sumala acá con su motivo. */
-  const SIN_FICHA_A_PROPOSITO = {
-    "DYNA DRIVERS":
-      "Los drivers no llevan ficha propia. Lo que corresponde es la leyenda " +
-      "«Dimerizable por DALI / TRIAC» en las fichas de los productos que los usan.",
-    "RIELES 2EF 2NEUTROS":
-      "Se hizo una ficha en su momento y después se anuló. Son dos accesorios " +
-      "sueltos (ADAPTADOR 2EF 2N, 6726/6727), que hoy no llevan ficha.",
-  };
-  const motivoSinFicha = ag => {
-    const k = String(ag || "").trim().toUpperCase();
-    return Object.keys(SIN_FICHA_A_PROPOSITO)
-      .filter(x => x.toUpperCase() === k).map(x => SIN_FICHA_A_PROPOSITO[x])[0] || "";
-  };
+  // Orden de los chips y prioridad del color en la lista (la primera que aplique)
+  const ETIQUETAS = [
+    { k: "foto", txt: "Falta foto", cls: "fe-foto" },
+    { k: "nueva", txt: "Nueva", cls: "fe-nueva" },
+    { k: "actualizada", txt: "Actualizada", cls: "fe-actualizada" },
+    { k: "discontinuada", txt: "Discontinuada", cls: "fe-discontinuada" },
+  ];
+  const ETQ = {}; ETIQUETAS.forEach(e => { ETQ[e.k] = e; });
 
   /* ---- estado en memoria ---- */
-  let ITEMS = [];       // { ag, doc, ficha }  — la unión de las dos fuentes
+  let ITEMS = [];       // { ag, doc, h, etq: [k...], skus: [] }
+  let HIST = {};        // agrupación → { creada, actualizada, cambios, falta_foto }
   let sel = null;       // agrupación seleccionada
-  let FILTRO = "";      // "" = todos
+  let FILTRO = "";      // "" = todas; si no, una clave de ETIQUETAS
   let BUSCA = "";
-  let CARGANDO = false;
-  let AVISO_API = "";   // la API no contestó: se avisa pero la vista sigue
+  let AVISO = "";       // el historial no cargó: se avisa pero la vista sigue
   let AMPLIADO = false; // la ficha sola, sin lista ni buscador
   let montado = false;
 
   const ses = () => window.LEUK_SESION || {};
-  const puedeEditar = () => !!(ses().puedeEditarFichas && ses().puedeEditarFichas());
   const item = ag => ITEMS.filter(x => x.ag === ag)[0] || null;
 
   /* ================= DATOS ================= */
 
-  // Une los documentos del generador con los estados de la planilla.
-  // Se conserva el orden alfabético que ya trae DOCS.
-  function construir(estados) {
+  const diasDesde = iso => {
+    if (!iso) return Infinity;
+    const d = new Date(iso + "T12:00:00");
+    return (Date.now() - d.getTime()) / 86400000;
+  };
+  const fecha = iso => iso ? iso.split("-").reverse().join("/") : "";
+
+  function construir() {
     const docs = (window.FichasDoc && window.FichasDoc.docs()) || [];
-    const porAg = {};
-    (estados || []).forEach(f => { porAg[f.agrupacion] = f; });
-
-    ITEMS = docs.map(d => ({ ag: d.ag, doc: d, ficha: porAg[d.ag] || null }));
-
-    // Filas de la planilla que no tienen ficha dibujada (dato sucio, o ficha
-    // que todavía no se generó). Entran igual: son trabajo pendiente.
-    const vistos = {};
-    ITEMS.forEach(x => { vistos[x.ag] = true; });
-    (estados || []).forEach(f => {
-      if (!vistos[f.agrupacion]) ITEMS.push({ ag: f.agrupacion, doc: null, ficha: f });
+    ITEMS = docs.map(d => {
+      const h = HIST[d.ag] || {};
+      const etq = [];
+      if ((h.falta_foto || []).length) etq.push("foto");
+      if (diasDesde(h.creada) <= DIAS_RECIENTE) etq.push("nueva");
+      else if (diasDesde(h.actualizada) <= DIAS_RECIENTE) etq.push("actualizada");
+      const prod = d.fichas.filter(f => !f.tipo);
+      if (prod.length && prod.every(f => f.discontinuado)) etq.push("discontinuada");
+      const skus = [];
+      d.fichas.forEach(f => (f.skus || [f.sku]).forEach(s => { if (s && skus.indexOf(String(s)) === -1) skus.push(String(s)); }));
+      return { ag: d.ag, doc: d, h, etq, skus };
     });
-
     ITEMS.sort((a, b) => a.ag.localeCompare(b.ag, "es"));
   }
 
   async function cargar() {
-    if (!configurada()) { AVISO_API = "Falta conectar la API de estados (ver DESPLIEGUE.md)."; construir([]); return; }
-    CARGANDO = true; AVISO_API = "";
+    AVISO = "";
     try {
-      const r = await fetch(`${API.url}?accion=fichas&token=${encodeURIComponent(API.token)}`, { redirect: "follow" });
-      const txt = await r.text();
-      let d;
-      try { d = JSON.parse(txt); }
-      catch (e) {
-        // Suele ser que el Web App no está publicado como "Cualquier persona":
-        // Google devuelve el HTML de su login en vez de JSON.
-        throw new Error("La API no devolvió JSON. Revisá que el Web App esté publicado con acceso «Cualquier persona».");
-      }
-      if (!d.ok) throw new Error(d.mensaje || d.error);
-      construir(d.fichas || []);
+      const r = await fetch(`fichas-historial.json?t=${Date.now()}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      HIST = (await r.json()).fichas || {};
     } catch (e) {
-      AVISO_API = e.message || String(e);
-      construir([]);                                  // sin estados, pero con fichas
-    } finally {
-      CARGANDO = false;
+      HIST = {};
+      AVISO = "No pude leer el historial de las fichas: no se ven las etiquetas. Las fichas se ven y descargan igual.";
     }
-  }
-
-  // La API siempre responde HTTP 200 (limitación de ContentService): el
-  // resultado real viene en `ok`. Nunca mirar r.status.
-  // Content-Type text/plain a propósito: con application/json el navegador
-  // manda un preflight OPTIONS que Apps Script no sabe responder.
-  async function apiPost(payload) {
-    try {
-      const r = await fetch(API.url, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(Object.assign({
-          token: API.token,
-          jwt: ses().token ? ses().token() : ""
-        }, payload)),
-        redirect: "follow"
-      });
-      return JSON.parse(await r.text());
-    } catch (e) {
-      return { ok: false, error: "SIN_RED", mensaje: "No pude comunicarme con la planilla. ¿Tenés internet?" };
-    }
+    construir();
   }
 
   /* ================= ARMADO DE LA PANTALLA ================= */
@@ -173,8 +96,6 @@
       <div class="fp-bar">
         <input id="fpSearch" class="intg-search" type="search" autocomplete="off"
                placeholder="Buscá por nombre de ficha o por SKU…">
-        <button id="fpReload" class="btn-desc" title="Volver a leer los estados de la planilla">↻ Estados</button>
-        <button id="fpLote" class="btn-desc" title="Marca como Finalizada todo lo que estás viendo"></button>
         <button id="fpZip" class="btn-desc" title="Genera un ZIP con todas las fichas en PDF">⬇ Todas (ZIP)</button>
         <button id="fpGH" class="btn-desc" hidden title="Vuelve a leer el Hub, regenera las fichas y sus PDF (corre en GitHub)">⟳ Regenerar fichas</button>
         <span class="intg-stat" id="fpMeta"></span>
@@ -194,14 +115,12 @@
       BUSCA = ev.target.value;
       if (pintarLista()) pintarDetalle();
     };
-    $("#fpReload").onclick = async () => { await cargar(); pintarTodo(); };
     $("#fpZip").onclick = ev => window.FichasDoc.descargarTodas(ev.currentTarget, $("#fpMeta"));
-    $("#fpLote").onclick = confirmarLote;
     $("#fpGH").onclick = () => pedirGH("");
     if (puedeGH()) { $("#fpGH").hidden = false; refrescarGH(); }
     $("#fpChips").onclick = ev => {
-      const c = ev.target.closest("[data-estado]"); if (!c) return;
-      FILTRO = (FILTRO === c.dataset.estado) ? "" : c.dataset.estado;
+      const c = ev.target.closest("[data-etq]"); if (!c) return;
+      FILTRO = (FILTRO === c.dataset.etq) ? "" : c.dataset.etq;
       pintarTodo();
     };
     $("#fpSide").onclick = ev => {
@@ -217,94 +136,52 @@
       if (ev.key === "Escape" && AMPLIADO && !$("#fpModal")) ampliar(false);
     });
 
-    construir([]);                 // primero lo local: la vista ya sirve
+    construir();                   // primero lo local: la vista ya sirve
     pintarTodo();
-    cargar().then(pintarTodo);     // después se le suma el estado
+    cargar().then(pintarTodo);     // después se le suman las etiquetas
   }
 
   function pintarTodo() { pintarChips(); pintarLista(); pintarDetalle(); pintarMeta(); }
 
-  // Las que el botón de lote va a tocar: sólo lo que está a la vista y admite
-  // el cambio. Nunca "todas" a secas — si hay un filtro puesto, manda el filtro.
-  function candidatasLote() {
-    return visibles().filter(x => x.ficha && x.doc && x.ficha.editable &&
-      SIN_ACCIONES.indexOf(x.ficha.estado) === -1);
-  }
-
-  function pintarBotonLote() {
-    const b = $("#fpLote"); if (!b) return;
-    const n = candidatasLote().length;
-    const filtrando = !!FILTRO || BUSCA.trim() !== "";
-    b.disabled = n === 0 || !puedeEditar();
-    b.style.display = puedeEditar() ? "" : "none";
-    b.textContent = n === 0 ? "✓ Nada pendiente acá"
-      : filtrando ? (n === 1 ? "✓ Actualizar la visible" : `✓ Actualizar las ${n} visibles`)
-      : (n === 1 ? "✓ Actualizar la única pendiente" : `✓ Actualizar todas (${n})`);
-  }
-
   function pintarMeta() {
-    const m = $("#fpMeta"); if (!m) return;
-    m.textContent = CARGANDO ? "Leyendo la planilla…" : `${ITEMS.length} fichas`;
-    // OJO: #fpAviso es sólo para "la API no contesta". Los mensajes pasajeros
-    // van a #fpMsg. Si comparten elemento, cada repintado borra el resultado
-    // de lo último que hiciste antes de que llegues a leerlo.
+    const m = $("#fpMeta"); if (m) m.textContent = `${ITEMS.length} fichas`;
     const a = $("#fpAviso");
-    if (a) {
-      a.className = AVISO_API ? "us-msg px-err" : "us-msg";
-      a.textContent = AVISO_API ? `Sin estados: ${AVISO_API} Podés ver y descargar fichas igual.` : "";
-    }
+    if (a) { a.className = AVISO ? "us-msg px-err" : "us-msg"; a.textContent = AVISO; }
   }
 
   function pintarChips() {
-    const c = {}; ESTADOS.forEach(e => { c[e] = 0; });
-    let sinEstado = 0;
-    ITEMS.forEach(x => {
-      if (!x.ficha) { sinEstado++; return; }
-      if (c[x.ficha.estado] !== undefined) c[x.ficha.estado]++;
-    });
-    const chip = (e, n, cls) =>
-      `<button class="fe-chip ${cls} ${FILTRO === e ? "on" : ""}" data-estado="${esc(e)}">
-         <b>${n}</b> <span>${esc(e)}</span></button>`;
-    // Discontinuada y el legado "Listo para publicar" sólo si hay: no son
-    // trabajo pendiente, y el segundo desaparece cuando el bot normalice.
-    const html = ESTADOS
-      .filter(e => (e !== "Discontinuada" && e !== "Listo para publicar") || c[e] > 0)
-      .map(e => chip(e, c[e], CLASE[e])).join("")
-      + (sinEstado ? chip("__sin__", sinEstado, "fe-sinestado").replace(">__sin__<", ">sin estado<") : "");
-    $("#fpChips").innerHTML = html;
+    const c = {}; ETIQUETAS.forEach(e => { c[e.k] = 0; });
+    ITEMS.forEach(x => x.etq.forEach(k => { c[k]++; }));
+    $("#fpChips").innerHTML = ETIQUETAS
+      .filter(e => c[e.k] > 0 || e.k !== "discontinuada")
+      .map(e => `<button class="fe-chip ${e.cls} ${FILTRO === e.k ? "on" : ""}" data-etq="${e.k}"
+          title="${e.k === "nueva" || e.k === "actualizada" ? `En los últimos ${DIAS_RECIENTE} días` : ""}">
+          <b>${c[e.k]}</b> <span>${esc(e.txt)}</span></button>`).join("");
   }
 
   function visibles() {
     const q = BUSCA.trim().toLowerCase();
     return ITEMS.filter(x => {
-      if (FILTRO === "__sin__") { if (x.ficha) return false; }
-      else if (FILTRO && (!x.ficha || x.ficha.estado !== FILTRO)) return false;
+      if (FILTRO && x.etq.indexOf(FILTRO) === -1) return false;
       if (!q) return true;
-      const texto = x.doc ? x.doc._s : (x.ag + " " + (x.ficha.skus || []).join(" ")).toLowerCase();
-      return texto.indexOf(q) !== -1;
+      return (x.doc._s || (x.ag + " " + x.skus.join(" ")).toLowerCase()).indexOf(q) !== -1;
     });
   }
 
-  // Devuelve true si la selección cambió, para que quien llame repinte el
-  // detalle. Sin esto, al filtrar la lista marca una ficha y el panel de la
-  // derecha sigue mostrando otra.
+  const claseDe = x => x.etq.length ? ETQ[x.etq[0]].cls : "";
+
+  // Devuelve true si la selección cambió, para que quien llame repinte el detalle.
   function pintarLista() {
     const lista = visibles();
     const antes = sel;
-    // Si lo seleccionado se fue por el filtro, se pasa a lo primero visible.
     if (lista.length && !lista.some(x => x.ag === sel)) sel = lista[0].ag;
     if (!lista.length) sel = null;
 
     $("#fpSide").innerHTML = lista.length
-      ? lista.map(x => {
-          const cls = x.ficha ? (CLASE[x.ficha.estado] || "") : "fe-sinestado";
-          const n = x.ficha ? x.ficha.cantidad : (x.doc ? x.doc.fichas.length : "");
-          return `<div class="fp-it ${cls} ${x.ag === sel ? "on" : ""}" data-ag="${esc(x.ag)}">
-            <i class="fp-dot"></i><b>${esc(x.ag)}</b><span>${n}</span></div>`;
-        }).join("")
+      ? lista.map(x => `<div class="fp-it ${claseDe(x)} ${x.ag === sel ? "on" : ""}" data-ag="${esc(x.ag)}"
+            title="${esc(x.etq.map(k => ETQ[k].txt).join(" · "))}">
+            <i class="fp-dot"></i><b>${esc(x.ag)}</b><span>${x.skus.length}</span></div>`).join("")
       : `<div class="fp-vacio">Nada coincide con el filtro.</div>`;
-
-    pintarBotonLote();
     return sel !== antes;
   }
 
@@ -319,68 +196,34 @@
       return;
     }
 
-    const f = x.ficha;
-    const cls = f ? (CLASE[f.estado] || "") : "fe-sinestado";
-    const cerrada = !!f && SIN_ACCIONES.indexOf(f.estado) !== -1;
-    // Sin ficha dibujada no se ofrece ningún botón de estado: marcar como
-    // "Listo para publicar" algo que no existe sería declarar un trabajo que
-    // nadie hizo. Primero tiene que existir la ficha.
-    const editable = f && f.editable && !cerrada && !!x.doc && puedeEditar();
+    const h = x.h;
+    const badges = x.etq.map(k => `<span class="fe-badge ${ETQ[k].cls}">${esc(ETQ[k].txt)}</span>`).join("");
+    const hojas = x.doc.fichas.length > 1 ? `${x.doc.fichas.length} hojas` : "";
+    const lineas = [];
+    if (h.creada) lineas.push(`Creada el ${esc(fecha(h.creada))}`);
+    if (h.actualizada) lineas.push(`Actualizada el ${esc(fecha(h.actualizada))}${
+      (h.cambios || []).length ? ` · cambió: ${esc(h.cambios.join(", "))}` : ""}`);
 
-    const badge = f
-      ? `<span class="fe-badge ${cls}">${esc(f.estado)}</span>`
-      : `<span class="fe-badge fe-sinestado" title="Esta ficha no figura en la hoja «Fichas técnicas»">sin estado</span>`;
-    const skus = f ? f.skus.join(", ") : "";
-    const hojas = x.doc && x.doc.fichas.length > 1 ? `${x.doc.fichas.length} hojas` : "";
-
-    head.innerHTML = `<div class="fp-head ${cls}">
+    head.innerHTML = `<div class="fp-head ${claseDe(x)}">
       <div class="fp-title">
-        <span class="fp-h1">${esc(x.ag)}</span>${badge}
-        ${f ? `<span class="fp-meta">${f.cantidad} SKU</span>` : ""}
+        <span class="fp-h1">${esc(x.ag)}</span>${badges}
+        <span class="fp-meta">${x.skus.length} SKU</span>
         ${hojas ? `<span class="fp-meta">· ${hojas}</span>` : ""}
       </div>
-      ${skus ? `<div class="fp-skus">${esc(skus)}</div>` : ""}
-      ${f && f.motivo ? `<div class="fp-motivo">${esc(f.motivo)}</div>` : ""}
-      ${f && f.detectado ? `<div class="fp-fecha">En este estado desde ${esc(f.detectado)}${
-        f.actualizadaPor ? ` · actualizada por <b>${esc(f.actualizadaPor)}</b>${f.cuando ? ` el ${esc(f.cuando)}` : ""}` : ""
-      }</div>` : ""}
+      ${x.skus.length ? `<div class="fp-skus">${esc(x.skus.join(", "))}</div>` : ""}
+      ${(h.falta_foto || []).length ? `<div class="fp-motivo fe-foto">Falta la foto de producto de
+        <b>${esc(h.falta_foto.join(", "))}</b>. Subila a la
+        <a href="${CARPETA_FOTOS}" target="_blank" rel="noopener">carpeta de fotos de Drive</a>
+        (nombrada con el SKU, ej. <i>${esc(h.falta_foto[0])}FotoProducto0.png</i>) y la ficha se completa
+        sola en la próxima actualización. Mientras tanto su PDF no se sube a Drive.</div>` : ""}
+      ${lineas.length ? `<div class="fp-fecha">${lineas.join(" · ")}</div>` : ""}
       <div class="fp-acc">
-        ${editable
-          ? `<button class="btn-primary" data-act="Finalizada"
-               title="Marcá que ya la hiciste: la ficha pasa a «Finalizada»">Actualizar</button>` : ""}
-        ${x.doc ? `<button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>` : ""}
-        ${x.doc && puedeGH() ? `<button class="btn-ghost" data-gh="1"
+        <button class="btn-ghost" data-pdf="1">⬇ Descargar PDF</button>
+        ${puedeGH() ? `<button class="btn-ghost" data-gh="1"
                title="Vuelve a generar esta ficha desde el Hub y su PDF, aunque no haya cambiado">⟳ Reimprimir</button>` : ""}
-        ${x.doc ? `<button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>` : ""}
+        <button class="btn-ghost" data-ampliar="1">${AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar"}</button>
       </div>
     </div>`;
-
-    if (!x.doc) {
-      // Primero: ¿es una decisión de producto? Entonces no hay nada que revisar.
-      const aProposito = motivoSinFicha(x.ag);
-      if (aProposito) {
-        stage.innerHTML = `<div class="fp-vacio">
-          <b>Esta agrupación no lleva ficha.</b>
-          <div>${esc(aProposito)}</div>
-          <div style="margin-top:10px">Es una decisión de producto, no un error:
-          no hay nada que corregir acá.</div></div>`;
-        return;
-      }
-      // Si no, se explica el porqué y qué hacer. El arreglo es en la planilla.
-      const raro = /^[^A-Za-zÀ-ÿ0-9]+$/.test(x.ag) || /^(#N\/A|N\/A)$/i.test(x.ag);
-      stage.innerHTML = `<div class="fp-vacio">
-        <b>Todavía no existe la ficha, así que no hay nada que publicar.</b>
-        <div>Figura en la hoja «Fichas técnicas»${f ? ` con ${f.cantidad} SKU (${esc(f.skus.join(", "))})` : ""},
-        pero el generador no encontró ninguna ficha con ese nombre.</div>
-        <div style="margin-top:10px">${raro
-          ? `La agrupación se llama <b>«${esc(x.ag)}»</b>, que no es un nombre válido.
-             Poné el nombre real en la columna <b>Agrupación de fichas técnicas</b> de
-             BASE ÚNICA, para esos SKU.`
-          : `Revisá cómo está escrita la agrupación <b>«${esc(x.ag)}»</b> en la columna
-             <b>Agrupación de fichas técnicas</b> de BASE ÚNICA.`}
-        La ficha aparece sola en la próxima actualización.</div></div>`;
-      return;
-    }
 
     stage.innerHTML = window.FichasDoc.html(x.doc);
     escalar();
@@ -393,10 +236,6 @@
   //   · normal:   entra a lo ancho, nunca más del 100%
   //   · ampliado: usa todo el ancho que dejó la lista al esconderse, y SÍ puede
   //               pasar del 100% — ese es el punto: leer la letra chica.
-  //
-  // Ojo: la primera versión ajustaba "la hoja entera a la ventana" y en
-  // pantallas bajas daba MENOS que el modo normal, o sea que el botón
-  // "Ampliar" achicaba. Se ajusta solo a lo ancho, y se scrollea si no entra.
   function escalar() {
     const stage = $("#ficha-stage"); if (!stage) return;
     const porAncho = (stage.clientWidth - 36) / ANCHO_A4;
@@ -415,101 +254,8 @@
     if (ev.target.closest("[data-pdf]")) { window.FichasDoc.imprimir(x.ag); return; }
     if (ev.target.closest("[data-ampliar]")) { ampliar(!AMPLIADO); return; }
     if (ev.target.closest("[data-gh]")) { pedirGH(x.ag); return; }
-    const b = ev.target.closest("[data-act]");
-    if (b && x.ficha) confirmar(x.ficha, b.dataset.act);
   }
 
-  // Confirmación obligatoria. Muestra el estado que va a quedar y, si el bot
-  // detectó un cambio, el motivo textual — para que nadie cierre una ficha sin
-  // ver que cambió la potencia.
-  function confirmar(f, nuevoEstado, opciones) {
-    opciones = opciones || {};
-    const ov = document.createElement("div");
-    ov.className = "detail"; ov.id = "fpModal";
-
-    const aviso = opciones.conflicto ? `
-      <div class="fp-conflicto">
-        <b>Ojo: esta ficha cambió mientras la mirabas.</b>
-        <div>Ahora está en <b>${esc(opciones.estadoActual)}</b>${opciones.motivoActual ? ` — ${esc(opciones.motivoActual)}` : ""}.</div>
-        <div>Si seguís, tu cambio pisa ese estado.</div>
-      </div>` : "";
-    const motivo = (!opciones.conflicto && f.motivo)
-      ? `<div class="fp-modal-caja"><span>Qué cambió</span><div>${esc(f.motivo)}</div></div>` : "";
-
-    ov.innerHTML = `<div class="detail-inner fp-modal">
-      <button class="detail-close" id="fpClose">✕</button>
-      <h2>${esc(f.agrupacion)}</h2>
-      ${aviso}
-      <div class="fp-modal-cambio">
-        <span class="fe-badge ${CLASE[opciones.estadoActual || f.estado] || ""}">${esc(opciones.estadoActual || f.estado)}</span>
-        <span class="fp-flecha">→</span>
-        <span class="fe-badge ${CLASE[nuevoEstado] || ""}">${esc(nuevoEstado)}</span>
-      </div>
-      ${motivo}
-      <div class="fp-modal-caja"><span>${f.cantidad} SKU en el grupo</span><div>${esc(f.skus.join(", "))}</div></div>
-      <div class="us-msg" id="fpModalMsg"></div>
-      <div class="desc-actions">
-        <button class="btn-ghost" id="fpCancel">Cancelar</button>
-        <button class="btn-primary" id="fpOk">${opciones.conflicto ? "Aplicar igual" : "Confirmar"}</button>
-      </div>
-    </div>`;
-
-    document.body.appendChild(ov);
-    const cerrar = () => ov.remove();
-    ov.querySelector("#fpClose").onclick = cerrar;
-    ov.querySelector("#fpCancel").onclick = cerrar;
-    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
-
-    ov.querySelector("#fpOk").onclick = async () => {
-      const btn = ov.querySelector("#fpOk"), msg = ov.querySelector("#fpModalMsg");
-      btn.disabled = true; btn.textContent = "Guardando…";
-      msg.className = "us-msg"; msg.textContent = "";
-
-      const r = await apiPost({
-        accion: "cambiarEstado",
-        agrupacion: f.agrupacion,
-        estado: nuevoEstado,
-        detectadoVisto: f.detectado,
-        forzar: !!opciones.conflicto
-      });
-
-      if (r.ok) {
-        f.estado = r.estadoNuevo;
-        f.detectado = r.detectado;
-        if (r.motivo != null) f.motivo = r.motivo;
-        if (r.actualizadaPor) { f.actualizadaPor = r.actualizadaPor; f.cuando = r.cuando; }
-        f.editable = r.estadoNuevo !== "Discontinuada";
-        cerrar(); pintarChips(); pintarLista(); pintarDetalle();
-        avisar(`${f.agrupacion} → ${r.estadoNuevo}${r.sinCambios ? " (ya estaba así)" : ""}`, true);
-        return;
-      }
-
-      if (r.error === "CONFLICTO") {
-        f.estado = r.estadoActual;
-        f.detectado = r.detectadoActual;
-        f.motivo = r.motivoActual || "";
-        cerrar(); pintarChips(); pintarLista(); pintarDetalle();
-        // Si en el medio quedó justo donde la persona la quería, no hay nada
-        // que pisar: se avisa y listo.
-        if (r.estadoActual === nuevoEstado) {
-          avisar(`${f.agrupacion} ya quedó en "${nuevoEstado}" — alguien lo hizo mientras mirabas.`, true);
-          return;
-        }
-        confirmar(f, nuevoEstado, { conflicto: true, estadoActual: r.estadoActual, motivoActual: r.motivoActual });
-        return;
-      }
-
-      // El resto de los errores se muestran tal cual: los mensajes de la API
-      // ya están escritos para que los lea una persona.
-      btn.disabled = false; btn.textContent = opciones.conflicto ? "Aplicar igual" : "Confirmar";
-      msg.className = "us-msg px-err";
-      msg.textContent = r.mensaje || r.error || "No se pudo guardar.";
-      if (r.error === "FICHA_DISCONTINUADA" || r.error === "NO_ENCONTRADA") cargar().then(pintarTodo);
-    };
-  }
-
-  // Ampliar / volver. No se re-dibuja la ficha (es caro): solo se reacomoda
-  // el layout y se recalcula el zoom de la hoja.
   function ampliar(si) {
     AMPLIADO = si;
     const page = $("#page-fichas"); if (!page) return;
@@ -518,112 +264,6 @@
     if (b) b.textContent = AMPLIADO ? "⤡ Volver a la lista" : "⤢ Ampliar";
     escalar();
     if (AMPLIADO) window.scrollTo({ top: 0 });
-  }
-
-  /* ---- Cambio en lote ----
-     La confirmación muestra la lista completa, no sólo el número: cerrar 130
-     fichas de un clic es la operación más difícil de deshacer de la pantalla,
-     y conviene ver qué se está cerrando. */
-  function confirmarLote() {
-    const items = candidatasLote();
-    if (!items.length) return;
-
-    const filtrando = !!FILTRO || BUSCA.trim() !== "";
-    const porEstado = {};
-    items.forEach(x => { porEstado[x.ficha.estado] = (porEstado[x.ficha.estado] || 0) + 1; });
-
-    const ov = document.createElement("div");
-    ov.className = "detail"; ov.id = "fpModal";
-    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
-      <button class="detail-close" id="fpClose">✕</button>
-      <h2>Actualizar ${items.length} ficha${items.length > 1 ? "s" : ""}</h2>
-      <div class="fp-conflicto">
-        <b>Esto marca las ${items.length} como Finalizada de una vez.</b>
-        <div>${filtrando
-          ? "Son las que estás viendo ahora, con el filtro puesto."
-          : "Son <b>todas</b> las que tienen trabajo pendiente."}
-        Desde la pantalla no se puede deshacer.</div>
-      </div>
-      <div class="fp-modal-caja"><span>De qué estado vienen</span><div>${
-        Object.keys(porEstado).map(e => `${porEstado[e]} ${e}`).join(" · ")}</div></div>
-      <div class="fp-modal-caja fp-lote-lista"><span>Cuáles</span><div>${
-        items.map(x => esc(x.ag)).join(" · ")}</div></div>
-      <div class="us-msg" id="fpModalMsg"></div>
-      <div class="desc-actions">
-        <button class="btn-ghost" id="fpCancel">Cancelar</button>
-        <button class="btn-primary" id="fpOk">Sí, actualizar ${items.length}</button>
-      </div>
-    </div>`;
-    document.body.appendChild(ov);
-    const cerrar = () => ov.remove();
-    ov.querySelector("#fpClose").onclick = cerrar;
-    ov.querySelector("#fpCancel").onclick = cerrar;
-    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
-
-    ov.querySelector("#fpOk").onclick = async () => {
-      const btn = ov.querySelector("#fpOk"), msg = ov.querySelector("#fpModalMsg");
-      btn.disabled = true; btn.textContent = `Actualizando ${items.length}…`;
-      msg.className = "us-msg"; msg.textContent = "";
-
-      const r = await apiPost({
-        accion: "cambiarEstadoLote",
-        estado: "Finalizada",
-        // Cada una con lo que la pantalla tenía a la vista: la API saltea lo
-        // que haya cambiado en el medio en vez de pisarlo.
-        fichas: items.map(x => ({ agrupacion: x.ag, detectadoVisto: x.ficha.detectado }))
-      });
-
-      if (!r.ok) {
-        btn.disabled = false; btn.textContent = `Sí, actualizar ${items.length}`;
-        msg.className = "us-msg px-err";
-        msg.textContent = r.mensaje || r.error || "No se pudo guardar.";
-        return;
-      }
-
-      // Se aplica lo que la API confirmó, una por una: si salteó alguna, esa
-      // queda como estaba y se dice por qué.
-      (r.aplicadas || []).forEach(a => {
-        const x = item(a.agrupacion); if (!x || !x.ficha) return;
-        x.ficha.estado = r.estado;
-        x.ficha.detectado = r.detectado;
-        x.ficha.actualizadaPor = r.actualizadaPor;
-        x.ficha.cuando = r.detectado;
-      });
-
-      cerrar(); pintarTodo();
-
-      const n = (r.aplicadas || []).length, s = (r.salteadas || []).length;
-      if (s === 0) {
-        avisar(`${n} ficha${n > 1 ? "s" : ""} actualizada${n > 1 ? "s" : ""}.`, true);
-      } else {
-        avisar(`${n} actualizada${n > 1 ? "s" : ""} · ${s} salteada${s > 1 ? "s" : ""}.`, n > 0);
-        detalleSalteadas(r.salteadas);
-      }
-      // Lo salteado pudo cambiar en la planilla: se relee para no quedar viejo.
-      if (s > 0) cargar().then(pintarTodo);
-    };
-  }
-
-  // Por qué no se tocó cada una. Importa: si el bot marcó algo como
-  // "A actualizar" mientras mirabas, el lote NO lo pisa, y hay que saberlo.
-  function detalleSalteadas(salteadas) {
-    const ov = document.createElement("div");
-    ov.className = "detail"; ov.id = "fpModal";
-    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
-      <button class="detail-close" id="fpClose">✕</button>
-      <h2>${salteadas.length} quedaron sin tocar</h2>
-      <div class="fp-salteadas">${salteadas.map(x => `<div>
-        <b>${esc(x.agrupacion)}</b> — ${esc(x.motivo)}${
-          x.estadoActual ? ` Ahora está en <b>${esc(x.estadoActual)}</b>.` : ""}${
-          x.motivoActual ? `<div class="fp-salteada-motivo">${esc(x.motivoActual)}</div>` : ""}
-      </div>`).join("")}</div>
-      <div class="desc-actions"><button class="btn-primary" id="fpCancel">Entendido</button></div>
-    </div>`;
-    document.body.appendChild(ov);
-    const cerrar = () => ov.remove();
-    ov.querySelector("#fpClose").onclick = cerrar;
-    ov.querySelector("#fpCancel").onclick = cerrar;
-    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
   }
 
   function avisar(texto, ok) {

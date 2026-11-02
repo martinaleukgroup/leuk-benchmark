@@ -1,0 +1,595 @@
+{
+ "fichas": {
+  "AURA": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7488"
+   ]
+  },
+  "BILUNE": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7436",
+    "7437",
+    "7438",
+    "7439",
+    "7440",
+    "7441",
+    "7610",
+    "7611"
+   ]
+  },
+  "CATEN": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7442",
+    "7443",
+    "7444",
+    "7445",
+    "7446",
+    "7447"
+   ]
+  },
+  "DOT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7503",
+    "7504"
+   ]
+  },
+  "DROP": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7489"
+   ]
+  },
+  "DYNA FIELTRO": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7423",
+    "7424"
+   ]
+  },
+  "FORTE": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7475",
+    "7476",
+    "7477",
+    "7478",
+    "7479",
+    "7480",
+    "7481",
+    "7482",
+    "7483",
+    "7484",
+    "7485",
+    "7486"
+   ]
+  },
+  "GALIA": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7466"
+   ]
+  },
+  "KOKO": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7509"
+   ]
+  },
+  "LAIVA": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7470",
+    "7471",
+    "7472"
+   ]
+  },
+  "LAIVA AP": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7469"
+   ]
+  },
+  "LIV": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7622",
+    "7623",
+    "7624",
+    "7625"
+   ]
+  },
+  "LOOP": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7428",
+    "7429",
+    "7430",
+    "7431",
+    "7432",
+    "7433",
+    "7434",
+    "7435"
+   ]
+  },
+  "LUVA": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Fijación"
+   ]
+  },
+  "MINI POCKET": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7492",
+    "7494",
+    "7496",
+    "7498",
+    "7747",
+    "7748",
+    "7749",
+    "7750"
+   ]
+  },
+  "MINI SPY": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7510",
+    "7511"
+   ]
+  },
+  "MOLY": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Nombre",
+    "Descripción",
+    "Potencia"
+   ]
+  },
+  "NANO CHILL": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7518"
+   ]
+  },
+  "NODO": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7508"
+   ]
+  },
+  "NUMA": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7519",
+    "7520",
+    "7521",
+    "7522",
+    "7523",
+    "7524",
+    "7525",
+    "7528",
+    "7529",
+    "7532",
+    "7533"
+   ]
+  },
+  "NUMA MODULO": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7526",
+    "7527",
+    "7530",
+    "7531"
+   ]
+  },
+  "NUMA POINT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7490",
+    "7491"
+   ]
+  },
+  "ORBIS": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7505",
+    "7506"
+   ]
+  },
+  "PETRA LINE": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7501",
+    "7502"
+   ]
+  },
+  "PIN": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7500"
+   ]
+  },
+  "POCKET DRIVER ON-OFF VI": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7719"
+   ]
+  },
+  "POCKET DRIVER ON-OFF XII": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7721"
+   ]
+  },
+  "POCKET DRIVER TRIAC VI": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7720"
+   ]
+  },
+  "POCKET DRIVER TRIAC XII": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7722"
+   ]
+  },
+  "POCKET III": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7723",
+    "7724",
+    "7725",
+    "7735",
+    "7736",
+    "7737"
+   ]
+  },
+  "POCKET III y IV": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7717",
+    "7718"
+   ]
+  },
+  "POCKET IV": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7726",
+    "7727",
+    "7728",
+    "7738",
+    "7739",
+    "7740"
+   ]
+  },
+  "POCKET IV AP": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7454",
+    "7455",
+    "7456",
+    "7457",
+    "7458",
+    "7459"
+   ]
+  },
+  "POCKET MODULO III 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7449",
+    "7450"
+   ]
+  },
+  "POCKET MODULO III BLBL 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7448"
+   ]
+  },
+  "POCKET MODULO IV 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7452",
+    "7453"
+   ]
+  },
+  "POCKET MODULO IV BLBL 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7451"
+   ]
+  },
+  "POCKET MODULO VI 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7461",
+    "7462"
+   ]
+  },
+  "POCKET MODULO VI BLBL 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7460"
+   ]
+  },
+  "POCKET MODULO XII 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7464",
+    "7465"
+   ]
+  },
+  "POCKET MODULO XII BLBL 2CCT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7463"
+   ]
+  },
+  "POCKET VI": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7729",
+    "7730",
+    "7731",
+    "7741",
+    "7742",
+    "7743"
+   ]
+  },
+  "POCKET XII": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Variantes"
+   ],
+   "falta_foto": [
+    "7732",
+    "7733",
+    "7734",
+    "7744",
+    "7745",
+    "7746"
+   ]
+  },
+  "POLAR": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7535",
+    "7536",
+    "7537",
+    "7538",
+    "7539",
+    "7540",
+    "7541",
+    "7542",
+    "7545",
+    "7546",
+    "7547",
+    "7548",
+    "7549",
+    "7550",
+    "7551",
+    "7552",
+    "7553",
+    "7554",
+    "7555",
+    "7556",
+    "7557",
+    "7558",
+    "7559",
+    "7560",
+    "7561",
+    "7562",
+    "7702",
+    "7703",
+    "7704",
+    "7705",
+    "7706",
+    "7715"
+   ]
+  },
+  "POLAR BEAM": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7581",
+    "7582",
+    "7599",
+    "7600"
+   ]
+  },
+  "POLAR FOCUS": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7603",
+    "7604"
+   ]
+  },
+  "POLAR GRID": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7569",
+    "7570",
+    "7571",
+    "7572",
+    "7587",
+    "7588",
+    "7589",
+    "7590",
+    "7591",
+    "7592",
+    "7593",
+    "7594"
+   ]
+  },
+  "POLAR GRID MOVIL": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7573",
+    "7574",
+    "7575",
+    "7576"
+   ]
+  },
+  "POLAR LINE": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7565",
+    "7566",
+    "7567",
+    "7568",
+    "7583",
+    "7584",
+    "7585",
+    "7586"
+   ]
+  },
+  "POLAR MEX": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7577",
+    "7578",
+    "7579",
+    "7580",
+    "7595",
+    "7596",
+    "7597",
+    "7598"
+   ]
+  },
+  "POLAR SOUND": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7601",
+    "7602"
+   ]
+  },
+  "POLAR y REN": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7563"
+   ]
+  },
+  "RIELES 1EF": {
+   "actualizada": "2026-11-02",
+   "cambios": [
+    "Accesorios"
+   ]
+  },
+  "RIELES 3EF": {
+   "falta_foto": [
+    "7235"
+   ]
+  },
+  "RISE": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7701"
+   ]
+  },
+  "SPY": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7512",
+    "7513"
+   ]
+  },
+  "SPY AP": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7514",
+    "7515"
+   ]
+  },
+  "SPY EM": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7516",
+    "7517"
+   ]
+  },
+  "SUNSET": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7467",
+    "7468"
+   ]
+  },
+  "TERRA": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7626",
+    "7627",
+    "7628",
+    "7629",
+    "7630",
+    "7631",
+    "7632",
+    "7633",
+    "7634",
+    "7635",
+    "7636"
+   ]
+  },
+  "TERRA CHILL": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7638"
+   ]
+  },
+  "TERRA GRID": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7639"
+   ]
+  },
+  "TERRA POINT": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7637"
+   ]
+  },
+  "TRAZO": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7473",
+    "7474"
+   ]
+  },
+  "VALIJA LINEA POCKET": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7700"
+   ]
+  },
+  "WINSOR": {
+   "creada": "2026-11-02",
+   "falta_foto": [
+    "7487"
+   ]
+  }
+ }
+}

@@ -1,3 +1,7 @@
+> ⛔ **Desactivado el 02/11/2026.** El panel de Fichas ya no lee ni escribe estados: usa
+> etiquetas automáticas (`fichas-historial.json`, ver `automatizacion/README.md`). Se borró el
+> activador semanal de `actualizarFichasTecnicas`. Este documento queda como referencia.
+
 # API de fichas técnicas — despliegue
 
 Conecta la hoja **Fichas técnicas** del *Archivo de carga | Web* con la vista

@@ -1,4 +1,10 @@
 // ============================================================
+// ⛔ DESACTIVADO (02/11/2026, Martina): las fichas se generan solas en GitHub Actions
+// y el panel muestra etiquetas automáticas (Nueva / Actualizada / Falta foto) desde
+// fichas-historial.json. Se borró el activador semanal de actualizarFichasTecnicas.
+// Los datos del Maestro llegan al Hub por el Proceso 1 (n8n, Sync Maestro → Base).
+// Se conserva como referencia.
+// ============================================================
 // 02_FICHAS.gs — ESTADO DE LAS FICHAS TÉCNICAS
 // ============================================================
 // Requiere 00_Comun.gs en el mismo proyecto.

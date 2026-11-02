@@ -8,6 +8,11 @@ cambiada una ficha cuya foto de producto se actualizó, aunque los datos sean ig
 
 Uso:
     python3 fichas_cambiadas.py --repo <raíz del repo> --salida cambiadas.txt [--solo "MOLY,DYNA"]
+                                [--historial fichas-historial.json --fecha 2026-11-02]
+
+Con --historial actualiza el historial que lee el panel de Fichas (etiquetas Nueva /
+Actualizada / Falta foto): cuándo se creó y cuándo cambió cada ficha, qué cambió y a qué
+SKU le falta la foto de producto.
 
 Escribe una agrupación por línea en --salida y un resumen en la consola.
 Con --solo, además de las cambiadas fuerza esas agrupaciones (para probar).
@@ -38,6 +43,84 @@ def firma(lista):
     return json.dumps(lista, ensure_ascii=False, sort_keys=True)
 
 
+ETIQ_ASSETS = [("foto", "Foto"), ("dibujo", "Dibujo técnico"), ("curva", "Curvas fotométricas"),
+               ("ldt", "LDT"), ("cad", "CAD"), ("manual", "Manual de instalación")]
+
+
+def que_cambio(a_, b_):
+    """Etiquetas legibles de lo que cambió entre dos versiones de una ficha."""
+    out = []
+    def suma(x):
+        if x not in out:
+            out.append(x)
+    pa = {str(f.get("sku")): f for f in a_}
+    pb = {str(f.get("sku")): f for f in b_}
+    if set(pa) != set(pb):
+        suma("Variantes")
+    for sku in set(pa) & set(pb):
+        x, y = pa[sku], pb[sku]
+        if x.get("titulo") != y.get("titulo"):
+            suma("Nombre")
+        if (x.get("descripcion") or "") != (y.get("descripcion") or ""):
+            suma("Descripción")
+        fx = {r.get("k"): r.get("v") for r in (x.get("filas") or [])}
+        fy = {r.get("k"): r.get("v") for r in (y.get("filas") or [])}
+        for k in sorted(set(fx) | set(fy), key=lambda k: list(fy).index(k) if k in fy else 999):
+            if fx.get(k) != fy.get(k) and k != "SKU":
+                suma(k)
+        ax, ay = x.get("assets") or {}, y.get("assets") or {}
+        for clave, etiqueta in ETIQ_ASSETS:
+            vx = {k: v for k, v in ax.items() if k.startswith(clave)}
+            vy = {k: v for k, v in ay.items() if k.startswith(clave)}
+            if json.dumps(vx, sort_keys=True) != json.dumps(vy, sort_keys=True):
+                suma(etiqueta)
+        if (x.get("foto_url") or "") != (y.get("foto_url") or ""):
+            suma("Foto")
+        if json.dumps(x.get("colores"), sort_keys=True) != json.dumps(y.get("colores"), sort_keys=True):
+            suma("Colores")
+        if json.dumps(x.get("items"), sort_keys=True) != json.dumps(y.get("items"), sort_keys=True):
+            suma("Accesorios")
+    return out or ["Otros datos"]
+
+
+def falta_foto(lista):
+    """SKU de las hojas de producto sin foto (las hojas de accesorios/texto llevan 'tipo')."""
+    return [str(f.get("sku")) for f in lista if not f.get("tipo") and not f.get("foto_url")]
+
+
+def actualizar_historial(ruta, fecha, antes, ahora, nuevas, cambiadas, por_foto):
+    try:
+        h = json.loads(Path(ruta).read_text(encoding="utf-8"))
+    except Exception:
+        h = {}
+    fichas = h.get("fichas") or {}
+    for ag in nuevas:
+        fichas.setdefault(ag, {})["creada"] = fecha
+    for ag in cambiadas:
+        e = fichas.setdefault(ag, {})
+        e["actualizada"] = fecha
+        e["cambios"] = que_cambio(antes[ag], ahora[ag])
+    for ag in por_foto:
+        e = fichas.setdefault(ag, {})
+        e["actualizada"] = fecha
+        e["cambios"] = ["Foto"]
+    for ag, lista in ahora.items():
+        e = fichas.setdefault(ag, {})
+        ff = falta_foto(lista)
+        if ff:
+            e["falta_foto"] = ff
+        else:
+            e.pop("falta_foto", None)
+    # las que ya no existen salen del historial
+    for ag in [k for k in fichas if k not in ahora]:
+        del fichas[ag]
+    fichas = {k: v for k, v in sorted(fichas.items()) if v}
+    Path(ruta).write_text(json.dumps({"fichas": fichas}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+                          encoding="utf-8")
+    n_ff = sum(1 for v in fichas.values() if v.get("falta_foto"))
+    print(f"· historial: {len(nuevas)} nuevas, {len(cambiadas) + len(por_foto)} actualizadas, {n_ff} con falta de foto")
+
+
 def fotos_cambiadas(repo):
     """Nombres de archivo (sin extensión) de fotos nuevas o modificadas en el working tree."""
     r = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "--", "assets/ficha/fotos"],
@@ -54,11 +137,15 @@ def main():
     ap.add_argument("--repo", required=True)
     ap.add_argument("--salida", required=True)
     ap.add_argument("--solo", default="")
+    ap.add_argument("--historial", default="")
+    ap.add_argument("--fecha", default="")
+    ap.add_argument("--antes", default="", help="fichas-data.js de referencia (por defecto, el de HEAD)")
     a = ap.parse_args()
     repo = Path(a.repo)
 
-    previo = subprocess.run(["git", "-C", str(repo), "show", "HEAD:fichas-data.js"],
-                            capture_output=True, text=True).stdout
+    previo = Path(a.antes).read_text(encoding="utf-8") if a.antes else \
+        subprocess.run(["git", "-C", str(repo), "show", "HEAD:fichas-data.js"],
+                       capture_output=True, text=True).stdout
     antes = agrupar(cargar(previo))
     ahora = agrupar(cargar((repo / "fichas-data.js").read_text(encoding="utf-8")))
 
@@ -95,6 +182,11 @@ def main():
     for ag in nuevas + cambiadas + por_foto + forzadas:
         if ag not in lista:
             lista.append(ag)
+
+    if a.historial:
+        from datetime import date
+        actualizar_historial(a.historial, a.fecha or date.today().isoformat(),
+                             antes, ahora, nuevas, cambiadas, por_foto)
 
     Path(a.salida).write_text("\n".join(lista) + ("\n" if lista else ""), encoding="utf-8")
 

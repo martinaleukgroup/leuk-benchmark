@@ -21,6 +21,12 @@
 .fe-finalizada     { --fe-c: var(--ok);         --fe-bg: #EDF3EC; }
 .fe-discontinuada  { --fe-c: var(--gray-soft);  --fe-bg: #f1f2ee; }  /* BANDA_PAR del bot (00_Comun.gs) */
 .fe-sinestado      { --fe-c: var(--olive-soft); --fe-bg: var(--olive-pale); }
+/* Etiquetas automáticas (02/11/2026): reemplazan a los estados manuales */
+.fe-nueva          { --fe-c: var(--ok);         --fe-bg: #EDF3EC; }
+.fe-actualizada    { --fe-c: #2f6690;           --fe-bg: #EAF1F7; }
+.fe-foto           { --fe-c: var(--no);         --fe-bg: #FDEBEC; }
+.fp-motivo.fe-foto a{color:inherit;text-decoration:underline}
+.fp-title .fe-badge + .fe-badge{margin-left:4px}
 
 .fe-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;
           font-weight:600;letter-spacing:.03em;text-transform:uppercase;

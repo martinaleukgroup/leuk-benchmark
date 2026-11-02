@@ -108,6 +108,20 @@ def main():
         print(f"· ya no están (no se borra ningún PDF): {', '.join(bajas[:15])}{'…' if len(bajas) > 15 else ''}")
     print(f"→ PDF a generar: {len(lista)}")
 
+    # Detalle de qué cambió (primeras fichas), para revisar en el log
+    for ag in cambiadas[:4]:
+        a_, b_ = antes[ag], ahora[ag]
+        print(f"  ─ {ag}: {len(a_)} → {len(b_)} hojas")
+        for i, (x, y) in enumerate(zip(a_, b_)):
+            claves = sorted(set(x) | set(y))
+            for k in claves:
+                if json.dumps(x.get(k), sort_keys=True, ensure_ascii=False) != json.dumps(y.get(k), sort_keys=True, ensure_ascii=False):
+                    vx = json.dumps(x.get(k), ensure_ascii=False)[:160]
+                    vy = json.dumps(y.get(k), ensure_ascii=False)[:160]
+                    print(f"     hoja {i+1} · {k}:\n        antes: {vx}\n        ahora: {vy}")
+            if i >= 1:
+                break
+
 
 if __name__ == "__main__":
     main()

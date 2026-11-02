@@ -60,10 +60,19 @@ jobs:
         env:
           MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || (github.event_name == 'push' && 'prueba') || vars.FICHAS_MODO || 'prueba' }}
           SOLO: ${{ github.event_name == 'workflow_dispatch' && inputs.solo || (github.event_name == 'push' && 'MOLY') || '' }}
-          MAX_PDFS: ${{ inputs.max_pdfs || '30' }}
+          MAX_PDFS: ${{ inputs.max_pdfs || (github.event_name == 'push' && '80') || '30' }}
           SALIDA: ${{ runner.temp }}/salida
           GH_TOKEN: ${{ github.token }}
         run: bash automatizacion/ci/actualizar_fichas_ci.sh
+
+      # SOLO PARA LA PRUEBA INICIAL: deja los PDF en una rama temporal para revisarlos
+      - name: PDF de prueba a rama temporal
+        if: github.event_name == 'push'
+        run: |
+          cd "${{ runner.temp }}/salida"
+          git init -q -b prueba-pdfs && git add -A
+          git -c user.name=github-actions -c user.email=actions@github.com commit -q -m "PDF de prueba"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" prueba-pdfs
 
       - name: Guardar PDF y log
         if: always()

@@ -235,6 +235,15 @@ def fmt(v):
     return str(v).strip()
 
 
+def fmt_dato(v):
+    """Valor técnico para mostrar en la ficha. Los números con decimales que llegan como número
+    desde la planilla (p. ej. factor de potencia 0.95) se escriben con coma, como el resto de los
+    datos de la ficha ("0,95"). Los textos quedan tal cual."""
+    if isinstance(v, float) and not v.is_integer():
+        return f"{round(v, 6):g}".replace(".", ",")
+    return fmt(v)
+
+
 def _hex_one(part):
     """Hex de un color simple; gana la coincidencia más larga (p.ej. 'dorado' antes que 'oro')."""
     n = (part or "").lower()
@@ -448,7 +457,7 @@ def build_ficha(variants, blue, MAN):
             continue
         if EMPTY(p.get(h)):
             continue
-        v = fmt(p.get(h))
+        v = fmt_dato(p.get(h))
         if h == "Clase de aislación":
             v = fix_roman(v)                 # 'Clase l' → 'Clase I'
         elif h == "Dimensión producto":

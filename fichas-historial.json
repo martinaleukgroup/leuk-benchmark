@@ -1,9 +1,92 @@
 {
  "fichas": {
+  "ACACIA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Descripción",
+    "Factor de potencia"
+   ]
+  },
+  "ACRU": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "ALOUMI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "ALTAI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "ARKANSAS": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "AURA": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7488"
+   ]
+  },
+  "AXE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "AXIS": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Dimensión producto"
+   ]
+  },
+  "BARON": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "BATOR": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "BELA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "BEMUS": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "BERSH": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "BIG SKOTE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "BILUNE": {
@@ -23,10 +106,52 @@
     "7611"
    ]
   },
-  "CATEN": {
-   "actualizada": "2026-11-02",
+  "BOG": {
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Factor de potencia"
+   ]
+  },
+  "BONY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "BULGAN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CAMBOYA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CAMBOYA AP": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CAPI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CARAMEL": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CATEN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7442",
@@ -37,6 +162,62 @@
     "7447"
    ]
   },
+  "CHESTER": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CHILL": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CITY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CLASS": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "COSMO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "CUFA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "DAKOTA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "DARJAN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "DEB": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Potencia"
+   ]
+  },
   "DOT": {
    "creada": "2026-11-02",
    "falta_foto": [
@@ -44,10 +225,34 @@
     "7504"
    ]
   },
+  "DRABE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "DROP": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7489"
+   ]
+  },
+  "DUNA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "DYNA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "DYNA EM": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "DYNA FIELTRO": {
@@ -57,10 +262,37 @@
     "7424"
    ]
   },
+  "DYO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "EKO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Dimensión producto"
+   ]
+  },
+  "EPICUR": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Descripción",
+    "Factor de potencia"
+   ]
+  },
+  "FACH": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
   "FORTE": {
    "actualizada": "2026-11-03",
    "cambios": [
-    "Garantía"
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7475",
@@ -77,6 +309,18 @@
     "7486"
    ]
   },
+  "FREYA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "GALACTIC": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "GALIA": {
    "actualizada": "2026-11-03",
    "cambios": [
@@ -87,16 +331,84 @@
     "7466"
    ]
   },
+  "GUM": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "HOKA 3EF": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "IOJU": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "ISCH": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "KARTIO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "KATO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "KENTRO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "KIM": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "KOKO": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7509"
    ]
   },
-  "LAIVA": {
-   "actualizada": "2026-11-02",
+  "KOLDO": {
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Factor de potencia"
+   ]
+  },
+  "KRONE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "KYKLO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LAIVA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7470",
@@ -110,16 +422,66 @@
     "7469"
    ]
   },
-  "LIV": {
-   "actualizada": "2026-11-02",
+  "LAZU": {
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Factor de potencia"
+   ]
+  },
+  "LEIA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LEIF": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LETO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LEX": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LIV": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7622",
     "7623",
     "7624",
     "7625"
+   ]
+  },
+  "LOA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "LOFI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "LOFI AP": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "LOOP": {
@@ -135,10 +497,54 @@
     "7435"
    ]
   },
+  "LUKA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "LUVA": {
-   "actualizada": "2026-11-02",
+   "actualizada": "2026-11-03",
    "cambios": [
     "Fijación"
+   ]
+  },
+  "MARDAI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MARLEY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MATT": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "MEX": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MEX 3CCT": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MIJA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "MINI POCKET": {
@@ -154,6 +560,12 @@
     "7750"
    ]
   },
+  "MINI SPOT OPTIC": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "MINI SPY": {
    "creada": "2026-11-02",
    "falta_foto": [
@@ -161,18 +573,76 @@
     "7511"
    ]
   },
-  "MOLY": {
-   "actualizada": "2026-11-02",
+  "MIRACLE": {
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Nombre",
-    "Descripción",
+    "Factor de potencia"
+   ]
+  },
+  "MIRACLE II": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MOLY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
     "Potencia"
+   ]
+  },
+  "MOMO EXT": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MORGAN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "MUSK": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "NANO CHILL": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7518"
+   ]
+  },
+  "NEULA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "NIAO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "NIAO AP": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "NIAO MS": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "NICHI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "NODO": {
@@ -225,11 +695,37 @@
     "7491"
    ]
   },
+  "OKTA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "ONA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
   "ORBIS": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7505",
     "7506"
+   ]
+  },
+  "ORTHOG": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "OTTO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "PETRA LINE": {
@@ -239,10 +735,34 @@
     "7502"
    ]
   },
+  "PIER F": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "PIER W": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "PIETRO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "PIN": {
    "creada": "2026-11-02",
    "falta_foto": [
     "7500"
+   ]
+  },
+  "PLEVRES": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "POCKET DRIVER ON-OFF VI": {
@@ -270,9 +790,9 @@
    ]
   },
   "POCKET III": {
-   "actualizada": "2026-11-02",
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7723",
@@ -291,9 +811,10 @@
    ]
   },
   "POCKET IV": {
-   "actualizada": "2026-11-02",
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Variantes",
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7726",
@@ -368,9 +889,10 @@
    ]
   },
   "POCKET VI": {
-   "actualizada": "2026-11-02",
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Variantes",
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7729",
@@ -381,10 +903,18 @@
     "7743"
    ]
   },
-  "POCKET XII": {
-   "actualizada": "2026-11-02",
+  "POCKET VI AP": {
+   "actualizada": "2026-11-03",
    "cambios": [
-    "Variantes"
+    "Variantes",
+    "Factor de potencia"
+   ]
+  },
+  "POCKET XII": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Factor de potencia"
    ],
    "falta_foto": [
     "7732",
@@ -393,6 +923,13 @@
     "7744",
     "7745",
     "7746"
+   ]
+  },
+  "POCKET XII AP": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Factor de potencia"
    ]
   },
   "POLAR": {
@@ -508,9 +1045,31 @@
    ]
   },
   "POLAR y REN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Garantía"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7563"
+   ]
+  },
+  "POLUX": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "PRISMA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "REN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "RIELES 1EF": {
@@ -528,6 +1087,94 @@
    "creada": "2026-11-02",
    "falta_foto": [
     "7701"
+   ]
+  },
+  "RITA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "RIU": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "RONY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "RUFFO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SAGSAI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SCALA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SEB": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ]
+  },
+  "SHIR": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SINTRA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SINTRA 2700": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SINTRA SQ": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SIRENA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SKOTE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SMOKY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "SPY": {
@@ -551,6 +1198,12 @@
     "7517"
    ]
   },
+  "SUN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "SUNSET": {
    "actualizada": "2026-11-03",
    "cambios": [
@@ -560,6 +1213,18 @@
    "falta_foto": [
     "7467",
     "7468"
+   ]
+  },
+  "SUTSKE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "SWEET": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "TERRA": {
@@ -612,15 +1277,52 @@
     "7637"
    ]
   },
+  "TETRA": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "TOICHO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "TOTEM": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "TRAKKE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "TRAZO": {
    "actualizada": "2026-11-03",
    "cambios": [
-    "Garantía"
+    "Factor de potencia",
+    "Control"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7473",
     "7474"
+   ]
+  },
+  "ULÁN": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "UNAI": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   },
   "VALIJA LINEA POCKET": {
@@ -629,10 +1331,68 @@
     "7700"
    ]
   },
+  "VALK": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "WALLE": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "WEST": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "WILLY": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
   "WINSOR": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Garantía"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7487"
+   ]
+  },
+  "XAPO": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "YORK": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "YORK 2700": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "YUKON": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
+   ]
+  },
+  "ZAR": {
+   "actualizada": "2026-11-03",
+   "cambios": [
+    "Factor de potencia"
    ]
   }
  }

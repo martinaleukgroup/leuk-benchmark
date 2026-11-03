@@ -594,6 +594,8 @@ details.ct-v .ct-body{border-top:1px solid var(--line);background:var(--card)}
 .ct-placa-pin{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 3px;
   border-radius:999px;background:var(--no);color:#fff;font-size:10px;font-weight:700;
   display:grid;place-items:center;border:1.5px solid #fff;font-family:var(--font-title)}
+.ct-placa-vid{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.72);color:#fff;font-size:10px;
+  line-height:1;padding:4px 5px;border-radius:4px}
 .ct-placa-n{position:absolute;left:0;bottom:0;background:rgba(0,0,0,.72);color:#fff;
   font-family:var(--font-title);font-size:11px;padding:0 7px;border-top-right-radius:7px}
 
@@ -926,6 +928,8 @@ body.ct-visor-abierto{overflow:hidden}
   justify-content:center}
 .ct-hist-pantalla{position:relative;height:min(calc(100dvh - 110px),860px);aspect-ratio:9/16;max-width:100vw;
   background:#000;border-radius:10px;overflow:hidden;cursor:pointer}
+.ct-hist-pantalla > iframe{position:absolute;left:0;right:0;top:64px;bottom:0;width:100%;height:calc(100% - 64px);border:0;background:#000}
+.ct-hist-pantalla.con-video .ct-hist-arriba{background:#000;padding-bottom:8px}
 .ct-hist-pantalla > img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .ct-hist-ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:32px;
   background:linear-gradient(160deg,#363636,#16170f);color:#fff;font-family:var(--font-title);font-size:24px;line-height:1.15}
@@ -954,8 +958,11 @@ body.ct-visor-abierto{overflow:hidden}
 .ct-hist-trabajo > div{flex:1;min-width:0;line-height:1.2}
 .ct-hist-trabajo b{font-family:var(--font-title);font-size:14.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ct-hist-trabajo small{font-size:12px;color:var(--gray-soft)}
+/* Sobre un video los toques los toma el reproductor: en el celular las flechas van en la franja */
+.ct-hist-cel{display:none}
 /* En el celular la historia ocupa toda la pantalla, sin flechas a los costados */
 @media (max-width:560px){
+  .ct-hist-cel{display:inline-flex}
   .ct-hist{gap:0}
   .ct-hist-lado{display:none}
   .ct-hist-lado[hidden]{display:none}

@@ -1144,12 +1144,15 @@
     const pintarH = () => {
       const m = lista[hi], n = total(), f = aFecha(m.fecha);
       const img = imagenDe(m, pj);
+      const vid = String((placasDe(m)[pj] || {}).video || "").trim();
+      const emb = esURL(vid) ? driveEmbed(vid) : "";
       const motivo = faltaFigma(m) ? "Falta el link de Figma" : sinImagenPor(m, pj);
       ov.innerHTML = `
         <button class="ct-hist-lado izq" data-hpaso="-1" ${hi === 0 && pj === 0 ? "hidden" : ""} title="Anterior">‹</button>
         <div class="ct-hist-col">
-          <div class="ct-hist-pantalla" data-hpant>
-            ${img ? `<img src="${esc(img)}" alt="">`
+          <div class="ct-hist-pantalla ${emb ? "con-video" : ""}" data-hpant>
+            ${emb ? `<iframe src="${esc(emb)}" allow="autoplay; fullscreen" allowfullscreen title="Video de la historia"></iframe>`
+              : img ? `<img src="${esc(img)}" alt="">`
               : `<div class="ct-hist-ph"><span>${esc(m.criterio || "Sin título")}</span>${motivo && !motivo.endsWith("…") ? `<small>${esc(motivo)}</small>` : ""}</div>`}
             <div class="ct-hist-arriba">
               <div class="ct-hist-barras">${Array.from({ length: n }, (_, j) =>
@@ -1162,14 +1165,16 @@
                 <button class="ct-hist-x" data-hx title="Cerrar (Esc)">✕</button>
               </div>
             </div>
-            <div class="ct-hist-abajo">
+            ${emb ? "" : `<div class="ct-hist-abajo">
               <span class="ct-hist-msj">Enviar mensaje…</span>${IG_ICO.corazon}${IG_ICO.compartir}
-            </div>
+            </div>`}
             ${pausa ? `<span class="ct-hist-pausa">❚❚</span>` : ""}
           </div>
           <div class="ct-hist-trabajo">
             <div><b>${esc(m.criterio || "Sin título")}</b>
-              <small>Historia ${hi + 1} de ${lista.length}${n > 1 ? ` · placa ${pj + 1} de ${n}` : ""}</small></div>
+              <small>Historia ${hi + 1} de ${lista.length}${n > 1 ? ` · placa ${pj + 1} de ${n}` : ""}${emb ? " · video" : ""}</small></div>
+            ${emb ? `<button class="btn-mini ct-hist-cel" data-hpaso="-1" title="Anterior">‹</button><button class="btn-mini ct-hist-cel" data-hpaso="1" title="Siguiente">›</button>` : ""}
+            ${esURL(vid) && !emb ? `<a class="btn-mini" href="${esc(vid)}" target="_blank" rel="noopener">▶ Video</a>` : ""}
             ${`<span class="ct-est ${esc(m.estado)}">${ESTADOS[m.estado] ? ESTADOS[m.estado].t : esc(m.estado)}</span>`}
             <button class="btn-mini on" data-hficha="${m.id}">Abrir la ficha</button>
           </div>
@@ -1194,7 +1199,8 @@
     const historia = d => ir(hi + d, 0);
     const tic = t => {
       if (!ultimo) ultimo = t;
-      if (!pausa && !document.hidden) { transcurrido += t - ultimo; if (transcurrido >= HIST_SEG) paso(1); else barra(); }
+      const conVideo = !!ov.querySelector(".con-video");
+      if (!pausa && !conVideo && !document.hidden) { transcurrido += t - ultimo; if (transcurrido >= HIST_SEG) paso(1); else barra(); }
       ultimo = t;
       if (ov.isConnected) raf = requestAnimationFrame(tic);
     };
@@ -1628,6 +1634,8 @@
     // Un reel es un video: la placa es su MINIATURA (la portada que queda en el
     // perfil, de Figma) y el video va aparte, como link de Drive.
     const reel = m.tipo === "reel";
+    // Una historia mezcla imágenes y videos: cada placa puede llevar el suyo (nov 2026).
+    const historia = m.tipo === "historia";
     const tipoSel = ed ? `<select class="ct-tipo" data-tipo="${m.id}" title="Cómo se publica">
           ${Object.keys(TIPOS).map(k => `<option value="${k}" ${(m.tipo || "post") === k ? "selected" : ""}>${TIPOS[k]}</option>`).join("")}
         </select>` : `<span class="ct-pill">${TIPOS[m.tipo] || "Post"}</span>`;
@@ -1651,7 +1659,7 @@
 
     return `<div class="ct-placas-blk">
       <div class="ct-placas-cab">
-        <h5>${reel ? "El reel" : pls.length > 1 ? `Carrusel de ${pls.length} placas` : "La pieza"}</h5>
+        <h5>${reel ? "El reel" : historia ? (pls.length > 1 ? `Historia de ${pls.length} placas` : "La historia") : pls.length > 1 ? `Carrusel de ${pls.length} placas` : "La pieza"}</h5>
         ${tipoSel}
 
       </div>
@@ -1664,6 +1672,7 @@
             ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${conFigma(m, p) ? n + 1 : "Sin link"}</span>`}
             <span class="ct-placa-est ${esc(p.estado || "borrador")}"></span>
             ${c ? `<span class="ct-placa-pin">${c}</span>` : ""}
+            ${historia && esURL(p.video) ? `<span class="ct-placa-vid" title="Tiene video">▶</span>` : ""}
             <span class="ct-placa-n">${n + 1}</span>
           </button>`;
         }).join("")}
@@ -1691,6 +1700,7 @@
           }</span></p>`
         : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 
+      ${historia ? videoPlacaHTML(m, i, ed) : ""}
       ${ed ? `<div class="ct-placa-accs">
         <button class="btn-mini peligro" data-delplaca="${m.id}:${i}" title="Eliminar esta placa">✕ Eliminar ${reel ? "miniatura" : "placa"}</button>
       </div>` : ""}
@@ -1728,6 +1738,46 @@
     catch (e) { if (inp) inp.value = meta.video || ""; avisar(pid, "No se pudo guardar", false); return; }
     avisar(pid, v ? "Link del video guardado ✓" : "Link del video borrado", true);
     pintar();
+  }
+  // En una historia el video va POR PLACA (placas[i].video), opcional: la placa de
+  // Figma sigue siendo la portada, y si hay video el visor de historias lo pasa.
+  function videoPlacaHTML(m, i, ed) {
+    const v = String((placasDe(m)[i] || {}).video || "").trim();
+    return `<div class="ct-video">
+      ${ed ? `<label class="ct-figma ct-video-in">
+          <span>Video en Drive <b class="tenue">opcional</b></span>
+          <input type="url" data-videoplaca="${m.id}:${i}" value="${esc(v)}"
+            placeholder="Si esta placa es un video, pegá acá el link de Google Drive" spellcheck="false" autocomplete="off">
+        </label>` : ""}
+      ${esURL(v) ? `<p class="ct-placa-figma"><a href="${esc(v)}" target="_blank" rel="noopener">▶ Ver el video en Drive</a>
+          <span class="tenue">Se reproduce en «▶ Historias». En Drive tiene que estar compartido con quien revisa.</span></p>`
+        : ed ? `<p class="ct-placa-figma tenue">Si esta placa se sube como video, pegá el link. En Drive: clic derecho sobre el video → Compartir → Copiar vínculo.</p>` : ""}
+    </div>`;
+  }
+  async function guardarVideoPlaca(pid, n, valor, inp) {
+    const m = MSGS.find(x => x.id === pid); if (!m) return;
+    const pls = placasDe(m).slice(); const p = pls[n]; if (!p) return;
+    const v = String(valor || "").trim();
+    if (v === (p.video || "")) return;
+    if (v && !esDrive(v)) {
+      if (inp) inp.value = p.video || "";
+      lkAviso("Ese link no es de Google Drive\n\nEn Drive: clic derecho sobre el video → Compartir → Copiar vínculo, y pegalo acá.");
+      return;
+    }
+    pls[n] = Object.assign({}, p, { video: v });
+    avisar(pid, "Guardando…", false);
+    try { await guardarCampo(pid, "placas", pls); }
+    catch (e) { if (inp) inp.value = p.video || ""; avisar(pid, "No se pudo guardar", false); return; }
+    avisar(pid, v ? "Link del video guardado ✓" : "Link del video borrado", true);
+    pintar();
+  }
+  // Para verlo adentro de la app: Drive deja embeber /file/d/<id>/preview.
+  function driveEmbed(s) {
+    try {
+      const u = new URL(String(s).trim());
+      const id = (u.pathname.match(/\/file\/d\/([\w-]+)/) || [])[1] || u.searchParams.get("id");
+      return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview` : "";
+    } catch (e) { return ""; }
   }
 
   function cuerpoHTML(o, pre, ed, m) {
@@ -1932,6 +1982,10 @@
     // El link de Figma de cada placa: se guarda al pegarlo o al salir del campo.
     cont.querySelectorAll("[data-videolink]").forEach(inp => {
       inp.onchange = () => guardarVideo(inp.dataset.videolink, inp.value, inp);
+      inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); } };
+    });
+    cont.querySelectorAll("[data-videoplaca]").forEach(inp => {
+      inp.onchange = () => { const [pid, n] = inp.dataset.videoplaca.split(":"); guardarVideoPlaca(pid, +n, inp.value, inp); };
       inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); } };
     });
     cont.querySelectorAll("[data-figmalink]").forEach(inp => {
@@ -2165,7 +2219,8 @@
         traerImagenes().then(h => { if (h) pintar(); });
         PLACA[id] = pls.length - 1;
         // Con más de una placa ya es un carrusel; con una sola no se toca el tipo.
-        if (pls.length > 1 && m.tipo !== "carrusel") await guardarCampo(id, "tipo", "carrusel");
+        // Una historia con varias placas sigue siendo historia.
+        if (pls.length > 1 && !["carrusel", "historia"].includes(m.tipo)) await guardarCampo(id, "tipo", "carrusel");
         pintar(); return;
       }
       const dp = t.closest("[data-delplaca]");

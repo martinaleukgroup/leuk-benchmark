@@ -32,6 +32,12 @@
    ]
   },
   "AURA": {
+   "actualizada": "2026-11-04",
+   "cambios": [
+    "Material",
+    "Marca Driver",
+    "Dibujo técnico"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7488"
@@ -90,9 +96,9 @@
    ]
   },
   "BILUNE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-04",
    "cambios": [
-    "Garantía"
+    "Dimensión producto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -149,9 +155,9 @@
    ]
   },
   "CATEN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-04",
    "cambios": [
-    "Factor de potencia"
+    "Clase de aislación"
    ],
    "falta_foto": [
     "7442",
@@ -232,6 +238,11 @@
    ]
   },
   "DROP": {
+   "actualizada": "2026-11-04",
+   "cambios": [
+    "Material",
+    "Dibujo técnico"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7489"
@@ -417,6 +428,12 @@
    ]
   },
   "LAIVA AP": {
+   "actualizada": "2026-11-04",
+   "cambios": [
+    "Material",
+    "Marca Driver",
+    "Clase de aislación"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7469"
@@ -646,6 +663,10 @@
    ]
   },
   "NODO": {
+   "actualizada": "2026-11-04",
+   "cambios": [
+    "Dibujo técnico"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7508"
@@ -1302,10 +1323,9 @@
    ]
   },
   "TRAZO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-04",
    "cambios": [
-    "Factor de potencia",
-    "Control"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1356,9 +1376,11 @@
    ]
   },
   "WINSOR": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-04",
    "cambios": [
-    "Garantía"
+    "Dimensión producto",
+    "Clase de aislación",
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [

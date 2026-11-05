@@ -27,6 +27,10 @@ on:
         description: "Freno: máximo de fichas a imprimir"
         required: false
         default: "30"
+      permitir_quitar_stock:
+        description: "Aceptar que el filtro de stock saque más de 30 SKU de golpe (revisá antes el Excel de stock)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -59,6 +63,7 @@ jobs:
           MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || vars.FICHAS_MODO || 'real' }}
           SOLO: ${{ inputs.solo || '' }}
           MAX_PDFS: ${{ inputs.max_pdfs || '30' }}
+          PERMITIR_QUITAR_STOCK: ${{ inputs.permitir_quitar_stock && 'true' || 'false' }}
           SALIDA: ${{ runner.temp }}/salida
           GH_TOKEN: ${{ github.token }}
           N8N_FICHAS_URL: ${{ secrets.N8N_FICHAS_URL }}

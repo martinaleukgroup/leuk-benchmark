@@ -28,6 +28,19 @@ LOCAL_FALLBACK = P.WORK.parent / "Generador de fichas técnicas" / "Maestro_Mark
 HOJA = "Base"
 OUT = P.ROOT / "app" / "fichas-data.js"
 
+# --- Filtro por stock (Martina, 05/11/2026) ---------------------------------------
+# Un producto solo va en la ficha técnica si su SKU figura en el Excel de stock
+# "STOCK LEUK ILUMINACIÓN" (pestaña DISPONIBILIDAD DE STOCK, compartido por link).
+# No importa la disponibilidad ("SIN STOCK" también cuenta): lo que manda es que
+# el SKU esté en el archivo. Si a una ficha no le queda ningún SKU, sale de la
+# plataforma. Lo quitado queda en fichas-sin-stock.json (raíz del repo).
+# Para apagarlo sin tocar código: FICHAS_FILTRO_STOCK=0.
+STOCK_SHEET_ID = "11qFGvlamJwTLwfs5KYAMUNnFL0KwwSWlb3jb-maSJEM"
+STOCK_URL = f"https://docs.google.com/spreadsheets/d/{STOCK_SHEET_ID}/export?format=xlsx"
+STOCK_CACHE = P.ROOT / "pipeline" / "stock_leuk.xlsx"
+STOCK_MIN_SKUS = 200        # freno: menos SKU que esto = lectura rota → no se filtra nada
+SIN_STOCK_OUT = P.ROOT / "app" / "fichas-sin-stock.json"
+
 
 def _buscar_hoja(wb):
     """Encuentra la pestaña de BASE ÚNICA sin depender de mayúsculas ni tildes.
@@ -84,6 +97,65 @@ def get_workbook():
         print("")
         wb = openpyxl.load_workbook(LOCAL_FALLBACK, data_only=True)
         return wb, (_buscar_hoja(wb) or HOJA)
+
+
+def skus_de_stock(wb):
+    """SKU listados en el Excel de stock.
+
+    La pestaña tiene varios bloques lado a lado (COLGANTES | APLIQUES …) y cada
+    bloque repite su propio encabezado "SKU" más abajo (CARDÁNICOS, RIELES…).
+    Se toman las columnas donde aparece una celda "SKU" y, de ellas, todo valor
+    que sea un código numérico. Las otras pestañas (LOG_CAMBIOS…) no se leen.
+    """
+    def norm(t):
+        import unicodedata
+        t = unicodedata.normalize("NFD", str(t)).encode("ascii", "ignore").decode()
+        return " ".join(t.upper().split())
+    hoja = next((n for n in wb.sheetnames if "DISPONIBILIDAD" in norm(n)), wb.sheetnames[0])
+    ws = wb[hoja]
+    cols = set()
+    for row in ws.iter_rows():
+        for c in row:
+            if c.value is not None and norm(c.value) == "SKU":
+                cols.add(c.column)
+    skus = set()
+    for row in ws.iter_rows():
+        for c in row:
+            if c.column in cols:
+                v = fmt(c.value)
+                if re.fullmatch(r"\d{3,6}", v):
+                    skus.add(v)
+    return hoja, skus
+
+
+STOCK_FALLO = ""            # motivo si el Excel de stock no se pudo usar (→ no publicar)
+
+
+def cargar_stock():
+    """Devuelve el set de SKU del Excel de stock, o None si no se pudo leer bien.
+
+    None = no se filtra nada (nunca vaciar las fichas por una lectura rota).
+    """
+    global STOCK_FALLO
+    import os
+    import urllib.request
+    if os.environ.get("FICHAS_FILTRO_STOCK", "1").strip() in ("0", "no", "false"):
+        print("  filtro de stock: APAGADO (FICHAS_FILTRO_STOCK=0)")
+        return None
+    try:
+        urllib.request.urlretrieve(STOCK_URL, str(STOCK_CACHE))
+        hoja, skus = skus_de_stock(openpyxl.load_workbook(STOCK_CACHE, data_only=True))
+    except Exception as e:
+        STOCK_FALLO = f"no pude leer el Excel de stock ({e})"
+        print(f"  ⚠ filtro de stock: {STOCK_FALLO}. NO se quita ningún SKU.")
+        return None
+    if len(skus) < STOCK_MIN_SKUS:
+        STOCK_FALLO = (f"el Excel de stock trae solo {len(skus)} SKU (mínimo {STOCK_MIN_SKUS}); "
+                       f"parece una lectura rota")
+        print(f"  ⚠ filtro de stock: {STOCK_FALLO}. NO se quita ningún SKU.")
+        return None
+    print(f"  filtro de stock: {len(skus)} SKU en «{hoja}»")
+    return skus
 
 # --- Config de la ficha (espejo del molde de diseño) ---
 FIXED_TOP = [("SKU", "Código de producto"), ("EAN", "EAN"), ("Descripción corta", "Descripción del producto")]
@@ -828,6 +900,34 @@ def main():
                 if EMPTY(o.get(k)) and not EMPTY(m.get(k)):
                     o[k] = m[k]
 
+    # Filtro por stock: fuera las filas cuyo SKU no está en el Excel de stock. Va DESPUÉS
+    # de heredar la clasificación (la fila padre puede salir y sus hijas la necesitan) y
+    # ANTES de agrupar, así una ficha con colores pierde solo la variante que no está.
+    STOCK = cargar_stock()
+    quitadas = []
+    if STOCK is not None:
+        def _doc(o):
+            ag = fmt(o.get("Agrupación de fichas técnicas"))
+            return ag if not EMPTY(ag) and not set(ag) <= {"?"} else fix_roman(strip_color(fmt(o.get("Nombre"))))
+        quedan, vistos = [], set()
+        for o in rows:
+            s = fmt(o.get("SKU"))
+            if s in STOCK:
+                quedan.append(o)
+            elif s not in vistos:            # la fila padre repite el SKU de su 1ª variante
+                vistos.add(s)
+                quitadas.append({"sku": s, "nombre": fmt(o.get("Nombre")), "ficha": _doc(o)})
+        docs_antes = {_doc(o) for o in rows}
+        docs_despues = {_doc(o) for o in quedan}
+        fichas_fuera = sorted(d for d in docs_antes - docs_despues if d)
+        rows = quedan
+        print(f"  filtro de stock: {len(quitadas)} SKU fuera de las fichas (no están en el Excel de stock); "
+              f"{len(fichas_fuera)} ficha(s) quedan sin ningún SKU y salen de la plataforma")
+        SIN_STOCK_OUT.write_text(json.dumps({
+            "skus": sorted(quitadas, key=lambda q: (q["ficha"], q["sku"])),
+            "fichas_fuera": fichas_fuera,
+        }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
     # dedupe por (SKU, Color): quedarnos con la fila que tenga MÁS datos (padre o hija según el caso)
     def richness(o):
         return sum(1 for k, v in o.items() if not k.startswith("_") and not EMPTY(v))
@@ -1025,6 +1125,11 @@ def main():
     if USO_FALLBACK:
         print("\n⛔ Se generó desde el xlsx LOCAL, no desde la planilla. NO publicar.")
         raise SystemExit(2)
+    # Sin el Excel de stock las fichas volverían a traer los productos que no están en
+    # stock: mejor no publicar ese día que publicarlos y sacarlos al siguiente.
+    if STOCK_FALLO:
+        print(f"\n⛔ Filtro de stock: {STOCK_FALLO}. NO publicar.")
+        raise SystemExit(3)
 
 
 if __name__ == "__main__":

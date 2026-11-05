@@ -12,6 +12,8 @@
 #   MODO      prueba (default) | real   — en prueba no commitea ni publica nada
 #   SOLO      agrupaciones a forzar, separadas por coma (ej. "MOLY,DYNA")
 #   MAX_PDFS  freno: si hay más fichas cambiadas que esto, no genera PDF (default 30)
+#   MAX_QUITAR_STOCK  freno: si el filtro de stock saca hoy más SKU nuevos que esto, no publica (default 30)
+#   PERMITIR_QUITAR_STOCK  true = acepta la quita aunque supere MAX_QUITAR_STOCK (corrida a mano)
 #   SALIDA    carpeta donde quedan los PDF y el log (default ./salida)
 #
 # FRENOS (los mismos de la Mac, ver automatizacion/README.md):
@@ -20,12 +22,16 @@
 #   · si las fichas caen más de 5%, no publica
 #   · si no cambió nada, no commitea
 #   · si cambian más de MAX_PDFS fichas, no genera PDF (avisa)
+#   · si no puede leer el Excel de stock, no publica
+#   · si el filtro de stock saca más de MAX_QUITAR_STOCK SKU nuevos, no publica (salvo permiso)
 # ============================================================
 set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODO="${MODO:-prueba}"
 SOLO="${SOLO:-}"
 MAX_PDFS="${MAX_PDFS:-30}"
+MAX_QUITAR_STOCK="${MAX_QUITAR_STOCK:-30}"
+PERMITIR_QUITAR_STOCK="${PERMITIR_QUITAR_STOCK:-false}"
 SALIDA="${SALIDA:-$REPO/salida}"
 mkdir -p "$SALIDA"
 LOG="$SALIDA/actualizar_fichas.log"
@@ -34,12 +40,12 @@ resumen() { [ -n "${GITHUB_STEP_SUMMARY:-}" ] && echo "$*" >> "$GITHUB_STEP_SUMM
 
 # Resumen de una línea como anotación de la corrida: lo lee la plataforma
 # (función fichas-github) para mostrar el resultado del botón "Regenerar fichas".
-N=0; PLAT="sin terminar"; PLAT_FRENO=0; DRIVE_RES=""
+N=0; PLAT="sin terminar"; PLAT_FRENO=0; DRIVE_RES=""; STOCK_RES=""
 anotar() {
   local listos pend
   listos=$(ls "$SALIDA/pdfs"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
   pend=$(grep -c . "$SALIDA/pendientes_foto.txt" 2>/dev/null); pend=${pend:-0}
-  echo "::notice title=Resumen fichas::modo $MODO · $N fichas cambiadas · $listos PDF listos · $pend pendientes de foto$([ -n "${DRIVE_RES:-}" ] && echo " · $DRIVE_RES") · plataforma: $PLAT$([ "$PLAT_FRENO" = 1 ] && echo " · ⚠ freno: más de $MAX_PDFS fichas, no se generaron PDF")"
+  echo "::notice title=Resumen fichas::modo $MODO · $N fichas cambiadas · $listos PDF listos · $pend pendientes de foto$([ -n "${STOCK_RES:-}" ] && echo " · $STOCK_RES")$([ -n "${DRIVE_RES:-}" ] && echo " · $DRIVE_RES") · plataforma: $PLAT$([ "$PLAT_FRENO" = 1 ] && echo " · ⚠ freno: más de $MAX_PDFS fichas, no se generaron PDF")"
 }
 trap anotar EXIT
 
@@ -73,6 +79,12 @@ fi
 # 2) fichas desde el Hub
 python3 fichas_build.py >>"$LOG" 2>&1
 CODIGO=$?
+if [ "$CODIGO" -eq 3 ]; then
+  log "⛔ no se pudo leer el Excel de stock (o vino casi vacío). No se publica."; PLAT="⛔ no se pudo leer el Excel de stock"
+  resumen "⛔ No se pudo leer el Excel de stock. No se publicó nada."
+  git -C "$REPO" checkout -- fichas-data.js fichas-sin-stock.json 2>/dev/null
+  exit 1
+fi
 if [ "$CODIGO" -ne 0 ]; then
   log "⛔ fichas_build.py falló (código $CODIGO): probablemente no pudo leer el Hub. No se publica."; PLAT="⛔ no se pudo leer el Hub"
   resumen "⛔ No se pudo leer el Hub (código $CODIGO). No se publicó nada."
@@ -80,22 +92,41 @@ if [ "$CODIGO" -ne 0 ]; then
   exit 1
 fi
 log "✓ fichas regeneradas desde el Hub"
-
-# 2b) freno de caída brusca
 cd "$REPO" || exit 1
+
+# 2a) filtro de stock: los SKU que no están en el Excel de stock salen de las fichas.
+#     Freno: si hoy salen de golpe muchos que ayer estaban, no se publica (suele ser que
+#     alguien recortó el Excel). Se acepta corriendo a mano con "permitir_quitar_stock".
+read -r ST_NUEVOS ST_VOLVIERON ST_ESPERADAS < <(python3 "$REPO/automatizacion/ci/freno_stock.py" \
+  --repo "$REPO" --detalle "$SALIDA/sin_stock_nuevos.txt" 2>>"$LOG" || echo "0 0 0")
+ST_TOTAL=$(python3 -c 'import json;print(len(json.load(open("fichas-sin-stock.json"))["skus"]))' 2>/dev/null || echo 0)
+log "· filtro de stock: $ST_TOTAL SKU fuera de las fichas ($ST_NUEVOS nuevos hoy, $ST_VOLVIERON volvieron)"
+STOCK_RES="$ST_TOTAL SKU fuera por stock ($ST_NUEVOS nuevos)"
+resumen ""
+resumen "Filtro de stock: **$ST_TOTAL** SKU fuera de las fichas · $ST_NUEVOS nuevos hoy · $ST_VOLVIERON volvieron al Excel"
+if [ "${ST_NUEVOS:-0}" -gt "$MAX_QUITAR_STOCK" ] && [ "$PERMITIR_QUITAR_STOCK" != "true" ]; then
+  log "⛔ FRENO: el filtro de stock saca hoy $ST_NUEVOS SKU nuevos (máximo $MAX_QUITAR_STOCK). NO se publica."
+  log "   Revisar el Excel de stock. Si está bien, correr a mano con «permitir_quitar_stock» tildado."
+  PLAT="⛔ freno: el filtro de stock saca $ST_NUEVOS SKU"
+  resumen "⛔ Freno: salen $ST_NUEVOS SKU nuevos por stock (máximo $MAX_QUITAR_STOCK). No se publicó nada. Lista en el artifact (sin_stock_nuevos.txt)."
+  git checkout -- fichas-data.js fichas-sin-stock.json 2>/dev/null
+  exit 1
+fi
+
+# 2b) freno de caída brusca (descontando las hojas que salen a propósito por stock)
 CUENTA='import re,json,sys;print(len(json.loads(re.search(r"window\.FICHAS\s*=\s*(\[.*\])\s*;?\s*$",sys.stdin.read(),re.S).group(1))))'
 ANTES=$(git show HEAD:fichas-data.js 2>/dev/null | python3 -c "$CUENTA" 2>/dev/null || echo 0)
 AHORA=$(python3 -c "$CUENTA" < fichas-data.js 2>/dev/null || echo 0)
 if [ "$ANTES" -gt 0 ] && [ "$AHORA" -gt 0 ]; then
-  MINIMO=$(( ANTES * 95 / 100 ))
+  MINIMO=$(( (ANTES - ${ST_ESPERADAS:-0}) * 95 / 100 ))
   if [ "$AHORA" -lt "$MINIMO" ]; then
     log "⛔ FRENO: las fichas caen de $ANTES a $AHORA (más del 5%). NO se publica."; PLAT="⛔ freno: las fichas caen de $ANTES a $AHORA"
     log "   Suele ser que alguien borró filas del Hub sin querer (Archivo → Historial de versiones)."
     resumen "⛔ Freno: las fichas caen de $ANTES a $AHORA (más del 5%). No se publicó nada."
-    git checkout -- fichas-data.js
+    git checkout -- fichas-data.js fichas-sin-stock.json 2>/dev/null
     exit 1
   fi
-  log "· fichas: $ANTES → $AHORA"
+  log "· fichas: $ANTES → $AHORA$([ "${ST_ESPERADAS:-0}" -gt 0 ] && echo " ($ST_ESPERADAS menos por el filtro de stock)")"
 fi
 
 # 3) qué fichas cambiaron
@@ -133,7 +164,7 @@ elif [ "$N" -gt 0 ]; then
 fi
 
 # 4) publicar (solo en modo real y si cambió algo)
-if git diff --quiet -- fichas-data.js fichas-historial.json && [ -z "$(git status --porcelain -- assets/ficha/fotos)" ]; then
+if git diff --quiet -- fichas-data.js fichas-historial.json && [ -z "$(git status --porcelain -- assets/ficha/fotos fichas-sin-stock.json)" ]; then
   log "· sin cambios en las fichas de la plataforma. No se publica."; PLAT="sin cambios"
   resumen ""
   resumen "Plataforma: sin cambios."
@@ -157,7 +188,7 @@ fi
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git add fichas-data.js fichas-historial.json index.html assets/ficha/fotos \
+git add fichas-data.js fichas-historial.json fichas-sin-stock.json index.html assets/ficha/fotos \
   plataforma/pipeline/ficha_assets_manifest.json plataforma/pipeline/ficha_fotos_estado.json
 git commit -q -m "Fichas al día (automático, GitHub Actions)" || { log "· nada para commitear"; PLAT="sin cambios"; exit 0; }
 

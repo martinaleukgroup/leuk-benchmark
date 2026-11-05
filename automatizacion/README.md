@@ -15,6 +15,19 @@ Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos f
 - **Fichas sin foto de producto:** el PDF se genera pero queda en `pdfs_pendientes_foto/` y no se
   sube. Cuando aparece la foto en Drive, la ficha se detecta como cambiada y sale completa.
 - **Freno:** si cambian más de 30 fichas en una corrida, no genera PDF (avisa en el resumen).
+- **Filtro por stock (05/11/2026):** solo van a la ficha los productos cuyo SKU está en el Excel
+  *STOCK LEUK ILUMINACIÓN* (pestaña DISPONIBILIDAD DE STOCK). No importa la disponibilidad: "SIN
+  STOCK" también cuenta; lo que manda es que el SKU figure. El SKU que no está sale de su ficha
+  (si era una variante de color, la ficha sigue con las demás) y la ficha que queda sin ningún SKU
+  sale de la plataforma. Lo quitado queda en `fichas-sin-stock.json` (SKU, nombre, ficha, y las
+  fichas que salieron enteras). Cuando el SKU aparece en el Excel, vuelve solo en la corrida siguiente.
+  - Si no se puede leer el Excel (o trae menos de 200 SKU), **no publica** ese día.
+  - Si hoy salen más de 30 SKU que ayer estaban, **no publica** (suele ser un Excel recortado). Si
+    está bien, correr a mano tildando **permitir_quitar_stock**. La lista queda en el artifact
+    (`sin_stock_nuevos.txt`).
+  - El freno del 5% descuenta las hojas que salen a propósito por stock.
+  - Apagarlo: variable de entorno `FICHAS_FILTRO_STOCK=0` (en el paso "Actualizar fichas").
+  - Los PDF de fichas que salieron enteras **siguen en Drive**: hay que sacarlos a mano.
 - Los PDF y el log quedan en cada corrida → **Artifacts** (30 días).
 - Publica la plataforma (commit como `github-actions[bot]` + dispara Pages).
 
@@ -25,6 +38,7 @@ Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos f
    - **modo:** `prueba` (no publica nada, solo muestra qué cambiaría y genera los PDF) o `real` (publica).
    - **solo:** agrupaciones a imprimir sí o sí, separadas por coma (ej. `MOLY, DYNA`). Opcional.
    - **max_pdfs:** el freno; subirlo si cambiaron muchas fichas a propósito.
+   - **permitir_quitar_stock:** aceptar que el filtro de stock saque más de 30 SKU de golpe.
 3. Al terminar (~4 min): la corrida muestra el resumen (qué fichas cambiaron, pendientes de foto) y
    los PDF en **Artifacts**.
 

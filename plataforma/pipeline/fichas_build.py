@@ -34,12 +34,15 @@ OUT = P.ROOT / "app" / "fichas-data.js"
 # No importa la disponibilidad ("SIN STOCK" también cuenta): lo que manda es que
 # el SKU esté en el archivo. Si a una ficha no le queda ningún SKU, sale de la
 # plataforma. Lo quitado queda en fichas-sin-stock.json (raíz del repo).
+# Excepción (Martina, 05/11): los productos con Estado "Repo X" (Repo 7, Repo 8…) se quedan
+# aunque no estén en el Excel: son lanzamientos que todavía no se cargaron al stock.
 # Para apagarlo sin tocar código: FICHAS_FILTRO_STOCK=0.
 STOCK_SHEET_ID = "11qFGvlamJwTLwfs5KYAMUNnFL0KwwSWlb3jb-maSJEM"
 STOCK_URL = f"https://docs.google.com/spreadsheets/d/{STOCK_SHEET_ID}/export?format=xlsx"
 STOCK_CACHE = P.ROOT / "pipeline" / "stock_leuk.xlsx"
 STOCK_MIN_SKUS = 200        # freno: menos SKU que esto = lectura rota → no se filtra nada
 SIN_STOCK_OUT = P.ROOT / "app" / "fichas-sin-stock.json"
+ESTADO_REPO = re.compile(r"^\s*repo\b", re.I)    # "Repo 7", "REPO 8", "repo7"… → no se filtra
 
 
 def _buscar_hoja(wb):
@@ -909,10 +912,13 @@ def main():
         def _doc(o):
             ag = fmt(o.get("Agrupación de fichas técnicas"))
             return ag if not EMPTY(ag) and not set(ag) <= {"?"} else fix_roman(strip_color(fmt(o.get("Nombre"))))
+        # SKU en Repo: alcanza con que una de sus filas (padre o variante) diga "Repo X"
+        en_repo = {fmt(o.get("SKU")) for o in rows
+                   if ESTADO_REPO.match(fmt(o.get("Estado")) or fmt(o.get("Situación")))}
         quedan, vistos = [], set()
         for o in rows:
             s = fmt(o.get("SKU"))
-            if s in STOCK:
+            if s in STOCK or s in en_repo:
                 quedan.append(o)
             elif s not in vistos:            # la fila padre repite el SKU de su 1ª variante
                 vistos.add(s)
@@ -921,6 +927,7 @@ def main():
         docs_despues = {_doc(o) for o in quedan}
         fichas_fuera = sorted(d for d in docs_antes - docs_despues if d)
         rows = quedan
+        print(f"  filtro de stock: {len(en_repo - STOCK)} SKU en Repo se quedan aunque no estén en el Excel")
         print(f"  filtro de stock: {len(quitadas)} SKU fuera de las fichas (no están en el Excel de stock); "
               f"{len(fichas_fuera)} ficha(s) quedan sin ningún SKU y salen de la plataforma")
         SIN_STOCK_OUT.write_text(json.dumps({

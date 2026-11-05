@@ -2555,7 +2555,7 @@
   });
 
   /* ===================== NAV ===================== */
-  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "liquidacion", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "eventos-clientes", "usuarios", "kpis"];
+  const PAGES = ["inicio", "comparaciones", "resultados", "decisiones", "integraciones", "manual", "fichas", "firmas", "stock", "reingresos", "liquidacion", "eventos", "contenidos", "contenidos-ig", "contenidos-mail", "tareas", "acciones", "eventos-clientes", "pauta", "usuarios", "kpis"];
   // Navegación en 2 niveles: MÓDULO (Inicio · Benchmark · Diseño) → páginas del módulo.
   // Sumar una página a Diseño = agregar una línea acá, nada más.
   const MODULOS = {
@@ -2596,7 +2596,8 @@
     acciones: {
       label: "Acciones",
       pages: [{ p: "acciones", t: "Seguimiento de acciones" },
-              { p: "eventos-clientes", t: "Impacto de acciones" }],   // eventos-clientes.js
+              { p: "eventos-clientes", t: "Impacto de acciones" },    // eventos-clientes.js
+              { p: "pauta", t: "Pauta en Instagram" }],               // pauta.js (Meta Ads × ventas; mismo permiso que Impacto)
     },
     usuarios: {                                     // sólo admin (ver ROLES)
       label: "Usuarios",
@@ -2622,6 +2623,7 @@
     contenidos:      { t: "Comunidad WhatsApp",   ic: "chat" },
     "contenidos-ig": { t: "Instagram",            ic: "photo_camera" },
     "contenidos-mail": { t: "Mailing",            ic: "mail" },
+    pauta:           { t: "Pauta",                ic: "ads_click" },
     comparaciones:   { t: "Catálogo",             ic: "search" },
     resultados:      { t: "Comparaciones",        ic: "compare_arrows", count: true },
     decisiones:      { t: "Insights",             ic: "insights" },
@@ -2648,7 +2650,7 @@
   const GRUPOS = [
     { items: ["inicio"] },
     { g: "Planificación",      items: ["tareas", "acciones", "eventos-clientes", "eventos"] },
-    { g: "Contenidos",         items: ["contenidos", "contenidos-ig", "contenidos-mail"], badge: "contenidos" },
+    { g: "Contenidos",         items: ["contenidos", "contenidos-ig", "contenidos-mail", "pauta"], badge: "contenidos" },
     { g: "Producto y precios", items: ["comparaciones", "resultados", "decisiones", "fichas"] },
     { g: "Generadores",        items: ["firmas", "stock", "reingresos", "liquidacion"] },
     { g: "Administración",     items: ["integraciones", "manual", "usuarios", "kpis", "@precios", "@costos", "@lista"], abajo: true },
@@ -2657,7 +2659,7 @@
   GRUPOS.forEach(g => g.items.forEach(i => { GRUPO_DE[i] = g.g || ""; }));
   function puedeVerPagina(page) {
     if (page === "inicio") return true;
-    if (page === "eventos-clientes") return puedeVerImpacto();
+    if (page === "eventos-clientes" || page === "pauta") return puedeVerImpacto();
     const mod = MOD_DE[page];
     if (!mod || !puedeVer(mod)) return false;
     const pcfg = MODULOS[mod].pages.find(x => x.p === page);
@@ -2787,6 +2789,11 @@
       "En la <b>línea de tiempo</b> sumá propuestas, contrapropuestas, notas de reuniones y <b>archivos</b> (arrastrándolos a la ficha).",
       "Definí las <b>métricas esperadas</b> antes de arrancar; al terminar cargás las <b>reales</b> y ves el cumplimiento.",
       "Cargá la <b>inversión estimada y real</b>, y al cierre los <b>aprendizajes</b> para decidir si se repite."] },
+    { t: "Pauta en Instagram", ic: "ads_click", pages: ["pauta"], pasos: [
+      "Bajá de <b>Ads Manager</b> el Excel de anuncios de <b>Leuk</b> y el de <b>Laftdren</b> (con la columna ENLACE AL ANUNCIO y el período en el nombre, ej. <i>Leuk-Anuncios-dic25-oct26</i>) y subilos juntos con <b>⬆ Subir informe de Meta</b>. El informe nuevo <b>reemplaza</b> al anterior y conserva lo que corregiste.",
+      "En <b>Anuncios</b> revisá el <b>tipo</b> (producto, proyecto, marca, Luz en Acción) y el <b>producto</b>: es la palabra que se busca en la descripción de los artículos vendidos (ej. Niao, 441A).",
+      "<b>Resumen</b>: cuánto se invirtió, qué consiguió cada objetivo (costo por resultado, CPM, seguidores) y la inversión mes a mes contra las ventas de la marca.",
+      "<b>Ventas por producto</b>: compras del producto después del anuncio contra lo esperado, <b>compras extra</b> y <b>ROAS</b> (compras extra ÷ inversión). Las ventas se suben en Impacto de acciones."] },
     { t: "Impacto de acciones", ic: "handshake", pages: ["eventos-clientes"], pasos: [
       "Subí el <b>Reporte de ventas</b> del sistema (CSV) desde <b>⋯ Más → Actualizar ventas</b>. Reemplaza sólo el período que trae el archivo, así que lo podés volver a subir cada mes. En <b>¿De dónde salen las ventas?</b> ves qué archivo se usó y hasta qué fecha llega.",
       "Creá el evento con <b>＋ Nuevo evento</b> (o pasalo desde Acciones en <b>Datos que faltan</b>): fecha, formato, <b>quién dio la charla</b>, profesionales inscriptos y que fueron, y la <b>inversión</b> en US$ o en pesos.",
@@ -2836,7 +2843,7 @@
     if (!PAGES.includes(page)) page = "inicio";
     let mod = MOD_DE[page] || "inicio";
     // sin permiso sobre ese módulo → a Inicio (la Home ya se filtra por rol)
-    if (mod !== "inicio" && !(page === "eventos-clientes" ? puedeVerImpacto() : puedeVer(mod))) { page = "inicio"; mod = "inicio"; }
+    if (mod !== "inicio" && !(page === "eventos-clientes" || page === "pauta" ? puedeVerImpacto() : puedeVer(mod))) { page = "inicio"; mod = "inicio"; }
     // páginas con candado propio (ej: Nuevas integraciones = sólo puedeIntegrar())
     const pcfg = (MODULOS[mod] && MODULOS[mod].pages || []).find(x => x.p === page);
     if (pcfg && pcfg.gate && !pcfg.gate()) { page = "inicio"; mod = "inicio"; }
@@ -2875,6 +2882,8 @@
     if (page === "acciones" && window.renderAcciones) window.renderAcciones();
     // Eventos con clientes: quiénes vinieron y cuánto compraron después. Lo arma eventos-clientes.js.
     if (page === "eventos-clientes" && window.renderEventosClientes) window.renderEventosClientes();
+    // Pauta en Instagram: anuncios de Meta cruzados con las ventas del producto. Lo arma pauta.js.
+    if (page === "pauta" && window.renderPauta) window.renderPauta();
     if (page === "usuarios") renderUsuarios();
     if (page === "kpis" && window.renderKpisConfig) window.renderKpisConfig();
     window.scrollTo({ top: 0 });

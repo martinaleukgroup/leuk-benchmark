@@ -1,0 +1,85 @@
+/* Pauta en Instagram (pauta.js) — reusa las clases de Impacto (.ec-*) para tarjetas, tablas y gráficos */
+#pauta .pa-bar{margin:10px 0 4px}
+#pauta .pa-marcas{margin:0}
+#pauta .pa-bar2{margin:12px 0 4px}
+#pauta .pa-tabs{margin-top:10px}
+#pauta .pa-grilla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+#pauta .pa-ancha{grid-column:1/-1}
+#pauta .pa-pie{font-size:12px;color:var(--gray-soft);margin:8px 0 0;line-height:1.45}
+#pauta .pa-pie b{color:var(--ink)}
+#pauta .pa-vacio p{font-size:14px;color:var(--gray)}
+#pauta .pa-como{font-size:13.5px;color:var(--gray);line-height:1.55;padding-left:20px;margin:8px 0 14px}
+#pauta .pa-como b{color:var(--ink)}
+#pauta .pa-nota.err{color:var(--no)}
+#pauta .mh-kpi b small{font-size:15px;color:var(--gray-soft)}
+
+/* barras horizontales (HTML, legibles en media columna) */
+#pauta .pa-barras{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+#pauta .pa-barra{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;align-items:center}
+#pauta .pa-barra>div{grid-column:1/-1;height:10px;background:var(--olive-pale);border-radius:3px;overflow:hidden}
+#pauta .pa-barra>div i{display:block;height:100%;background:var(--olive);border-radius:3px}
+#pauta .pa-barra>b{grid-row:1;grid-column:2;font-weight:600}
+#pauta .pa-barra>small{grid-column:1/-1;font-size:11.5px;color:var(--gray-soft)}
+
+/* los que rindieron mejor */
+#pauta .pa-top h4{margin:10px 0 4px;font-size:13px;color:var(--ink)}
+#pauta .pa-top ol{margin:0;padding-left:20px;font-size:13px;line-height:1.6}
+#pauta .pa-top a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+#pauta .pa-top a:hover{border-color:var(--olive)}
+#pauta .pa-top small{color:var(--gray-soft)}
+
+/* tabla de anuncios */
+#pauta .pa-tabla{min-width:900px;table-layout:fixed}
+#pauta .pa-tabla col.c-f{width:92px} #pauta .pa-tabla col.c-i{width:110px} #pauta .pa-tabla col.c-r{width:120px}
+#pauta .pa-tabla col.c-a{width:90px} #pauta .pa-tabla col.c-t{width:176px} #pauta .pa-tabla col.c-v{width:200px}
+#pauta .pa-det p{overflow-wrap:anywhere}
+#pauta .pa-tabla tr[data-pa-abrir]{cursor:pointer}
+#pauta .pa-tabla tr[data-pa-abrir]:hover td,#pauta .pa-tabla tr.on td{background:var(--olive-pale)}
+#pauta .pa-tabla td small{display:block}
+#pauta .pa-nom{max-width:260px}
+#pauta .pa-prod{width:150px}
+#pauta .pa-prod .ac-sel{font-size:12px;padding:3px 6px;width:150px}
+#pauta .pa-pal{width:150px!important;box-sizing:border-box}
+#pauta .pa-tabla td:last-child{min-width:150px}
+#pauta .pa-pal{margin-top:4px;width:100%;font:inherit;font-size:12.5px;padding:4px 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+#pauta .pa-pal:focus{border-color:var(--olive);outline:none}
+#pauta .pa-ord{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer}
+#pauta .pa-ord.on{color:var(--ink)}
+#pauta tr[data-pa="ir"]{cursor:pointer}
+#pauta tr[data-pa="ir"]:hover td{background:var(--olive-pale)}
+#pauta .pa-det-fila>td{background:var(--bg,#fafafa);padding:0}
+#pauta .pa-det{padding:14px 16px 10px;cursor:default}
+#pauta .pa-det-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+#pauta .pa-det-top>div:first-child b{display:block;font-size:14px}
+#pauta .pa-links{display:flex;gap:8px;flex-wrap:wrap}
+#pauta .pa-links .btn-ghost{text-decoration:none;font-size:12.5px}
+#pauta .pa-met{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:12px 0}
+#pauta .pa-met>div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card)}
+#pauta .pa-met span{display:block;font-size:11.5px;color:var(--gray-soft)}
+#pauta .pa-met b{font-family:var(--font-title);font-size:20px;color:var(--ink)}
+#pauta .pa-met small{display:block;font-size:11.5px;color:var(--gray-soft)}
+#pauta .pa-fechas{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 12px;font-size:13px}
+#pauta .pa-fechas label{display:flex;flex-direction:column;gap:3px}
+#pauta .pa-fechas label.ancho{flex:1 1 260px}
+#pauta .pa-fechas span{font-size:11.5px;color:var(--gray-soft)}
+#pauta .pa-fechas input{font:inherit;font-size:13px;padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+#pauta .btn-link{border:0;background:none;padding:0;color:var(--no);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
+
+/* compras extra por producto (barras desde el centro) */
+#pauta .pa-div{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+#pauta .pa-div-f{display:grid;grid-template-columns:150px 1fr 100px;align-items:center;gap:10px;font-size:12.5px}
+#pauta .pa-div-f small{color:var(--gray-soft)}
+#pauta .pa-div-b{position:relative;height:14px;border-left:0}
+#pauta .pa-div-b::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;border-left:1px solid var(--gray-soft)}
+#pauta .pa-div-b i{position:absolute;top:2px;height:10px;border-radius:3px;background:var(--olive)}
+#pauta .pa-div-b i.neg{background:#E16F64}
+#pauta .pa-div-f b{text-align:right;font-weight:600}
+#pauta .pa-div-f b.ok{color:var(--ok)} #pauta .pa-div-f b.no{color:var(--no)}
+
+@media (max-width:760px){
+  #pauta .pa-grilla{grid-template-columns:minmax(0,1fr)}
+  #pauta .pa-div-f{grid-template-columns:100px 1fr 80px}
+}
+#pauta .pa-det,#pauta .pa-det *{white-space:normal}
+#pauta .pa-prod .ac-sel,#pauta .pa-pal{display:block}
+#pauta .pa-tabla td{overflow:hidden}

@@ -32,10 +32,11 @@
    ]
   },
   "AURA": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
     "Material",
-    "Marca Driver",
+    "Dimensión producto",
+    "Clase de aislación",
     "Dibujo técnico"
    ],
    "creada": "2026-11-02",
@@ -52,9 +53,9 @@
    ]
   },
   "AXIS": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Dimensión producto"
+    "Descripción"
    ]
   },
   "BARON": {
@@ -96,9 +97,10 @@
    ]
   },
   "BILUNE": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Dimensión producto"
+    "Vida útil",
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -155,9 +157,9 @@
    ]
   },
   "CATEN": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Clase de aislación"
+    "Vida útil"
    ],
    "falta_foto": [
     "7442",
@@ -175,9 +177,10 @@
    ]
   },
   "CHILL": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Factor de potencia"
+    "Descripción",
+    "Foto"
    ]
   },
   "CITY": {
@@ -238,10 +241,13 @@
    ]
   },
   "DROP": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Material",
-    "Dibujo técnico"
+    "Color producto",
+    "Dimensión producto",
+    "Clase de aislación",
+    "Dibujo técnico",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -280,9 +286,11 @@
    ]
   },
   "EKO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Dimensión producto"
+    "Descripción",
+    "Foto",
+    "CAD"
    ]
   },
   "EPICUR": {
@@ -301,9 +309,9 @@
    ]
   },
   "FORTE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Factor de potencia"
+    "Vida útil"
    ],
    "falta_foto": [
     "7475",
@@ -333,9 +341,9 @@
    ]
   },
   "GALIA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -470,9 +478,9 @@
    ]
   },
   "LIV": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Factor de potencia"
+    "Vida útil"
    ],
    "falta_foto": [
     "7622",
@@ -521,9 +529,9 @@
    ]
   },
   "LUVA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Fijación"
+    "Descripción"
    ]
   },
   "MARDAI": {
@@ -565,6 +573,10 @@
    ]
   },
   "MINI POCKET": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Clase de aislación"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7492",
@@ -663,8 +675,10 @@
    ]
   },
   "NODO": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
+    "Material",
+    "Difusor",
     "Dibujo técnico"
    ],
    "creada": "2026-11-02",
@@ -673,9 +687,12 @@
    ]
   },
   "NUMA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Color producto",
+    "Colores",
+    "Dimensión producto",
+    "Material"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -693,9 +710,12 @@
    ]
   },
   "NUMA MODULO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Color producto",
+    "Dimensión producto",
+    "Vida útil",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -706,9 +726,10 @@
    ]
   },
   "NUMA POINT": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Clase de aislación",
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -744,9 +765,9 @@
    ]
   },
   "OTTO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ]
   },
   "PETRA LINE": {
@@ -954,6 +975,12 @@
    ]
   },
   "POLAR": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Dimensión producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7535",
@@ -991,6 +1018,12 @@
    ]
   },
   "POLAR BEAM": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Material",
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7581",
@@ -1000,6 +1033,11 @@
    ]
   },
   "POLAR FOCUS": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7603",
@@ -1007,6 +1045,11 @@
    ]
   },
   "POLAR GRID": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7569",
@@ -1024,6 +1067,11 @@
    ]
   },
   "POLAR GRID MOVIL": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7573",
@@ -1033,6 +1081,11 @@
    ]
   },
   "POLAR LINE": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7565",
@@ -1046,6 +1099,11 @@
    ]
   },
   "POLAR MEX": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7577",
@@ -1059,6 +1117,11 @@
    ]
   },
   "POLAR SOUND": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7601",
@@ -1066,9 +1129,10 @@
    ]
   },
   "POLAR y REN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1100,6 +1164,12 @@
    ]
   },
   "RIELES 3EF": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Foto",
+    "Descripción",
+    "LDT"
+   ],
    "falta_foto": [
     "7235"
    ]
@@ -1199,6 +1269,10 @@
    ]
   },
   "SPY": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Dimensión producto"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7512",
@@ -1206,6 +1280,10 @@
    ]
   },
   "SPY AP": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Dimensión producto"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7514",
@@ -1213,6 +1291,10 @@
    ]
   },
   "SPY EM": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Dimensión producto"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7516",
@@ -1226,9 +1308,9 @@
    ]
   },
   "SUNSET": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1249,9 +1331,10 @@
    ]
   },
   "TERRA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil",
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1269,9 +1352,9 @@
    ]
   },
   "TERRA CHILL": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1279,9 +1362,9 @@
    ]
   },
   "TERRA GRID": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1289,9 +1372,9 @@
    ]
   },
   "TERRA POINT": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Garantía"
+    "Vida útil"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1323,8 +1406,9 @@
    ]
   },
   "TRAZO": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
+    "Vida útil",
     "Dibujo técnico"
    ],
    "creada": "2026-11-02",
@@ -1376,10 +1460,8 @@
    ]
   },
   "WINSOR": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Dimensión producto",
-    "Clase de aislación",
     "Dibujo técnico"
    ],
    "creada": "2026-11-02",

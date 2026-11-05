@@ -5,31 +5,61 @@
    "cambios": [
     "Descripción",
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Embutidos / ACACIA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1ZiLewp_KTv2a2KSEsFXVYEb4dLj5ynDm/view"
+   }
   },
   "ACRU": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Pared / Embutidos / ACRU / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1kvMIAvgd3dqYYQVYhVZdHl0zpvWTI-2J/view"
+   }
   },
   "ALOUMI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / ALOUMI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1L8kg25yyhKm6hXQoOzwQxR50HcPE_Zvl/view"
+   }
   },
   "ALTAI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / ALTAI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1anhgUpXpH9JTL6DjBL3UDGIp_OXHfOCF/view"
+   }
   },
   "ARKANSAS": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / ARKANSAS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1GpuVB81THmNuVHKtv3Nvgf3APcnlp_UG/view"
+   }
   },
   "AURA": {
    "actualizada": "2026-11-05",
@@ -50,31 +80,61 @@
     "Variantes",
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / AXE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1PhP-AHn1J25_IwchC7vMErr1uW6KYsJJ/view"
+   }
   },
   "AXIS": {
    "actualizada": "2026-11-05",
    "cambios": [
     "Descripción"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / AXIS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1VHlhmJmGBaW7weTB-XP_093T9sYQ_YG3/view"
+   }
   },
   "BARON": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / BARON / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1e7KA3I77Cb1xSrwCj8Pa76zybb2DKnpt/view"
+   }
   },
   "BATOR": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / BATOR / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1NW9CFq-AqJWbaW6U2Oq0awbGmoVzsGNx/view"
+   }
   },
   "BELA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / BELA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1-hVCiISDMNJqiXMjzAZMZZpiDei7zMXx/view"
+   }
   },
   "BERSH": {
    "actualizada": "2026-11-03",
@@ -82,13 +142,25 @@
     "Variantes",
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / BERSH / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1mvMBTTiQqZC0ofhRygbJZKtFbFsiQ2yc/view"
+   }
   },
   "BIG SKOTE": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / BIG SKOTE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1uvdymLNui2hYjDZplCpMAHzAbOHhxoaZ/view"
+   }
   },
   "BILUNE": {
    "actualizada": "2026-11-05",
@@ -112,43 +184,85 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / BOG / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1ksBxPNZUYqu9FeAZhcAWVAmSqnbpOyCD/view"
+   }
   },
   "BONY": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / BONY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1jhTDp0mAaJECeOqAjIfzDUYY8XsCwSEF/view"
+   }
   },
   "BULGAN": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / BULGAN / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1zsvg9RCb1Doubv6PoRQSWj3TRb2o9GA5/view"
+   }
   },
   "CAMBOYA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / CAMBOYA S / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1RFoOHpaUTFnyLLhccf-55ekE4oI0WfXh/view"
+   }
   },
   "CAMBOYA AP": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / CAMBOYA AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1YOvztpQg3Znm_2QZsgmmRZJ1dygXE47Y/view"
+   }
   },
   "CAPI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / CAPI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1yEj060UoQjAiNCjqsjj3veXBBX2rC_LK/view"
+   }
   },
   "CARAMEL": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / CARAMEL / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1W06TSlITSBVrT2qyd8PQJx9pNFCnl77h/view"
+   }
   },
   "CATEN": {
    "actualizada": "2026-11-05",
@@ -170,32 +284,62 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / CHESTER / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1vkNnZfV7T-NoNmguiXRobUCZF-WKoR_B/view"
+   }
   },
   "CHILL": {
    "actualizada": "2026-11-05",
    "cambios": [
     "Descripción",
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Proyectores / CHILL / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1OuHLz5s0vkdqRjiFvk5j29obP6qKlJf9/view"
+   }
   },
   "CITY": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / CITY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/12_0yn8n7dZZj8_H3UzbW_LadGpWICUBp/view"
+   }
   },
   "CLASS": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / CLASS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/16sujHG3mwSRYQEwRp-51xu_vxEv45qmn/view"
+   }
   },
   "COSMO": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / COSMO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/13bszHpcxcD6rpDx-WPTJUVRBYFdVl0RN/view"
+   }
   },
   "CUFA": {
    "actualizada": "2026-11-03",
@@ -203,7 +347,13 @@
     "Variantes",
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / CUFA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1UenuI8Gb0kt469dqYki0o72tw9BcvXRA/view"
+   }
   },
   "DAKOTA": {
    "actualizada": "2026-11-03",
@@ -284,8 +434,6 @@
   "EKO": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Descripción",
-    "Foto",
     "CAD"
    ]
   },

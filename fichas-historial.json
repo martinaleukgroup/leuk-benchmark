@@ -1168,14 +1168,26 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / OKTA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1M0JsT1cIqyXDthmT0ZPleT7CvM1dgSlZ/view"
+   }
   },
   "ONA": {
    "actualizada": "2026-11-05",
    "cambios": [
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / ONA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1gBcCrjJ4szOSZ-LhyQuVg3Tl5aOiDBiQ/view"
+   }
   },
   "ORBIS": {
    "creada": "2026-11-02",
@@ -1189,19 +1201,37 @@
    "cambios": [
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / ORI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/11PQIB-PNfmRxhD1ArwOMJGwA9vv4fUF9/view"
+   }
   },
   "ORTHOG": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / ORTHOG / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1oyjas2akTMP9AZ-oHPpeooaIkPwubQTi/view"
+   }
   },
   "OTTO": {
    "actualizada": "2026-11-05",
    "cambios": [
     "LDT"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / OTTO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1vLnrABccXK6KBZ4YjVrgwxWRi5pkO2s-/view"
+   }
   },
   "PETRA LINE": {
    "creada": "2026-11-02",
@@ -1214,19 +1244,37 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / PIER F / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1HMi0MK4o2I9Eb7cCW6Zkezhrr8tXx0lq/view"
+   }
   },
   "PIER W": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / PIER W / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1DlJVmi8tO6fnIkVuG3eOfoTEXwpByqb-/view"
+   }
   },
   "PIETRO": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / PIETRO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1sKi-3jtu_cqpMngKkE9f90poyZBNG4qj/view"
+   }
   },
   "PIN": {
    "creada": "2026-11-02",
@@ -1238,7 +1286,13 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / PLEVRES / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1rB7wGdBJVfceJN_tQG_OJfw9diL8b5Gq/view"
+   }
   },
   "POCKET DRIVER ON-OFF VI": {
    "creada": "2026-11-02",
@@ -1373,7 +1427,13 @@
    "cambios": [
     "Variantes",
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET VI AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1mdJfzQwPsOQnKwvIsA8B3WYA2-sXHXrb/view"
+   }
   },
   "POCKET XII": {
    "actualizada": "2026-11-03",
@@ -1395,7 +1455,13 @@
    "cambios": [
     "Variantes",
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET XII AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1UdusnB7F67SmVyUuagz8AvKxzy31W9hw/view"
+   }
   },
   "POLAR": {
    "actualizada": "2026-11-05",
@@ -1563,25 +1629,49 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Embutidos / POLUX / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1ntUkr4Dnx-wm-nPCJjKVyPPxkix3CYYP/view"
+   }
   },
   "PRISMA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / PRISMA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1B4QAM-cNVNTL0Bg7OkJjKYS3EkvPw2Rc/view"
+   }
   },
   "REN": {
    "actualizada": "2026-11-05",
    "cambios": [
     "Variantes"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / REN / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1lveKM15sdjBWJh5RmK-RFR0SUCtoxU2O/view"
+   }
   },
   "RIELES 1EF": {
    "actualizada": "2026-11-02",
    "cambios": [
     "Accesorios"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / Rieles / Uniones / RIELES 1EF / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1DJMIQXGkeV6KS7DOOVi9ZsWYGTFQB9VI/view"
+   }
   },
   "RIELES 3EF": {
    "actualizada": "2026-11-05",
@@ -1605,37 +1695,73 @@
    "actualizada": "2026-11-05",
    "cambios": [
     "Variantes"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / RITA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1H7Iucllcu4NgSsoaJFo6BfS4oE8THE5e/view"
+   }
   },
   "RIU": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / RIU / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1XbWG_LeVOTVBW0HAJQnsvZIk-j3qTQfF/view"
+   }
   },
   "RONY": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / RONY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1NGUp4bYYSUKCxvxatbdGSCZPGsN9mAfK/view"
+   }
   },
   "RUFFO": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / RUFFO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1nGaBL7wsngAiR_e6lGlQeFRtjftZ4Toz/view"
+   }
   },
   "SAGSAI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / SAGSAI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1mYgclw-XAfG7qOvaKd7da7q_spIVb9zt/view"
+   }
   },
   "SCALA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Embutidos / SCALA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/19kPlnJlRvaj-_ff86GDvgKrpa_6BncVE/view"
+   }
   },
   "SEB": {
    "actualizada": "2026-11-03",
@@ -1643,25 +1769,51 @@
     "Variantes",
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / SEB / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1EMQq1Y8iQAQveF48ZlMd5lMLYvlHX1rc/view"
+   }
   },
   "SHIR": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / SHIR / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1IbHOo5Qq3Z0T89EEYN-rij1V6H5xeezp/view"
+   }
   },
   "SINTRA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "aviso": "Se deja «Ficha Técnica - SINTRA Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
+    "destino": "Interior / De Techo / Apliques / SINTRA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/177UIKfTtSQQmct3stLW9lIbXbvVaCxzq/view"
+   }
   },
   "SINTRA 2700": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "aviso": "Se deja «Ficha Técnica - SINTRA BL 2700K Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
+    "destino": "Interior / De Techo / Apliques / SINTRA 2700 / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1niceWrE6ZoKvq-m3OaKrUeLo7g4a0-O6/view"
+   }
   },
   "SINTRA SQ": {
    "actualizada": "2026-11-03",

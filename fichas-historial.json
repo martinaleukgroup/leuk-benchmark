@@ -749,19 +749,37 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / LEIF / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1D3arQW0sAiOKm5Y9TL1Cpd2ZaRvjC8Ue/view"
+   }
   },
   "LETO": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Embutidos / LETO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1mmTpxRguXlJnFL2cojTdkzd7Y1zoSabn/view"
+   }
   },
   "LEX": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Apliques / LEX / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1FlyzCdWBszDyYwEuU8K4V_6Ye3Ih_Mat/view"
+   }
   },
   "LIV": {
    "actualizada": "2026-11-05",
@@ -779,19 +797,37 @@
    "actualizada": "2026-11-05",
    "cambios": [
     "Variantes"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / LOA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1uc0RBAymN_EkOvNxrh-bPdgjrqQXfeYN/view"
+   }
   },
   "LOFI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / LOFI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1Lm6FVsr5hwgdVOKSAzgjFaJRtEOFOePJ/view"
+   }
   },
   "LOFI AP": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / LOFI AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1oB1jek2GBMcoWORuTLIA9mXhDeCymJc0/view"
+   }
   },
   "LOOP": {
    "creada": "2026-11-02",
@@ -810,44 +846,86 @@
    "actualizada": "2026-11-05",
    "cambios": [
     "Descripción"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / LUVA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1pYWziam87CUabsML27FVmow5LV_PoQKL/view"
+   }
   },
   "MARDAI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / MARDAI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1JVwSEThs45cf_VxpyPSSiG09bTkqe26X/view"
+   }
   },
   "MARLEY": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / MARLEY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/10aUhM9G3LcfnkPqcAwv-CRNF7MuKOkIv/view"
+   }
   },
   "MATT": {
    "actualizada": "2026-11-05",
    "cambios": [
     "Color producto",
     "Colores"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / MATT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1-0xQ9ocF52S0nWkdF9GQg3JuF05Jo4vS/view"
+   }
   },
   "MEX": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Cabezales / MEX / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1q9tgTQ7qiaLfcESGTDTV2OOSSoiKTI5Q/view"
+   }
   },
   "MEX 3CCT": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Cabezales / MEX 3CCT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1w0ZViirWphiWIJXPK4G56KrAxSaM9hUv/view"
+   }
   },
   "MIJA": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / MIJA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1c-LOniVmvyfpYfZzj6oyqLul-aP9_-Yb/view"
+   }
   },
   "MINI POCKET": {
    "actualizada": "2026-11-05",
@@ -870,7 +948,13 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / OPTIC / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1qGI8prN1a53FzwpyRIHjpxLyF69W1xU6/view"
+   }
   },
   "MINI SPY": {
    "creada": "2026-11-02",
@@ -883,37 +967,73 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / MIRACLE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1Qq-Ya0wd5tYhUun9q2DAVUfdp4iRl76a/view"
+   }
   },
   "MIRACLE II": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / MIRACLE II / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1M5yrfUBN5D0OSEaEHCuyqUEBapPc3dvT/view"
+   }
   },
   "MOLY": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / MOLY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1mDTQsBj4rrF8OJYgDs0wu6MfiEbQMJs2/view"
+   }
   },
   "MOMO EXT": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Pared / Apliques / MOMO EXT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1aLKeMWmu2pj22AJme9tM2kTjf_HXxNcx/view"
+   }
   },
   "MORGAN": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Bolardos / MORGAN / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1-kdEX5Pstr8h-K5Ik6fIcMlR8P_NfwZm/view"
+   }
   },
   "MUSK": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Exterior / De Piso / Estacas / MUSK / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1_GWMo-TNpwszqF99Dtwj9tiKgtD4mndC/view"
+   }
   },
   "NANO CHILL": {
    "creada": "2026-11-02",
@@ -925,31 +1045,61 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / NEULA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1WPWebg40iXwEz1-bYLCatBY2elQBxfL0/view"
+   }
   },
   "NIAO": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / NIAO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/12F4A8s2rHt7MelgyMJH-ptDdGhrEXG24/view"
+   }
   },
   "NIAO AP": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / NIAO AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1qKQcNK8du35493bqWS7bJuI3zNxl8Fyn/view"
+   }
   },
   "NIAO MS": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Apoyo / Mesa / NIAO MS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/12b3seyMXGJsMQeQ-4TOJNlVL1KPBP2mU/view"
+   }
   },
   "NICHI": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / NICHI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1hTXg1K1Wsbv5D4Uw--i7A2w5_qaS3TC8/view"
+   }
   },
   "NODO": {
    "actualizada": "2026-11-05",

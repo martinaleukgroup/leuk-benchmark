@@ -1864,7 +1864,7 @@
     const go = async () => {
       const err = $("#gateErr"); err.textContent = "";
       const btn = $("#gateGo"); btn.disabled = true; btn.textContent = "Ingresando…";
-      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); await bootApp(); unlock(); irDesdeLink(location.hash); }
+      try { await AUTHSES.login($("#gateEmail").value, $("#gatePass").value); await bootApp(); unlock(); irDesdeLink(LINK_ENTRADA); }
       catch (e) { err.textContent = e.message || "No se pudo ingresar"; }
       btn.disabled = false; btn.textContent = "Ingresar";
     };
@@ -2870,7 +2870,33 @@
     $("#ayudaFab").setAttribute("aria-expanded", "false");
   }
 
-  function goToPage(page) {
+  // ---- DIRECCIÓN (URL) DE CADA PÁGINA ---------------------------------------
+  // Cada página tiene su dirección: …/leuk-benchmark/#/pauta. Sirve para compartir o guardar
+  // el link, y el "atrás" del navegador vuelve a la página anterior. Se usa el nombre que se
+  // ve en el menú (no la clave interna: "comparaciones" es Catálogo, "resultados" es Comparaciones).
+  const DIR = {
+    comparaciones: "catalogo", resultados: "comparaciones", decisiones: "insights", fichas: "fichas-tecnicas",
+    contenidos: "whatsapp", "contenidos-ig": "instagram", "contenidos-mail": "mailing", "eventos-clientes": "impacto",
+    firmas: "firmas", stock: "stock", integraciones: "integraciones", manual: "manual",
+  };
+  const dirDe = p => DIR[p] || p;
+  const paginaDeDir = d => PAGES.find(p => p !== "inicio" && dirDe(p) === d) || null;
+  let URL_LISTA = false;                            // hasta leer el link de entrada, no se toca la barra
+  function ponerURL(page, reemplazar) {
+    if (!URL_LISTA) return;
+    const url = location.pathname + location.search + (page === "inicio" ? "" : "#/" + dirDe(page));
+    if (url === location.pathname + location.search + location.hash) return;
+    history[reemplazar ? "replaceState" : "pushState"]({ pagina: page }, "", url);
+  }
+  // "Atrás" / "Adelante" del navegador
+  window.addEventListener("popstate", () => {
+    if (document.body.classList.contains("locked")) return;
+    const m = location.hash.match(/^#\/([\w-]+)/);
+    goToPage(m ? paginaDeDir(m[1]) || "inicio" : "inicio", { historial: true });
+  });
+
+  function goToPage(page, op) {
+    op = op || {};
     if (!PAGES.includes(page)) page = "inicio";
     let mod = MOD_DE[page] || "inicio";
     // sin permiso sobre ese módulo → a Inicio (la Home ya se filtra por rol)
@@ -2879,6 +2905,7 @@
     const pcfg = (MODULOS[mod] && MODULOS[mod].pages || []).find(x => x.p === page);
     if (pcfg && pcfg.gate && !pcfg.gate()) { page = "inicio"; mod = "inicio"; }
     if (MODULOS[mod]) ULTIMA_PAG[mod] = page;
+    if (!op.historial) ponerURL(page, op.reemplazar);
     marcarNav(page);
     abrirMenu(false);
     $("#metaLine").textContent = mod === "benchmark" ? META_BENCH : "";   // pie sólo en Benchmark
@@ -3175,6 +3202,9 @@
   };
   // Al tocar un aviso del sistema: la app se abre (o se trae al frente) con #tarea=… / #accion=… / #pieza=… / #hoy
   async function irDesdeLink(hash) {
+    URL_LISTA = true;                               // desde acá, cada cambio de página va a la barra
+    const pg = String(hash || "").match(/^#\/([\w-]+)/);
+    if (pg) return goToPage(paginaDeDir(pg[1]) || "inicio", { reemplazar: true });
     const m = String(hash || "").match(/^#(tarea|accion|pieza|hoy)(?:=([\w-]+))?$/); if (!m) return;
     history.replaceState(null, "", location.pathname + location.search);
     if (m[1] === "hoy") return goToPage("inicio");
@@ -3439,6 +3469,7 @@
   $("#btnAuth").addEventListener("click", openCuenta);
   wireGate(); updateDescBtn();
   // La app requiere sesión: si hay sesión válida, bajar datos y entrar; si no, mostrar el login.
+  const LINK_ENTRADA = location.hash;               // ej. #/pauta: se abre después de entrar
   (async () => {
     // ¿Volvemos del mail de recuperación? El token viene en el # (a veces en el ?).
     const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
@@ -3453,7 +3484,7 @@
       return;
     }
     if (AUTHSES.logged() && await AUTHSES.refresh()) {
-      try { await bootApp(); unlock(); irDesdeLink(location.hash); } catch (e) { lock(); }
+      try { await bootApp(); unlock(); irDesdeLink(LINK_ENTRADA); } catch (e) { lock(); }
     } else { lock(); }
   })();
   setInterval(() => {

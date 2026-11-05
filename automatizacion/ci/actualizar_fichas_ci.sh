@@ -104,6 +104,33 @@ log "· filtro de stock: $ST_TOTAL SKU fuera de las fichas ($ST_NUEVOS nuevos ho
 STOCK_RES="$ST_TOTAL SKU fuera por stock ($ST_NUEVOS nuevos)"
 resumen ""
 resumen "Filtro de stock: **$ST_TOTAL** SKU fuera de las fichas · $ST_NUEVOS nuevos hoy · $ST_VOLVIERON volvieron al Excel"
+# Lista completa en el resumen (desplegable), agrupada por ficha: así se revisa sin bajar el artifact.
+if [ "${ST_TOTAL:-0}" -gt 0 ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  python3 - "$REPO/fichas-sin-stock.json" "$SALIDA/sin_stock_nuevos.txt" >> "$GITHUB_STEP_SUMMARY" <<'PY' 2>>"$LOG"
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+nuevos = set()
+try:
+    nuevos = {l.split(" · ", 1)[1].split(" ", 1)[0] for l in open(sys.argv[2], encoding="utf-8") if " · " in l}
+except Exception:
+    pass
+fuera = set(d.get("fichas_fuera", []))
+por = {}
+for q in d.get("skus", []):
+    por.setdefault(q["ficha"], []).append(q)
+print("")
+print(f"<details><summary>Ver los {len(d.get('skus', []))} SKU fuera por stock "
+      f"({len(fuera)} fichas salen enteras)</summary>\n")
+print("| Ficha | Sale entera | SKU | Nombre |")
+print("|---|---|---|---|")
+for ficha in sorted(por):
+    for i, q in enumerate(sorted(por[ficha], key=lambda q: q["sku"])):
+        marca = " 🆕" if q["sku"] in nuevos else ""
+        print(f"| {ficha if i == 0 else ''} | {('Sí' if ficha in fuera else 'No') if i == 0 else ''} "
+              f"| {q['sku']}{marca} | {q['nombre']} |")
+print("\n</details>")
+PY
+fi
 if [ "${ST_NUEVOS:-0}" -gt "$MAX_QUITAR_STOCK" ] && [ "$PERMITIR_QUITAR_STOCK" != "true" ]; then
   log "⛔ FRENO: el filtro de stock saca hoy $ST_NUEVOS SKU nuevos (máximo $MAX_QUITAR_STOCK). NO se publica."
   log "   Revisar el Excel de stock. Si está bien, correr a mano con «permitir_quitar_stock» tildado."

@@ -518,6 +518,7 @@
     if (ERROR) { c.innerHTML = `<div class="empty">No se pudieron traer los eventos. Revisá la conexión.<br><button class="btn-ghost" data-ec="reintentar">Reintentar</button></div>`; return; }
     if (ABIERTO && ABIERTO !== "nuevo" && !EVS.some(e => e.id === ABIERTO)) ABIERTO = null;
     if (CAMP && CAMP !== "nueva" && !CAMPS.some(x => x.id === CAMP)) CAMP = null;
+    migas();
     if (ABIERTO) { c.innerHTML = `<div class="ec-detalle"></div>`; return pintarDetalle(); }
     if (CAMP) { c.innerHTML = `<div class="ec-detalle"></div>`; return pintarCampana(); }
     c.innerHTML = `<div class="ec-tablero"></div>`;
@@ -1214,6 +1215,17 @@
     } catch (e) { nota("No se pudo eliminar. Sólo puede hacerlo quien lo creó o un admin.", true); }
   }
   function abrir(id) { ABIERTO = id; CAMP = null; OTRO_DIS = false; BUSCA_CLI = ""; pintar(); window.scrollTo({ top: 0 }); }
+  // Migas de pan (app.js): Planificación › Impacto de acciones › la pestaña › el evento o la campaña
+  const TAB_T = { eventos: "Charlas y eventos", comparar: "Comparar períodos", campanas: "Campañas de producto", faltan: "Datos que faltan" };
+  function migas() {
+    if (!window.lkMigas) return;
+    const ev = ABIERTO && eventoAbierto(), cp = !ev && CAMP && campanaAbierta();
+    const det = ev ? (ABIERTO === "nuevo" ? "Nuevo evento" : ev.titulo || "Sin nombre")
+      : cp ? (CAMP === "nueva" ? "Nueva campaña" : cp.titulo || cp.palabra || cp.familia || "Campaña") : "";
+    const tab = ev ? "eventos" : cp ? "campanas" : TAB;
+    window.lkMigas("eventos-clientes", [{ t: TAB_T[tab], ir: det ? () => { TAB = tab; volver(); } : null }, det && { t: det }],
+      det || TAB !== "eventos" ? () => { TAB = "eventos"; if (det) volver(); else pintar(); } : null);
+  }
   async function volver() {
     if (ABIERTO === "nuevo") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !(await lkConfirmar("¿Descartar el evento que estabas creando?", { ok: "Descartar" }))) return; }
     if (CAMP === "nueva") { const t = caja().querySelector(".ec-titulo"); if (t && t.value.trim() && !(await lkConfirmar("¿Descartar la campaña que estabas creando?", { ok: "Descartar" }))) return; }

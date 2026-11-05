@@ -2706,15 +2706,46 @@
     if (GRUPO_DE[page] === "Administración") plegarAdmin(true);
     const t = $("#tbTitle"); if (t) t.textContent = (PAG[page] || {}).t || "";
   }
-  // Barra de la página: sólo la llevan las páginas con herramientas propias (hoy, las de
-  // Benchmark: ⚙ Descuentos). El resto ya trae su propia barra (Contenidos, Tareas…).
+  // Barra de la página: migas de pan en todas las páginas menos Mi día
+  // (Grupo › Página › lo que la página cuente), y las herramientas propias de Benchmark (Descuentos).
+  // Una página suma sus niveles con window.lkMigas(página, [{t, ir}], alInicio):
+  //   cada nivel con `ir` se puede tocar para volver ahí; el último es "estás acá";
+  //   `alInicio` (opcional) hace clickeable el nombre de la página para volver a su vista principal.
+  let PAG_ACTUAL = "", MIGAS = { items: [], alInicio: null };
   function renderSubbar(mod, page) {
     const bar = $("#subbar"); if (!bar) return;
-    if (mod !== "benchmark") { bar.classList.add("hidden"); return; }
-    bar.classList.remove("hidden");
-    $("#sbLabel").textContent = GRUPO_DE[page] || "";
-    $("#sbTitle").textContent = (PAG[page] || {}).t || "";
+    if (page !== PAG_ACTUAL) MIGAS = { items: [], alInicio: null };
+    PAG_ACTUAL = page;
+    bar.classList.toggle("hidden", page === "inicio");
+    $("#sbTools").classList.toggle("hidden", mod !== "benchmark");
+    pintarMigas();
   }
+  function pintarMigas() {
+    const nav = $("#migas"); if (!nav) return;
+    const page = PAG_ACTUAL, items = MIGAS.items.filter(x => x && x.t);
+    const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const sep = `<span class="mg-sep" aria-hidden="true">›</span>`;
+    const nivel = (t, i, ultimo) => ultimo ? `<span class="mg-act" aria-current="page">${esc(t)}</span>`
+      : i == null ? `<span class="mg-txt">${esc(t)}</span>`
+      : `<button class="mg-link" data-mg="${i}">${esc(t)}</button>`;
+    const partes = [];
+    if (GRUPO_DE[page]) partes.push(nivel(GRUPO_DE[page], null, false));
+    partes.push(nivel((PAG[page] || {}).t || "", MIGAS.alInicio ? -1 : null, !items.length));
+    items.forEach((x, i) => partes.push(nivel(x.t, x.ir ? i : null, i === items.length - 1)));
+    nav.innerHTML = partes.join(sep);
+    nav.scrollLeft = nav.scrollWidth;              // en celular, que se vea el final (dónde estás)
+  }
+  window.lkMigas = function (page, items, alInicio) {
+    if (page !== PAG_ACTUAL) return;               // una página que no está a la vista no toca las migas
+    MIGAS = { items: items || [], alInicio: alInicio || null };
+    pintarMigas();
+  };
+  $("#migas").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-mg]"); if (!b) return;
+    const i = Number(b.dataset.mg);
+    const fn = i === -1 ? MIGAS.alInicio : (MIGAS.items[i] || {}).ir;
+    if (fn) { fn(); window.scrollTo({ top: 0 }); }
+  });
   const abrirMenu = si => document.body.classList.toggle("nav-abierto", si);
 
   // ---- AYUDA ---------------------------------------------------------------

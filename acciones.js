@@ -560,6 +560,10 @@
     if (ABIERTA && !accionAbierta()) ABIERTA = null;
     c.innerHTML = ABIERTA ? `<div class="ac-detalle"></div>` : `<div class="ac-lista-wrap"></div>`;
     if (ABIERTA) pintarDetalle(); else pintarLista();
+    // Migas de pan (app.js): Planificación › Acciones › la acción abierta
+    const a = ABIERTA && accionAbierta();
+    if (window.lkMigas) window.lkMigas("acciones", a ? [{ t: ABIERTA === "nueva" ? "Nueva acción" : a.titulo || "Sin título" }] : [],
+      a ? () => volver() : null);
   }
 
   /* ---------- LISTA ---------- */

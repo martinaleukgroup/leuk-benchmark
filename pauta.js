@@ -339,6 +339,9 @@
     else w.innerHTML = resumenHTML();
     pintarNota();
     window.scrollTo({ top: sc });
+    // Migas de pan (app.js): Contenidos › Pauta › la pestaña
+    if (window.lkMigas) window.lkMigas("pauta", ADS.length ? [{ t: { resumen: "Resumen", anuncios: "Anuncios", productos: "Ventas por producto" }[TAB] }] : [],
+      TAB !== "resumen" ? () => { TAB = "resumen"; ABIERTO = null; pintar(); } : null);
   }
   const vacioHTML = () => `<section class="ec-card pa-vacio"><h3>Todavía no hay pauta cargada</h3>
     <p>Subí los informes de anuncios de Meta (Excel): el de Leuk y el de Laftdren juntos.</p>${comoHTML()}

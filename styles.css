@@ -105,9 +105,18 @@ button{font-family:var(--font-body);cursor:pointer}
 .topbar .logo{height:26px;width:26px}
 .tb-title{font-family:var(--font-title);font-weight:600;font-size:17px;color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pagebar{display:flex;align-items:baseline;gap:10px;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
-.pb-grp{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.18em;color:var(--gray-soft);white-space:nowrap}
-.pb-title{margin:0;font-size:18px;font-weight:600;color:var(--ink)}
+.pagebar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.pagebar.hidden{display:none}
+/* Migas de pan: Grupo › Página › pestaña/detalle. Los niveles con link vuelven ahí. */
+.migas{display:flex;align-items:center;gap:6px;min-width:0;flex:1;font-size:13px;color:var(--gray-soft);
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.migas::-webkit-scrollbar{display:none}
+.mg-sep{color:var(--line);font-size:15px;line-height:1;flex:none}
+.mg-txt{flex:none}
+.mg-link{flex:none;border:0;background:transparent;padding:2px 4px;margin:0 -4px;border-radius:6px;font:inherit;
+  color:var(--gray);cursor:pointer}
+.mg-link:hover{background:var(--olive-pale);color:var(--ink)}
+.mg-act{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;max-width:42ch}
 .sb-tools{margin-left:auto;display:flex;gap:8px;flex:none;align-self:center}
 .sb-tools.hidden{display:none}
 
@@ -120,7 +129,8 @@ button{font-family:var(--font-body);cursor:pointer}
   body.nav-abierto .side-scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:25}
   .topbar{display:flex}
   .pagebar{padding:8px 12px}
-  .pagebar .pb-grp,.pagebar .pb-title{display:none}
+  .pagebar{flex-wrap:wrap;gap:6px}
+  .migas{flex-basis:100%}
   .sb-tools{margin-left:0;width:100%}
   .sb-tools .btn-desc{flex:1;text-align:center}
 }

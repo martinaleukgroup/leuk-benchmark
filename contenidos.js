@@ -1949,7 +1949,23 @@
     if (ok) setTimeout(() => { if (el.textContent === txt) el.textContent = ""; }, 2500);
   }
 
+  // Migas de pan (app.js): Instagram › Leuk › Fichas › la pieza abierta.
+  const VISTA_T = { calendario: "Calendario", fichas: "Fichas", feed: "Feed", resultados: "Resultados" };
+  function migas() {
+    if (!window.lkMigas) return;
+    const perfil = esIG(CANAL) ? PERFILES.find(p => p.k === CANAL) : null;
+    // en celular (≤860px, como contenidos.css) la pieza sólo cuenta si está abierta, no con la lista a la vista
+    const conPanel = VER_PANEL || !matchMedia("(max-width:860px)").matches;
+    const pieza = MSGS.length && VISTA === "fichas" && conPanel ? MSGS.find(m => m.id === SEL[CANAL]) : null;
+    const aLista = () => { VISTA = "fichas"; VER_PANEL = false; MOVIENDO = ""; pintar(); };
+    window.lkMigas(C().pagina, [
+      perfil && { t: perfil.t, ir: VISTA !== "fichas" || pieza ? aLista : null },
+      MSGS.length && { t: VISTA_T[VISTA] || "", ir: pieza ? () => { VER_PANEL = false; pintar(); } : null },
+      pieza && { t: pieza.criterio || "Sin título" },
+    ]);
+  }
   function enganchar() {
+    migas();
     const cont = caja(); if (!cont) return;
     cont.querySelectorAll("[data-mailfile]").forEach(inp => {
       inp.onchange = () => { const fs = [...inp.files]; inp.value = ""; if (fs.length) subirMail(inp.dataset.mailfile, fs); };

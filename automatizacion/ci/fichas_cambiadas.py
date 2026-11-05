@@ -15,7 +15,7 @@ Actualizada / Falta foto): cuándo se creó y cuándo cambió cada ficha, qué c
 SKU le falta la foto de producto.
 
 Escribe una agrupación por línea en --salida y un resumen en la consola.
-Con --solo, además de las cambiadas fuerza esas agrupaciones (para probar).
+Con --solo se imprimen solo esas agrupaciones (las demás quedan para la próxima corrida).
 """
 import argparse
 import json
@@ -196,8 +196,11 @@ def main():
         else:
             print(f"  ⚠ --solo: no hay ninguna agrupación llamada {ag!r}")
 
+    # Con --solo se imprimen SOLO esas (botón "Reimprimir" o corrida a mano de una ficha):
+    # antes se sumaban a todas las cambiadas y el freno de MAX_PDFS frenaba la ficha pedida.
+    # Las demás no se pierden: siguen pendientes y salen en la próxima corrida normal.
     lista = []
-    for ag in nuevas + cambiadas + por_foto + pendientes_drive + forzadas:
+    for ag in (forzadas if forzadas else nuevas + cambiadas + por_foto + pendientes_drive):
         if ag not in lista:
             lista.append(ag)
 

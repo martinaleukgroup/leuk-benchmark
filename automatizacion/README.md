@@ -36,7 +36,7 @@ Hace lo mismo que la Mac (índice de Drive, fotos, fichas desde el Hub, mismos f
 1. GitHub → repo → pestaña **Actions** → **Fichas técnicas · actualización diaria**.
 2. **Run workflow** → elegir:
    - **modo:** `prueba` (no publica nada, solo muestra qué cambiaría y genera los PDF) o `real` (publica).
-   - **solo:** agrupaciones a imprimir sí o sí, separadas por coma (ej. `MOLY, DYNA`). Opcional.
+   - **solo:** imprimir solo estas agrupaciones, separadas por coma (ej. `MOLY, DYNA`). Opcional; las demás cambiadas quedan para la próxima corrida.
    - **max_pdfs:** el freno; subirlo si cambiaron muchas fichas a propósito.
    - **permitir_quitar_stock:** aceptar que el filtro de stock saque más de 30 SKU de golpe.
 3. Al terminar (~4 min): la corrida muestra el resumen (qué fichas cambiaron, pendientes de foto) y

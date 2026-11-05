@@ -20,7 +20,7 @@ on:
         options: [prueba, real]
         default: prueba
       solo:
-        description: "Agrupaciones a imprimir sí o sí, separadas por coma (opcional)"
+        description: "Imprimir solo estas agrupaciones, separadas por coma (opcional)"
         required: false
         default: ""
       max_pdfs:

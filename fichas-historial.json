@@ -76,12 +76,6 @@
     "Factor de potencia"
    ]
   },
-  "BEMUS": {
-   "actualizada": "2026-11-03",
-   "cambios": [
-    "Factor de potencia"
-   ]
-  },
   "BERSH": {
    "actualizada": "2026-11-03",
    "cambios": [
@@ -159,7 +153,9 @@
   "CATEN": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "falta_foto": [
     "7442",
@@ -311,7 +307,8 @@
   "FORTE": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil"
+    "Color producto",
+    "Colores"
    ],
    "falta_foto": [
     "7475",
@@ -329,12 +326,6 @@
    ]
   },
   "FREYA": {
-   "actualizada": "2026-11-03",
-   "cambios": [
-    "Factor de potencia"
-   ]
-  },
-  "GALACTIC": {
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
@@ -363,9 +354,8 @@
    ]
   },
   "IOJU": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
     "Color producto",
     "Colores"
    ]
@@ -436,11 +426,9 @@
    ]
   },
   "LAIVA AP": {
-   "actualizada": "2026-11-04",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Material",
-    "Marca Driver",
-    "Clase de aislación"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -490,11 +478,9 @@
    ]
   },
   "LOA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Variantes"
    ]
   },
   "LOFI": {
@@ -522,12 +508,6 @@
     "7435"
    ]
   },
-  "LUKA": {
-   "actualizada": "2026-11-03",
-   "cambios": [
-    "Factor de potencia"
-   ]
-  },
   "LUVA": {
    "actualizada": "2026-11-05",
    "cambios": [
@@ -547,9 +527,8 @@
    ]
   },
   "MATT": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
     "Color producto",
     "Colores"
    ]
@@ -744,9 +723,8 @@
    ]
   },
   "ONA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
     "Color producto",
     "Colores"
    ]
@@ -756,6 +734,13 @@
    "falta_foto": [
     "7505",
     "7506"
+   ]
+  },
+  "ORI": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
    ]
   },
   "ORTHOG": {
@@ -819,18 +804,6 @@
     "7721"
    ]
   },
-  "POCKET DRIVER TRIAC VI": {
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7720"
-   ]
-  },
-  "POCKET DRIVER TRIAC XII": {
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7722"
-   ]
-  },
   "POCKET III": {
    "actualizada": "2026-11-03",
    "cambios": [
@@ -846,6 +819,11 @@
    ]
   },
   "POCKET III y IV": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7717",
@@ -853,10 +831,10 @@
    ]
   },
   "POCKET IV": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
-    "Factor de potencia"
+    "Color producto",
+    "Colores"
    ],
    "falta_foto": [
     "7726",
@@ -879,29 +857,27 @@
    ]
   },
   "POCKET MODULO III 2CCT": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7449",
-    "7450"
-   ]
-  },
-  "POCKET MODULO III BLBL 2CCT": {
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7448"
+    "7449"
    ]
   },
   "POCKET MODULO IV 2CCT": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Variantes",
+    "Color producto",
+    "Colores"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7452",
-    "7453"
-   ]
-  },
-  "POCKET MODULO IV BLBL 2CCT": {
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7451"
+    "7452"
    ]
   },
   "POCKET MODULO VI 2CCT": {
@@ -931,10 +907,9 @@
    ]
   },
   "POCKET VI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
-    "Factor de potencia"
+    "Variantes"
    ],
    "falta_foto": [
     "7729",
@@ -977,8 +952,8 @@
   "POLAR": {
    "actualizada": "2026-11-05",
    "cambios": [
+    "Variantes",
     "Color producto",
-    "Dimensión producto",
     "Colores"
    ],
    "creada": "2026-11-02",
@@ -1002,13 +977,10 @@
     "7553",
     "7554",
     "7555",
-    "7556",
     "7557",
-    "7558",
     "7559",
     "7560",
     "7561",
-    "7562",
     "7702",
     "7703",
     "7704",
@@ -1152,9 +1124,9 @@
    ]
   },
   "REN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Factor de potencia"
+    "Variantes"
    ]
   },
   "RIELES 1EF": {
@@ -1166,12 +1138,10 @@
   "RIELES 3EF": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Foto",
-    "Descripción",
-    "LDT"
-   ],
-   "falta_foto": [
-    "7235"
+    "Variantes",
+    "Accesorios",
+    "Color producto",
+    "Colores"
    ]
   },
   "RISE": {
@@ -1181,11 +1151,9 @@
    ]
   },
   "RITA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-05",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Variantes"
    ]
   },
   "RIU": {
@@ -1333,7 +1301,6 @@
   "TERRA": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil",
     "Dibujo técnico"
    ],
    "creada": "2026-11-02",
@@ -1354,7 +1321,7 @@
   "TERRA CHILL": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1364,7 +1331,7 @@
   "TERRA GRID": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1374,7 +1341,7 @@
   "TERRA POINT": {
    "actualizada": "2026-11-05",
    "cambios": [
-    "Vida útil"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1473,6 +1440,12 @@
    "actualizada": "2026-11-03",
    "cambios": [
     "Factor de potencia"
+   ]
+  },
+  "YANA": {
+   "actualizada": "2026-11-05",
+   "cambios": [
+    "Variantes"
    ]
   },
   "YORK": {

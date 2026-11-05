@@ -1,0 +1,182 @@
+{
+ "skus": [
+  {
+   "sku": "6031",
+   "nombre": "BEMUS",
+   "ficha": "BEMUS"
+  },
+  {
+   "sku": "7098",
+   "nombre": "CATEN 60",
+   "ficha": "CATEN"
+  },
+  {
+   "sku": "7246",
+   "nombre": "CATEN 30 DR",
+   "ficha": "CATEN"
+  },
+  {
+   "sku": "7115",
+   "nombre": "FORTE BL 12W",
+   "ficha": "FORTE"
+  },
+  {
+   "sku": "6780",
+   "nombre": "GALACTIC",
+   "ficha": "GALACTIC"
+  },
+  {
+   "sku": "6781",
+   "nombre": "GALACTIC NG 45W",
+   "ficha": "GALACTIC"
+  },
+  {
+   "sku": "6782",
+   "nombre": "GALACTIC BLMD 45W",
+   "ficha": "GALACTIC"
+  },
+  {
+   "sku": "6783",
+   "nombre": "GALACTIC NGMD 45W",
+   "ficha": "GALACTIC"
+  },
+  {
+   "sku": "6112",
+   "nombre": "IOJU",
+   "ficha": "IOJU"
+  },
+  {
+   "sku": "6327",
+   "nombre": "JEN",
+   "ficha": "JEN"
+  },
+  {
+   "sku": "6328",
+   "nombre": "JEN I NG",
+   "ficha": "JEN"
+  },
+  {
+   "sku": "6431",
+   "nombre": "JEN I BLNG",
+   "ficha": "JEN"
+  },
+  {
+   "sku": "6485",
+   "nombre": "LAMPY M",
+   "ficha": "LAMPY DE MESA"
+  },
+  {
+   "sku": "6486",
+   "nombre": "LAMPY M BL",
+   "ficha": "LAMPY DE MESA"
+  },
+  {
+   "sku": "6487",
+   "nombre": "LAMPY M AZ",
+   "ficha": "LAMPY DE MESA"
+  },
+  {
+   "sku": "6488",
+   "nombre": "LAMPY M VR",
+   "ficha": "LAMPY DE MESA"
+  },
+  {
+   "sku": "6489",
+   "nombre": "LAMPY M BD",
+   "ficha": "LAMPY DE MESA"
+  },
+  {
+   "sku": "6492",
+   "nombre": "LAMPY P AZ",
+   "ficha": "LAMPY DE PIE"
+  },
+  {
+   "sku": "6494",
+   "nombre": "LAMPY P BD",
+   "ficha": "LAMPY DE PIE"
+  },
+  {
+   "sku": "6117",
+   "nombre": "LOA I NG",
+   "ficha": "LOA"
+  },
+  {
+   "sku": "6772",
+   "nombre": "LUKA BLMD",
+   "ficha": "LUKA"
+  },
+  {
+   "sku": "6120",
+   "nombre": "MATT l NG",
+   "ficha": "MATT"
+  },
+  {
+   "sku": "6125",
+   "nombre": "ONA",
+   "ficha": "ONA"
+  },
+  {
+   "sku": "6804",
+   "nombre": "ORI",
+   "ficha": "ORI"
+  },
+  {
+   "sku": "7182",
+   "nombre": "POCKET IV",
+   "ficha": "POCKET IV"
+  },
+  {
+   "sku": "7189",
+   "nombre": "POCKET VI BLNG 3000K",
+   "ficha": "POCKET VI"
+  },
+  {
+   "sku": "7279",
+   "nombre": "MARCO REN SLIM",
+   "ficha": "REN"
+  },
+  {
+   "sku": "7008",
+   "nombre": "ADAPTADOR HEMBRA 3EF",
+   "ficha": "RIELES 3EF"
+  },
+  {
+   "sku": "7009",
+   "nombre": "ADAPTADOR HEMBRA 3EF NG",
+   "ficha": "RIELES 3EF"
+  },
+  {
+   "sku": "7235",
+   "nombre": "ALIMENTACION EXTREMO 3 EF",
+   "ficha": "RIELES 3EF"
+  },
+  {
+   "sku": "7236",
+   "nombre": "ALIMENTACION EXTREMO 3 EF BL",
+   "ficha": "RIELES 3EF"
+  },
+  {
+   "sku": "7242",
+   "nombre": "RIEL 1MT 3EF BL",
+   "ficha": "RIELES 3EF"
+  },
+  {
+   "sku": "6133",
+   "nombre": "RITA I NG",
+   "ficha": "RITA"
+  },
+  {
+   "sku": "6437",
+   "nombre": "YANA l NG",
+   "ficha": "YANA"
+  }
+ ],
+ "fichas_fuera": [
+  "BEMUS",
+  "GALACTIC",
+  "JEN",
+  "LAMPY DE MESA",
+  "LAMPY DE PIE",
+  "LUKA"
+ ]
+}

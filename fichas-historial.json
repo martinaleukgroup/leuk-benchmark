@@ -1145,9 +1145,9 @@
    ],
    "drive": {
     "destino": "Interior / Rieles / Uniones / RIELES 3EF / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"The item has no binary field 'pdf' [item 0]\"",
-    "estado": "error",
-    "fecha": "2026-11-05"
+    "estado": "subida",
+    "fecha": "2026-11-05",
+    "url": "https://drive.google.com/file/d/1JVJ0TIXhTOGWLpDpQdX97M7o36MgREQj/view"
    }
   },
   "RISE": {

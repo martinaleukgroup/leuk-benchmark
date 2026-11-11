@@ -75,17 +75,15 @@
    ]
   },
   "AXE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-11",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Variantes"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / AXE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1PhP-AHn1J25_IwchC7vMErr1uW6KYsJJ/view"
+    "fecha": "2026-11-11",
+    "url": "https://drive.google.com/file/d/1K34-opUaXQBe4BfGeZPGjawn2krzMEdb/view"
    }
   },
   "AXIS": {
@@ -377,18 +375,6 @@
     "estado": "subida",
     "fecha": "2026-11-05",
     "url": "https://drive.google.com/file/d/1d7ctM7Vy7Fw2djUd8c3b3KJ5TrdLflqW/view"
-   }
-  },
-  "DEB": {
-   "actualizada": "2026-11-03",
-   "cambios": [
-    "Potencia"
-   ],
-   "drive": {
-    "destino": "Interior / De Techo / Embutidos / DEB / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1pSAqf9T_LMNlRt8oqgpYF3n1ljNl1c_1/view"
    }
   },
   "DOT": {
@@ -1173,6 +1159,19 @@
     "url": "https://drive.google.com/file/d/1M0JsT1cIqyXDthmT0ZPleT7CvM1dgSlZ/view"
    }
   },
+  "OLU": {
+   "actualizada": "2026-11-11",
+   "cambios": [
+    "Color producto",
+    "Colores"
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / OLU / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-11",
+    "url": "https://drive.google.com/file/d/1xqgjZT20SXHo75Ng059zblwlJ2yCd1xA/view"
+   }
+  },
   "ONA": {
    "actualizada": "2026-11-05",
    "cambios": [
@@ -1524,9 +1523,9 @@
    ]
   },
   "POLAR GRID": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-11",
    "cambios": [
-    "Dimensión producto"
+    "Variantes"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1537,24 +1536,24 @@
     "7587",
     "7588",
     "7589",
-    "7590",
-    "7591",
-    "7592",
-    "7593",
-    "7594"
+    "7590"
    ]
   },
   "POLAR GRID MOVIL": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-11",
    "cambios": [
-    "Dimensión producto"
+    "Variantes"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7573",
     "7574",
     "7575",
-    "7576"
+    "7576",
+    "7591",
+    "7592",
+    "7593",
+    "7594"
    ]
   },
   "POLAR LINE": {
@@ -1804,18 +1803,6 @@
     "estado": "subida",
     "fecha": "2026-11-05",
     "url": "https://drive.google.com/file/d/1niceWrE6ZoKvq-m3OaKrUeLo7g4a0-O6/view"
-   }
-  },
-  "SINTRA SQ": {
-   "actualizada": "2026-11-03",
-   "cambios": [
-    "Factor de potencia"
-   ],
-   "drive": {
-    "destino": "Interior / De Techo / Apliques / SINTRA SQ / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1F--oRzCHj7yKopdG2qnGPBOFJ9C-UwxK/view"
    }
   },
   "SIRENA": {

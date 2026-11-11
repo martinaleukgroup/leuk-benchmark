@@ -1,6 +1,11 @@
 {
  "skus": [
   {
+   "sku": "6098",
+   "nombre": "AXE I NG",
+   "ficha": "AXE"
+  },
+  {
    "sku": "6031",
    "nombre": "BEMUS",
    "ficha": "BEMUS"
@@ -14,6 +19,11 @@
    "sku": "7246",
    "nombre": "CATEN 30 DR",
    "ficha": "CATEN"
+  },
+  {
+   "sku": "6104",
+   "nombre": "DEB",
+   "ficha": "DEB"
   },
   {
    "sku": "7115",
@@ -111,6 +121,11 @@
    "ficha": "MATT"
   },
   {
+   "sku": "6806",
+   "nombre": "OLU",
+   "ficha": "OLU"
+  },
+  {
    "sku": "6125",
    "nombre": "ONA",
    "ficha": "ONA"
@@ -166,6 +181,11 @@
    "ficha": "RITA"
   },
   {
+   "sku": "6618",
+   "nombre": "SINTRA SQ",
+   "ficha": "SINTRA SQ"
+  },
+  {
    "sku": "6437",
    "nombre": "YANA l NG",
    "ficha": "YANA"
@@ -173,10 +193,12 @@
  ],
  "fichas_fuera": [
   "BEMUS",
+  "DEB",
   "GALACTIC",
   "JEN",
   "LAMPY DE MESA",
   "LAMPY DE PIE",
-  "LUKA"
+  "LUKA",
+  "SINTRA SQ"
  ]
 }

@@ -346,7 +346,9 @@
     : "";
   const conFigma = (m, p) => !!(p && p.nodo && archivoDe(m, p));
   // Una pieza de Instagram no avanza sin el diseño: todas sus placas con link de Figma.
-  const faltaFigma = m => !placasDe(m).length || placasDe(m).some(p => !conFigma(m, p));
+  // En una historia una placa puede ser sólo un video de Drive (nov 2026): ese no pide Figma.
+  const placaOk = (m, p) => conFigma(m, p) || (m.tipo === "historia" && !!p && esURL(p.video));
+  const faltaFigma = m => !placasDe(m).length || placasDe(m).some(p => !placaOk(m, p));
 
   /* Del link que se copia en Figma (clic derecho en el frame → "Copiar link a la
      selección") salen los dos datos que pide la API: el archivo y el frame.
@@ -1669,7 +1671,7 @@
           const img = imagenDe(m, n);
           const c = comsPlaca(m, n + 1).length;
           return `<button class="ct-placa ${n === i ? "on" : ""}" data-placa="${m.id}:${n}" title="${esc(p.pie || "Placa " + (n + 1))}">
-            ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${conFigma(m, p) ? n + 1 : "Sin link"}</span>`}
+            ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="ph">${conFigma(m, p) ? n + 1 : placaOk(m, p) ? "▶ Video" : "Sin link"}</span>`}
             <span class="ct-placa-est ${esc(p.estado || "borrador")}"></span>
             ${c ? `<span class="ct-placa-pin">${c}</span>` : ""}
             ${historia && esURL(p.video) ? `<span class="ct-placa-vid" title="Tiene video">▶</span>` : ""}
@@ -1686,8 +1688,8 @@
         ${traba ? `<span class="ct-placa-traba">· ${traba} comentario${traba > 1 ? "s" : ""} sin resolver acá</span>` : ""}
       </div>
 
-      ${ed ? `<label class="ct-figma ${conFigma(m, act) ? "" : "falta"}">
-          <span>Link de Figma${reel ? " de la miniatura" : ""} <b>obligatorio</b></span>
+      ${ed ? `<label class="ct-figma ${placaOk(m, act) ? "" : "falta"}">
+          <span>Link de Figma${reel ? " de la miniatura" : ""} ${historia ? `<b class="tenue">o el video de abajo</b>` : "<b>obligatorio</b>"}</span>
           <input type="url" data-figmalink="${m.id}:${i}" value="${esc(figmaUrl(m, act))}"
             placeholder="Pegá acá el link del frame de ${reel ? "la miniatura" : "esta placa"}" spellcheck="false" autocomplete="off">
         </label>` : ""}
@@ -1698,6 +1700,8 @@
               ? `Imagen congelada${act.png_ts ? " el " + String(act.png_ts).slice(8, 10) + "/" + String(act.png_ts).slice(5, 7) : ""}: esto es lo que se aprobó, aunque el frame haya cambiado después.`
             : esc(sinImagenPor(m, i) || "La imagen se trae de Figma y se congela al aprobar esta placa.")
           }</span></p>`
+        : historia && placaOk(m, act) ? `<p class="ct-placa-figma tenue">Esta placa es un video: no hace falta Figma (si querés una portada, pegá el link del frame arriba).</p>`
+        : historia ? `<p class="ct-placa-figma falta">Esta placa necesita el link de Figma o el del video en Drive (abajo). <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`
         : `<p class="ct-placa-figma falta">Esta placa todavía no tiene el link de Figma: sin él no se ve el diseño y la pieza no puede pedir feedback. <span class="tenue">${esc(FIGMA_AYUDA)}</span></p>`}
 
       ${historia ? videoPlacaHTML(m, i, ed) : ""}
@@ -2189,7 +2193,7 @@
         const [pid, n, nuevo] = pEst.dataset.placaest.split(":");
         const m = MSGS.find(x => x.id === pid); if (!m) return;
         const pls = placasDe(m).slice(); if (!pls[+n]) return;
-        if (nuevo !== "borrador" && !conFigma(m, pls[+n])) {
+        if (nuevo !== "borrador" && !placaOk(m, pls[+n])) {
           lkAviso(`Falta el link de Figma\n\nPegá el link de esta placa en el campo «Link de Figma» antes de cambiarle el estado.\n\n${FIGMA_AYUDA}`);
           return;
         }
@@ -2228,12 +2232,13 @@
       if (t.closest("[data-addplaca]")) {
         const m = MSGS.find(x => x.id === id); if (!m) return;
         // Sin link no hay placa: es de donde sale la imagen.
-        const f = await pedirFigma(m.tipo === "reel" ? "la miniatura del reel" : `Placa ${placasDe(m).length + 1}`);
+        const f = await pedirFigma(m.tipo === "reel" ? "la miniatura del reel" : `Placa ${placasDe(m).length + 1}`, m.tipo === "historia");
         if (!f) return;
         const pls = placasDe(m).slice();
-        pls.push({ pie: "", nodo: f.nodo, archivo: f.archivo, link: f.link, png: "", estado: "borrador" });
+        pls.push(f.video ? { pie: "", video: f.video, png: "", estado: "borrador" }
+          : { pie: "", nodo: f.nodo, archivo: f.archivo, link: f.link, png: "", estado: "borrador" });
         await guardarCampo(id, "placas", pls);
-        if (!m.figma_file) { try { await guardarCampo(id, "figma_file", f.archivo); } catch (e) { } }
+        if (!f.video && !m.figma_file) { try { await guardarCampo(id, "figma_file", f.archivo); } catch (e) { } }
         traerImagenes().then(h => { if (h) pintar(); });
         PLACA[id] = pls.length - 1;
         // Con más de una placa ya es un carrusel; con una sola no se toca el tipo.
@@ -2383,14 +2388,16 @@
   }
 
   // Pide el link hasta que sea uno válido o se cancele. Devuelve {archivo, nodo, link} o null.
-  async function pedirFigma(que) {
+  // conVideo (historias): también vale el link de un video en Drive → {video}.
+  async function pedirFigma(que, conVideo) {
     let txt = "", err = "";
     for (;;) {
-      const r = await lkPedir(`${err ? FIGMA_ERR[err] + " Probá de nuevo." : `Pegá el link de Figma de ${que.toLowerCase()}`}\n\n${FIGMA_AYUDA}`,
+      const r = await lkPedir(`${err ? FIGMA_ERR[err] + " Probá de nuevo." : conVideo ? `Pegá el link de Figma o del video en Drive de ${que.toLowerCase()}` : `Pegá el link de Figma de ${que.toLowerCase()}`}\n\n${FIGMA_AYUDA}${conVideo ? "\nSi es un video: en Drive, clic derecho sobre el video → Compartir → Copiar vínculo." : ""}`,
         txt, { ok: "Guardar" });
       if (r == null) return null;
       txt = String(r).trim();
       if (!txt) return null;
+      if (conVideo && esDrive(txt)) return { video: conProto(txt) };
       const f = leerFigma(txt);
       if (!f.error) return f;
       err = f.error;
@@ -2431,7 +2438,7 @@
     // Instagram no avanza sin el diseño (oct 2026): cada placa con su link de Figma.
     if (esIG(CANAL) && ["revision", "aprobado", "calendarizado", "publicado"].includes(a) && faltaFigma(m)) {
       const pls = placasDe(m);
-      const sin = pls.map((p, n) => conFigma(m, p) ? 0 : n + 1).filter(Boolean);
+      const sin = pls.map((p, n) => placaOk(m, p) ? 0 : n + 1).filter(Boolean);
       if (sin.length) PLACA[id] = sin[0] - 1;
       pintar();
       lkAviso(!pls.length

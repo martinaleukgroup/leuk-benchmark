@@ -1709,7 +1709,9 @@
   }
 
   // El video del reel vive en Drive (pesa demasiado para la base): acá va el link.
-  const esDrive = s => { try { return /(^|\.)(drive|docs)\.google\.com$/i.test(new URL(String(s).trim()).hostname); } catch (e) { return false; } };
+  // Acepta también drive.usercontent.google.com y el link pegado sin "https://".
+  const conProto = s => { s = String(s || "").trim(); return s && !/^https?:\/\//i.test(s) && /^[\w.-]*google\.com\//i.test(s) ? "https://" + s : s; };
+  const esDrive = s => { try { return /(^|\.)(drive|docs|drive\.usercontent)\.google\.com$/i.test(new URL(conProto(s)).hostname); } catch (e) { return false; } };
   function videoHTML(m, ed) {
     const v = ((m.meta || {}).video || "").trim();
     return `<div class="ct-video">
@@ -1726,7 +1728,7 @@
   async function guardarVideo(pid, valor, inp) {
     const m = MSGS.find(x => x.id === pid); if (!m) return;
     const meta = m.meta || {};
-    const v = String(valor || "").trim();
+    const v = conProto(valor);
     if (v === (meta.video || "")) return;
     if (v && !esDrive(v)) {
       if (inp) inp.value = meta.video || "";
@@ -1757,7 +1759,7 @@
   async function guardarVideoPlaca(pid, n, valor, inp) {
     const m = MSGS.find(x => x.id === pid); if (!m) return;
     const pls = placasDe(m).slice(); const p = pls[n]; if (!p) return;
-    const v = String(valor || "").trim();
+    const v = conProto(valor);
     if (v === (p.video || "")) return;
     if (v && !esDrive(v)) {
       if (inp) inp.value = p.video || "";
@@ -3371,7 +3373,8 @@
       const sec = $("#page-" + C().pagina);
       if (!sec || sec.classList.contains("hidden") || document.hidden) return;
       const foco = document.activeElement;
-      if (foco && (foco.isContentEditable || foco.tagName === "TEXTAREA")) return;   // estás editando: no toco nada
+      // estás editando (también un link de Figma/Drive a medio pegar): no toco nada
+      if (foco && (foco.isContentEditable || foco.tagName === "TEXTAREA" || foco.tagName === "INPUT" || foco.tagName === "SELECT")) return;
       if (VISTA === "resultados") return;   // ahí se cargan números: repintar borraría lo que estás tipeando
       await Promise.all([traerMes(MES), traerAvisos()]); pintar();
     }, 30000);

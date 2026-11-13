@@ -8,10 +8,12 @@ Por qué existe (13/11/2026): n8n Cloud se quedaba sin memoria al abrir los orig
 Circuito (flujo "Hub de marketing · Fotos WebP · puente GitHub (Proceso 6b)" en n8n):
   1. pendientes → n8n lee la hoja "Fotos Web a convertir" del Hub (la escribe el Proceso 6) y responde
                   las fotos que todavía no tienen WebP (o lo tienen de una versión vieja).
-  2. bajar      → n8n devuelve el original de Drive. Acá se convierte: ancho máx. 1200 px, calidad 85.
-  3. subir      → n8n guarda el WebP en "Fotos web (WebP) - Proceso 6 (automático)" con el id y md5
-                  del original. Los originales de Drive NO se tocan.
-  4. fin        → n8n deja una línea WEBP en "Log Fotos Web" y, si hubo conversiones, corre el Proceso 6.
+  2. bajar      → n8n devuelve en un zip varios originales de Drive (de a LOTE_BAJAR, para no gastar una
+                  ejecución de n8n por foto). Acá se convierten: ancho máx. 1200 px, calidad 85.
+  3. subir      → n8n guarda los WebP (de a LOTE_SUBIR por llamada) en "Fotos web (WebP) - Proceso 6
+                  (automático)" con el id y md5 del original. Los originales de Drive NO se tocan.
+  4. fin        → n8n deja una línea WEBP en "Log Fotos Web", manda a la papelera los WebP de versiones
+                  viejas y, si hubo conversiones, corre el Proceso 6.
 
 Uso:
     python3 fotos_webp.py --modo prueba|real [--max 400] [--corrida 123] [--salida carpeta]
@@ -28,6 +30,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+import zipfile
 from pathlib import Path
 
 from PIL import Image, ImageOps
@@ -38,6 +41,8 @@ ANCHO_MAX = 1200
 CALIDAD = 85
 TIMEOUT = 300
 ESPERAS = [10, 30, 60]          # reintentos ante cortes de red o 5xx
+LOTE_BAJAR = 5                  # originales por llamada (pueden pesar 10-16 MB cada uno)
+LOTE_SUBIR = 10                 # WebP por llamada (pesan ~50-300 KB)
 
 
 def url_puente():
@@ -71,14 +76,17 @@ def post_json(url, token, body, binario=False):
     return _pedir(req, binario)
 
 
-def post_webp(url, token, campos, nombre, datos):
+def post_webps(url, token, campos, archivos):
+    """multipart con los campos de texto y los WebP en orden (webp0, webp1...)."""
     limite = "----leuk" + uuid.uuid4().hex
     partes = [f'--{limite}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode("utf-8")
               for k, v in campos.items()]
-    partes.append((f'--{limite}\r\nContent-Disposition: form-data; name="webp"; filename="{nombre}"\r\n'
-                   'Content-Type: image/webp\r\n\r\n').encode("utf-8"))
-    partes.append(datos)
-    partes.append(f"\r\n--{limite}--\r\n".encode("utf-8"))
+    for i, (nombre, datos) in enumerate(archivos):
+        partes.append((f'--{limite}\r\nContent-Disposition: form-data; name="webp{i}"; filename="{nombre}"\r\n'
+                       'Content-Type: image/webp\r\n\r\n').encode("utf-8"))
+        partes.append(datos)
+        partes.append(b"\r\n")
+    partes.append(f"--{limite}--\r\n".encode("utf-8"))
     req = urllib.request.Request(url, data=b"".join(partes), method="POST",
                                  headers={"Content-Type": f"multipart/form-data; boundary={limite}", "x-leuk-token": token})
     return _pedir(req)
@@ -135,24 +143,59 @@ def main():
         return 0
 
     convertidas, errores, filas = 0, [], []
-    for n, p in enumerate(pendientes, 1):
-        nombre = (p.get("stem") or "foto") + ".webp"
+    cola = []   # (meta, nombre, webp) listos para guardar en Drive; se mandan de a LOTE_SUBIR
+
+    def guardar(todo=False):
+        nonlocal convertidas
+        while cola and (todo or len(cola) >= LOTE_SUBIR):
+            lote = cola[:LOTE_SUBIR]
+            del cola[:LOTE_SUBIR]
+            if a.modo != "real":
+                convertidas += len(lote)
+                continue
+            metas = [{"drive": p["drive"], "md5": p.get("md5", ""), "stem": p.get("stem", "")} for p, _, _ in lote]
+            try:
+                r = post_webps(url, token, {"accion": "subir", "metas": json.dumps(metas)}, [(n, w) for _, n, w in lote])
+                ok = {x.get("drive") for x in (r.get("subidas") or []) if x.get("id")}
+            except Exception as e:
+                ok = set()
+                print(f"ERROR guardando en Drive: {e}", file=sys.stderr)
+            for p, _, _ in lote:
+                if p["drive"] in ok:
+                    convertidas += 1
+                else:
+                    errores.append(f"{p.get('nombre', p['drive'])}: no se pudo guardar en Drive")
+
+    hechas = 0
+    for k in range(0, len(pendientes), LOTE_BAJAR):
+        lote = pendientes[k:k + LOTE_BAJAR]
         try:
-            original = post_json(url, token, {"accion": "bajar", "drive": p["drive"]}, binario=True)
-            webp = a_webp(original)
+            zbytes = post_json(url, token, {"accion": "bajar", "drives": [p["drive"] for p in lote]}, binario=True)
+            with zipfile.ZipFile(io.BytesIO(zbytes)) as z:
+                originales = {Path(n).name: z.read(n) for n in z.namelist()}
+        except Exception as e:
+            errores += [f"{p.get('nombre', p['drive'])}: no se pudo bajar ({str(e)[:120]})" for p in lote]
+            print(f"ERROR bajando lote {k // LOTE_BAJAR + 1}: {e}", file=sys.stderr)
+            continue
+        for p in lote:
+            nombre = (p.get("stem") or "foto") + ".webp"
+            original = originales.get(p["drive"])
+            if original is None:
+                errores.append(f"{p.get('nombre', p['drive'])}: n8n no la devolvió")
+                continue
+            try:
+                webp = a_webp(original)
+            except Exception as e:
+                errores.append(f"{p.get('nombre', p['drive'])}: no se pudo convertir ({str(e)[:120]})")
+                continue
             if salida:
                 (salida / nombre).write_bytes(webp)
-            if a.modo == "real":
-                r = post_webp(url, token, {"accion": "subir", "drive": p["drive"], "md5": p.get("md5", ""),
-                                           "stem": p.get("stem", ""), "nombre": p.get("nombre", "")}, nombre, webp)
-                if not r.get("ok"):
-                    raise RuntimeError("n8n no confirmó la subida: " + json.dumps(r)[:200])
-            convertidas += 1
+            cola.append((p, nombre, webp))
+            hechas += 1
             filas.append(f"| {p.get('nombre', '')} | {len(original) / 1e6:.1f} MB | {len(webp) / 1e3:.0f} KB |")
-            print(f"[{n}/{len(pendientes)}] {p.get('nombre')} {len(original) / 1e6:.1f} MB → {len(webp) / 1e3:.0f} KB")
-        except Exception as e:
-            errores.append(f"{p.get('nombre', p.get('drive'))}: {str(e)[:150]}")
-            print(f"[{n}/{len(pendientes)}] ERROR {p.get('nombre')}: {e}", file=sys.stderr)
+            print(f"[{hechas}/{len(pendientes)}] {p.get('nombre')} {len(original) / 1e6:.1f} MB → {len(webp) / 1e3:.0f} KB")
+        guardar()
+    guardar(todo=True)
 
     try:
         fin = post_json(url, token, {"accion": "fin", "modo": a.modo, "corrida": a.corrida, "pedidas": len(pendientes),

@@ -1,0 +1,67 @@
+name: Fotos web · conversión a WebP
+
+# Convierte a WebP (1200 px, calidad 85) las fotos de producto que el Proceso 6 de n8n necesita subir a
+# la web, y las deja en Drive ("Fotos web (WebP) - Proceso 6 (automático)") a través del Proceso 6b.
+# n8n no puede convertir los originales grandes (se queda sin memoria). Ver automatizacion/ci/fotos_webp.py.
+#
+# Horario: lun–vie 8:45 Buenos Aires, después del Proceso 6 (8:30), que anota en el Hub qué fotos faltan.
+# Al terminar, n8n vuelve a correr el Proceso 6 y sube las fotos convertidas.
+# Para pausarlo: variable del repo FOTOS_WEBP_MODO = prueba.
+
+on:
+  schedule:
+    - cron: "45 11 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "prueba = convierte pero no sube nada · real = sube los WebP y corre el Proceso 6"
+        type: choice
+        options: [prueba, real]
+        default: real
+      max:
+        description: "Máximo de fotos a convertir en esta corrida"
+        required: false
+        default: "400"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fotos-webp
+  cancel-in-progress: false
+
+jobs:
+  webp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: automatizacion/ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: pip install "Pillow>=10"
+
+      - name: Convertir fotos
+        env:
+          N8N_FICHAS_URL: ${{ secrets.N8N_FICHAS_URL }}
+          N8N_FICHAS_TOKEN: ${{ secrets.N8N_FICHAS_TOKEN }}
+        run: >
+          python3 automatizacion/ci/fotos_webp.py
+          --modo "${{ github.event_name == 'workflow_dispatch' && inputs.modo || vars.FOTOS_WEBP_MODO || 'real' }}"
+          --max "${{ inputs.max || '400' }}"
+          --corrida "${{ github.run_number }}"
+          --salida "${{ runner.temp }}/webp"
+
+      - name: Guardar WebP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fotos-webp-${{ github.run_number }}
+          path: ${{ runner.temp }}/webp
+          retention-days: 7
+          if-no-files-found: ignore

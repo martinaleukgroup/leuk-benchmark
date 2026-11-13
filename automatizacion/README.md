@@ -72,6 +72,24 @@ La corrida programada sigue, pero sin publicar. Borrar la variable para volver a
 
 ---
 
+## Fotos web · conversión a WebP (13/11/2026)
+
+Workflow `.github/workflows/fotos-webp.yml`, script `automatizacion/ci/fotos_webp.py`.
+Corre lun–vie 8:45 (Buenos Aires), después del Proceso 6 de n8n (8:30).
+
+n8n Cloud se quedaba sin memoria al convertir los originales grandes de Drive, así que
+la conversión se hace acá: el Proceso 6 anota en la hoja **Fotos Web a convertir** del
+Hub las fotos que necesita; este workflow las pide al **Proceso 6b** (webhook
+`leuk-fotos-webp`, misma clave que el Proceso 5), baja cada original, lo convierte
+(1200 px de ancho, calidad 85, respeta transparencia) y lo guarda en la carpeta de Drive
+**Fotos web (WebP) - Proceso 6 (automático)**. Al final n8n vuelve a correr el Proceso 6,
+que sube los WebP a la web. Los originales de Drive no se tocan.
+
+- A mano: Actions → "Fotos web · conversión a WebP" → Run workflow (`prueba` convierte
+  pero no sube; los WebP quedan en Artifacts 7 días).
+- Pausar: variable del repo `FOTOS_WEBP_MODO = prueba`.
+- Usa los secretos `N8N_FICHAS_URL` y `N8N_FICHAS_TOKEN` que ya existen.
+
 ## Versión de la Mac (desactivada)
 
 ## Qué hace

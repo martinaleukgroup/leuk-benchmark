@@ -263,6 +263,14 @@ def id_de_link(url):
     return m.group(1) if m else None
 
 
+# "No aplica" en el Hub (viene del Maestro, lo escribe el Proceso 2): ese archivo NO va a ese
+# producto. No es un faltante ni un nombre de archivo: no se busca, no se avisa y no se muestra
+# el botón, aunque en Drive haya un archivo con ese SKU (Martina, 16/11/2026). Vale para dibujo,
+# LDT, CAD, manual de instalación y curvas fotométricas.
+def NO_APLICA(v):
+    return fmt(v).strip().lower().rstrip(".") == "no aplica"
+
+
 def resolver_archivos(celda, byname, sku="", tipo="", link=None):
     """[(nombre, fileId), …] de los archivos que el Hub nombra en `celda`.
 
@@ -484,17 +492,20 @@ def build_ficha(variants, blue, MAN):
     multi = len(variants) > 1
     sku = fmt(p.get("SKU"))
     byname = MAN.get("by_name", {})
-    dib_fn = fmt(p.get("Dibujo técnico"))
-    ldt_fn = fmt(p.get("Archivos LDT"))
-    cad_fn = fmt(p.get("Archivo CAD"))
+    na_dib, na_ldt, na_cad = (NO_APLICA(p.get(c)) for c in ("Dibujo técnico", "Archivos LDT", "Archivo CAD"))
+    na_manual = NO_APLICA(p.get("Manual de instalación"))
+    dib_fn = "" if na_dib else fmt(p.get("Dibujo técnico"))
+    ldt_fn = "" if na_ldt else fmt(p.get("Archivos LDT"))
+    cad_fn = "" if na_cad else fmt(p.get("Archivo CAD"))
     links = p.get("_links") or {}
     # para el dibujo sigue ganando el índice por SKU: evita el "dibujo prestado" que a veces
     # queda cargado en la fila (ver foreign_dib). El link entra como segunda opción.
-    dib_id = (MAN.get("dibujo_by_sku", {}).get(sku) or id_de_link(links.get("Dibujo técnico"))
-              or byname.get(dib_fn.lower()))
-    ldts = resolver_archivos(ldt_fn, byname, sku, "LDT", links.get("Archivos LDT"))
-    cads = resolver_archivos(cad_fn, byname, sku, "CAD", links.get("Archivo CAD"))
-    cur = MAN.get("curva_by_sku", {}).get(sku, {})
+    dib_id = None if na_dib else (MAN.get("dibujo_by_sku", {}).get(sku) or id_de_link(links.get("Dibujo técnico"))
+                                  or byname.get(dib_fn.lower()))
+    ldts = [] if na_ldt else resolver_archivos(ldt_fn, byname, sku, "LDT", links.get("Archivos LDT"))
+    cads = [] if na_cad else resolver_archivos(cad_fn, byname, sku, "CAD", links.get("Archivo CAD"))
+    na_curvas = NO_APLICA(p.get("Curvas Fotométricas"))
+    cur = {} if na_curvas else MAN.get("curva_by_sku", {}).get(sku, {})
     nombre = fix_roman(strip_color(fmt(p.get("Nombre"))))   # 'MATT ll' → 'MATT II'
     # Renombres puntuales que todavía no están cargados en el maestro
     _ov = next((NOMBRE_OVERRIDE[s] for s in [fmt(v.get("SKU")) for v in variants] if s in NOMBRE_OVERRIDE), None)
@@ -552,7 +563,7 @@ def build_ficha(variants, blue, MAN):
     _cm = re.search(r"\b(III|II|I)\b", fix_roman(fmt(p.get("Clase de aislación"))))
     clase_aisl = _cm.group(1) if _cm else ""
 
-    curvas = [x for x in re.split(r"[,\s]+", fmt(p.get("Curvas Fotométricas"))) if x]
+    curvas = [] if na_curvas else [x for x in re.split(r"[,\s]+", fmt(p.get("Curvas Fotométricas"))) if x]
     ag = fmt(p.get("Agrupación de fichas técnicas"))
     if EMPTY(ag) or set(ag) <= {"?"} or ag.upper() in ("#N/A", "N/A", "#N/D", "#REF!"):
         ag = nombre                    # sin agrupación válida → la ficha es su propio documento
@@ -562,8 +573,8 @@ def build_ficha(variants, blue, MAN):
     # 'Chill'). Si nada matchea → sin botón de manual.
     manual_map = MAN.get("manual_by_sku", {})
     _skus_ficha = [fmt(p.get("SKU"))] + [c["sku"] for c in colores]
-    manual_id = next((manual_map[s] for s in _skus_ficha if s in manual_map), None)
-    if manual_id is None and len(ag.strip()) >= 3:
+    manual_id = None if na_manual else next((manual_map[s] for s in _skus_ficha if s in manual_map), None)
+    if manual_id is None and not na_manual and len(ag.strip()) >= 3:
         ag_l = ag.lower().strip()
         manual_id = next((m["id"] for m in MAN.get("manuales_lista", []) if ag_l in m["t"]), None)
 
@@ -943,6 +954,8 @@ def main():
         # fila con un dibujo "prestado" de otro modelo (su SKU no está en el nombre del archivo).
         # Arrastre del maestro: p.ej. SKU 6122 cargado como 'MATT l NG' con el dibujo del MATT I.
         dib, s = fmt(o.get("Dibujo técnico")), fmt(o.get("SKU"))
+        if NO_APLICA(dib):
+            return False
         return bool(dib) and bool(s) and s not in dib
 
     def rank(o):

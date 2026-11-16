@@ -36,13 +36,14 @@ OUT = P.ROOT / "app" / "fichas-data.js"
 # plataforma. Lo quitado queda en fichas-sin-stock.json (raíz del repo).
 # Excepción (Martina, 05/11): los productos con Estado "Repo X" (Repo 7, Repo 8…) se quedan
 # aunque no estén en el Excel: son lanzamientos que todavía no se cargaron al stock.
+# Desde el 16/11 tambien cuenta "Nuevo" (Martina): los Repo 7 pasaron en el Maestro de "REPO 7" a "Nuevo".
 # Para apagarlo sin tocar código: FICHAS_FILTRO_STOCK=0.
 STOCK_SHEET_ID = "11qFGvlamJwTLwfs5KYAMUNnFL0KwwSWlb3jb-maSJEM"
 STOCK_URL = f"https://docs.google.com/spreadsheets/d/{STOCK_SHEET_ID}/export?format=xlsx"
 STOCK_CACHE = P.ROOT / "pipeline" / "stock_leuk.xlsx"
 STOCK_MIN_SKUS = 200        # freno: menos SKU que esto = lectura rota → no se filtra nada
 SIN_STOCK_OUT = P.ROOT / "app" / "fichas-sin-stock.json"
-ESTADO_REPO = re.compile(r"^\s*repo\b", re.I)    # "Repo 7", "REPO 8", "repo7"… → no se filtra
+ESTADO_REPO = re.compile(r"^\s*(repo|nuevo)\b", re.I)    # "Repo 7", "REPO 8", "Nuevo"… → no se filtra
 
 
 def _buscar_hoja(wb):

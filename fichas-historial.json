@@ -1420,7 +1420,9 @@
   "POCKET IV": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "falta_foto": [
     "7727",
@@ -1485,7 +1487,9 @@
   "POCKET VI": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Dibujo técnico",
+    "LDT",
+    "CAD"
    ],
    "falta_foto": [
     "7730",
@@ -1508,9 +1512,6 @@
   "POCKET XII": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores",
     "Foto"
    ],
    "falta_foto": [
@@ -2268,9 +2269,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / YUKON / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Request failed with status code 403\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1dCnaQfHHWuHZWtuRiRbjs0ZNAmkGcSlN/view"
    }
   },
   "ZAR": {
@@ -2280,9 +2281,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / ZAR / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1uehATY-C9KLpO_hM623VbwESTGGmnmKR/view"
    }
   }
  }

@@ -170,14 +170,7 @@
   "BILUNE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD",
-    "Color producto",
-    "Colores"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1169,14 +1162,11 @@
   "NUMA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
     "Foto",
-    "Curvas fotométricas",
-    "LDT",
-    "Color producto",
     "Dibujo técnico",
     "CAD",
-    "Colores"
+    "Curvas fotométricas",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1195,7 +1185,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "Dibujo técnico"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1403,10 +1396,7 @@
   "POCKET III": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Colores"
+    "Foto"
    ],
    "falta_foto": [
     "7724",
@@ -1430,12 +1420,7 @@
   "POCKET IV": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Colores",
-    "Dibujo técnico",
-    "LDT"
+    "Foto"
    ],
    "falta_foto": [
     "7727",
@@ -1500,13 +1485,7 @@
   "POCKET VI": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores",
-    "Foto",
-    "Dibujo técnico",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
    "falta_foto": [
     "7730",
@@ -1555,13 +1534,11 @@
   "POLAR": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
     "Foto",
-    "Color producto",
-    "Colores",
     "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "CAD",
+    "LDT",
+    "Curvas fotométricas"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1588,10 +1565,7 @@
   "POLAR BEAM": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
     "Foto",
-    "Colores",
     "Dibujo técnico",
     "Curvas fotométricas",
     "LDT"
@@ -1617,10 +1591,7 @@
   "POLAR GRID": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
     "Foto",
-    "Colores",
     "Dibujo técnico",
     "Curvas fotométricas",
     "LDT"
@@ -1636,10 +1607,7 @@
   "POLAR GRID MOVIL": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
     "Foto",
-    "Colores",
     "Dibujo técnico",
     "Curvas fotométricas",
     "LDT"
@@ -1655,10 +1623,7 @@
   "POLAR LINE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
     "Foto",
-    "Colores",
     "Dibujo técnico",
     "Curvas fotométricas",
     "LDT"
@@ -1675,10 +1640,7 @@
   "POLAR MEX": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
     "Foto",
-    "Colores",
     "Dibujo técnico",
     "Curvas fotométricas",
     "LDT"
@@ -1694,10 +1656,7 @@
   "POLAR SOUND": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Colores"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -2056,13 +2015,10 @@
   "TERRA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
     "Foto",
     "Dibujo técnico",
-    "LDT",
-    "Color producto",
-    "Colores",
     "Curvas fotométricas",
+    "LDT",
     "CAD"
    ],
    "creada": "2026-11-02",
@@ -2119,8 +2075,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / TETRA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1m7sqwom_AHLQhhTRsc07_Sos9Y_UsnS8/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1JvZ-uCEsrzE-CiZZNKXqfoRRE0bevqhs/view"
    }
   },
   "TOICHO": {
@@ -2131,8 +2087,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / TOICHO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1_YcAHR_iqSN7_g8VqOoXeWojp4DK43N1/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1xAZ6iqOgPNw-wlrsuqazzq7XM7KQjH4c/view"
    }
   },
   "TOTEM": {
@@ -2143,8 +2099,8 @@
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / TOTEM / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1Zc-_esv0ix_feE0oRz-WjO_CNQyc8C74/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/121D-0xI7o2163kOc5ibj5CtjYKHGrTBm/view"
    }
   },
   "TRAKKE": {
@@ -2155,8 +2111,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / TRAKKE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1k3GOvDWxJgxzRQxMxIaYuwxx8abrqpg5/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1CgUJRZfQpQl1mMBwzt49nOwMY4xjOvno/view"
    }
   },
   "TRAZO": {
@@ -2177,8 +2133,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / ULÁN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1DINBxtnLKjCKk48zyxMinW9EvCjeayhs/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/108EM-bzW3fZ0F2HJpXRHisGNLXQ1Y4B-/view"
    }
   },
   "UNAI": {
@@ -2189,8 +2145,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / UNAI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1a52ob73CYK-tyZCIPkH0VhUDe5np6gkr/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1o9ZV3NtflqyUEKkX7HbpWMiDFiPxVDJG/view"
    }
   },
   "VALK": {
@@ -2201,8 +2157,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / VALK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1wKco4CRWSIEOglJibNj9rxqfu66Z0ovA/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1T4WYa-twmvkpgYTGBqPQ_Ge154NxFLs9/view"
    }
   },
   "WALLE": {
@@ -2213,8 +2169,8 @@
    "drive": {
     "destino": "Interior / De Apoyo / Mesa / WALLE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1rvk4netgOMc47bVl9V-lqlKwa8KCJdp3/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1inHXuEOUeAsnmFR1DCQN7VeAbNJNcHzr/view"
    }
   },
   "WEST": {
@@ -2225,8 +2181,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / WEST / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1HaM3G59dpQXMW00oijaz1MZV3LpJjx0n/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/10mtfHBB_K2R8e36Aqog1MG752Uvypxwi/view"
    }
   },
   "WILLY": {
@@ -2237,8 +2193,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / WILLY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1gwybAyG0DrXNpMgbYHjak2O3gVy-OyQw/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1iQiDe0U11BHFjkH3nTltUg6GCZ3dG7Wm/view"
    }
   },
   "WINSOR": {
@@ -2263,8 +2219,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / XAPO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1UpM13yd8zFyvzJAUXI8iQeN3cSekoi6c/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1iYdmB-ovdkXn2ZmdYUQmnmYpFWADu0th/view"
    }
   },
   "YANA": {
@@ -2288,8 +2244,8 @@
     "aviso": "Se deja «Ficha Técnica - YORK MD Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
     "destino": "Interior / De Techo / Apliques / YORK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/16tG-BZ_uUgHv35DzhgbWQU92RTCONnX8/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1MvNOj8KGYRVc1XammgTdLSyrk6U5dsoL/view"
    }
   },
   "YORK 2700": {
@@ -2301,8 +2257,8 @@
     "aviso": "Se deja «Ficha Técnica - YORK 2700K Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es. Se deja «Ficha Técnica - YORK 2700K.pdf» en la carpeta: no está claro de qué ficha es.",
     "destino": "Interior / De Techo / Apliques / YORK 2700K / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1nIxBfe5UdrpiqJTy-D1o3EEEj4VHV-rF/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1GIAg_d61En5PH0sG0gpoRmKLBWKiRb_Q/view"
    }
   },
   "YUKON": {
@@ -2312,9 +2268,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / YUKON / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1yX2Pud5IQGHMagwfImCMfdNC1KuQaZBW/view"
+    "error": "No se pudo subir el PDF: \"Request failed with status code 403\"",
+    "estado": "error",
+    "fecha": "2026-11-17"
    }
   },
   "ZAR": {
@@ -2324,9 +2280,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / ZAR / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1MGUukPq4zEGStXEFtshFNoZvAbzZaW1H/view"
+    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
+    "estado": "error",
+    "fecha": "2026-11-17"
    }
   }
  }

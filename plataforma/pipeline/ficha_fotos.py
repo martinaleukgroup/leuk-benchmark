@@ -37,6 +37,11 @@ from PIL import Image
 import paths as P
 
 FOLDER_ID = "1OmHlMZ4sMK5890tNkRoeMoNZVgU15JLD"
+# Árbol de productos de diseño (Interior/Exterior/… /<PRODUCTO>/Fotos/…). Desde el 17/11/2026 las
+# fotos de los productos Nuevo están ahí, nombradas con varias SKU ("7428-7430FotoProducto0.png").
+# Se usan sólo para las SKU que NO tienen foto en la carpeta única de arriba (esa manda).
+ARBOL_ID = "1EeWcZw0jQDyfpOX_cLQWfxZhfin_aDT_"
+ARBOL_SALTEAR = re.compile(r"^(archivo cad|archivo ldt|ficha t|reemplazad|manual)", re.I)
 DEST = P.ROOT / "app" / "assets" / "ficha" / "fotos"
 ESTADO = P.ROOT / "pipeline" / "ficha_fotos_estado.json"
 MAXW = 900          # ancho máximo para web
@@ -89,6 +94,48 @@ def listar(intentos=3):
             print(f"  ⚠ intento {i+1} falló ({str(e)[:70]}…)", flush=True)
             time.sleep(8 * (i + 1))
     return []
+
+
+def _entradas(fid):
+    """[(id, nombre, modificado, es_carpeta)] de una carpeta pública (vista embebida)."""
+    r = requests.get(f"https://drive.google.com/embeddedfolderview?id={fid}", timeout=60,
+                     headers={"Accept-Language": "en-US"})
+    r.raise_for_status()
+    out = re.findall(
+        r'id="entry-([-\w]{25,})".*?href="([^"]*)".*?flip-entry-title">([^<]*)<.*?flip-entry-last-modified"><div>([^<]*)<',
+        r.text, re.S)
+    return [(i, html.unescape(n), html.unescape(m).strip(), "/folders/" in h) for i, h, n, m in out]
+
+
+def listar_arbol():
+    """Fotos de producto del árbol de diseño: archivos dentro de carpetas "Fotos" (a cualquier
+    profundidad). Si algo falla, devuelve lo que alcanzó a leer: nunca corta la corrida."""
+    fotos, pila, vistas = [], [(ARBOL_ID, "", 0)], 0
+    while pila:
+        fid, ruta, prof = pila.pop()
+        if prof > 8:
+            continue
+        try:
+            ents = _entradas(fid)
+        except Exception as e:
+            print(f"  ⚠ árbol de fotos: no pude leer {ruta or '/'} ({str(e)[:50]})", flush=True)
+            continue
+        vistas += 1
+        for i, nombre, mod, carpeta in ents:
+            if carpeta:
+                if not ARBOL_SALTEAR.match(nombre):
+                    pila.append((i, f"{ruta}/{nombre}", prof + 1))
+            elif "/fotos" in ruta.lower():
+                fotos.append((i, nombre, mod))
+        time.sleep(0.2)
+    print(f"  árbol de fotos: {vistas} carpetas · {len(fotos)} archivos en carpetas Fotos", flush=True)
+    return fotos
+
+
+def skus_del_nombre(low):
+    """'7428-7430fotoproducto0.png' → ['7428', '7430']; '4169fotoproducto0.png' → ['4169']."""
+    m = re.match(r"(\d{4,}(?:\s*-\s*\d{4,})*)", low)
+    return re.findall(r"\d{4,}", m.group(1)) if m else []
 
 
 def puntaje(low):
@@ -156,6 +203,25 @@ def main():
         sku, pts = m.group(1), puntaje(low)
         if sku not in elegida or pts > elegida[sku]["pts"]:
             elegida[sku] = {"id": fid, "nombre": nombre, "mod": firma_fecha(mod), "pts": pts}
+
+    # SKU sin foto en la carpeta única: buscarlas en el árbol de diseño (productos Nuevo).
+    extra = {}
+    try:
+        for fid, nombre, mod in listar_arbol():
+            low = nombre.lower()
+            if "fotoproducto" not in low.replace(" ", "") or not low.endswith((".png", ".jpg", ".jpeg", ".webp")):
+                continue
+            pts = puntaje(re.sub(r"^[\d\s-]+", "0", low))
+            for sku in skus_del_nombre(low):
+                if sku in elegida:
+                    continue
+                if sku not in extra or pts > extra[sku]["pts"] or (pts == extra[sku]["pts"] and nombre < extra[sku]["nombre"]):
+                    extra[sku] = {"id": fid, "nombre": nombre, "mod": firma_fecha(mod), "pts": pts}
+    except Exception as e:
+        print(f"  ⚠ árbol de fotos: {str(e)[:80]}. Sigo sólo con la carpeta única.", flush=True)
+    if extra:
+        print(f"  árbol de fotos: {len(extra)} SKU nuevas con foto (no estaban en la carpeta única)", flush=True)
+    elegida.update(extra)
 
     try:
         estado = json.loads(ESTADO.read_text())

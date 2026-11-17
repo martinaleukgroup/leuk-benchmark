@@ -1,10 +1,9 @@
 {
  "fichas": {
   "ACACIA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Descripción",
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / ACACIA / Ficha Técnica",
@@ -14,9 +13,9 @@
    }
   },
   "ACRU": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Embutidos / ACRU / Ficha Técnica",
@@ -26,9 +25,9 @@
    }
   },
   "ALOUMI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / ALOUMI / Ficha Técnica",
@@ -38,9 +37,9 @@
    }
   },
   "ALTAI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / ALTAI / Ficha Técnica",
@@ -48,6 +47,12 @@
     "fecha": "2026-11-05",
     "url": "https://drive.google.com/file/d/1anhgUpXpH9JTL6DjBL3UDGIp_OXHfOCF/view"
    }
+  },
+  "APLIQUE CABEZAL": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Dibujo técnico"
+   ]
   },
   "ARKANSAS": {
    "actualizada": "2026-11-03",
@@ -62,12 +67,9 @@
    }
   },
   "AURA": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Material",
-    "Dimensión producto",
-    "Clase de aislación",
-    "Dibujo técnico"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -87,9 +89,9 @@
    }
   },
   "AXIS": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Descripción"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / AXIS / Ficha Técnica",
@@ -99,9 +101,9 @@
    }
   },
   "BARON": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / BARON / Ficha Técnica",
@@ -111,9 +113,9 @@
    }
   },
   "BATOR": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / BATOR / Ficha Técnica",
@@ -123,9 +125,9 @@
    }
   },
   "BELA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / BELA / Ficha Técnica",
@@ -149,9 +151,9 @@
    }
   },
   "BIG SKOTE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / BIG SKOTE / Ficha Técnica",
@@ -161,10 +163,12 @@
    }
   },
   "BILUNE": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Vida útil",
-    "Dibujo técnico"
+    "Foto",
+    "Dibujo técnico",
+    "Material",
+    "Dimensión producto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -179,9 +183,9 @@
    ]
   },
   "BOG": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / BOG / Ficha Técnica",
@@ -191,9 +195,9 @@
    }
   },
   "BONY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / BONY / Ficha Técnica",
@@ -203,9 +207,9 @@
    }
   },
   "BULGAN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / BULGAN / Ficha Técnica",
@@ -215,9 +219,9 @@
    }
   },
   "CAMBOYA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / CAMBOYA S / Ficha Técnica",
@@ -227,9 +231,9 @@
    }
   },
   "CAMBOYA AP": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / CAMBOYA AP / Ficha Técnica",
@@ -239,9 +243,9 @@
    }
   },
   "CAPI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / CAPI / Ficha Técnica",
@@ -251,9 +255,9 @@
    }
   },
   "CARAMEL": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / CARAMEL / Ficha Técnica",
@@ -263,11 +267,11 @@
    }
   },
   "CATEN": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto",
+    "LDT",
+    "Dibujo técnico"
    ],
    "falta_foto": [
     "7442",
@@ -279,9 +283,9 @@
    ]
   },
   "CHESTER": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / CHESTER / Ficha Técnica",
@@ -291,10 +295,10 @@
    }
   },
   "CHILL": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Descripción",
-    "Foto"
+    "LDT",
+    "Índice de reproducción cromatica"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Proyectores / CHILL / Ficha Técnica",
@@ -304,9 +308,9 @@
    }
   },
   "CITY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / CITY / Ficha Técnica",
@@ -316,9 +320,9 @@
    }
   },
   "CLASS": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / CLASS / Ficha Técnica",
@@ -328,9 +332,9 @@
    }
   },
   "COSMO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / COSMO / Ficha Técnica",
@@ -354,9 +358,9 @@
    }
   },
   "DAKOTA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / DAKOTA / Ficha Técnica",
@@ -366,9 +370,9 @@
    }
   },
   "DARJAN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / DARJAN / Ficha Técnica",
@@ -378,6 +382,10 @@
    }
   },
   "DOT": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7503",
@@ -385,9 +393,9 @@
    ]
   },
   "DRABE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / DRABE / Ficha Técnica",
@@ -397,9 +405,10 @@
    }
   },
   "DROP": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Control"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -407,9 +416,9 @@
    ]
   },
   "DUNA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / DUNA / Ficha Técnica",
@@ -419,9 +428,9 @@
    }
   },
   "DYNA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA / Ficha Técnica",
@@ -431,9 +440,9 @@
    }
   },
   "DYNA EM": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA EM / Ficha Técnica",
@@ -443,6 +452,11 @@
    }
   },
   "DYNA FIELTRO": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7423",
@@ -450,9 +464,9 @@
    ]
   },
   "DYO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / DYO / Ficha Técnica",
@@ -462,9 +476,9 @@
    }
   },
   "EKO": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "CAD"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / EKO  / Ficha Técnica",
@@ -473,11 +487,22 @@
     "url": "https://drive.google.com/file/d/1GMdbm91t3idnT63CnISLxxjI1SzVCtCP/view"
    }
   },
-  "EPICUR": {
-   "actualizada": "2026-11-03",
+  "ELON": {
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Descripción",
-    "Factor de potencia"
+    "LDT"
+   ]
+  },
+  "EMBUTIDO CABEZAL": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Dibujo técnico"
+   ]
+  },
+  "EPICUR": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / EPICUR / Ficha Técnica",
@@ -501,11 +526,10 @@
    }
   },
   "FORTE": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Color producto",
-    "Dimensión producto",
-    "Colores"
+    "LDT",
+    "Foto"
    ],
    "falta_foto": [
     "7475",
@@ -523,9 +547,9 @@
    ]
   },
   "FREYA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / FREYA / Ficha Técnica",
@@ -535,9 +559,10 @@
    }
   },
   "GALIA": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Vida útil"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -545,9 +570,9 @@
    ]
   },
   "GUM": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Proyectores / GUM / Ficha Técnica",
@@ -557,9 +582,9 @@
    }
   },
   "HOKA 3EF": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / Rieles / Barrales LED / HOKA 3EF / Ficha Técnica",
@@ -582,9 +607,9 @@
    }
   },
   "ISCH": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / ISCH / Ficha Técnica",
@@ -594,9 +619,9 @@
    }
   },
   "KARTIO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / KARTIO / Ficha Técnica",
@@ -606,9 +631,9 @@
    }
   },
   "KATO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / KATO / Ficha Técnica",
@@ -618,9 +643,9 @@
    }
   },
   "KENTRO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / KENTRO / Ficha Técnica",
@@ -630,9 +655,9 @@
    }
   },
   "KIM": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Embutidos / KIM / Ficha Técnica",
@@ -648,9 +673,9 @@
    ]
   },
   "KOLDO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / KOLDO / Ficha Técnica",
@@ -660,9 +685,9 @@
    }
   },
   "KRONE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / KRONE / Ficha Técnica",
@@ -672,9 +697,9 @@
    }
   },
   "KYKLO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / KYKLO / Ficha Técnica",
@@ -684,9 +709,10 @@
    }
   },
   "LAIVA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "Foto",
+    "LDT"
    ],
    "falta_foto": [
     "7470",
@@ -695,9 +721,10 @@
    ]
   },
   "LAIVA AP": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -705,9 +732,9 @@
    ]
   },
   "LAZU": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / LAZU / Ficha Técnica",
@@ -717,9 +744,9 @@
    }
   },
   "LEIA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / LEIA / Ficha Técnica",
@@ -729,9 +756,9 @@
    }
   },
   "LEIF": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / LEIF / Ficha Técnica",
@@ -741,9 +768,9 @@
    }
   },
   "LETO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Embutidos / LETO / Ficha Técnica",
@@ -753,9 +780,10 @@
    }
   },
   "LEX": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT",
+    "Foto"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Apliques / LEX / Ficha Técnica",
@@ -765,9 +793,10 @@
    }
   },
   "LIV": {
-   "actualizada": "2026-11-09",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Otros datos"
+    "LDT",
+    "Foto"
    ],
    "falta_foto": [
     "7622",
@@ -776,22 +805,10 @@
     "7625"
    ]
   },
-  "LOA": {
-   "actualizada": "2026-11-05",
-   "cambios": [
-    "Variantes"
-   ],
-   "drive": {
-    "destino": "Interior / De Techo / Embutidos / LOA / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1uc0RBAymN_EkOvNxrh-bPdgjrqQXfeYN/view"
-   }
-  },
   "LOFI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / LOFI / Ficha Técnica",
@@ -801,9 +818,9 @@
    }
   },
   "LOFI AP": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / LOFI AP / Ficha Técnica",
@@ -813,9 +830,10 @@
    }
   },
   "LOOP": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Otros datos"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -829,10 +847,17 @@
     "7435"
    ]
   },
-  "LUVA": {
-   "actualizada": "2026-11-05",
+  "LOUTA": {
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Descripción"
+    "LDT",
+    "Dibujo técnico"
+   ]
+  },
+  "LUVA": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / LUVA / Ficha Técnica",
@@ -842,9 +867,9 @@
    }
   },
   "MARDAI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MARDAI / Ficha Técnica",
@@ -854,9 +879,9 @@
    }
   },
   "MARLEY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / MARLEY / Ficha Técnica",
@@ -879,9 +904,11 @@
    }
   },
   "MEX": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "Dibujo técnico",
+    "LDT",
+    "CAD"
    ],
    "drive": {
     "destino": "Interior / De Techo / Cabezales / MEX / Ficha Técnica",
@@ -891,9 +918,11 @@
    }
   },
   "MEX 3CCT": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "Dibujo técnico",
+    "LDT",
+    "CAD"
    ],
    "drive": {
     "destino": "Interior / De Techo / Cabezales / MEX 3CCT / Ficha Técnica",
@@ -903,9 +932,9 @@
    }
   },
   "MIJA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / MIJA / Ficha Técnica",
@@ -915,11 +944,11 @@
    }
   },
   "MINI POCKET": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Color producto",
-    "Clase de aislación",
-    "Colores"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -934,9 +963,9 @@
    ]
   },
   "MINI SPOT OPTIC": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / OPTIC / Ficha Técnica",
@@ -946,6 +975,11 @@
    }
   },
   "MINI SPY": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Dibujo técnico",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7510",
@@ -953,9 +987,9 @@
    ]
   },
   "MIRACLE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MIRACLE / Ficha Técnica",
@@ -965,9 +999,9 @@
    }
   },
   "MIRACLE II": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MIRACLE II / Ficha Técnica",
@@ -989,9 +1023,9 @@
    }
   },
   "MOMO EXT": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / MOMO EXT / Ficha Técnica",
@@ -1001,9 +1035,9 @@
    }
   },
   "MORGAN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / MORGAN / Ficha Técnica",
@@ -1013,9 +1047,9 @@
    }
   },
   "MUSK": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Estacas / MUSK / Ficha Técnica",
@@ -1025,15 +1059,20 @@
    }
   },
   "NANO CHILL": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7518"
    ]
   },
   "NEULA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / NEULA / Ficha Técnica",
@@ -1043,9 +1082,9 @@
    }
   },
   "NIAO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / NIAO / Ficha Técnica",
@@ -1055,9 +1094,9 @@
    }
   },
   "NIAO AP": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / NIAO AP / Ficha Técnica",
@@ -1067,9 +1106,9 @@
    }
   },
   "NIAO MS": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Apoyo / Mesa / NIAO MS / Ficha Técnica",
@@ -1079,9 +1118,9 @@
    }
   },
   "NICHI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / NICHI / Ficha Técnica",
@@ -1091,11 +1130,9 @@
    }
   },
   "NODO": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Material",
-    "Difusor",
-    "Dibujo técnico"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1103,9 +1140,10 @@
    ]
   },
   "NUMA": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1123,9 +1161,10 @@
    ]
   },
   "NUMA MODULO": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1136,10 +1175,10 @@
    ]
   },
   "NUMA POINT": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Clase de aislación",
-    "Vida útil"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1148,9 +1187,9 @@
    ]
   },
   "OKTA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / OKTA / Ficha Técnica",
@@ -1186,6 +1225,11 @@
    }
   },
   "ORBIS": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7505",
@@ -1206,9 +1250,9 @@
    }
   },
   "ORTHOG": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / ORTHOG / Ficha Técnica",
@@ -1218,7 +1262,7 @@
    }
   },
   "OTTO": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
     "LDT"
    ],
@@ -1230,6 +1274,10 @@
    }
   },
   "PETRA LINE": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7501",
@@ -1237,9 +1285,9 @@
    ]
   },
   "PIER F": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / PIER F / Ficha Técnica",
@@ -1249,9 +1297,9 @@
    }
   },
   "PIER W": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / PIER W / Ficha Técnica",
@@ -1261,9 +1309,9 @@
    }
   },
   "PIETRO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / PIETRO / Ficha Técnica",
@@ -1273,15 +1321,19 @@
    }
   },
   "PIN": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7500"
    ]
   },
   "PLEVRES": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / PLEVRES / Ficha Técnica",
@@ -1291,21 +1343,32 @@
    }
   },
   "POCKET DRIVER ON-OFF VI": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7719"
    ]
   },
   "POCKET DRIVER ON-OFF XII": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7721"
    ]
   },
   "POCKET III": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT",
+    "Foto"
    ],
    "falta_foto": [
     "7723",
@@ -1317,10 +1380,10 @@
    ]
   },
   "POCKET III y IV": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Color producto",
-    "Colores"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1329,10 +1392,10 @@
    ]
   },
   "POCKET IV": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Color producto",
-    "Colores"
+    "LDT",
+    "Foto"
    ],
    "falta_foto": [
     "7726",
@@ -1344,6 +1407,11 @@
    ]
   },
   "POCKET IV AP": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto",
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7454",
@@ -1355,11 +1423,9 @@
    ]
   },
   "POCKET MODULO III 2CCT": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1367,11 +1433,9 @@
    ]
   },
   "POCKET MODULO IV 2CCT": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1379,6 +1443,10 @@
    ]
   },
   "POCKET MODULO VI 2CCT": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7461",
@@ -1386,12 +1454,20 @@
    ]
   },
   "POCKET MODULO VI BLBL 2CCT": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7460"
    ]
   },
   "POCKET MODULO XII 2CCT": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7464",
@@ -1399,15 +1475,20 @@
    ]
   },
   "POCKET MODULO XII BLBL 2CCT": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7463"
    ]
   },
   "POCKET VI": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes"
+    "Foto",
+    "LDT"
    ],
    "falta_foto": [
     "7729",
@@ -1419,10 +1500,10 @@
    ]
   },
   "POCKET VI AP": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Factor de potencia"
+    "Foto",
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET VI AP / Ficha Técnica",
@@ -1432,10 +1513,10 @@
    }
   },
   "POCKET XII": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Factor de potencia"
+    "Foto",
+    "LDT"
    ],
    "falta_foto": [
     "7732",
@@ -1447,10 +1528,10 @@
    ]
   },
   "POCKET XII AP": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Factor de potencia"
+    "Foto",
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET XII AP / Ficha Técnica",
@@ -1460,9 +1541,11 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-09",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico"
+    "Foto",
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1498,9 +1581,11 @@
    ]
   },
   "POLAR BEAM": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1511,10 +1596,10 @@
    ]
   },
   "POLAR FOCUS": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Color producto",
-    "Colores"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1523,9 +1608,10 @@
    ]
   },
   "POLAR GRID": {
-   "actualizada": "2026-11-11",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1540,9 +1626,11 @@
    ]
   },
   "POLAR GRID MOVIL": {
-   "actualizada": "2026-11-11",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1557,9 +1645,11 @@
    ]
   },
   "POLAR LINE": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1574,9 +1664,11 @@
    ]
   },
   "POLAR MEX": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1591,9 +1683,9 @@
    ]
   },
   "POLAR SOUND": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1602,9 +1694,9 @@
    ]
   },
   "POLAR y REN": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Control"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1612,9 +1704,9 @@
    ]
   },
   "POLUX": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Embutidos / POLUX / Ficha Técnica",
@@ -1624,9 +1716,9 @@
    }
   },
   "PRISMA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / PRISMA / Ficha Técnica",
@@ -1636,9 +1728,9 @@
    }
   },
   "REN": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / REN / Ficha Técnica",
@@ -1672,9 +1764,9 @@
    }
   },
   "RISE": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Difusor"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1694,9 +1786,9 @@
    }
   },
   "RIU": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / RIU / Ficha Técnica",
@@ -1706,9 +1798,9 @@
    }
   },
   "RONY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / RONY / Ficha Técnica",
@@ -1718,9 +1810,9 @@
    }
   },
   "RUFFO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / RUFFO / Ficha Técnica",
@@ -1729,10 +1821,16 @@
     "url": "https://drive.google.com/file/d/1nGaBL7wsngAiR_e6lGlQeFRtjftZ4Toz/view"
    }
   },
-  "SAGSAI": {
-   "actualizada": "2026-11-03",
+  "RUFFO GU10": {
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
+   ]
+  },
+  "SAGSAI": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / SAGSAI / Ficha Técnica",
@@ -1742,9 +1840,9 @@
    }
   },
   "SCALA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / SCALA / Ficha Técnica",
@@ -1768,9 +1866,9 @@
    }
   },
   "SHIR": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / SHIR / Ficha Técnica",
@@ -1780,9 +1878,9 @@
    }
   },
   "SINTRA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - SINTRA Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
@@ -1793,9 +1891,9 @@
    }
   },
   "SINTRA 2700": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - SINTRA BL 2700K Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
@@ -1806,9 +1904,9 @@
    }
   },
   "SIRENA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / SIRENA / Ficha Técnica",
@@ -1818,9 +1916,9 @@
    }
   },
   "SKOTE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / SKOTE / Ficha Técnica",
@@ -1830,9 +1928,9 @@
    }
   },
   "SMOKY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / SMOKY / Ficha Técnica",
@@ -1842,9 +1940,9 @@
    }
   },
   "SPY": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1853,9 +1951,10 @@
    ]
   },
   "SPY AP": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1864,9 +1963,11 @@
    ]
   },
   "SPY EM": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dimensión producto"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1875,9 +1976,9 @@
    ]
   },
   "SUN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / SUN / Ficha Técnica",
@@ -1887,9 +1988,10 @@
    }
   },
   "SUNSET": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Vida útil"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1898,9 +2000,9 @@
    ]
   },
   "SUTSKE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Apoyo / Pie / SUTSKE / Ficha Técnica",
@@ -1910,9 +2012,9 @@
    }
   },
   "SWEET": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / SWEET / Ficha Técnica",
@@ -1922,11 +2024,10 @@
    }
   },
   "TERRA": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Clase de aislación",
-    "Material",
-    "Dimensión producto"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1944,9 +2045,10 @@
    ]
   },
   "TERRA CHILL": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Difusor"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1954,10 +2056,9 @@
    ]
   },
   "TERRA GRID": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Difusor",
-    "Dimensión producto"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1965,9 +2066,10 @@
    ]
   },
   "TERRA POINT": {
-   "actualizada": "2026-11-06",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Difusor"
+    "Foto",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1975,9 +2077,9 @@
    ]
   },
   "TETRA": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / TETRA / Ficha Técnica",
@@ -1987,9 +2089,9 @@
    }
   },
   "TOICHO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / TOICHO / Ficha Técnica",
@@ -1999,9 +2101,9 @@
    }
   },
   "TOTEM": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / TOTEM / Ficha Técnica",
@@ -2011,9 +2113,9 @@
    }
   },
   "TRAKKE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / TRAKKE / Ficha Técnica",
@@ -2023,10 +2125,11 @@
    }
   },
   "TRAZO": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Vida útil",
-    "Dibujo técnico"
+    "Foto",
+    "Dibujo técnico",
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -2035,9 +2138,9 @@
    ]
   },
   "ULÁN": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / ULÁN / Ficha Técnica",
@@ -2047,9 +2150,9 @@
    }
   },
   "UNAI": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / UNAI / Ficha Técnica",
@@ -2065,9 +2168,9 @@
    ]
   },
   "VALK": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / VALK / Ficha Técnica",
@@ -2077,9 +2180,9 @@
    }
   },
   "WALLE": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Apoyo / Mesa / WALLE / Ficha Técnica",
@@ -2089,9 +2192,9 @@
    }
   },
   "WEST": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / WEST / Ficha Técnica",
@@ -2101,9 +2204,9 @@
    }
   },
   "WILLY": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / WILLY / Ficha Técnica",
@@ -2113,9 +2216,9 @@
    }
   },
   "WINSOR": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -2123,9 +2226,9 @@
    ]
   },
   "XAPO": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / XAPO / Ficha Técnica",
@@ -2147,9 +2250,9 @@
    }
   },
   "YORK": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - YORK MD Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
@@ -2160,9 +2263,9 @@
    }
   },
   "YORK 2700": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - YORK 2700K Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es. Se deja «Ficha Técnica - YORK 2700K.pdf» en la carpeta: no está claro de qué ficha es.",
@@ -2173,9 +2276,9 @@
    }
   },
   "YUKON": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / YUKON / Ficha Técnica",
@@ -2185,9 +2288,9 @@
    }
   },
   "ZAR": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-17",
    "cambios": [
-    "Factor de potencia"
+    "LDT"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / ZAR / Ficha Técnica",

@@ -98,7 +98,7 @@ def listar(intentos=3):
 
 def _entradas(fid):
     """[(id, nombre, modificado, es_carpeta)] de una carpeta pública (vista embebida)."""
-    r = requests.get(f"https://drive.google.com/embeddedfolderview?id={fid}", timeout=60,
+    r = requests.get(f"https://drive.google.com/embeddedfolderview?id={fid}", timeout=30,
                      headers={"Accept-Language": "en-US"})
     r.raise_for_status()
     out = re.findall(
@@ -107,28 +107,38 @@ def _entradas(fid):
     return [(i, html.unescape(n), html.unescape(m).strip(), "/folders/" in h) for i, h, n, m in out]
 
 
-def listar_arbol():
+def listar_arbol(hilos=12, tope_seg=900):
     """Fotos de producto del árbol de diseño: archivos dentro de carpetas "Fotos" (a cualquier
-    profundidad). Si algo falla, devuelve lo que alcanzó a leer: nunca corta la corrida."""
-    fotos, pila, vistas = [], [(ARBOL_ID, "", 0)], 0
-    while pila:
-        fid, ruta, prof = pila.pop()
-        if prof > 8:
-            continue
-        try:
-            ents = _entradas(fid)
-        except Exception as e:
-            print(f"  ⚠ árbol de fotos: no pude leer {ruta or '/'} ({str(e)[:50]})", flush=True)
-            continue
-        vistas += 1
-        for i, nombre, mod, carpeta in ents:
-            if carpeta:
-                if not ARBOL_SALTEAR.match(nombre):
-                    pila.append((i, f"{ruta}/{nombre}", prof + 1))
-            elif "/fotos" in ruta.lower():
-                fotos.append((i, nombre, mod))
-        time.sleep(0.2)
-    print(f"  árbol de fotos: {vistas} carpetas · {len(fotos)} archivos en carpetas Fotos", flush=True)
+    profundidad). Lee las carpetas en paralelo y con un tope de tiempo; si algo falla, devuelve
+    lo que alcanzó a leer: nunca corta la corrida."""
+    from concurrent.futures import ThreadPoolExecutor, FIRST_COMPLETED, wait
+    inicio = time.time()
+    fotos, vistas, fallas = [], 0, 0
+    with ThreadPoolExecutor(max_workers=hilos) as ex:
+        vivos = {ex.submit(_entradas, ARBOL_ID): ("", 0)}
+        while vivos:
+            listos, _ = wait(vivos, timeout=60, return_when=FIRST_COMPLETED)
+            for fut in listos:
+                ruta, prof = vivos.pop(fut)
+                try:
+                    ents = fut.result()
+                except Exception:
+                    fallas += 1
+                    continue
+                vistas += 1
+                for i, nombre, mod, carpeta in ents:
+                    if carpeta:
+                        if prof < 8 and not ARBOL_SALTEAR.match(nombre) and time.time() - inicio < tope_seg:
+                            vivos[ex.submit(_entradas, i)] = (f"{ruta}/{nombre}", prof + 1)
+                    elif "/fotos" in ruta.lower():
+                        fotos.append((i, nombre, mod))
+            if time.time() - inicio > tope_seg + 120:
+                print("  ⚠ árbol de fotos: se pasó del tiempo; sigo con lo leído.", flush=True)
+                for f in vivos:
+                    f.cancel()
+                break
+    print(f"  árbol de fotos: {vistas} carpetas ({fallas} sin leer) · {len(fotos)} archivos en carpetas Fotos"
+          f" · {time.time() - inicio:.0f}s", flush=True)
     return fotos
 
 

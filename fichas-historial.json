@@ -170,9 +170,11 @@
   "BILUNE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -270,9 +272,7 @@
   "CATEN": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto"
    ],
    "falta_foto": [
     "7442",
@@ -382,11 +382,14 @@
   "DOT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Color producto",
+    "Foto",
+    "Dibujo técnico",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7503",
     "7504"
    ]
   },
@@ -406,7 +409,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -537,19 +543,19 @@
   "FORTE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Color producto",
+    "Foto",
+    "Colores",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT"
    ],
    "falta_foto": [
-    "7475",
-    "7476",
     "7477",
     "7478",
-    "7479",
-    "7480",
     "7481",
     "7482",
-    "7483",
-    "7484",
     "7485",
     "7486"
    ]
@@ -570,6 +576,7 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
+    "Curvas fotométricas",
     "LDT"
    ],
    "creada": "2026-11-02",
@@ -677,7 +684,11 @@
   "KOKO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -724,20 +735,20 @@
   "LAIVA": {
    "actualizada": "2026-11-17",
    "cambios": [
+    "Variantes",
+    "Color producto",
     "Foto",
-    "LDT"
+    "Colores"
    ],
    "falta_foto": [
     "7470",
-    "7471",
     "7472"
    ]
   },
   "LAIVA AP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -943,8 +954,8 @@
    "drive": {
     "destino": "Interior / De Techo / Cabezales / MEX 3CCT / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1w0ZViirWphiWIJXPK4G56KrAxSaM9hUv/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1aTHtcPI_gs7xrG5y2vJpC3EZwb8K0stb/view"
    }
   },
   "MIJA": {
@@ -955,27 +966,28 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / MIJA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1c-LOniVmvyfpYfZzj6oyqLul-aP9_-Yb/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1i13whlA8ImZCu6Cn_jVBloHxnjNiS32L/view"
    }
   },
   "MINI POCKET": {
    "actualizada": "2026-11-17",
    "cambios": [
+    "Variantes",
+    "Color producto",
     "Foto",
     "Dibujo técnico",
-    "LDT"
+    "Curvas fotométricas",
+    "LDT",
+    "CAD",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7492",
     "7494",
     "7496",
-    "7498",
-    "7747",
-    "7748",
-    "7749",
-    "7750"
+    "7498"
    ]
   },
   "MINI SPOT OPTIC": {
@@ -986,14 +998,18 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / OPTIC / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1qGI8prN1a53FzwpyRIHjpxLyF69W1xU6/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1uytbPqYxQSHs5S8fkalIaO_xbGTBglMV/view"
    }
   },
   "MINI SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1009,8 +1025,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MIRACLE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1Qq-Ya0wd5tYhUun9q2DAVUfdp4iRl76a/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1EU51kYWXC18JTEwdPa9Ao_zlHJLUELFN/view"
    }
   },
   "MIRACLE II": {
@@ -1021,8 +1037,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MIRACLE II / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1M5yrfUBN5D0OSEaEHCuyqUEBapPc3dvT/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/13vuBq-eAuLd-OlXWreV8LR5NOqL1yfeg/view"
    }
   },
   "MOLY": {
@@ -1045,8 +1061,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / MOMO EXT / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1aLKeMWmu2pj22AJme9tM2kTjf_HXxNcx/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1cfN7KDjnyOZMMYXZW8PyrPF61XOFhbMH/view"
    }
   },
   "MORGAN": {
@@ -1057,8 +1073,8 @@
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / MORGAN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1-kdEX5Pstr8h-K5Ik6fIcMlR8P_NfwZm/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1fELtTX_Gq-8Ac5LHaw9KFcLbMcXdK0oY/view"
    }
   },
   "MUSK": {
@@ -1069,15 +1085,16 @@
    "drive": {
     "destino": "Exterior / De Piso / Estacas / MUSK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1_GWMo-TNpwszqF99Dtwj9tiKgtD4mndC/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1EbVwmhnKePyS9Ts1veMcldemG-kjWdCy/view"
    }
   },
   "NANO CHILL": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1092,8 +1109,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / NEULA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1WPWebg40iXwEz1-bYLCatBY2elQBxfL0/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1yaRSEI7oY-mjdIIhAiBeggIKt8TNuJvU/view"
    }
   },
   "NIAO": {
@@ -1104,8 +1121,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / NIAO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/12F4A8s2rHt7MelgyMJH-ptDdGhrEXG24/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/12EGBykDv_qtDy2oK1oycrnesn7AflONG/view"
    }
   },
   "NIAO AP": {
@@ -1116,8 +1133,8 @@
    "drive": {
     "destino": "Interior / De Pared / Apliques / NIAO AP / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1qKQcNK8du35493bqWS7bJuI3zNxl8Fyn/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1ohU1pJ4QAugRlFLYAV3WE0ovLgJokP22/view"
    }
   },
   "NIAO MS": {
@@ -1128,8 +1145,8 @@
    "drive": {
     "destino": "Interior / De Apoyo / Mesa / NIAO MS / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/12b3seyMXGJsMQeQ-4TOJNlVL1KPBP2mU/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1rIO52TiRvMlWf_VrUs7rNefC7TXBkhd3/view"
    }
   },
   "NICHI": {
@@ -1140,14 +1157,16 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / NICHI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1hTXg1K1Wsbv5D4Uw--i7A2w5_qaS3TC8/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1uzaiLBb788S4LeEmWa3EXdn1QBMdU3D8/view"
    }
   },
   "NODO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1158,7 +1177,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Curvas fotométricas",
+    "LDT",
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1179,7 +1201,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1193,7 +1218,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1209,8 +1237,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / OKTA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1M0JsT1cIqyXDthmT0ZPleT7CvM1dgSlZ/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1rTTerbNkmrHOvM8az2nUesrJyfmoPO7X/view"
    }
   },
   "OLU": {
@@ -1243,7 +1271,10 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1272,8 +1303,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / ORTHOG / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1oyjas2akTMP9AZ-oHPpeooaIkPwubQTi/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1yyyJELSYfbLz_c-plsNQDhsaa2pncDs8/view"
    }
   },
   "OTTO": {
@@ -1284,18 +1315,20 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / OTTO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1vLnrABccXK6KBZ4YjVrgwxWRi5pkO2s-/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1n5wB0zvNVn8FKatKiDM4ydo_8m9u-nDv/view"
    }
   },
   "PETRA LINE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Color producto",
+    "Foto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7501",
     "7502"
    ]
   },
@@ -1307,8 +1340,8 @@
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / PIER F / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1HMi0MK4o2I9Eb7cCW6Zkezhrr8tXx0lq/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1e7_vQ_CYUZxO985PViYkzgHU1MuvxPY5/view"
    }
   },
   "PIER W": {
@@ -1319,8 +1352,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / PIER W / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1DlJVmi8tO6fnIkVuG3eOfoTEXwpByqb-/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1XgIi5p4g10CHGzVFQgRfxPQ4kcSiND9J/view"
    }
   },
   "PIETRO": {
@@ -1331,8 +1364,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / PIETRO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1sKi-3jtu_cqpMngKkE9f90poyZBNG4qj/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1izdrQpd1NLO9JGO8r0nvR8XXrN_0mAME/view"
    }
   },
   "PIN": {
@@ -1353,8 +1386,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / PLEVRES / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1rB7wGdBJVfceJN_tQG_OJfw9diL8b5Gq/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1eJc-6DRI1u-vunrPmndiWyNkvkNQhBSR/view"
    }
   },
   "POCKET DRIVER ON-OFF VI": {
@@ -1424,17 +1457,15 @@
   "POCKET IV AP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT"
+    "Variantes",
+    "Color producto",
+    "Colores",
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7454",
-    "7455",
     "7456",
-    "7457",
-    "7458",
-    "7459"
+    "7457"
    ]
   },
   "POCKET MODULO III 2CCT": {
@@ -1542,6 +1573,8 @@
    "cambios": [
     "Foto",
     "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
     "CAD"
    ],
    "creada": "2026-11-02",
@@ -1608,6 +1641,8 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
     "LDT"
    ],
    "creada": "2026-11-02",
@@ -1627,6 +1662,7 @@
    "cambios": [
     "Foto",
     "Dibujo técnico",
+    "Curvas fotométricas",
     "LDT"
    ],
    "creada": "2026-11-02",
@@ -1646,6 +1682,7 @@
    "cambios": [
     "Foto",
     "Dibujo técnico",
+    "Curvas fotométricas",
     "LDT"
    ],
    "creada": "2026-11-02",
@@ -1665,6 +1702,7 @@
    "cambios": [
     "Foto",
     "Dibujo técnico",
+    "Curvas fotométricas",
     "LDT"
    ],
    "creada": "2026-11-02",
@@ -1693,7 +1731,8 @@
   "POLAR y REN": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Curvas fotométricas"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1939,7 +1978,11 @@
   "SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1950,7 +1993,11 @@
   "SPY AP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1963,7 +2010,7 @@
    "cambios": [
     "Foto",
     "Dibujo técnico",
-    "LDT"
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1986,13 +2033,17 @@
   "SUNSET": {
    "actualizada": "2026-11-17",
    "cambios": [
+    "Variantes",
+    "Color producto",
     "Foto",
-    "LDT"
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7467",
-    "7468"
+    "7467"
    ]
   },
   "SUTSKE": {
@@ -2122,13 +2173,13 @@
   "TRAZO": {
    "actualizada": "2026-11-17",
    "cambios": [
+    "Variantes",
+    "Color producto",
     "Foto",
-    "Dibujo técnico",
-    "LDT"
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7473",
     "7474"
    ]
   },
@@ -2207,7 +2258,11 @@
   "WINSOR": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Foto",
+    "Dibujo técnico",
+    "Curvas fotométricas",
+    "LDT",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "falta_foto": [

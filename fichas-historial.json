@@ -165,10 +165,7 @@
   "BILUNE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Material",
-    "Dimensión producto"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -384,7 +381,7 @@
   "DOT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -528,7 +525,6 @@
   "FORTE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT",
     "Foto"
    ],
    "falta_foto": [
@@ -667,6 +663,10 @@
    }
   },
   "KOKO": {
+   "actualizada": "2026-11-17",
+   "cambios": [
+    "Foto"
+   ],
    "creada": "2026-11-02",
    "falta_foto": [
     "7509"
@@ -977,8 +977,7 @@
   "MINI SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico",
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1276,7 +1275,7 @@
   "PETRA LINE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1323,7 +1322,7 @@
   "PIN": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1445,43 +1444,25 @@
   "POCKET MODULO VI 2CCT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7461",
-    "7462"
-   ]
-  },
-  "POCKET MODULO VI BLBL 2CCT": {
-   "actualizada": "2026-11-17",
-   "cambios": [
-    "LDT"
-   ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7460"
+    "7461"
    ]
   },
   "POCKET MODULO XII 2CCT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7464",
-    "7465"
-   ]
-  },
-  "POCKET MODULO XII BLBL 2CCT": {
-   "actualizada": "2026-11-17",
-   "cambios": [
-    "LDT"
-   ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7463"
+    "7464"
    ]
   },
   "POCKET VI": {
@@ -1766,7 +1747,7 @@
   "RISE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1942,7 +1923,7 @@
   "SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1953,8 +1934,7 @@
   "SPY AP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico",
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -2026,8 +2006,7 @@
   "TERRA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -2161,12 +2140,6 @@
     "url": "https://drive.google.com/file/d/1a52ob73CYK-tyZCIPkH0VhUDe5np6gkr/view"
    }
   },
-  "VALIJA LINEA POCKET": {
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7700"
-   ]
-  },
   "VALK": {
    "actualizada": "2026-11-17",
    "cambios": [
@@ -2218,7 +2191,7 @@
   "WINSOR": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
    "creada": "2026-11-02",
    "falta_foto": [

@@ -8,8 +8,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Embutidos / ACACIA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1ZiLewp_KTv2a2KSEsFXVYEb4dLj5ynDm/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1jJkLcm-yHgcKCDdao23i5RM8lAz5XXar/view"
    }
   },
   "ACRU": {
@@ -20,8 +20,8 @@
    "drive": {
     "destino": "Interior / De Pared / Embutidos / ACRU / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1kvMIAvgd3dqYYQVYhVZdHl0zpvWTI-2J/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1VIdOmgx2R5qxtqCTtide6SjTAefP3ztq/view"
    }
   },
   "ALOUMI": {
@@ -32,8 +32,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / ALOUMI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1L8kg25yyhKm6hXQoOzwQxR50HcPE_Zvl/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1SgRRUwA-i1QPNlhHdENL5LQeEIGgplu7/view"
    }
   },
   "ALTAI": {
@@ -44,15 +44,20 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / ALTAI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1anhgUpXpH9JTL6DjBL3UDGIp_OXHfOCF/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1xbAs5S_jH18b4pPFuhdpjyByTUAClF67/view"
    }
   },
   "APLIQUE CABEZAL": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Dibujo técnico"
-   ]
+   ],
+   "drive": {
+    "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7222, 7223).",
+    "estado": "sin_carpeta",
+    "fecha": "2026-11-17"
+   }
   },
   "ARKANSAS": {
    "actualizada": "2026-11-03",
@@ -96,8 +101,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / AXIS / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1VHlhmJmGBaW7weTB-XP_093T9sYQ_YG3/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1p0YnTSVv50MNrg7ZFTmRETbo8yygQaBl/view"
    }
   },
   "BARON": {
@@ -108,8 +113,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / BARON / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1e7KA3I77Cb1xSrwCj8Pa76zybb2DKnpt/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1g3pGuyJt8h5Ysvp6PI7tHN-tKlllqILS/view"
    }
   },
   "BATOR": {
@@ -120,8 +125,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / BATOR / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1NW9CFq-AqJWbaW6U2Oq0awbGmoVzsGNx/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1YdE7aIoTWRed0vEZmS4pbeRgqDZ3zUZe/view"
    }
   },
   "BELA": {
@@ -132,8 +137,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / BELA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1-hVCiISDMNJqiXMjzAZMZZpiDei7zMXx/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1ppfveFGZL4w9UkMcu0Q5Ngm67uLmSaAn/view"
    }
   },
   "BERSH": {
@@ -158,8 +163,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / BIG SKOTE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1uvdymLNui2hYjDZplCpMAHzAbOHhxoaZ/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1QmbrjvV1kuv0cDCF8DzTb6bk9sBV-dTh/view"
    }
   },
   "BILUNE": {
@@ -187,8 +192,8 @@
    "drive": {
     "destino": "Interior / De Pared / Apliques / BOG / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1ksBxPNZUYqu9FeAZhcAWVAmSqnbpOyCD/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1nsbAzu3VlvulL7EcfLVfwG7mgmx9x7MO/view"
    }
   },
   "BONY": {
@@ -199,8 +204,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / BONY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1jhTDp0mAaJECeOqAjIfzDUYY8XsCwSEF/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1VrqT52G2Sx0KXkP2Fz13nlnExLW-s3DG/view"
    }
   },
   "BULGAN": {
@@ -211,8 +216,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / BULGAN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1zsvg9RCb1Doubv6PoRQSWj3TRb2o9GA5/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1wicy1U6htktXLHb-K9LDkupGzhpylx4E/view"
    }
   },
   "CAMBOYA": {
@@ -223,8 +228,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / CAMBOYA S / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1RFoOHpaUTFnyLLhccf-55ekE4oI0WfXh/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1U-Co_3AKnBrYuEN9cEt_6dpau6d6r8-i/view"
    }
   },
   "CAMBOYA AP": {
@@ -235,8 +240,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / CAMBOYA AP / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1YOvztpQg3Znm_2QZsgmmRZJ1dygXE47Y/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1ihX5cYhbv29CNJO2IYwwDKp--ncgYIkP/view"
    }
   },
   "CAPI": {
@@ -247,8 +252,8 @@
    "drive": {
     "destino": "Interior / De Pared / Apliques / CAPI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1yEj060UoQjAiNCjqsjj3veXBBX2rC_LK/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1UbnTpenbLPcB3FqGPzBg1jBtW3JCvN0q/view"
    }
   },
   "CARAMEL": {
@@ -259,8 +264,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / CARAMEL / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1W06TSlITSBVrT2qyd8PQJx9pNFCnl77h/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/13D3DlvYO3eJOmKWZclEjxHG2iSl5QkdV/view"
    }
   },
   "CATEN": {
@@ -287,8 +292,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / CHESTER / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1vkNnZfV7T-NoNmguiXRobUCZF-WKoR_B/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/11db87hnYibN66JPhq9aJqg0PKJyIJVxX/view"
    }
   },
   "CHILL": {
@@ -300,8 +305,8 @@
    "drive": {
     "destino": "Exterior / De Piso / Proyectores / CHILL / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1OuHLz5s0vkdqRjiFvk5j29obP6qKlJf9/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1_qxE_GJ1w1uo5HwMPGBWOgbYIeJc-Qut/view"
    }
   },
   "CITY": {
@@ -312,8 +317,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / CITY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/12_0yn8n7dZZj8_H3UzbW_LadGpWICUBp/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1GtGtZe2x6iK73vqNyyPYkOCUfDy1MmCR/view"
    }
   },
   "CLASS": {
@@ -324,8 +329,8 @@
    "drive": {
     "destino": "Exterior / De Pared / Apliques / CLASS / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/16sujHG3mwSRYQEwRp-51xu_vxEv45qmn/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1AkfhH4vdbOsBqgABj-QWMKnUIQSM1NN2/view"
    }
   },
   "COSMO": {
@@ -336,8 +341,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / COSMO / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/13bszHpcxcD6rpDx-WPTJUVRBYFdVl0RN/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1XxUlIdKZiXKCNQcYrwrmVaSlgEatKX1F/view"
    }
   },
   "CUFA": {
@@ -362,8 +367,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / DAKOTA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1KZrjuUwdqmUvlUkcy384E6IUmxPPgmyT/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/17e-ACXyNJ8o3t-6MTZvOULKEuPblqISD/view"
    }
   },
   "DARJAN": {
@@ -374,8 +379,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / DARJAN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1d7ctM7Vy7Fw2djUd8c3b3KJ5TrdLflqW/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1UuZgjI7-FySPzsUTmbEidnJ_5TknZ9cW/view"
    }
   },
   "DOT": {
@@ -397,8 +402,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / DRABE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/12CqnR9MZGV_RFZc2tqHFxgQlPC8i7JLZ/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/17CuZi47R9gWLnbiTbIKN2GEj1T5CEuex/view"
    }
   },
   "DROP": {
@@ -420,8 +425,8 @@
    "drive": {
     "destino": "Interior / De Techo / Apliques / DUNA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1piTpCL8zcEeEHZaAgsw5XbcFiVaac_Ss/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/13NzE94Fj7WqEjElhSRc1iSthf43esC8j/view"
    }
   },
   "DYNA": {
@@ -432,8 +437,8 @@
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1ALTujMeGiXNzt9N-EENgDSAhkcT7orsV/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/19phkbW8i3-fylJMBxk4WZNv4NvU9jiIh/view"
    }
   },
   "DYNA EM": {
@@ -444,8 +449,8 @@
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA EM / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1pvY0JcJ0cj6W3PeIBQcrq8dpBeH1LXJY/view"
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1a9ZMzg7sF6sISqtc1AnhnOQwKpjji4Bw/view"
    }
   },
   "DYNA FIELTRO": {

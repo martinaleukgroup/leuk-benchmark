@@ -32,6 +32,7 @@ SOLO="${SOLO:-}"
 MAX_PDFS="${MAX_PDFS:-30}"
 MAX_QUITAR_STOCK="${MAX_QUITAR_STOCK:-30}"
 PERMITIR_QUITAR_STOCK="${PERMITIR_QUITAR_STOCK:-false}"
+PERMITIR_CAIDA="${PERMITIR_CAIDA:-false}"   # true = acepta la caída de >5% (corrida a mano)
 SALIDA="${SALIDA:-$REPO/salida}"
 mkdir -p "$SALIDA"
 LOG="$SALIDA/actualizar_fichas.log"
@@ -146,7 +147,10 @@ ANTES=$(git show HEAD:fichas-data.js 2>/dev/null | python3 -c "$CUENTA" 2>/dev/n
 AHORA=$(python3 -c "$CUENTA" < fichas-data.js 2>/dev/null || echo 0)
 if [ "$ANTES" -gt 0 ] && [ "$AHORA" -gt 0 ]; then
   MINIMO=$(( (ANTES - ${ST_ESPERADAS:-0}) * 95 / 100 ))
-  if [ "$AHORA" -lt "$MINIMO" ]; then
+  if [ "$AHORA" -lt "$MINIMO" ] && [ "$PERMITIR_CAIDA" = "true" ]; then
+    log "⚠ las fichas caen de $ANTES a $AHORA (más del 5%), aceptado a mano (permitir_caida)."
+    resumen "⚠ Las fichas caen de $ANTES a $AHORA: aceptado a mano (permitir_caida)."
+  elif [ "$AHORA" -lt "$MINIMO" ]; then
     log "⛔ FRENO: las fichas caen de $ANTES a $AHORA (más del 5%). NO se publica."; PLAT="⛔ freno: las fichas caen de $ANTES a $AHORA"
     log "   Suele ser que alguien borró filas del Hub sin querer (Archivo → Historial de versiones)."
     resumen "⛔ Freno: las fichas caen de $ANTES a $AHORA (más del 5%). No se publicó nada."

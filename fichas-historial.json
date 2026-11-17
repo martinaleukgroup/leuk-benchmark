@@ -170,15 +170,14 @@
   "BILUNE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7436",
     "7437",
-    "7438",
     "7439",
-    "7440",
     "7441",
     "7610",
     "7611"
@@ -271,17 +270,14 @@
   "CATEN": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT",
-    "Dibujo técnico"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "falta_foto": [
     "7442",
-    "7443",
     "7444",
-    "7445",
-    "7446",
-    "7447"
+    "7446"
    ]
   },
   "CHESTER": {
@@ -456,13 +452,13 @@
   "DYNA FIELTRO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7423",
-    "7424"
+    "7423"
    ]
   },
   "DYO": {
@@ -720,9 +716,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / KYKLO / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1GESfQyAMIO8T3mtTMZ6BP0F7tFwVcGrZ/view"
    }
   },
   "LAIVA": {
@@ -755,9 +751,9 @@
    ],
    "drive": {
     "destino": "Interior / De Pared / Apliques / LAZU / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1lVBiO7sj5Lv1r2kNoek6c6_yuKqiK6rk/view"
    }
   },
   "LEIA": {
@@ -767,9 +763,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / LEIA / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1MqwGYtAV6OGYKbwsGLSaOpVX4ceUbypZ/view"
    }
   },
   "LEIF": {
@@ -779,9 +775,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / LEIF / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1lmhTbiG4NP2kKp3wwxlvBQPnWO8ktEG3/view"
    }
   },
   "LETO": {
@@ -791,9 +787,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Piso / Embutidos / LETO / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1H9YWLDnVnm4PI2wzLK5nxzi95ZFQKKsw/view"
    }
   },
   "LEX": {
@@ -804,9 +800,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Piso / Apliques / LEX / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1srav5ZOUWcu7G5di972vvUt0OkNacn3W/view"
    }
   },
   "LIV": {
@@ -829,9 +825,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / LOFI / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1Zwp7qFKv-i3DtkVrkzWiWkSaHIUdE9DZ/view"
    }
   },
   "LOFI AP": {
@@ -841,26 +837,23 @@
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / LOFI AP / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1j2ji1QJJ6NucCG2gLkgDoBjuGDEuD2bx/view"
    }
   },
   "LOOP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "LDT"
+    "Variantes",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
-    "7428",
     "7429",
-    "7430",
     "7431",
-    "7432",
     "7433",
-    "7434",
     "7435"
    ]
   },
@@ -872,9 +865,9 @@
    ],
    "drive": {
     "destino": "Exterior / De Piso / Bolardos / LOUTA / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Request failed with status code 403\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/16z-iGZDRl3TwGRFPy9R2eQJG5XWfc5un/view"
    }
   },
   "LUVA": {
@@ -884,9 +877,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / LUVA / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1-vpmoUUjurHo29bMvIYB6JIgyubyywGJ/view"
    }
   },
   "MARDAI": {
@@ -896,9 +889,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Colgantes / MARDAI / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1kaI-D3H60qHMvMN_UQXzMzZfKA9WvdK7/view"
    }
   },
   "MARLEY": {
@@ -908,9 +901,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Apliques / MARLEY / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1tuXWM7Fi16X-NRQi1Mv55LCo2bh58Y8R/view"
    }
   },
   "MATT": {
@@ -935,9 +928,9 @@
    ],
    "drive": {
     "destino": "Interior / De Techo / Cabezales / MEX / Ficha Técnica",
-    "error": "No se pudo subir el PDF: \"Forbidden - perhaps check your credentials?\"",
-    "estado": "error",
-    "fecha": "2026-11-17"
+    "estado": "subida",
+    "fecha": "2026-11-17",
+    "url": "https://drive.google.com/file/d/1OZu9ZWVcfUiY8U9u4Njn9jzxtVhuYUac/view"
    }
   },
   "MEX 3CCT": {

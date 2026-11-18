@@ -173,7 +173,15 @@
   "BILUNE": {
    "actualizada": "2026-11-18",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Flujo lumínico",
+    "Eficacia lumínica",
+    "Ángulo de apertura",
+    "Lúmenes LED",
+    "Curvas fotométricas",
+    "Foto",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -428,9 +436,9 @@
    }
   },
   "DYNA": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
-    "LDT"
+    "Dimensión producto"
    ],
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA / Ficha Técnica",
@@ -986,6 +994,7 @@
   "MINI SPY": {
    "actualizada": "2026-11-18",
    "cambios": [
+    "Dibujo técnico",
     "Foto"
    ],
    "creada": "2026-11-02",
@@ -1155,9 +1164,9 @@
    }
   },
   "NUMA": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
-    "Foto"
+    "Variantes"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -1881,6 +1890,7 @@
   "SPY": {
    "actualizada": "2026-11-18",
    "cambios": [
+    "Dibujo técnico",
     "Foto"
    ],
    "creada": "2026-11-02",
@@ -1894,6 +1904,7 @@
   "SPY AP": {
    "actualizada": "2026-11-18",
    "cambios": [
+    "Dibujo técnico",
     "Foto"
    ],
    "creada": "2026-11-02",
@@ -1907,6 +1918,7 @@
   "SPY EM": {
    "actualizada": "2026-11-18",
    "cambios": [
+    "Dibujo técnico",
     "Foto"
    ],
    "creada": "2026-11-02",
@@ -1969,7 +1981,10 @@
   "TERRA": {
    "actualizada": "2026-11-18",
    "cambios": [
-    "Foto"
+    "Variantes",
+    "Foto",
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "drive": {

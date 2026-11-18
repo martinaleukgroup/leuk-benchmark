@@ -74,12 +74,9 @@
   "AURA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7488"
-   ]
+   "creada": "2026-11-02"
   },
   "AXE": {
    "actualizada": "2026-11-11",
@@ -172,13 +169,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7437",
-    "7439",
-    "7441",
-    "7611"
-   ]
+   "creada": "2026-11-02"
   },
   "BOG": {
    "actualizada": "2026-11-17",
@@ -268,11 +259,6 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ],
-   "falta_foto": [
-    "7442",
-    "7444",
-    "7446"
    ]
   },
   "CHESTER": {
@@ -377,13 +363,9 @@
   "DOT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7504"
-   ]
+   "creada": "2026-11-02"
   },
   "DRABE": {
    "actualizada": "2026-11-17",
@@ -400,16 +382,9 @@
   "DROP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7489"
-   ]
+   "creada": "2026-11-02"
   },
   "DUNA": {
    "actualizada": "2026-11-17",
@@ -450,14 +425,9 @@
   "DYNA FIELTRO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7423"
-   ]
+   "creada": "2026-11-02"
   },
   "DYO": {
    "actualizada": "2026-11-17",
@@ -535,18 +505,7 @@
   "FORTE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
-   ],
-   "falta_foto": [
-    "7477",
-    "7478",
-    "7481",
-    "7482",
-    "7485",
-    "7486"
+    "Foto"
    ]
   },
   "FREYA": {
@@ -564,14 +523,9 @@
   "GALIA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7466"
-   ]
+   "creada": "2026-11-02"
   },
   "GUM": {
    "actualizada": "2026-11-17",
@@ -673,16 +627,9 @@
   "KOKO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7509"
-   ]
+   "creada": "2026-11-02"
   },
   "KOLDO": {
    "actualizada": "2026-11-17",
@@ -725,10 +672,6 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ],
-   "falta_foto": [
-    "7470",
-    "7472"
    ]
   },
   "LAIVA AP": {
@@ -736,10 +679,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7469"
-   ]
+   "creada": "2026-11-02"
   },
   "LAZU": {
    "actualizada": "2026-11-17",
@@ -805,15 +745,7 @@
   "LIV": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "LDT"
-   ],
-   "falta_foto": [
-    "7622",
-    "7623",
-    "7624",
-    "7625"
+    "Foto"
    ]
   },
   "LOFI": {
@@ -843,17 +775,9 @@
   "LOOP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7429",
-    "7431",
-    "7433",
-    "7435"
-   ]
+   "creada": "2026-11-02"
   },
   "LOUTA": {
    "actualizada": "2026-11-17",
@@ -960,19 +884,9 @@
   "MINI POCKET": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7492",
-    "7494",
-    "7496",
-    "7498"
-   ]
+   "creada": "2026-11-02"
   },
   "MINI SPOT OPTIC": {
    "actualizada": "2026-11-17",
@@ -989,19 +903,9 @@
   "MINI SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7511"
-   ]
+   "creada": "2026-11-02"
   },
   "MIRACLE": {
    "actualizada": "2026-11-17",
@@ -1078,14 +982,9 @@
   "NANO CHILL": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7518"
-   ]
+   "creada": "2026-11-02"
   },
   "NEULA": {
    "actualizada": "2026-11-17",
@@ -1150,68 +1049,30 @@
   "NODO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7508"
-   ]
+   "creada": "2026-11-02"
   },
   "NUMA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "CAD",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7521",
-    "7520",
-    "7524",
-    "7523",
-    "7525",
-    "7528",
-    "7529",
-    "7532",
-    "7533"
-   ]
+   "creada": "2026-11-02"
   },
   "NUMA MODULO": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7526",
-    "7527",
-    "7530",
-    "7531"
-   ]
+   "creada": "2026-11-02"
   },
   "NUMA POINT": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7490",
-    "7491"
-   ]
+   "creada": "2026-11-02"
   },
   "OKTA": {
    "actualizada": "2026-11-17",
@@ -1254,19 +1115,9 @@
   "ORBIS": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7505"
-   ]
+   "creada": "2026-11-02"
   },
   "ORI": {
    "actualizada": "2026-11-05",
@@ -1310,10 +1161,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7502"
-   ]
+   "creada": "2026-11-02"
   },
   "PIER F": {
    "actualizada": "2026-11-17",
@@ -1356,10 +1204,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7500"
-   ]
+   "creada": "2026-11-02"
   },
   "PLEVRES": {
    "actualizada": "2026-11-17",
@@ -1397,10 +1242,6 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ],
-   "falta_foto": [
-    "7724",
-    "7736"
    ]
   },
   "POCKET III y IV": {
@@ -1420,12 +1261,9 @@
   "POCKET IV": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "LDT"
+    "Foto"
    ],
    "falta_foto": [
-    "7727",
     "7739"
    ]
   },
@@ -1434,11 +1272,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7456",
-    "7457"
-   ]
+   "creada": "2026-11-02"
   },
   "POCKET MODULO III 2CCT": {
    "actualizada": "2026-11-17",
@@ -1487,13 +1321,7 @@
   "POCKET VI": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Dibujo técnico",
-    "LDT",
-    "CAD"
-   ],
-   "falta_foto": [
-    "7730",
-    "7742"
+    "Foto"
    ]
   },
   "POCKET VI AP": {
@@ -1513,10 +1341,6 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ],
-   "falta_foto": [
-    "7733",
-    "7745"
    ]
   },
   "POCKET XII AP": {
@@ -1535,147 +1359,65 @@
   "POLAR": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "CAD",
-    "LDT",
-    "Curvas fotométricas"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7535",
-    "7537",
-    "7539",
-    "7541",
-    "7545",
-    "7547",
-    "7549",
-    "7551",
-    "7553",
-    "7555",
-    "7557",
-    "7559",
-    "7560",
-    "7561",
-    "7702",
-    "7703",
-    "7705",
-    "7715"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR BEAM": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7581",
-    "7599"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR FOCUS": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7603"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR GRID": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7569",
-    "7571",
-    "7587",
-    "7589"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR GRID MOVIL": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7573",
-    "7575",
-    "7591",
-    "7593"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR LINE": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7565",
-    "7567",
-    "7583",
-    "7585",
-    "7586"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR MEX": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7577",
-    "7579",
-    "7595",
-    "7597"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR SOUND": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7601"
-   ]
+   "creada": "2026-11-02"
   },
   "POLAR y REN": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7563"
-   ]
+   "creada": "2026-11-02"
   },
   "POLUX": {
    "actualizada": "2026-11-17",
@@ -1742,10 +1484,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7701"
-   ]
+   "creada": "2026-11-02"
   },
   "RITA": {
    "actualizada": "2026-11-05",
@@ -1922,47 +1661,23 @@
   "SPY": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7512"
-   ]
+   "creada": "2026-11-02"
   },
   "SPY AP": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7514"
-   ]
+   "creada": "2026-11-02"
   },
   "SPY EM": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Variantes",
-    "Color producto",
-    "Foto",
-    "Dibujo técnico",
-    "CAD",
-    "Colores"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7516"
-   ]
+   "creada": "2026-11-02"
   },
   "SUN": {
    "actualizada": "2026-11-17",
@@ -1979,15 +1694,9 @@
   "SUNSET": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7467"
-   ]
+   "creada": "2026-11-02"
   },
   "SUTSKE": {
    "actualizada": "2026-11-17",
@@ -2016,47 +1725,23 @@
   "TERRA": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7626",
-    "7628",
-    "7629",
-    "7630",
-    "7631",
-    "7632",
-    "7633",
-    "7634",
-    "7635",
-    "7636"
-   ]
+   "creada": "2026-11-02"
   },
   "TERRA CHILL": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "LDT"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7638"
-   ]
+   "creada": "2026-11-02"
   },
   "TERRA GRID": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7639"
-   ]
+   "creada": "2026-11-02"
   },
   "TERRA POINT": {
    "actualizada": "2026-11-17",
@@ -2121,10 +1806,7 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7474"
-   ]
+   "creada": "2026-11-02"
   },
   "ULÁN": {
    "actualizada": "2026-11-17",
@@ -2201,16 +1883,9 @@
   "WINSOR": {
    "actualizada": "2026-11-17",
    "cambios": [
-    "Foto",
-    "Dibujo técnico",
-    "Curvas fotométricas",
-    "LDT",
-    "CAD"
+    "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7487"
-   ]
+   "creada": "2026-11-02"
   },
   "XAPO": {
    "actualizada": "2026-11-17",

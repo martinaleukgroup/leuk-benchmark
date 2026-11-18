@@ -76,7 +76,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / AURA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/11Go6J07HFSmfgg2v7PhUId5BoRk71M75/view"
+   }
   },
   "AXE": {
    "actualizada": "2026-11-11",
@@ -169,7 +175,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Exterior / De Techo / Apliques / BILUNE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1tyIltH6-CuxA-5aJ119QeY4_2X3GK3rU/view"
+   }
   },
   "BOG": {
    "actualizada": "2026-11-17",
@@ -259,7 +271,12 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / De Pared / Apliques / CATEN | Interior / De Pared / Apliques / CATEN",
+    "estado": "ambigua",
+    "fecha": "2026-11-18"
+   }
   },
   "CHESTER": {
    "actualizada": "2026-11-17",
@@ -365,7 +382,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / DOT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1kJA0QTjtwDWwVij7gYCHelQ2egztClL_/view"
+   }
   },
   "DRABE": {
    "actualizada": "2026-11-17",
@@ -384,7 +407,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Apoyo / Mesa / DROP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1frcN1QomwD9cAXmUkXMKiXMBJF6b6PNL/view"
+   }
   },
   "DUNA": {
    "actualizada": "2026-11-17",
@@ -427,7 +456,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / DYNA FIELTRO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1kQk0aWHIt2hLQKbg0vgWKTIM0-PyG2FE/view"
+   }
   },
   "DYO": {
    "actualizada": "2026-11-17",
@@ -506,7 +541,13 @@
    "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / FORTE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1bjnqIHAtbAqxOGFoyI1XPq9_8rE0i2et/view"
+   }
   },
   "FREYA": {
    "actualizada": "2026-11-17",
@@ -525,7 +566,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / GALIA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1M9kIj2mmud5jamzq4ujdYiRxPl19ZEVg/view"
+   }
   },
   "GUM": {
    "actualizada": "2026-11-17",
@@ -629,7 +676,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Apoyo / Mesa / KOKO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1DGK_PhfA9amqG5WiyeooAUYJNSKWX5u6/view"
+   }
   },
   "KOLDO": {
    "actualizada": "2026-11-17",
@@ -672,7 +725,13 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / LAIVA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1tKRI75dUKTdBVZjxjW_hGT9M7wD4qLws/view"
+   }
   },
   "LAIVA AP": {
    "actualizada": "2026-11-17",

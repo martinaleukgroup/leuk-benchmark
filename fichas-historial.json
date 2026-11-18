@@ -165,7 +165,7 @@
    }
   },
   "BILUNE": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -361,7 +361,7 @@
    }
   },
   "DOT": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -423,7 +423,7 @@
    }
   },
   "DYNA FIELTRO": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -503,7 +503,7 @@
    }
   },
   "FORTE": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ]
@@ -625,7 +625,7 @@
    }
   },
   "KOKO": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -901,7 +901,7 @@
    }
   },
   "MINI SPY": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -1117,7 +1117,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / ORBIS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1CdC8RvTcQ_KuVcapG7GPSvCHQN2yw3kA/view"
+   }
   },
   "ORI": {
    "actualizada": "2026-11-05",
@@ -1157,11 +1163,17 @@
    }
   },
   "PETRA LINE": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / PETRA LINE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/15MJ1Z8HCUKde_D1S1Torj9sOJmyMC-vZ/view"
+   }
   },
   "PIER F": {
    "actualizada": "2026-11-17",
@@ -1200,11 +1212,17 @@
    }
   },
   "PIN": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / PIN / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1v0IpCPa4n7t4elqQunsgjEd_zzZpSVKk/view"
+   }
   },
   "PLEVRES": {
    "actualizada": "2026-11-17",
@@ -1242,7 +1260,13 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / POCKET / POCKET III / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1U1tgdQc8FYv1ml6jacGTQkFL2OBa1GpJ/view"
+   }
   },
   "POCKET III y IV": {
    "actualizada": "2026-11-17",
@@ -1272,7 +1296,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET IV AP / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1SZnf4fIKz3gHq0r-D4-lV6zaHdf_Cq8w/view"
+   }
   },
   "POCKET MODULO III 2CCT": {
    "actualizada": "2026-11-17",
@@ -1322,7 +1352,13 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / POCKET / POCKET VI / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1yC-8eOZjYEL7eaVI4YUx4J86abFK0vtf/view"
+   }
   },
   "POCKET VI AP": {
    "actualizada": "2026-11-17",
@@ -1341,7 +1377,13 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / POCKET / POCKET XII / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1PFU2sZSoLSjRTDI6weMjVFnhOPuNdXcb/view"
+   }
   },
   "POCKET XII AP": {
    "actualizada": "2026-11-17",
@@ -1361,35 +1403,64 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Interior / Rieles / Rieles / POLAR TRACK | Interior / Rieles / Accesorios / POLAR CONECTOR | Interior / Rieles / Uniones / POLAR UNION | Interior / Rieles / Accesorios / POLAR DRIVER | Interior / Rieles / Accesorios / POLAR KIT UNION | Interior / Rieles / Accesorios / POLAR KIT SUSPENSION",
+    "estado": "ambigua",
+    "fecha": "2026-11-18"
+   }
   },
   "POLAR BEAM": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Colgantes / POLAR BEAM / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1DwAbZD4WMS6tbFXZtfphtvFKJ4y7aMza/view"
+   }
   },
   "POLAR FOCUS": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR FOCUS / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1Vzx2iAetz8mqEwXsYOMcudtmIrYuSLs2/view"
+   }
   },
   "POLAR GRID": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR GRID / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1tCN4anFNoN12mJY6k9I-uKnVxoTrvrvA/view"
+   }
   },
   "POLAR GRID MOVIL": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR GRID MOVIL / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1F2m4z4yvQtRGfw43vR5v2dVV9rq9N4dI/view"
+   }
   },
   "POLAR LINE": {
    "actualizada": "2026-11-17",
@@ -1480,7 +1551,7 @@
    }
   },
   "RISE": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -1659,21 +1730,21 @@
    }
   },
   "SPY": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
    "creada": "2026-11-02"
   },
   "SPY AP": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
    "creada": "2026-11-02"
   },
   "SPY EM": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -1723,7 +1794,7 @@
    }
   },
   "TERRA": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
@@ -1881,7 +1952,7 @@
    }
   },
   "WINSOR": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],

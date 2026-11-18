@@ -738,7 +738,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / LAIVA AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1ydj95fOzfzU4UW4A0-9NUGEs6dMxSfEz/view"
+   }
   },
   "LAZU": {
    "actualizada": "2026-11-17",
@@ -805,7 +811,13 @@
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
-   ]
+   ],
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / LIV / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/18naDD9XPcXwE3qju3Vm7HOX2IuXzYL5R/view"
+   }
   },
   "LOFI": {
    "actualizada": "2026-11-17",
@@ -836,7 +848,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Exterior / De Techo / Apliques / LOOP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1_jYMRTDlItdnd-PQftMggRGWFqbo3Lce/view"
+   }
   },
   "LOUTA": {
    "actualizada": "2026-11-17",
@@ -945,7 +963,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / MINI POCKET / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1507i0eGpMYLpOAZC1re75CBB4AHU-9n2/view"
+   }
   },
   "MINI SPOT OPTIC": {
    "actualizada": "2026-11-17",
@@ -964,7 +988,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / MINI SPY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1_fYiZWC_qr7h8l5tM9xjaJmkHeK7szQu/view"
+   }
   },
   "MIRACLE": {
    "actualizada": "2026-11-17",
@@ -1043,7 +1073,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Exterior / De Piso / Proyectores / NANO CHILL / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/119KJDIZ-VQBn088Nwh-m267YYDUDmQvr/view"
+   }
   },
   "NEULA": {
    "actualizada": "2026-11-17",
@@ -1110,28 +1146,52 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Apoyo / Mesa / NODO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1h9k1IduejJMCl6YNQjDl5BmBMzeFpjqX/view"
+   }
   },
   "NUMA": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / NUMA / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1XjJZEzy0FaZMyqBJL9-eXAX9VOLWRQ3y/view"
+   }
   },
   "NUMA MODULO": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Accesorios / NUMA ACCESORIOS / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1XorLvDfksqOSeMlQb_64jT4zmZbCbWpd/view"
+   }
   },
   "NUMA POINT": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / NUMA POINT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/152v2gcJmVZLwkjd314wYdFfAfYxAgyOg/view"
+   }
   },
   "OKTA": {
    "actualizada": "2026-11-17",

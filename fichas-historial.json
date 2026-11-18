@@ -1467,28 +1467,52 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR LINE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1poN5kX3hd7QnzEh4rxe8Eo69TQ8rwpup/view"
+   }
   },
   "POLAR MEX": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR MEX / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1OpxUpa7k0URa3N-QKSF0rw8StrAkDg1i/view"
+   }
   },
   "POLAR SOUND": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Cabezales / POLAR SOUND / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1Lu8qe-FnZAjeM4Y5tjEZCpOlMhDQx2bf/view"
+   }
   },
   "POLAR y REN": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / Rieles / Accesorios / CONTROL BT TUYA / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1OOOiRP2a9BwnRKY-zjWNe13agbwwswa8/view"
+   }
   },
   "POLUX": {
    "actualizada": "2026-11-17",
@@ -1555,7 +1579,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Pared / Apliques / RISE / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1BekYr_z_jlyzgLhTznw8PGs4Ds8uckVJ/view"
+   }
   },
   "RITA": {
    "actualizada": "2026-11-05",
@@ -1734,21 +1764,39 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / SPY / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1bbZnl8BW-UR_WXhqMj91eO_9Yixn-3wH/view"
+   }
   },
   "SPY AP": {
    "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Apliques / SPY AP / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1FWgZyuAu_LNSJRP7JJcduCPndt-SZ3qN/view"
+   }
   },
   "SPY EM": {
    "actualizada": "2026-11-18",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Embutidos / SPY EM / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/10K95qWPgI_SGbuglP-hffvuptqlmq-3s/view"
+   }
   },
   "SUN": {
    "actualizada": "2026-11-17",
@@ -1767,7 +1815,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Apoyo / Pie / SUNSET / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1X0fFqG80yfVfbt4hYnKnJSAjVARhWWs7/view"
+   }
   },
   "SUTSKE": {
    "actualizada": "2026-11-17",
@@ -1798,21 +1852,38 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / Rieles / Rieles / TERRA TRACK | Exterior / Rieles / Uniones / TERRA BASE NG | Exterior / Rieles / Uniones / TERRA NODO NG | Exterior / Rieles / Uniones / TERRA UNION L NG | Exterior / Rieles / Uniones / TERRA UNION LINEAL NG | Exterior / Rieles / Accesorios / TERRA LED | Exterior / Rieles / Accesorios / TERRA FLEX | Exterior / Rieles / Accesorios / TERRA DRIVER",
+    "estado": "ambigua",
+    "fecha": "2026-11-18"
+   }
   },
   "TERRA CHILL": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Exterior / Rieles / Cabezales / TERRA CHILL / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1AhWFSfrHbpeUMCBZjzleViq3l-0JVIpz/view"
+   }
   },
   "TERRA GRID": {
    "actualizada": "2026-11-17",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Exterior / Rieles / Cabezales / TERRA GRID / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1mYyXyycbWBxr3jbdpcvh82ynAFBZ0TyW/view"
+   }
   },
   "TERRA POINT": {
    "actualizada": "2026-11-17",
@@ -1877,7 +1948,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / TRAZO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1YSD-W6jAKWAVQg3hCX_VF8ermQpmcY5N/view"
+   }
   },
   "ULÁN": {
    "actualizada": "2026-11-17",
@@ -1956,7 +2033,13 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "destino": "Interior / De Techo / Colgantes / WINSOR / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-18",
+    "url": "https://drive.google.com/file/d/1fv7kUPzWXT73SZg2gB-WTFasVzwMXsqW/view"
+   }
   },
   "XAPO": {
    "actualizada": "2026-11-17",

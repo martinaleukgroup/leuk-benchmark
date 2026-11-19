@@ -126,16 +126,6 @@
    "ficha": "MATT"
   },
   {
-   "sku": "7521",
-   "nombre": "NUMA R NG/BL",
-   "ficha": "NUMA"
-  },
-  {
-   "sku": "7524",
-   "nombre": "NUMA C NG/BL",
-   "ficha": "NUMA"
-  },
-  {
    "sku": "6806",
    "nombre": "OLU",
    "ficha": "OLU"
@@ -154,6 +144,11 @@
    "sku": "7182",
    "nombre": "POCKET IV",
    "ficha": "POCKET IV"
+  },
+  {
+   "sku": "7448",
+   "nombre": "POCKET MODULO III BLBL 2CCT",
+   "ficha": "POCKET MODULO III BLBL 2CCT"
   },
   {
    "sku": "7189",
@@ -215,6 +210,7 @@
   "LAMPY DE PIE",
   "LOA",
   "LUKA",
+  "POCKET MODULO III BLBL 2CCT",
   "SINTRA SQ"
  ]
 }

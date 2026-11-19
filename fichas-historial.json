@@ -171,17 +171,9 @@
    }
   },
   "BILUNE": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-19",
    "cambios": [
-    "Variantes",
-    "Flujo lumínico",
-    "Eficacia lumínica",
-    "Ángulo de apertura",
-    "Lúmenes LED",
-    "Curvas fotométricas",
-    "Foto",
-    "Color producto",
-    "Colores"
+    "LDT"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -680,7 +672,7 @@
    }
   },
   "KOKO": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-19",
    "cambios": [
     "Foto"
    ],
@@ -1164,7 +1156,7 @@
    }
   },
   "NUMA": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-19",
    "cambios": [
     "Variantes"
    ],
@@ -1433,9 +1425,10 @@
    }
   },
   "POCKET MODULO III 2CCT": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-19",
    "cambios": [
-    "LDT"
+    "Color producto",
+    "Colores"
    ],
    "creada": "2026-11-02",
    "falta_foto": [
@@ -1527,9 +1520,11 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-19",
    "cambios": [
-    "Foto"
+    "Dimensión producto",
+    "Clase de aislación",
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -1888,10 +1883,9 @@
    }
   },
   "SPY": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-19",
    "cambios": [
-    "Dibujo técnico",
-    "Foto"
+    "Ángulo de apertura"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -1916,10 +1910,9 @@
    }
   },
   "SPY EM": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-19",
    "cambios": [
-    "Dibujo técnico",
-    "Foto"
+    "Dimensión producto"
    ],
    "creada": "2026-11-02",
    "drive": {

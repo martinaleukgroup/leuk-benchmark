@@ -1156,7 +1156,7 @@
    }
   },
   "NUMA": {
-   "actualizada": "2026-11-19",
+   "actualizada": "2026-11-20",
    "cambios": [
     "Variantes"
    ],
@@ -1520,11 +1520,10 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-19",
+   "actualizada": "2026-11-20",
    "cambios": [
-    "Dimensión producto",
-    "Clase de aislación",
-    "Dibujo técnico"
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -1686,9 +1685,9 @@
    }
   },
   "RIELES 3EF": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-20",
    "cambios": [
-    "LDT"
+    "Variantes"
    ],
    "drive": {
     "destino": "Interior / Rieles / Uniones / RIELES 3EF / Ficha Técnica",
@@ -1795,9 +1794,8 @@
    }
   },
   "SEB": {
-   "actualizada": "2026-11-03",
+   "actualizada": "2026-11-20",
    "cambios": [
-    "Variantes",
     "Color producto",
     "Colores"
    ],
@@ -1821,9 +1819,9 @@
    }
   },
   "SINTRA": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-20",
    "cambios": [
-    "LDT"
+    "Variantes"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - SINTRA Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
@@ -2013,14 +2011,11 @@
    }
   },
   "TERRA POINT": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-20",
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02",
-   "falta_foto": [
-    "7637"
-   ]
+   "creada": "2026-11-02"
   },
   "TETRA": {
    "actualizada": "2026-11-17",

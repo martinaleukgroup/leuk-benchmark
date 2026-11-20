@@ -126,6 +126,16 @@
    "ficha": "MATT"
   },
   {
+   "sku": "7521",
+   "nombre": "NUMA R NG/BL",
+   "ficha": "NUMA"
+  },
+  {
+   "sku": "7524",
+   "nombre": "NUMA C NG/BL",
+   "ficha": "NUMA"
+  },
+  {
    "sku": "6806",
    "nombre": "OLU",
    "ficha": "OLU"
@@ -161,6 +171,11 @@
    "ficha": "REN"
   },
   {
+   "sku": "6611",
+   "nombre": "RIEL 1MT 3EF NG",
+   "ficha": "RIELES 3EF"
+  },
+  {
    "sku": "7008",
    "nombre": "ADAPTADOR HEMBRA 3EF",
    "ficha": "RIELES 3EF"
@@ -189,6 +204,16 @@
    "sku": "6133",
    "nombre": "RITA I NG",
    "ficha": "RITA"
+  },
+  {
+   "sku": "6134",
+   "nombre": "SEB",
+   "ficha": "SEB"
+  },
+  {
+   "sku": "6619",
+   "nombre": "SINTRA",
+   "ficha": "SINTRA"
   },
   {
    "sku": "6618",

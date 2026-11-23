@@ -56,7 +56,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7222, 7223).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-17"
+    "fecha": "2026-11-23"
    }
   },
   "ARKANSAS": {
@@ -179,8 +179,8 @@
    "drive": {
     "destino": "Exterior / De Techo / Apliques / BILUNE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1tyIltH6-CuxA-5aJ119QeY4_2X3GK3rU/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1ICBFg225mtIjF1q4R1jvqrk-eoZp1I8Q/view"
    }
   },
   "BOG": {
@@ -268,14 +268,14 @@
    }
   },
   "CATEN": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-23",
    "cambios": [
     "Foto"
    ],
    "drive": {
     "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / De Pared / Apliques / CATEN | Interior / De Pared / Apliques / CATEN",
     "estado": "ambigua",
-    "fecha": "2026-11-18"
+    "fecha": "2026-11-23"
    }
   },
   "CHESTER": {
@@ -435,8 +435,8 @@
    "drive": {
     "destino": "Interior / Lineales / Lineal / DYNA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-17",
-    "url": "https://drive.google.com/file/d/19phkbW8i3-fylJMBxk4WZNv4NvU9jiIh/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1ekK5dUibSO21QnYCcBzZBZz3lFRWJU9z/view"
    }
   },
   "DYNA EM": {
@@ -508,7 +508,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7220, 7221).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-17"
+    "fecha": "2026-11-23"
    }
   },
   "EPICUR": {
@@ -678,10 +678,9 @@
    ],
    "creada": "2026-11-02",
    "drive": {
-    "destino": "Interior / De Apoyo / Mesa / KOKO / Ficha Técnica",
-    "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1DGK_PhfA9amqG5WiyeooAUYJNSKWX5u6/view"
+    "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7509).",
+    "estado": "sin_carpeta",
+    "fecha": "2026-11-23"
    }
   },
   "KOLDO": {
@@ -1164,8 +1163,8 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / NUMA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1XjJZEzy0FaZMyqBJL9-eXAX9VOLWRQ3y/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1z3hNKdVc-5jthAyX0wi0b-l7dMkh4VEE/view"
    }
   },
   "NUMA MODULO": {
@@ -1520,16 +1519,17 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-20",
+   "actualizada": "2026-11-23",
    "cambios": [
-    "Dibujo técnico",
-    "CAD"
+    "Dimensión producto"
    ],
    "creada": "2026-11-02",
    "drive": {
-    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Interior / Rieles / Rieles / POLAR TRACK | Interior / Rieles / Accesorios / POLAR CONECTOR | Interior / Rieles / Uniones / POLAR UNION | Interior / Rieles / Accesorios / POLAR DRIVER | Interior / Rieles / Accesorios / POLAR KIT UNION | Interior / Rieles / Accesorios / POLAR KIT SUSPENSION",
-    "estado": "ambigua",
-    "fecha": "2026-11-18"
+    "aviso": "Destino fijo (DESTINO_FIJO).",
+    "destino": "Interior / Rieles / Rieles / POLAR TRACK / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1vLVQZTfFoXX8uVbxfyhaPgBmwR2lVfwJ/view"
    }
   },
   "POLAR BEAM": {
@@ -1678,10 +1678,10 @@
     "Accesorios"
    ],
    "drive": {
-    "destino": "Interior / Rieles / Uniones / RIELES 1EF / Ficha Técnica (nueva)",
+    "destino": "Interior / Rieles / Uniones / RIELES 1EF / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1DJMIQXGkeV6KS7DOOVi9ZsWYGTFQB9VI/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/10a1Jghu03RzAluxrBbcRdQjleiwZSFAB/view"
    }
   },
   "RIELES 3EF": {
@@ -1692,8 +1692,8 @@
    "drive": {
     "destino": "Interior / Rieles / Uniones / RIELES 3EF / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1JVJ0TIXhTOGWLpDpQdX97M7o36MgREQj/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1rxO9fp_VCd88fbxPkOvJGu7F7JpfbSZi/view"
    }
   },
   "RISE": {
@@ -1802,8 +1802,8 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / SEB / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1EMQq1Y8iQAQveF48ZlMd5lMLYvlHX1rc/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1M6Q6sv_Kb_uNchpMJAV4-grik3OlnPYP/view"
    }
   },
   "SHIR": {
@@ -1827,8 +1827,8 @@
     "aviso": "Se deja «Ficha Técnica - SINTRA Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
     "destino": "Interior / De Techo / Apliques / SINTRA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-17",
-    "url": "https://drive.google.com/file/d/1TjkuPtfj7TKwbwFkl43i15Etz46NO-Jx/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1oKNMJNcCPEkuisLPG--xPuTAT6yCAmq9/view"
    }
   },
   "SINTRA 2700": {
@@ -1889,8 +1889,8 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / SPY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1bbZnl8BW-UR_WXhqMj91eO_9Yixn-3wH/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1TUDy64mepX0VfB7bX9-FPbq9ZA0Vxxn0/view"
    }
   },
   "SPY AP": {
@@ -1916,8 +1916,8 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / SPY EM / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/10K95qWPgI_SGbuglP-hffvuptqlmq-3s/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1d8JzXWJ0IOoDcx47W7uUw3L5ae16EgFa/view"
    }
   },
   "SUN": {
@@ -1979,9 +1979,11 @@
    ],
    "creada": "2026-11-02",
    "drive": {
-    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / Rieles / Rieles / TERRA TRACK | Exterior / Rieles / Uniones / TERRA BASE NG | Exterior / Rieles / Uniones / TERRA NODO NG | Exterior / Rieles / Uniones / TERRA UNION L NG | Exterior / Rieles / Uniones / TERRA UNION LINEAL NG | Exterior / Rieles / Accesorios / TERRA LED | Exterior / Rieles / Accesorios / TERRA FLEX | Exterior / Rieles / Accesorios / TERRA DRIVER",
-    "estado": "ambigua",
-    "fecha": "2026-11-18"
+    "aviso": "Destino fijo (DESTINO_FIJO).",
+    "destino": "Exterior / Rieles / Rieles / TERRA TRACK / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1lOYkUqTxalrRXDWbB9qx6wLdufgRqDLd/view"
    }
   },
   "TERRA CHILL": {
@@ -2015,7 +2017,14 @@
    "cambios": [
     "Foto"
    ],
-   "creada": "2026-11-02"
+   "creada": "2026-11-02",
+   "drive": {
+    "aviso": "Destino fijo (DESTINO_FIJO).",
+    "destino": "Exterior / Rieles / Cabezales / TERRA POINT / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1SKezbzRBZ3I5-KAx1ZpNVEkQK4oJku4W/view"
+   }
   },
   "TETRA": {
    "actualizada": "2026-11-17",
@@ -2127,15 +2136,15 @@
    }
   },
   "WEST": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-23",
    "cambios": [
-    "LDT"
+    "Clase de aislación"
    ],
    "drive": {
     "destino": "Exterior / De Pared / Apliques / WEST / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-17",
-    "url": "https://drive.google.com/file/d/10mtfHBB_K2R8e36Aqog1MG752Uvypxwi/view"
+    "fecha": "2026-11-23",
+    "url": "https://drive.google.com/file/d/1Aj9o7gZJp8Vay3c3eAZN9xpZ-poI1Ajm/view"
    }
   },
   "WILLY": {

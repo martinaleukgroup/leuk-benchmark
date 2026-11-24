@@ -56,7 +56,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7222, 7223).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-23"
+    "fecha": "2026-11-24"
    }
   },
   "ARKANSAS": {
@@ -268,14 +268,14 @@
    }
   },
   "CATEN": {
-   "actualizada": "2026-11-23",
+   "actualizada": "2026-11-24",
    "cambios": [
     "Foto"
    ],
    "drive": {
     "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / De Pared / Apliques / CATEN | Interior / De Pared / Apliques / CATEN",
     "estado": "ambigua",
-    "fecha": "2026-11-23"
+    "fecha": "2026-11-24"
    }
   },
   "CHESTER": {
@@ -378,16 +378,16 @@
    }
   },
   "DOT": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Foto"
+    "Otros datos"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Pared / Apliques / DOT / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1kJA0QTjtwDWwVij7gYCHelQ2egztClL_/view"
+    "fecha": "2026-11-24",
+    "url": "https://drive.google.com/file/d/1vEOXfCTSFL9qVzFS6VLp1q2dx37EcaLP/view"
    }
   },
   "DRABE": {
@@ -508,7 +508,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7220, 7221).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-23"
+    "fecha": "2026-11-24"
    }
   },
   "EPICUR": {
@@ -672,15 +672,15 @@
    }
   },
   "KOKO": {
-   "actualizada": "2026-11-19",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Foto"
+    "Otros datos"
    ],
    "creada": "2026-11-02",
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7509).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-23"
+    "fecha": "2026-11-24"
    }
   },
   "KOLDO": {
@@ -1282,16 +1282,16 @@
    }
   },
   "PETRA LINE": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Foto"
+    "Otros datos"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Techo / Colgantes / PETRA LINE / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/15MJ1Z8HCUKde_D1S1Torj9sOJmyMC-vZ/view"
+    "fecha": "2026-11-24",
+    "url": "https://drive.google.com/file/d/1ozo7GNGp0ZF0x-y4CJ0-xhwKB2OlJYU2/view"
    }
   },
   "PIER F": {
@@ -1331,16 +1331,16 @@
    }
   },
   "PIN": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Foto"
+    "Otros datos"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Techo / Colgantes / PIN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1v0IpCPa4n7t4elqQunsgjEd_zzZpSVKk/view"
+    "fecha": "2026-11-24",
+    "url": "https://drive.google.com/file/d/1bCzcL2jndmed2h2qmU2YvbKiY4dyIS29/view"
    }
   },
   "PLEVRES": {
@@ -1519,17 +1519,17 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-23",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Dimensión producto"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "drive": {
     "aviso": "Destino fijo (DESTINO_FIJO).",
     "destino": "Interior / Rieles / Rieles / POLAR TRACK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-23",
-    "url": "https://drive.google.com/file/d/1vLVQZTfFoXX8uVbxfyhaPgBmwR2lVfwJ/view"
+    "fecha": "2026-11-24",
+    "url": "https://drive.google.com/file/d/1w86nmB06UEHwhqJUpl6vrUYWK7ElK5vZ/view"
    }
   },
   "POLAR BEAM": {
@@ -1881,16 +1881,16 @@
    }
   },
   "SPY": {
-   "actualizada": "2026-11-19",
+   "actualizada": "2026-11-24",
    "cambios": [
-    "Ángulo de apertura"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Techo / Embutidos / SPY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-23",
-    "url": "https://drive.google.com/file/d/1TUDy64mepX0VfB7bX9-FPbq9ZA0Vxxn0/view"
+    "fecha": "2026-11-24",
+    "url": "https://drive.google.com/file/d/1AHhnz8bMwxCaElrjv14hZsw3MaTdzGsi/view"
    }
   },
   "SPY AP": {

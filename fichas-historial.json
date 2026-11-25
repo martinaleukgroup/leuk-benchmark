@@ -672,9 +672,9 @@
    }
   },
   "KOKO": {
-   "actualizada": "2026-11-24",
+   "actualizada": "2026-11-25",
    "cambios": [
-    "Otros datos"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "drive": {
@@ -992,8 +992,8 @@
    "drive": {
     "destino": "Interior / De Techo / Embutidos / MINI SPY / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1_fYiZWC_qr7h8l5tM9xjaJmkHeK7szQu/view"
+    "fecha": "2026-11-25",
+    "url": "https://drive.google.com/file/d/1W_ciAvH1HGbkEEqbDvEw3WpGYC-RVtuC/view"
    }
   },
   "MIRACLE": {
@@ -1519,9 +1519,10 @@
    }
   },
   "POLAR": {
-   "actualizada": "2026-11-24",
+   "actualizada": "2026-11-25",
    "cambios": [
-    "Dibujo técnico"
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "drive": {

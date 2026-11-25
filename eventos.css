@@ -1,0 +1,180 @@
+/* eventos.css — Acreditación y sorteo (eventos.html). Paleta y letra de la plataforma Leuk Group. */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#FAFAFA}
+body{font-family:"Hanken Grotesk","Inter","Segoe UI",system-ui,sans-serif;color:#1A1A1A;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input{font-family:inherit;font-size:inherit;color:inherit}
+h2,h3{margin:0;letter-spacing:-.01em}
+
+.ev-ic{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;font-size:18px;line-height:1;display:inline-block;
+  font-feature-settings:"liga";-webkit-font-smoothing:antialiased;width:1em;overflow:hidden;flex:none}
+
+/* Encabezado con pestañas */
+.ev-top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E6E6E6}
+.ev-top-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px}
+.ev-tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.ev-tab{background:none;border:0;border-bottom:2px solid transparent;padding:14px 14px 12px;cursor:pointer;color:#808080;
+  font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:color .15s}
+.ev-tab:hover{color:#1A1A1A}
+.ev-tab.on{color:#000;border-bottom-color:#000}
+.ev-tab-n{background:#F0F0F0;color:#4D4D4D;border-radius:99px;padding:0 7px;font-size:12px;font-weight:600;line-height:18px}
+.ev-tab.on .ev-tab-n{background:#000;color:#fff}
+.ev-guardado{display:flex;align-items:center;gap:4px;font-size:12px;color:#448361;opacity:0;transition:opacity .3s;white-space:nowrap}
+.ev-guardado.on{opacity:1}
+.ev-guardado .ev-ic{font-size:16px}
+
+.ev-main{padding:20px;max-width:1100px;margin:0 auto}
+.ev-angosto{max-width:720px;margin:0 auto}
+@keyframes evUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes evPop{0%{transform:scale(.8);opacity:0}65%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes evFlash{0%,100%{opacity:1}50%{opacity:.55}}
+.ev-anim{animation:evUp .25s ease}
+
+.ev-card{background:#fff;border:1px solid #E6E6E6;border-radius:14px}
+
+/* Resumen */
+.ev-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ev-kpi{background:#fff;border:1px solid #E6E6E6;border-radius:12px;padding:12px 16px}
+.ev-kpi-v{font-size:26px;font-weight:700;line-height:1.1;display:flex;align-items:baseline;gap:8px}
+.ev-kpi-v small{font-size:13px;font-weight:500;color:#808080}
+.ev-kpi-l{font-size:12.5px;color:#808080;margin-top:2px}
+.ev-kpi.ok{background:#EDF3EC;border-color:#DBEDDB}
+.ev-kpi.ok .ev-kpi-v{color:#448361}
+.ev-kpi.ok .ev-kpi-l{color:#448361}
+.ev-barra{height:4px;background:#E6E6E6;border-radius:99px;overflow:hidden;margin:12px 0 0}
+.ev-barra div{height:100%;background:#000;border-radius:99px;transition:width .5s}
+.ev-ayuda{color:#4D4D4D;font-size:13px;margin:12px 0 16px}
+
+/* Herramientas */
+.ev-herr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.ev-buscar{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E6E6E6;border-radius:10px;padding:0 12px;color:#9E9E9E}
+.ev-buscar:focus-within{border-color:#000}
+.ev-buscar input{flex:1;border:0;outline:0;background:none;padding:10px 0;color:#1A1A1A;min-width:0}
+.ev-seg{display:flex;gap:2px;background:#F0F0F0;border-radius:10px;padding:3px}
+.ev-seg button{border:0;background:none;padding:7px 12px;border-radius:8px;cursor:pointer;color:#808080;font-weight:500;white-space:nowrap}
+.ev-seg button.on{background:#fff;color:#000;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ev-seg.ancho{margin:4px 0 14px}
+.ev-seg.ancho button{flex:1}
+
+/* Botones */
+.ev-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #000;background:#000;color:#fff;
+  border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.ev-btn:hover{opacity:.85}
+.ev-btn:disabled{background:#F0F0F0;border-color:#E6E6E6;color:#9E9E9E;cursor:not-allowed;opacity:1}
+.ev-btn.sec{background:#fff;color:#1A1A1A;border-color:#E6E6E6}
+.ev-btn.sec:hover{border-color:#1A1A1A;opacity:1}
+.ev-btn.rojo{background:#C4423D;border-color:#C4423D}
+.ev-btn.grande{padding:13px 40px;font-size:15px}
+.ev-fila-btn{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.ev-fila-btn.izq{justify-content:flex-start;margin-top:0}
+.ev-centro{text-align:center;margin-top:16px}
+
+/* Lista de personas */
+.ev-lista{overflow:hidden}
+.ev-fila{display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid #F0F0F0}
+.ev-fila:first-child{border-top:0}
+.ev-fila:hover{background:#FAFAFA}
+.ev-av{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:#F0F0F0;color:#808080;font-size:12px;font-weight:600}
+.ev-fila.llego .ev-av{background:#1A1A1A;color:#fff}
+.ev-av.ok,.ev-fila.llego .ev-av.ok{background:#448361;color:#fff}
+.ev-av.grande{width:76px;height:76px;font-size:26px;margin:0 auto 14px;background:#000;color:#fff}
+.ev-persona{flex:1;min-width:0}
+.ev-nombre{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ev-fila:not(.llego) .ev-nombre{color:#4D4D4D}
+.ev-sub{font-size:12.5px;color:#808080;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-chip{font-size:11px;font-weight:500;background:#F0F0F0;color:#4D4D4D;border-radius:99px;padding:1px 8px;white-space:nowrap}
+.ev-chip.ok{background:#EDF3EC;color:#448361}
+.ev-acciones{display:flex;gap:6px;flex:none}
+.ev-toggle{display:inline-flex;align-items:center;gap:5px;border:1px solid #E6E6E6;background:#fff;color:#808080;border-radius:99px;
+  padding:5px 12px 5px 9px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;min-width:142px;justify-content:center;transition:all .15s}
+.ev-toggle .ev-ic{font-size:16px}
+.ev-toggle:hover{border-color:#1A1A1A;color:#1A1A1A}
+.ev-toggle.on{background:#1A1A1A;border-color:#1A1A1A;color:#fff}
+.ev-toggle.verde{min-width:168px}
+.ev-toggle.verde:hover{border-color:#448361;color:#448361}
+.ev-toggle.verde.on{background:#EDF3EC;border-color:#DBEDDB;color:#448361}
+.ev-vacio{padding:44px 24px;text-align:center;color:#808080}
+.ev-vacio.grande{padding:56px 24px;line-height:1.7}
+
+b.verde,.verde b{color:#448361}
+
+/* Habilitados */
+.ev-intro{padding:20px 24px;margin-bottom:14px}
+.ev-intro h2{font-size:18px;margin-bottom:4px}
+.ev-intro p{margin:0;color:#4D4D4D;line-height:1.65}
+
+/* Sorteo */
+.ev-escenario{background:#fff;border:1px solid #E6E6E6;border-radius:18px;padding:48px 32px;text-align:center;margin-bottom:22px;min-height:330px;
+  display:flex;align-items:center;justify-content:center}
+.ev-escenario > div{width:100%}
+.ev-escenario h2{font-size:28px;margin-bottom:4px}
+.ev-festejo .ev-ic{font-size:42px;color:#808080;margin-bottom:8px}
+.ev-gsub{color:#808080;margin:0 0 26px}
+.ev-eti{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#808080;margin-bottom:16px}
+.ev-girando{animation:evFlash .4s ease infinite}
+.ev-pop{animation:evPop .5s cubic-bezier(.175,.885,.32,1.275) both}
+.ev-pop .ev-av.grande{background:#448361}
+.ev-gnombre{font-size:30px;font-weight:700;line-height:1.2}
+.ev-gemp{font-size:15px;color:#4D4D4D;margin-top:4px}
+.ev-gmail{font-size:13px;color:#808080;margin-top:2px}
+.ev-bloque{margin-bottom:18px}
+.ev-titulito{font-size:13px;font-weight:600;color:#4D4D4D;margin-bottom:8px}
+.ev-ganadores{margin:0;padding:12px 16px 12px 36px;background:#fff;border:1px solid #E6E6E6;border-radius:12px;color:#4D4D4D}
+.ev-ganadores li{padding:3px 0}
+.ev-ganadores b{color:#1A1A1A}
+.ev-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ev-part{padding:4px 12px;border-radius:99px;font-size:12.5px;background:#fff;border:1px solid #E6E6E6;color:#4D4D4D}
+.ev-part.gano{color:#9E9E9E;text-decoration:line-through;background:#FAFAFA}
+
+/* Configuración */
+.ev-paso{padding:22px 24px;margin-bottom:14px}
+.ev-paso-t{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ev-paso h3{font-size:16px}
+.ev-paso > p{color:#4D4D4D;margin:0 0 12px;line-height:1.65}
+.ev-num{width:24px;height:24px;border-radius:50%;background:#000;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.ev-num.verde{background:#448361}
+.ev-lbl{display:block;font-size:12.5px;font-weight:500;color:#4D4D4D;margin-bottom:5px}
+.ev-inp{width:100%;background:#FAFAFA;border:1px solid #E6E6E6;border-radius:10px;padding:9px 12px;outline:0;margin-bottom:10px}
+.ev-inp:focus{border-color:#000;background:#fff}
+.ev-inp.corto{max-width:220px;margin-bottom:4px}
+.ev-sep{margin-top:16px;padding-top:14px;border-top:1px solid #F0F0F0}
+.ev-nota{font-size:12.5px;color:#808080;line-height:1.55}
+.ev-estado{margin-top:12px;font-size:13px;padding:8px 12px;border-radius:8px;background:#F0F0F0;color:#1A1A1A}
+.ev-estado.ok{background:#EDF3EC;color:#448361}
+.ev-estado.error{background:#FDEBEC;color:#C4423D}
+.ev-paso.peligro{border-color:#FFE2DD}
+.ev-paso.peligro h3{color:#C4423D;margin-bottom:14px}
+.ev-reset{margin-bottom:16px}
+.ev-reset:last-child{margin-bottom:0}
+.ev-reset .ev-nota{margin-top:7px}
+
+/* Ventana para agregar */
+.ev-fondo{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.ev-modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;animation:evUp .2s ease;box-shadow:0 12px 40px rgba(0,0,0,.18);max-height:100%;overflow:auto}
+.ev-modal h3{font-size:17px;margin-bottom:2px}
+.ev-modal > .ev-nota{margin:0 0 16px}
+.ev-campo .ev-inp{margin-bottom:10px}
+.ev-check{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #E6E6E6;border-radius:10px;cursor:pointer;margin-top:4px}
+.ev-check input{margin-top:3px;accent-color:#448361}
+.ev-check small{color:#808080}
+.ev-modal .ev-fila-btn{justify-content:stretch}
+.ev-modal .ev-fila-btn .ev-btn{flex:1}
+
+/* Celular */
+@media (max-width:760px){
+  .ev-main{padding:14px 12px}
+  .ev-top-in{padding:0 8px}
+  .ev-tab{padding:13px 10px 11px}
+  .ev-guardado:not(.on){display:none}
+  .ev-kpis{grid-template-columns:repeat(2,1fr);gap:8px}
+  .ev-kpi-v{font-size:22px}
+  .ev-seg{width:100%}
+  .ev-seg button{flex:1;padding:7px 6px}
+  .ev-herr .ev-btn{width:100%}
+  .ev-fila{flex-wrap:wrap;padding:12px}
+  .ev-acciones{width:100%;padding-left:46px}
+  .ev-toggle,.ev-toggle.verde{flex:1;min-width:0}
+  .ev-escenario{padding:36px 18px;min-height:280px}
+  .ev-gnombre{font-size:24px}
+  .ev-paso{padding:18px 16px}
+}

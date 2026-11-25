@@ -1,12 +1,7 @@
-// eventos.app.js — componente Check-in & Sorteo PRE-COMPILADO (JSX → JS plano).
-// FUENTE EDITABLE: eventos.src.jsx (no servido). Para regenerar: transpilar ese JSX con
-// Babel runtime clásico → volcar acá. Tematizado con la paleta de la plataforma (claro/olivo/Barlow).
+// eventos.app.js — Acreditación y sorteo de eventos (eventos.html).
+// JS plano con React.createElement (h): se edita directo acá, no hace falta compilar.
+// Estilos en eventos.css. Estado compartido en vivo vía window.storage (tabla eventos_estado).
 /* eslint-disable */
-const {
-  useState,
-  useEffect,
-  useRef
-} = React;
 const INITIAL_ATTENDEES = [{
   id: "157362549",
   nombre: "Guillermina",
@@ -276,1682 +271,503 @@ const STORAGE_KEY = "evento_checkin_v4";
 const WINNERS_KEY = "evento_winners_v4";
 const SHEETS_KEY = "evento_list_url";
 const SURVEY_KEY = "evento_survey_url";
-const baseList = () => INITIAL_ATTENDEES.map(a => ({
-  ...a,
-  mail: a.mail || "",
-  presente: false,
-  formulario: false,
-  manual: false
-}));
+
+const h = React.createElement;
+const baseList = () => INITIAL_ATTENDEES.map(a => ({ ...a, mail: a.mail || "", presente: false, formulario: false, manual: false }));
+
 async function loadShared(key, fallback) {
-  try {
-    const r = await window.storage.get(key, true);
-    return r ? JSON.parse(r.value) : fallback;
-  } catch {
-    return fallback;
-  }
+  try { const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : fallback; }
+  catch (e) { return fallback; }
 }
 async function saveShared(key, value) {
-  try {
-    await window.storage.set(key, JSON.stringify(value), true);
-  } catch {}
-}
-const norm = s => String(s ?? "").trim().toLowerCase();
-const nameKey = x => {
-  const n = norm(x.nombre),
-    a = norm(x.apellidos);
-  return n && a ? n + "|" + a : "";
-};
-function getInitials(n = "", a = "") {
-  return ((n[0] || "") + (a[0] || "")).toUpperCase();
-}
-function parseTs(s) {
-  s = String(s ?? "").trim();
-  if (!s) return null;
-  const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return new Date(+m[3], +m[2] - 1, +m[1]); // formato d/m/aaaa (es-AR)
-  const d = new Date(s);
-  return isNaN(d) ? null : d;
+  try { await window.storage.set(key, JSON.stringify(value), true); } catch (e) {}
 }
 
-// detección de columnas por palabras clave del encabezado
+const norm = s => String(s ?? "").trim().toLowerCase();
+const nameKey = x => { const n = norm(x.nombre), a = norm(x.apellidos); return (n && a) ? n + "|" + a : ""; };
+const iniciales = (n = "", a = "") => ((n[0] || "") + (a[0] || "")).toUpperCase();
+const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+const porApellido = (a, b) => (a.apellidos || a.nombre || "").localeCompare(b.apellidos || b.nombre || "", "es");
+
+function parseTs(s) {
+  s = String(s ?? "").trim(); if (!s) return null;
+  const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]); // formato d/m/aaaa
+  const d = new Date(s); return isNaN(d) ? null : d;
+}
+
+// Detecta las columnas por palabras del encabezado
 function detectIdx(headers) {
-  const idx = cands => {
-    const r = cands.map(x => headers.findIndex(h => h.includes(x))).find(i => i >= 0);
-    return r === undefined ? -1 : r;
-  };
+  const idx = cands => { const r = cands.map(x => headers.findIndex(h => h.includes(x))).find(i => i >= 0); return r === undefined ? -1 : r; };
   return {
-    n: idx(["nombre", "name", "first"]),
-    a: idx(["apellido", "last"]),
-    e: idx(["empresa", "estudio", "company"]),
-    c: idx(["cargo", "puesto", "perfil", "rol"]),
-    p: idx(["contacto", "propietario", "owner", "agente"]),
-    m: idx(["mail", "email", "correo", "e-mail"]),
-    t: idx(["marca temporal", "timestamp", "fecha", "hora"])
+    n: idx(["nombre", "name", "first"]), a: idx(["apellido", "last"]),
+    e: idx(["empresa", "estudio", "company"]), c: idx(["cargo", "puesto", "perfil", "rol"]),
+    p: idx(["contacto", "propietario", "owner", "agente"]), m: idx(["mail", "email", "correo", "e-mail"]),
+    t: idx(["marca temporal", "timestamp", "fecha", "hora"]),
+    cel: idx(["celular", "teléfono", "telefono", "whatsapp", "móvil", "movil", "phone"]),
   };
 }
 function splitCsv(text) {
   const lines = text.trim().split("\n");
-  if (lines.length < 2) return {
-    header: [],
-    rows: []
-  };
+  if (lines.length < 2) return { header: [], rows: [] };
   const sp = l => l.split(",").map(c => c.replace(/^"|"$/g, "").trim());
-  return {
-    header: sp(lines[0]),
-    rows: lines.slice(1).map(sp)
-  };
+  return { header: sp(lines[0]), rows: lines.slice(1).map(sp) };
 }
 function filterSince(headerRow, dataRows, sinceStr) {
   if (!sinceStr) return dataRows;
-  const headers = headerRow.map(h => String(h ?? "").trim().toLowerCase());
+  const headers = headerRow.map(x => String(x ?? "").trim().toLowerCase());
   const ti = detectIdx(headers).t;
   if (ti < 0) return dataRows;
   const since = new Date(sinceStr + "T00:00:00");
-  return dataRows.filter(c => {
-    const d = parseTs(c[ti]);
-    return !d || d >= since;
-  });
+  return dataRows.filter(c => { const d = parseTs(c[ti]); return !d || d >= since; });
 }
 function rowsToAttendees(headerRow, dataRows, prefix) {
-  const headers = headerRow.map(h => String(h ?? "").trim().toLowerCase());
+  const headers = headerRow.map(x => String(x ?? "").trim().toLowerCase());
   const d = detectIdx(headers);
-  const get = (c, i) => i >= 0 && c[i] != null ? String(c[i]).trim() : "";
+  const get = (c, i) => (i >= 0 && c[i] != null) ? String(c[i]).trim() : "";
   return dataRows.map((c, i) => ({
-    id: prefix + i,
-    nombre: get(c, d.n),
-    apellidos: get(c, d.a),
-    empresa: get(c, d.e),
-    cargo: get(c, d.c),
-    propietario: get(c, d.p),
-    mail: get(c, d.m),
-    presente: false,
-    formulario: false,
-    manual: false
+    id: prefix + i, nombre: get(c, d.n), apellidos: get(c, d.a),
+    empresa: get(c, d.e), cargo: get(c, d.c), propietario: get(c, d.p), mail: get(c, d.m), celular: get(c, d.cel),
+    presente: false, formulario: false, manual: false,
   })).filter(r => r.nombre || r.empresa);
 }
 function toSurveyRespondents(headerRow, dataRows) {
-  const headers = headerRow.map(h => String(h ?? "").trim().toLowerCase());
+  const headers = headerRow.map(x => String(x ?? "").trim().toLowerCase());
   const d = detectIdx(headers);
-  const get = (c, i) => i >= 0 && c[i] != null ? String(c[i]).trim() : "";
-  return dataRows.map(c => ({
-    nombre: get(c, d.n),
-    apellidos: get(c, d.a),
-    mail: get(c, d.m),
-    ts: get(c, d.t)
-  })).filter(r => r.mail || r.nombre);
+  const get = (c, i) => (i >= 0 && c[i] != null) ? String(c[i]).trim() : "";
+  return dataRows.map(c => ({ nombre: get(c, d.n), apellidos: get(c, d.a), mail: get(c, d.m), ts: get(c, d.t) }))
+    .filter(r => r.mail || r.nombre);
 }
-const PROP_COLORS = {
-  "Fernando Mazzetti": {
-    bg: "#E7F3F8",
-    text: "#337EA9"
-  },
-  "Marketing Leuk": {
-    bg: "#EDF3EC",
-    text: "#448361"
-  },
-  "Asistente Agencia Paulo Lucia": {
-    bg: "#F6F3F9",
-    text: "#9065B0"
-  }
-};
-function Badge({
-  name
-}) {
-  if (!name) return null;
-  const c = PROP_COLORS[name] || {
-    bg: "#E6E6E6",
-    text: "#808080"
-  };
-  const short = name === "Asistente Agencia Paulo Lucia" ? "Agencia P.L." : name;
-  return /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: c.bg,
-      color: c.text,
-      fontSize: 10,
-      fontFamily: "'Hanken Grotesk',monospace",
-      padding: "2px 8px",
-      borderRadius: 4,
-      whiteSpace: "nowrap",
-      fontWeight: 500
-    }
-  }, short);
+
+const Icono = ({ n }) => h("span", { className: "ev-ic", "aria-hidden": "true" }, n);
+const Avatar = ({ p, grande }) => h("div", { className: "ev-av" + (grande ? " grande" : "") + (p.presente && p.formulario ? " ok" : "") }, iniciales(p.nombre, p.apellidos));
+
+const VACIO = { nombre: "", apellidos: "", empresa: "", cargo: "", propietario: "", mail: "", celular: "", formulario: false };
+
+// Baja el listado completo a Excel
+function descargarExcel(attendees, winners) {
+  const si = v => v ? "Sí" : "No";
+  const filas = [...attendees].sort(porApellido).map(a => ({
+    "Nombre": a.nombre || "", "Apellido": a.apellidos || "", "Mail": a.mail || "", "Celular": a.celular || "",
+    "Empresa o estudio": a.empresa || "", "Profesión o cargo": a.cargo || "",
+    "Inscripción": a.manual ? "Sin inscripción previa" : "Inscripto",
+    "Llegó": si(a.presente), "Completó la encuesta": si(a.formulario),
+    "Entró al sorteo": si(a.presente && a.formulario), "Ganó": si(winners.some(w => w.id === a.id)),
+  }));
+  const ws = XLSX.utils.json_to_sheet(filas);
+  ws["!cols"] = [14, 16, 30, 16, 26, 22, 22, 8, 20, 15, 8].map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Asistentes");
+  const hoy = new Date(), dd = n => String(n).padStart(2, "0");
+  XLSX.writeFile(wb, `Evento - asistentes ${hoy.getFullYear()}-${dd(hoy.getMonth() + 1)}-${dd(hoy.getDate())}.xlsx`);
 }
+
 function App() {
-  const [tab, setTab] = useState("checkin");
-  const [attendees, setAtt] = useState(baseList());
-  const [loaded, setLoaded] = useState(false);
-  const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
-  const [newP, setNewP] = useState({
-    nombre: "",
-    apellidos: "",
-    empresa: "",
-    cargo: "",
-    propietario: "",
-    mail: "",
-    formulario: false
-  });
-  // import lista
-  const [listMode, setListMode] = useState("sheets");
-  const [listUrl, setListUrl] = useState("");
-  const [listSince, setListSince] = useState("");
-  const [listSt, setListSt] = useState("");
-  // import encuesta
-  const [surveyMode, setSurveyMode] = useState("sheets");
-  const [surveyUrl, setSurveyUrl] = useState("");
-  const [surveySince, setSurveySince] = useState("");
-  const [surveySt, setSurveySt] = useState("");
-  // sorteo
-  const [raffleState, setRS] = useState("idle");
-  const [winner, setWinner] = useState(null);
-  const [winners, setWinners] = useState([]);
-  const [syncMsg, setSyncMsg] = useState("");
-  const [confirmReset, setConfirmReset] = useState(null);
-  const [wide, setWide] = useState(window.innerWidth >= 768);
-  const listFileRef = useRef(null);
-  const surveyFileRef = useRef(null);
-  useEffect(() => {
-    const fn = () => setWide(window.innerWidth >= 768);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, []);
-  useEffect(() => {
+  const [tab, setTab] = React.useState("asistentes");
+  const [attendees, setAtt] = React.useState(baseList());
+  const [winners, setWinners] = React.useState([]);
+  const [loaded, setLoaded] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [filtro, setFiltro] = React.useState("todos");
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [newP, setNewP] = React.useState(VACIO);
+  const [listMode, setListMode] = React.useState("sheets");
+  const [listUrl, setListUrl] = React.useState("");
+  const [listSince, setListSince] = React.useState("");
+  const [listSt, setListSt] = React.useState("");
+  const [surveyMode, setSurveyMode] = React.useState("sheets");
+  const [surveyUrl, setSurveyUrl] = React.useState("");
+  const [surveySince, setSurveySince] = React.useState("");
+  const [surveySt, setSurveySt] = React.useState("");
+  const [raffleState, setRS] = React.useState("idle");
+  const [winner, setWinner] = React.useState(null);
+  const [guardado, setGuardado] = React.useState("");
+  const [confirmReset, setConfirmReset] = React.useState(null);
+  const listFileRef = React.useRef(null);
+  const surveyFileRef = React.useRef(null);
+  const ultimoLocal = React.useRef(0);
+  const jsonAtt = React.useRef("");
+  const jsonWin = React.useRef("");
+
+  // Carga inicial
+  React.useEffect(() => {
     (async () => {
       const s = await loadShared(STORAGE_KEY, null);
       const w = await loadShared(WINNERS_KEY, []);
       const lu = await loadShared(SHEETS_KEY, "");
       const su = await loadShared(SURVEY_KEY, "");
-      if (s) setAtt(s);
-      setWinners(w);
-      if (lu) setListUrl(lu);
-      if (su) setSurveyUrl(su);
+      if (s) { setAtt(s); jsonAtt.current = JSON.stringify(s); }
+      setWinners(w); jsonWin.current = JSON.stringify(w);
+      if (lu) setListUrl(lu); if (su) setSurveyUrl(su);
       setLoaded(true);
     })();
   }, []);
-  useEffect(() => {
+
+  // Trae los cambios de las demás personas cada 1 s (sin pisar lo que se acaba de tocar acá)
+  React.useEffect(() => {
     if (!loaded) return;
     const t = setInterval(async () => {
+      if (Date.now() - ultimoLocal.current < 2500) return;
       const s = await loadShared(STORAGE_KEY, null);
-      if (s) setAtt(s);
-      setWinners(await loadShared(WINNERS_KEY, []));
+      const w = await loadShared(WINNERS_KEY, []);
+      if (Date.now() - ultimoLocal.current < 2500) return;
+      const js = JSON.stringify(s), jw = JSON.stringify(w);
+      if (s && js !== jsonAtt.current) { jsonAtt.current = js; setAtt(s); }
+      if (jw !== jsonWin.current) { jsonWin.current = jw; setWinners(w); }
     }, 1000);
     return () => clearInterval(t);
   }, [loaded]);
-  useEffect(() => {
-    if (!loaded) return;
-    saveShared(STORAGE_KEY, attendees).then(() => {
-      setSyncMsg("✓ Sync");
-      setTimeout(() => setSyncMsg(""), 1800);
-    });
-  }, [attendees, loaded]);
-  useEffect(() => {
-    if (loaded) saveShared(WINNERS_KEY, winners);
-  }, [winners, loaded]);
-  const toggle = id => setAtt(p => p.map(a => a.id === id ? {
-    ...a,
-    presente: !a.presente
-  } : a));
-  const toggleForm = id => setAtt(p => p.map(a => a.id === id ? {
-    ...a,
-    formulario: !a.formulario
-  } : a));
+
+  // Cambios hechos acá: se guardan al instante
+  const avisarGuardado = () => { setGuardado("Guardado"); clearTimeout(avisarGuardado.t); avisarGuardado.t = setTimeout(() => setGuardado(""), 1800); };
+  const guardarAtt = next => {
+    ultimoLocal.current = Date.now(); jsonAtt.current = JSON.stringify(next);
+    setAtt(next); saveShared(STORAGE_KEY, next).then(avisarGuardado);
+  };
+  const guardarWin = next => {
+    ultimoLocal.current = Date.now(); jsonWin.current = JSON.stringify(next);
+    setWinners(next); saveShared(WINNERS_KEY, next);
+  };
+
+  const toggle = id => guardarAtt(attendees.map(a => a.id === id ? { ...a, presente: !a.presente } : a));
+  const toggleForm = id => guardarAtt(attendees.map(a => a.id === id ? { ...a, formulario: !a.formulario } : a));
+
   const addManual = () => {
     if (!newP.nombre.trim()) return;
-    setAtt(p => [...p, {
-      ...newP,
-      id: "m_" + Date.now(),
-      presente: true,
-      manual: true
-    }]);
-    setNewP({
-      nombre: "",
-      apellidos: "",
-      empresa: "",
-      cargo: "",
-      propietario: "",
-      mail: "",
-      formulario: false
-    });
-    setShowAdd(false);
+    guardarAtt([...attendees, { ...newP, id: "m_" + Date.now(), presente: true, manual: true }]);
+    setNewP(VACIO); setShowAdd(false);
   };
-  const mergeParsed = parsed => setAtt(prev => {
-    const manual = prev.filter(a => a.manual);
-    const merged = parsed.map(p => {
-      const f = prev.find(a => norm(a.mail) && norm(a.mail) === norm(p.mail) || a.nombre === p.nombre && a.apellidos === p.apellidos);
-      return f ? {
-        ...p,
-        presente: f.presente,
-        formulario: f.formulario
-      } : p;
-    });
-    return [...merged, ...manual];
-  });
 
-  // ─── importar LISTA ───────────────────────────────────────────────────
+  const mergeParsed = parsed => {
+    const manual = attendees.filter(a => a.manual);
+    const merged = parsed.map(p => {
+      const f = attendees.find(a => (norm(a.mail) && norm(a.mail) === norm(p.mail)) || (a.nombre === p.nombre && a.apellidos === p.apellidos));
+      return f ? { ...p, presente: f.presente, formulario: f.formulario } : p;
+    });
+    guardarAtt([...merged, ...manual]);
+  };
+
+  // ─── Importar la lista de inscriptos ───
+  const leerHoja = async file => {
+    const data = new Uint8Array(await file.arrayBuffer());
+    const wb = XLSX.read(data, { type: "array" });
+    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, blankrows: false, defval: "" });
+  };
   const loadListSheets = async () => {
-    if (!listUrl.trim()) return;
+    if (!listUrl.trim()) { setListSt("Error: pegá primero el link de la hoja."); return; }
     setListSt("Cargando…");
     try {
       const res = await fetch(listUrl);
-      if (!res.ok) throw new Error("No se pudo acceder al link");
-      const {
-        header,
-        rows
-      } = splitCsv(await res.text());
+      if (!res.ok) throw new Error("no se pudo abrir el link. Revisá que la hoja esté publicada como CSV.");
+      const { header, rows } = splitCsv(await res.text());
       const parsed = rowsToAttendees(header, filterSince(header, rows, listSince), "sh_");
-      if (!parsed.length) throw new Error("No se detectaron inscriptos");
-      mergeParsed(parsed);
-      saveShared(SHEETS_KEY, listUrl);
-      setListSt(`✓ ${parsed.length} inscriptos cargados desde Sheets`);
-      setTimeout(() => setListSt(""), 3500);
-    } catch (e) {
-      setListSt("Error: " + e.message);
-    }
+      if (!parsed.length) throw new Error("la hoja no tiene inscriptos (o no encontré las columnas de nombre y empresa).");
+      mergeParsed(parsed); saveShared(SHEETS_KEY, listUrl);
+      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde Google Sheets.`);
+    } catch (e) { setListSt("Error: " + e.message); }
   };
   const loadListExcel = async file => {
-    if (!file) return;
-    setListSt("Leyendo archivo…");
+    if (!file) return; setListSt("Leyendo el archivo…");
     try {
-      const data = new Uint8Array(await file.arrayBuffer());
-      const wb = XLSX.read(data, {
-        type: "array"
-      });
-      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
-        header: 1,
-        blankrows: false,
-        defval: ""
-      });
-      if (!aoa || aoa.length < 2) throw new Error("El archivo no tiene filas de datos");
+      const aoa = await leerHoja(file);
+      if (!aoa || aoa.length < 2) throw new Error("el archivo no tiene filas con datos.");
       const parsed = rowsToAttendees(aoa[0], filterSince(aoa[0], aoa.slice(1), listSince), "xl_");
-      if (!parsed.length) throw new Error("No se detectaron columnas de nombre/empresa");
+      if (!parsed.length) throw new Error("no encontré las columnas de nombre y empresa.");
       mergeParsed(parsed);
-      setListSt(`✓ ${parsed.length} inscriptos cargados desde ${file.name}`);
-      setTimeout(() => setListSt(""), 3500);
-    } catch (e) {
-      setListSt("Error: " + e.message);
-    } finally {
-      if (listFileRef.current) listFileRef.current.value = "";
-    }
+      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde ${file.name}.`);
+    } catch (e) { setListSt("Error: " + e.message); }
+    finally { if (listFileRef.current) listFileRef.current.value = ""; }
   };
 
-  // ─── importar ENCUESTA + cruce automático ───────────────────────────────
+  // ─── Importar la encuesta y cruzarla con la lista ───
   const applySurvey = (resp, sinceStr) => {
     const since = sinceStr ? new Date(sinceStr + "T00:00:00") : null;
-    const valid = resp.filter(r => {
-      if (!since || !r.ts) return true;
-      const d = parseTs(r.ts);
-      return !d || d >= since;
-    });
+    const valid = resp.filter(r => { if (!since || !r.ts) return true; const d = parseTs(r.ts); return !d || d >= since; });
     const mails = new Set(valid.map(r => norm(r.mail)).filter(Boolean));
     const names = new Set(valid.map(nameKey).filter(Boolean));
     let matched = 0;
     const next = attendees.map(a => {
-      const hit = norm(a.mail) && mails.has(norm(a.mail)) || nameKey(a) && names.has(nameKey(a));
-      if (hit) {
-        matched++;
-        return a.formulario ? a : {
-          ...a,
-          formulario: true
-        };
-      }
+      const hit = (norm(a.mail) && mails.has(norm(a.mail))) || (nameKey(a) && names.has(nameKey(a)));
+      if (hit) { matched++; return a.formulario ? a : { ...a, formulario: true }; }
       return a;
     });
-    setAtt(next);
+    guardarAtt(next);
     return matched;
   };
+  const textoCruce = (n, m) => `✓ ${plural(n, "respuesta", "respuestas")} · ${m} ${m === 1 ? "coincide" : "coinciden"} con la lista de inscriptos.`;
   const loadSurveySheets = async () => {
-    if (!surveyUrl.trim()) return;
-    setSurveySt("Cargando encuesta…");
+    if (!surveyUrl.trim()) { setSurveySt("Error: pegá primero el link de la hoja."); return; }
+    setSurveySt("Cargando la encuesta…");
     try {
       const res = await fetch(surveyUrl);
-      if (!res.ok) throw new Error("No se pudo acceder al link");
-      const {
-        header,
-        rows
-      } = splitCsv(await res.text());
+      if (!res.ok) throw new Error("no se pudo abrir el link. Revisá que la hoja esté publicada como CSV.");
+      const { header, rows } = splitCsv(await res.text());
       const resp = toSurveyRespondents(header, rows);
-      if (!resp.length) throw new Error("No se encontraron respuestas");
-      const m = applySurvey(resp, surveySince);
-      saveShared(SURVEY_KEY, surveyUrl);
-      setSurveySt(`✓ ${resp.length} respuestas · ${m} cruzadas con la lista`);
-      setTimeout(() => setSurveySt(""), 4500);
-    } catch (e) {
-      setSurveySt("Error: " + e.message);
-    }
+      if (!resp.length) throw new Error("la hoja no tiene respuestas.");
+      const m = applySurvey(resp, surveySince); saveShared(SURVEY_KEY, surveyUrl);
+      setSurveySt(textoCruce(resp.length, m));
+    } catch (e) { setSurveySt("Error: " + e.message); }
   };
   const loadSurveyExcel = async file => {
-    if (!file) return;
-    setSurveySt("Leyendo encuesta…");
+    if (!file) return; setSurveySt("Leyendo la encuesta…");
     try {
-      const data = new Uint8Array(await file.arrayBuffer());
-      const wb = XLSX.read(data, {
-        type: "array"
-      });
-      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
-        header: 1,
-        blankrows: false,
-        defval: ""
-      });
-      if (!aoa || aoa.length < 2) throw new Error("El archivo no tiene respuestas");
+      const aoa = await leerHoja(file);
+      if (!aoa || aoa.length < 2) throw new Error("el archivo no tiene respuestas.");
       const resp = toSurveyRespondents(aoa[0], aoa.slice(1));
-      if (!resp.length) throw new Error("No se detectaron respuestas");
-      const m = applySurvey(resp, surveySince);
-      setSurveySt(`✓ ${resp.length} respuestas · ${m} cruzadas con la lista`);
-      setTimeout(() => setSurveySt(""), 4500);
-    } catch (e) {
-      setSurveySt("Error: " + e.message);
-    } finally {
-      if (surveyFileRef.current) surveyFileRef.current.value = "";
-    }
+      if (!resp.length) throw new Error("no encontré respuestas en el archivo.");
+      setSurveySt(textoCruce(resp.length, applySurvey(resp, surveySince)));
+    } catch (e) { setSurveySt("Error: " + e.message); }
+    finally { if (surveyFileRef.current) surveyFileRef.current.value = ""; }
   };
 
-  // ─── reset ──────────────────────────────────────────────────────────────
+  // ─── Empezar de nuevo ───
   const clearMarks = () => {
-    const fresh = attendees.map(a => ({
-      ...a,
-      presente: false,
-      formulario: false
-    }));
-    setAtt(fresh);
-    setWinners([]);
-    setRS("idle");
-    setWinner(null);
-    saveShared(STORAGE_KEY, fresh);
-    saveShared(WINNERS_KEY, []);
-    setConfirmReset(null);
-    setTab("checkin");
+    guardarAtt(attendees.map(a => ({ ...a, presente: false, formulario: false })));
+    guardarWin([]); setRS("idle"); setWinner(null); setConfirmReset(null); setTab("asistentes");
   };
   const resetToBase = () => {
-    const fresh = baseList();
-    setAtt(fresh);
-    setWinners([]);
-    setRS("idle");
-    setWinner(null);
-    saveShared(STORAGE_KEY, fresh);
-    saveShared(WINNERS_KEY, []);
-    setConfirmReset(null);
-    setTab("checkin");
+    guardarAtt(baseList()); guardarWin([]); setRS("idle"); setWinner(null); setConfirmReset(null); setTab("asistentes");
   };
+
   const doRaffle = () => {
     const pool = attendees.filter(a => a.presente && a.formulario && !winners.find(w => w.id === a.id));
     if (!pool.length) return;
-    setRS("spinning");
-    setWinner(null);
+    setRS("spinning"); setWinner(null);
     const start = Date.now();
     const iv = setInterval(() => {
       if (Date.now() - start >= 3000) {
         clearInterval(iv);
         const chosen = pool[Math.floor(Math.random() * pool.length)];
-        setWinner(chosen);
-        setWinners(w => [...w, chosen]);
-        setRS("winner");
-      } else {
-        setWinner(pool[Math.floor(Math.random() * pool.length)]);
-      }
+        setWinner(chosen); guardarWin([...winners, chosen]); setRS("winner");
+      } else setWinner(pool[Math.floor(Math.random() * pool.length)]);
     }, 80);
   };
+
   const presentes = attendees.filter(a => a.presente);
-  const elegibles = attendees.filter(a => a.presente && a.formulario);
+  const conEncuesta = attendees.filter(a => a.formulario);
+  const elegibles = attendees.filter(a => a.presente && a.formulario).sort(porApellido);
   const restantes = elegibles.filter(a => !winners.find(w => w.id === a.id));
-  const filtered = attendees.filter(a => {
-    const q = search.toLowerCase();
-    return !q || [a.nombre, a.apellidos, a.empresa, a.mail].some(v => (v || "").toLowerCase().includes(q));
-  }).sort((a, b) => (a.apellidos || "").localeCompare(b.apellidos || ""));
+  const q = norm(search);
+  const filtered = attendees
+    .filter(a => filtro === "todos" || (filtro === "llegaron" ? a.presente : !a.presente))
+    .filter(a => !q || [a.nombre, a.apellidos, a.empresa, a.mail, a.celular, `${a.nombre} ${a.apellidos}`].some(v => norm(v).includes(q)))
+    .sort(porApellido);
   const pct = attendees.length ? Math.round(presentes.length / attendees.length * 100) : 0;
 
-  // ─── styles ───────────────────────────────────────────────────────────
-  const card = {
-    background: "#ffffff",
-    border: "1px solid #E6E6E6",
-    borderRadius: 12,
-    padding: wide ? "24px 28px" : "18px 16px"
-  };
-  const btn = (grad = true) => ({
-    border: "none",
-    borderRadius: 8,
-    padding: "10px 20px",
-    cursor: "pointer",
-    fontFamily: "'Hanken Grotesk',sans-serif",
-    fontSize: 13,
-    fontWeight: 600,
-    background: grad ? "linear-gradient(135deg,#000000,#505050)" : "#F0F0F0",
-    color: grad ? "#fff" : "#808080"
-  });
-  const inp = {
-    width: "100%",
-    background: "#FAFAFA",
-    border: "1px solid #E6E6E6",
-    borderRadius: 8,
-    padding: "9px 13px",
-    color: "#1A1A1A",
-    fontSize: 13,
-    fontFamily: "'Hanken Grotesk',sans-serif",
-    outline: "none"
-  };
-  const stateBtn = (active, activeBg, activeBorder) => ({
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    border: `1px solid ${active ? activeBorder : "#E6E6E6"}`,
-    cursor: "pointer",
-    flexShrink: 0,
-    fontSize: 13,
-    fontWeight: 700,
-    background: active ? activeBg : "#F0F0F0",
-    color: active ? "#fff" : "#9E9E9E",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "'Hanken Grotesk',monospace"
-  });
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: "100vh",
-      background: "#FAFAFA",
-      color: "#1A1A1A",
-      fontFamily: "'Hanken Grotesk',sans-serif"
-    }
-  }, /*#__PURE__*/React.createElement("link", {
-    href: "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap",
-    rel: "stylesheet"
-  }), /*#__PURE__*/React.createElement("link", {
-    href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0&icon_names=celebration,confirmation_number&display=block",
-    rel: "stylesheet"
-  }), /*#__PURE__*/React.createElement("style", null, `
-*{box-sizing:border-box}
-.msi{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-feature-settings:"liga";color:#808080}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pop{0%{transform:scale(.7);opacity:0}65%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
-@keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
-.row:hover{background:rgba(0,0,0,.035)!important}
-.chk{transition:all .15s}.chk:hover{transform:scale(1.08);opacity:.85}
-input:focus,textarea:focus{border-color:#000000!important;outline:none}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#ffffff}::-webkit-scrollbar-thumb{background:#D2D2D2;border-radius:99px}
-`), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#ffffff",
-      borderBottom: "1px solid #E6E6E6",
-      padding: "0 20px",
-      position: "sticky",
-      top: 0,
-      zIndex: 100
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: "100%",
-      margin: "0 auto"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      minHeight: 44,
-      gap: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 0,
-      overflowX: "auto",
-      flexShrink: 1,
-      minWidth: 0
-    }
-  }, [{
-    k: "checkin",
-    l: "Inscriptos"
-  }, {
-    k: "eligibles",
-    l: `Habilitados · ${elegibles.length}`
-  }, {
-    k: "raffle",
-    l: `Sorteo · ${restantes.length}`
-  }, {
-    k: "config",
-    l: "⚙ Configuración"
-  }].map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.k,
-    onClick: () => setTab(t.k),
-    style: {
-      background: "none",
-      border: "none",
-      borderBottom: tab === t.k ? "2px solid #000000" : "2px solid transparent",
-      cursor: "pointer",
-      padding: "14px 16px",
-      fontSize: 13,
-      fontWeight: 500,
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      color: tab === t.k ? "#000000" : "#808080",
-      whiteSpace: "nowrap",
-      transition: "all .2s",
-      flexShrink: 0
-    }
-  }, t.l))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      flexShrink: 0
-    }
-  }, syncMsg && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#448361",
-      fontFamily: "'Hanken Grotesk',monospace",
-      animation: "fadeUp .2s"
-    }
-  }, syncMsg), [{
-    v: elegibles.length,
-    l: "EN SORTEO",
-    c: "#448361"
-  }, {
-    v: presentes.length,
-    l: "PRESENTES",
-    c: "#000000"
-  }, {
-    v: attendees.length,
-    l: "INSCRIPTOS",
-    c: "#808080"
-  }].map(s => /*#__PURE__*/React.createElement("div", {
-    key: s.l,
-    style: {
-      textAlign: "center",
-      padding: "3px 12px",
-      background: "#F0F0F0",
-      borderRadius: 8,
-      border: "1px solid #E6E6E6"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 700,
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      color: s.c,
-      lineHeight: 1.1
-    }
-  }, s.v), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "#9E9E9E",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, s.l))))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: "100%",
-      margin: "0 auto",
-      padding: wide ? "24px 20px" : "14px 12px"
-    }
-  }, tab === "checkin" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeUp .3s"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#eef3ea",
-      border: "1px solid #DBEDDB",
-      borderRadius: 10,
-      padding: "10px 14px",
-      marginBottom: 12,
-      fontSize: 12,
-      color: "#448361",
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...stateBtn(true, "linear-gradient(135deg,#000000,#505050)", "#00000020"),
-      width: 24,
-      height: 24,
-      fontSize: 11
-    }
-  }, "✓"), /*#__PURE__*/React.createElement("span", null, "Presente (a mano)"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#9E9E9E"
-    }
-  }, "+"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...stateBtn(true, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f30"),
-      width: 24,
-      height: 24,
-      fontSize: 11
-    }
-  }, "F"), /*#__PURE__*/React.createElement("span", null, "Encuesta (automático)"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#9E9E9E",
-      marginLeft: "auto"
-    }
-  }, "=\xA0entra al sorteo")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      marginBottom: 14,
-      display: "flex",
-      alignItems: "center",
-      gap: 16,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 180
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 5
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, "Asistencia"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#000000",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, pct, "% · ", presentes.length, "/", attendees.length)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: 4,
-      background: "#E6E6E6",
-      borderRadius: 99,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: "100%",
-      width: `${pct}%`,
-      background: "linear-gradient(90deg,#505050,#000000)",
-      borderRadius: 99,
-      transition: "width .5s"
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#448361",
-      fontFamily: "'Hanken Grotesk',monospace",
-      marginTop: 6
-    }
-  }, elegibles.length, " habilitado", elegibles.length !== 1 ? "s" : "", " para el sorteo (presente + encuesta)"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      position: "relative"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      position: "absolute",
-      left: 11,
-      top: "50%",
-      transform: "translateY(-50%)",
-      color: "#9E9E9E",
-      fontSize: 15,
-      pointerEvents: "none"
-    }
-  }, "⌕"), /*#__PURE__*/React.createElement("input", {
-    value: search,
-    onChange: e => setSearch(e.target.value),
-    placeholder: "Buscar nombre, apellido, empresa o mail…",
-    style: {
-      ...inp,
-      paddingLeft: 32
-    }
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowAdd(true),
-    style: {
-      ...btn(true),
-      whiteSpace: "nowrap",
-      flexShrink: 0,
-      padding: "9px 16px"
-    }
-  }, "+ Walk-in")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      padding: 0,
-      overflow: "hidden"
-    }
-  }, wide && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "34px 1.7fr 1.6fr 1.8fr 84px",
-      gap: 12,
-      padding: "9px 20px",
-      borderBottom: "1px solid #E6E6E6",
-      fontSize: 10,
-      color: "#9E9E9E",
-      fontFamily: "'Hanken Grotesk',monospace",
-      letterSpacing: ".05em",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null, "NOMBRE"), /*#__PURE__*/React.createElement("div", null, "EMPRESA"), /*#__PURE__*/React.createElement("div", null, "MAIL"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, "P · F")), filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 40,
-      textAlign: "center",
-      color: "#9E9E9E",
-      fontSize: 13
-    }
-  }, "Sin resultados"), filtered.map((a, i) => {
+  // ═══ Encabezado ═══
+  const tabs = [
+    { k: "asistentes", l: "Asistentes", n: attendees.length },
+    { k: "habilitados", l: "Habilitados", n: elegibles.length },
+    { k: "sorteo", l: "Sorteo" },
+    { k: "config", l: "Configuración" },
+  ];
+  const encabezado = h("header", { className: "ev-top" },
+    h("div", { className: "ev-top-in" },
+      h("nav", { className: "ev-tabs" }, tabs.map(t =>
+        h("button", { key: t.k, className: "ev-tab" + (tab === t.k ? " on" : ""), onClick: () => setTab(t.k) },
+          t.l, t.n != null && h("span", { className: "ev-tab-n" }, t.n)))),
+      h("span", { className: "ev-guardado" + (guardado ? " on" : "") }, h(Icono, { n: "check" }), "Guardado")));
+
+  // ═══ Asistentes ═══
+  const resumen = h("div", { className: "ev-kpis" },
+    [
+      { v: attendees.length, l: "Inscriptos" },
+      { v: presentes.length, l: "Llegaron", extra: attendees.length ? pct + "%" : null },
+      { v: conEncuesta.length, l: "Completaron la encuesta" },
+      { v: elegibles.length, l: "Entran al sorteo", ok: true },
+    ].map(k => h("div", { key: k.l, className: "ev-kpi" + (k.ok ? " ok" : "") },
+      h("div", { className: "ev-kpi-v" }, k.v, k.extra && h("small", null, k.extra)),
+      h("div", { className: "ev-kpi-l" }, k.l))));
+
+  const fila = a => {
     const eleg = a.presente && a.formulario;
-    return /*#__PURE__*/React.createElement("div", {
-      key: a.id,
-      className: "row",
-      style: {
-        display: wide ? "grid" : "flex",
-        gridTemplateColumns: wide ? "34px 1.7fr 1.6fr 1.8fr 84px" : undefined,
-        alignItems: "center",
-        gap: wide ? 12 : 10,
-        padding: wide ? "10px 20px" : "10px 12px",
-        borderBottom: i < filtered.length - 1 ? "1px solid #edeee7" : "none",
-        background: eleg ? "rgba(103,107,85,.06)" : a.presente ? "rgba(103,107,85,.02)" : "transparent",
-        transition: "background .12s"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 34,
-        height: 34,
-        borderRadius: 8,
-        flexShrink: 0,
-        background: eleg ? "linear-gradient(135deg,#505050,#000000)" : "#F0F0F0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 11,
-        fontWeight: 700,
-        color: eleg ? "#fff" : "#9E9E9E",
-        fontFamily: "'Hanken Grotesk',monospace",
-        border: `1px solid ${eleg ? "#00000020" : "#E6E6E6"}`
-      }
-    }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: a.presente ? "#1A1A1A" : "#666666",
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        flexWrap: "wrap"
-      }
-    }, a.nombre, " ", a.apellidos, a.manual && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 9,
-        background: "#EDF3EC",
-        color: "#448361",
-        padding: "1px 5px",
-        borderRadius: 3,
-        fontFamily: "'Hanken Grotesk',monospace"
-      }
-    }, "walk-in"), eleg && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 9,
-        background: "#FBF3DB",
-        color: "#000000",
-        padding: "1px 5px",
-        borderRadius: 3,
-        fontFamily: "'Hanken Grotesk',monospace"
-      }
-    }, "en sorteo")), !wide && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#808080",
-        marginTop: 1
-      }
-    }, a.empresa, a.mail ? ` · ${a.mail}` : "")), wide && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "#666666",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      }
-    }, a.empresa || "—"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#808080",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      }
-    }, a.mail || "—")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 6,
-        flexShrink: 0,
-        justifyContent: "center"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "chk",
-      title: "Presente en el evento (manual)",
-      onClick: () => toggle(a.id),
-      style: stateBtn(a.presente, "linear-gradient(135deg,#000000,#505050)", "#00000030")
-    }, a.presente ? "✓" : "○"), /*#__PURE__*/React.createElement("button", {
-      className: "chk",
-      title: "Encuesta completada (auto, o toggle manual)",
-      onClick: () => toggleForm(a.id),
-      style: stateBtn(a.formulario, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f40")
-    }, a.formulario ? "✓" : "F")));
-  }))), tab === "eligibles" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeUp .3s",
-      maxWidth: 820,
-      margin: "0 auto"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 17,
-      fontWeight: 700,
-      color: "#1A1A1A",
-      marginBottom: 4
-    }
-  }, "Habilitados para el sorteo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#808080",
-      lineHeight: 1.7
-    }
-  }, "Cruce automático: solo aparece quien ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#000000"
-    }
-  }, "asistió"), " (marcado a mano) y además ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#448361"
-    }
-  }, "completó la encuesta"), " (matcheado por mail o nombre). Son ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#448361"
-    }
-  }, elegibles.length), " persona", elegibles.length !== 1 ? "s" : "", ".")), elegibles.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      textAlign: "center",
-      padding: "54px 24px",
-      color: "#808080",
-      fontSize: 14
-    }
-  }, "Todavía no hay nadie que cumpla las dos condiciones.") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      padding: 0,
-      overflow: "hidden"
-    }
-  }, elegibles.sort((a, b) => (a.apellidos || "").localeCompare(b.apellidos || "")).map((a, i) => /*#__PURE__*/React.createElement("div", {
-    key: a.id,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: wide ? "11px 20px" : "10px 14px",
-      borderBottom: i < elegibles.length - 1 ? "1px solid #edeee7" : "none"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
-      flexShrink: 0,
-      background: "linear-gradient(135deg,#505050,#000000)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#fff",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, getInitials(a.nombre, a.apellidos)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "#1A1A1A"
-    }
-  }, a.nombre, " ", a.apellidos), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#808080"
-    }
-  }, a.empresa, a.mail ? ` · ${a.mail}` : "")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: "#448361",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, "✓ habilitado")))), elegibles.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setTab("raffle"),
-    style: {
-      ...btn(true),
-      padding: "12px 36px"
-    }
-  }, "Ir al sorteo →"))), tab === "raffle" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeUp .3s",
-      maxWidth: 680,
-      margin: "0 auto"
-    }
-  }, elegibles.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      textAlign: "center",
-      padding: "64px 24px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 40,
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("span", { className: "msi" }, "confirmation_number")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "#808080",
-      fontSize: 14,
-      lineHeight: 1.6
-    }
-  }, "Para entrar al sorteo cada persona tiene que estar", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#000000"
-    }
-  }, "presente"), " y haber ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#448361"
-    }
-  }, "completado la encuesta"), ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "linear-gradient(160deg,#ffffff,#F0F0F0)",
-      border: "1px solid #D2D2D2",
-      borderRadius: 16,
-      padding: wide ? "56px 48px" : "40px 20px",
-      textAlign: "center",
-      marginBottom: 20,
-      position: "relative",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "absolute",
-      top: 0,
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: 200,
-      height: 1,
-      background: "linear-gradient(90deg,transparent,#000000,transparent)"
-    }
-  }), raffleState === "idle" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 44,
-      marginBottom: 10
-    }
-  }, "✦"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: wide ? 28 : 22,
-      fontWeight: 700,
-      color: "#000000",
-      marginBottom: 6
-    }
-  }, "Sorteo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#808080",
-      marginBottom: 32
-    }
-  }, restantes.length, " participante", restantes.length !== 1 ? "s" : "", " habilitado", restantes.length !== 1 ? "s" : "", " en juego", winners.length > 0 && ` · ${winners.length} ya sorteado${winners.length !== 1 ? "s" : ""}`), /*#__PURE__*/React.createElement("button", {
-    onClick: doRaffle,
-    disabled: restantes.length === 0,
-    style: {
-      background: restantes.length === 0 ? "#F0F0F0" : "linear-gradient(135deg,#000000,#505050)",
-      border: "none",
-      borderRadius: 10,
-      padding: "14px 48px",
-      color: restantes.length === 0 ? "#808080" : "#fff",
-      cursor: restantes.length === 0 ? "not-allowed" : "pointer",
-      fontSize: 15,
-      fontWeight: 700,
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      letterSpacing: ".03em"
-    }
-  }, restantes.length === 0 ? "NO QUEDAN PARTICIPANTES" : "INICIAR SORTEO")), raffleState === "spinning" && winner && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "flash .4s ease infinite"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      marginBottom: 14
-    }
-  }, "SORTEANDO…"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 68,
-      height: 68,
-      borderRadius: 12,
-      margin: "0 auto 14px",
-      background: "linear-gradient(135deg,#505050,#000000)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 22,
-      fontWeight: 700,
-      color: "#fff",
-      fontFamily: "'Hanken Grotesk',monospace"
-    }
-  }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: wide ? 28 : 22,
-      fontWeight: 700,
-      color: "#000000"
-    }
-  }, winner.nombre, " ", winner.apellidos)), raffleState === "winner" && winner && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "pop .5s cubic-bezier(.175,.885,.32,1.275) both"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 34,
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", { className: "msi" }, "celebration")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#000000",
-      fontFamily: "'Hanken Grotesk',monospace",
-      letterSpacing: ".12em",
-      marginBottom: 14
-    }
-  }, "¡GANADOR/A!"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 78,
-      height: 78,
-      borderRadius: 14,
-      margin: "0 auto 18px",
-      background: "linear-gradient(135deg,#000000,#8D8D8D)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 26,
-      fontWeight: 700,
-      color: "#fff",
-      fontFamily: "'Hanken Grotesk',monospace",
-      boxShadow: "0 0 48px rgba(103,107,85,.5)"
-    }
-  }, getInitials(winner.nombre, winner.apellidos)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: wide ? 32 : 24,
-      fontWeight: 700,
-      color: "#1A1A1A",
-      marginBottom: 4
-    }
-  }, winner.nombre, " ", winner.apellidos), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      color: "#000000",
-      marginBottom: 4
-    }
-  }, winner.empresa), winner.mail && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#808080",
-      marginBottom: 10
-    }
-  }, winner.mail), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: doRaffle,
-    style: btn(true)
-  }, "Otro sorteo"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setRS("idle");
-      setWinner(null);
-    },
-    style: btn(false)
-  }, "Reiniciar")))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#9E9E9E",
-      fontFamily: "'Hanken Grotesk',monospace",
-      marginBottom: 8,
-      letterSpacing: ".05em"
-    }
-  }, "PARTICIPANTES HABILITADOS"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 6
-    }
-  }, elegibles.map(p => {
-    const won = winners.find(w => w.id === p.id);
-    return /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        padding: "4px 12px",
-        borderRadius: 6,
-        fontSize: 12,
-        background: won ? "#ffffff" : "rgba(103,107,85,.08)",
-        border: `1px solid ${won ? "#F0F0F0" : "rgba(103,107,85,.2)"}`,
-        color: won ? "#C2C2C2" : "#808080",
-        textDecoration: won ? "line-through" : "none"
-      }
-    }, p.nombre, " ", p.apellidos, won && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10,
-        marginLeft: 4,
-        color: "#000000"
-      }
-    }, "✓"));
-  })))), tab === "config" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeUp .3s",
-      maxWidth: 660,
-      margin: "0 auto"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 22,
-      height: 22,
-      borderRadius: 6,
-      background: "linear-gradient(135deg,#000000,#505050)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#fff"
-    }
-  }, "1"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      color: "#1A1A1A"
-    }
-  }, "Lista de inscriptos")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#808080",
-      lineHeight: 1.7,
-      marginBottom: 16
-    }
-  }, "Las respuestas del formulario de inscripción. Publicá esa hoja como CSV (Archivo → Compartir → Publicar en la web → CSV) y pegá el link, o subí un Excel."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      background: "#FAFAFA",
-      border: "1px solid #E6E6E6",
-      borderRadius: 9,
-      padding: 4,
-      marginBottom: 16
-    }
-  }, [["sheets", "Google Sheets"], ["excel", "Excel / CSV"]].map(([k, l]) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    onClick: () => {
-      setListMode(k);
-      setListSt("");
-    },
-    style: {
-      flex: 1,
-      border: "none",
-      borderRadius: 6,
-      padding: "8px 10px",
-      cursor: "pointer",
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      background: listMode === k ? "linear-gradient(135deg,#000000,#505050)" : "transparent",
-      color: listMode === k ? "#fff" : "#808080"
-    }
-  }, l))), listMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 10,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      display: "block",
-      marginBottom: 6
-    }
-  }, "URL publicada (CSV)"), /*#__PURE__*/React.createElement("input", {
-    value: listUrl,
-    onChange: e => setListUrl(e.target.value),
-    placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
-    style: {
-      ...inp,
-      fontFamily: "'Hanken Grotesk',monospace",
-      fontSize: 11,
-      marginBottom: 10
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: loadListSheets,
-    style: btn(true)
-  }, "Cargar inscriptos desde Sheets")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
-    ref: listFileRef,
-    type: "file",
-    accept: ".xlsx,.xls,.csv",
-    onChange: e => loadListExcel(e.target.files && e.target.files[0]),
-    style: {
-      display: "none"
-    },
-    id: "list-file"
-  }), /*#__PURE__*/React.createElement("label", {
-    htmlFor: "list-file",
-    style: {
-      ...btn(true),
-      display: "inline-block"
-    }
-  }, "Elegir archivo (.xlsx / .csv)…")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 14,
-      paddingTop: 14,
-      borderTop: "1px solid #F0F0F0"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 10,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      display: "block",
-      marginBottom: 6
-    }
-  }, "Mostrar inscriptos desde (opcional · usa la columna \"Marca temporal\")"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: listSince,
-    onChange: e => setListSince(e.target.value),
-    style: {
-      ...inp,
-      maxWidth: 220
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#9E9E9E",
-      marginTop: 6
-    }
-  }, "Si la hoja acumula varios eventos, poné la fecha del evento actual para traer solo a los nuevos.")), listSt && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      fontSize: 12,
-      fontFamily: "'Hanken Grotesk',monospace",
-      color: listSt.startsWith("✓") ? "#448361" : listSt.startsWith("Error") ? "#C4423D" : "#000000"
-    }
-  }, listSt)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      marginBottom: 16,
-      border: "1px solid #DBEDDB"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 22,
-      height: 22,
-      borderRadius: 6,
-      background: "linear-gradient(135deg,#448361,#448361)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#fff"
-    }
-  }, "2"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      color: "#1A1A1A"
-    }
-  }, "Respuestas de la encuesta")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#808080",
-      lineHeight: 1.7,
-      marginBottom: 16
-    }
-  }, "La encuesta post-evento (la del QR). Al cargarla, se marca el formulario ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#448361"
-    }
-  }, "automáticamente"), " cruzando por ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#3a3b34"
-    }
-  }, "mail"), " (o nombre + apellido) contra la lista. Importante: la encuesta tiene que pedir el mail."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      background: "#FAFAFA",
-      border: "1px solid #E6E6E6",
-      borderRadius: 9,
-      padding: 4,
-      marginBottom: 16
-    }
-  }, [["sheets", "Google Sheets"], ["excel", "Excel / CSV"]].map(([k, l]) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    onClick: () => {
-      setSurveyMode(k);
-      setSurveySt("");
-    },
-    style: {
-      flex: 1,
-      border: "none",
-      borderRadius: 6,
-      padding: "8px 10px",
-      cursor: "pointer",
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      background: surveyMode === k ? "linear-gradient(135deg,#448361,#448361)" : "transparent",
-      color: surveyMode === k ? "#fff" : "#808080"
-    }
-  }, l))), surveyMode === "sheets" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 10,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      display: "block",
-      marginBottom: 6
-    }
-  }, "URL publicada (CSV) de la hoja de la encuesta"), /*#__PURE__*/React.createElement("input", {
-    value: surveyUrl,
-    onChange: e => setSurveyUrl(e.target.value),
-    placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv",
-    style: {
-      ...inp,
-      fontFamily: "'Hanken Grotesk',monospace",
-      fontSize: 11,
-      marginBottom: 10
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: loadSurveySheets,
-    style: {
-      ...btn(false),
-      background: "linear-gradient(135deg,#448361,#448361)",
-      color: "#fff"
-    }
-  }, "Cruzar encuesta desde Sheets")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
-    ref: surveyFileRef,
-    type: "file",
-    accept: ".xlsx,.xls,.csv",
-    onChange: e => loadSurveyExcel(e.target.files && e.target.files[0]),
-    style: {
-      display: "none"
-    },
-    id: "survey-file"
-  }), /*#__PURE__*/React.createElement("label", {
-    htmlFor: "survey-file",
-    style: {
-      ...btn(false),
-      background: "linear-gradient(135deg,#448361,#448361)",
-      color: "#fff",
-      display: "inline-block"
-    }
-  }, "Elegir archivo de encuesta…")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 14,
-      paddingTop: 14,
-      borderTop: "1px solid #DBEDDB"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 10,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      display: "block",
-      marginBottom: 6
-    }
-  }, "Contar respuestas desde (opcional)"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: surveySince,
-    onChange: e => setSurveySince(e.target.value),
-    style: {
-      ...inp,
-      maxWidth: 220
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#9E9E9E",
-      marginTop: 6
-    }
-  }, "Como la hoja acumula eventos, poné la fecha del evento para no arrastrar encuestas viejas.")), surveySt && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      fontSize: 12,
-      fontFamily: "'Hanken Grotesk',monospace",
-      color: surveySt.startsWith("✓") ? "#448361" : surveySt.startsWith("Error") ? "#C4423D" : "#000000"
-    }
-  }, surveySt)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      border: "1px solid #FFE2DD"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#C4423D",
-      fontFamily: "'Hanken Grotesk',monospace",
-      marginBottom: 14,
-      letterSpacing: ".05em"
-    }
-  }, "ZONA DE RESETEO"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 18
-    }
-  }, confirmReset === "clear" ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      alignItems: "center",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: clearMarks,
-    style: {
-      ...btn(false),
-      border: "1px solid #FFE2DD",
-      color: "#C4423D",
-      background: "#FDEBEC"
-    }
-  }, "Confirmar: limpiar tildados"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setConfirmReset(null),
-    style: btn(false)
-  }, "Cancelar")) : /*#__PURE__*/React.createElement("button", {
-    onClick: () => setConfirmReset("clear"),
-    style: btn(true)
-  }, "Limpiar tildados (mantener lista actual)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#808080",
-      marginTop: 8
-    }
-  }, "Borra presentes, encuestas y ganadores, pero conserva la lista cargada. Es el reseteo de cada evento.")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: 1,
-      background: "#FDEBEC",
-      marginBottom: 18
-    }
-  }), /*#__PURE__*/React.createElement("div", null, confirmReset === "base" ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      alignItems: "center",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: resetToBase,
-    style: {
-      ...btn(false),
-      border: "1px solid #FFE2DD",
-      color: "#C4423D",
-      background: "#FDEBEC"
-    }
-  }, "Confirmar: volver a lista base"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setConfirmReset(null),
-    style: btn(false)
-  }, "Cancelar")) : /*#__PURE__*/React.createElement("button", {
-    onClick: () => setConfirmReset("base"),
-    style: {
-      ...btn(false),
-      border: "1px solid #FFE2DD"
-    }
-  }, "Volver a la lista base"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#9E9E9E",
-      marginTop: 8
-    }
-  }, "Descarta lo importado y restaura los contactos originales del sistema."))))), showAdd && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,.78)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 200,
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#ffffff",
-      border: "1px solid #D2D2D2",
-      borderRadius: 14,
-      padding: 28,
-      width: "100%",
-      maxWidth: 420,
-      animation: "fadeUp .2s"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Hanken Grotesk',sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      marginBottom: 20,
-      color: "#1A1A1A"
-    }
-  }, "Agregar walk-in"), [["nombre", "Nombre *"], ["apellidos", "Apellido"], ["mail", "Mail"], ["empresa", "Empresa"], ["cargo", "Perfil / cargo"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
-    key: k,
-    style: {
-      marginBottom: 11
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 10,
-      color: "#808080",
-      fontFamily: "'Hanken Grotesk',monospace",
-      display: "block",
-      marginBottom: 4
-    }
-  }, l), /*#__PURE__*/React.createElement("input", {
-    value: newP[k],
-    onChange: e => setNewP(p => ({
-      ...p,
-      [k]: e.target.value
-    })),
-    style: inp
-  }))), /*#__PURE__*/React.createElement("div", {
-    onClick: () => setNewP(p => ({
-      ...p,
-      formulario: !p.formulario
-    })),
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      marginTop: 6,
-      padding: "10px 12px",
-      background: "#FAFAFA",
-      border: `1px solid ${newP.formulario ? "#4f7a3f40" : "#E6E6E6"}`,
-      borderRadius: 8,
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: stateBtn(newP.formulario, "linear-gradient(135deg,#448361,#448361)", "#4f7a3f40")
-  }, newP.formulario ? "✓" : "F"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#3a3b34",
-      fontWeight: 500
-    }
-  }, "Ya completó la encuesta"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#808080"
-    }
-  }, "Necesario para entrar al sorteo"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginTop: 18
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: addManual,
-    style: {
-      ...btn(true),
-      flex: 1,
-      textAlign: "center"
-    }
-  }, "Agregar como presente"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowAdd(false),
-    style: {
-      ...btn(false),
-      flex: 1,
-      textAlign: "center"
-    }
-  }, "Cancelar")))));
+    return h("div", { key: a.id, className: "ev-fila" + (a.presente ? " llego" : "") },
+      h(Avatar, { p: a }),
+      h("div", { className: "ev-persona" },
+        h("div", { className: "ev-nombre" }, `${a.nombre} ${a.apellidos}`.trim(),
+          a.manual && h("span", { className: "ev-chip" }, "Sin inscripción previa"),
+          eleg && h("span", { className: "ev-chip ok" }, "Entra al sorteo")),
+        h("div", { className: "ev-sub" }, [a.empresa, a.mail, a.celular].filter(Boolean).join(" · ") || "Sin empresa ni contacto")),
+      h("div", { className: "ev-acciones" },
+        h("button", { className: "ev-toggle" + (a.presente ? " on" : ""), onClick: () => toggle(a.id),
+          title: a.presente ? "Tocá para desmarcar la llegada" : "Tocá cuando llegue al evento" },
+          h(Icono, { n: a.presente ? "check" : "how_to_reg" }), a.presente ? "Llegó" : "Marcar llegada"),
+        h("button", { className: "ev-toggle verde" + (a.formulario ? " on" : ""), onClick: () => toggleForm(a.id),
+          title: a.formulario ? "Encuesta completa (tocá para desmarcar)" : "Se marca sola al cruzar la encuesta; también podés tocarla a mano" },
+          h(Icono, { n: a.formulario ? "check" : "assignment_turned_in" }), a.formulario ? "Encuesta completa" : "Encuesta pendiente")));
+  };
+
+  const vistaAsistentes = h("div", { className: "ev-anim" },
+    resumen,
+    h("div", { className: "ev-barra" }, h("div", { style: { width: pct + "%" } })),
+    h("p", { className: "ev-ayuda" },
+      "Para entrar al sorteo cada persona tiene que ", h("b", null, "haber llegado"), " y ", h("b", null, "completar la encuesta"),
+      ". La llegada se marca a mano; la encuesta se marca sola cuando cargás las respuestas en Configuración."),
+    h("div", { className: "ev-herr" },
+      h("label", { className: "ev-buscar" }, h(Icono, { n: "search" }),
+        h("input", { value: search, onChange: e => setSearch(e.target.value), placeholder: "Buscar por nombre, empresa o mail…" })),
+      h("div", { className: "ev-seg" }, [["todos", "Todos"], ["llegaron", "Llegaron"], ["faltan", "Todavía no llegaron"]].map(([k, l]) =>
+        h("button", { key: k, className: filtro === k ? "on" : "", onClick: () => setFiltro(k) }, l))),
+      h("button", { className: "ev-btn sec", onClick: () => descargarExcel(attendees, winners), disabled: !attendees.length, title: "Baja el listado completo con quién llegó, encuesta y ganadores" }, h(Icono, { n: "download" }), "Descargar Excel"),
+      h("button", { className: "ev-btn", onClick: () => setShowAdd(true) }, h(Icono, { n: "person_add" }), "Agregar asistente")),
+    h("div", { className: "ev-card ev-lista" },
+      filtered.length === 0
+        ? h("div", { className: "ev-vacio" }, attendees.length ? "No hay nadie que coincida con la búsqueda." : "Todavía no hay inscriptos. Cargá la lista en Configuración.")
+        : filtered.map(fila)));
+
+  // ═══ Habilitados ═══
+  const vistaHabilitados = h("div", { className: "ev-anim ev-angosto" },
+    h("div", { className: "ev-card ev-intro" },
+      h("h2", null, "Habilitados para el sorteo"),
+      h("p", null, "Aparecen las personas que ", h("b", null, "llegaron"), " al evento y además ", h("b", { className: "verde" }, "completaron la encuesta"),
+        " (se cruza por mail o por nombre y apellido). Hoy son ", h("b", { className: "verde" }, plural(elegibles.length, "persona", "personas")), ".")),
+    elegibles.length === 0
+      ? h("div", { className: "ev-card ev-vacio" }, "Todavía no hay nadie que cumpla las dos condiciones.")
+      : h("div", { className: "ev-card ev-lista" }, elegibles.map(a =>
+          h("div", { key: a.id, className: "ev-fila" },
+            h(Avatar, { p: a }),
+            h("div", { className: "ev-persona" },
+              h("div", { className: "ev-nombre" }, `${a.nombre} ${a.apellidos}`.trim()),
+              h("div", { className: "ev-sub" }, [a.empresa, a.mail].filter(Boolean).join(" · "))),
+            winners.find(w => w.id === a.id)
+              ? h("span", { className: "ev-chip" }, "Ya ganó")
+              : h("span", { className: "ev-chip ok" }, "Habilitado")))),
+    elegibles.length > 0 && h("div", { className: "ev-centro" },
+      h("button", { className: "ev-btn grande", onClick: () => setTab("sorteo") }, "Ir al sorteo")));
+
+  // ═══ Sorteo ═══
+  let escenario;
+  if (raffleState === "spinning" && winner) {
+    escenario = h("div", { className: "ev-girando" },
+      h("div", { className: "ev-eti" }, "Sorteando…"),
+      h(Avatar, { p: winner, grande: true }),
+      h("div", { className: "ev-gnombre" }, `${winner.nombre} ${winner.apellidos}`.trim()));
+  } else if (raffleState === "winner" && winner) {
+    escenario = h("div", { className: "ev-pop" },
+      h("div", { className: "ev-festejo" }, h(Icono, { n: "celebration" })),
+      h("div", { className: "ev-eti" }, "¡Tenemos ganador o ganadora!"),
+      h(Avatar, { p: winner, grande: true }),
+      h("div", { className: "ev-gnombre" }, `${winner.nombre} ${winner.apellidos}`.trim()),
+      winner.empresa && h("div", { className: "ev-gemp" }, winner.empresa),
+      winner.mail && h("div", { className: "ev-gmail" }, winner.mail),
+      h("div", { className: "ev-fila-btn" },
+        h("button", { className: "ev-btn", onClick: doRaffle, disabled: restantes.length === 0 }, "Sortear otro premio"),
+        h("button", { className: "ev-btn sec", onClick: () => { setRS("idle"); setWinner(null); } }, "Volver")));
+  } else {
+    escenario = h("div", null,
+      h("div", { className: "ev-festejo" }, h(Icono, { n: "confirmation_number" })),
+      h("h2", null, "Sorteo"),
+      h("p", { className: "ev-gsub" }, restantes.length
+        ? `${plural(restantes.length, "persona participa", "personas participan")}` + (winners.length ? ` · ${plural(winners.length, "premio ya sorteado", "premios ya sorteados")}` : "")
+        : "Ya ganaron todas las personas habilitadas."),
+      h("button", { className: "ev-btn grande", onClick: doRaffle, disabled: restantes.length === 0 },
+        restantes.length ? "Sortear" : "No quedan participantes"));
+  }
+  const vistaSorteo = h("div", { className: "ev-anim ev-angosto" },
+    elegibles.length === 0
+      ? h("div", { className: "ev-card ev-vacio grande" },
+          h("div", { className: "ev-festejo" }, h(Icono, { n: "confirmation_number" })),
+          "Para participar del sorteo cada persona tiene que haber ", h("b", null, "llegado"), " y ", h("b", { className: "verde" }, "completado la encuesta"), ".")
+      : h(React.Fragment, null,
+          h("div", { className: "ev-escenario" }, escenario),
+          winners.length > 0 && h("div", { className: "ev-bloque" },
+            h("div", { className: "ev-titulito" }, "Ganadores"),
+            h("ol", { className: "ev-ganadores" }, winners.map((w, i) =>
+              h("li", { key: w.id + i }, h("b", null, `${w.nombre} ${w.apellidos}`.trim()), w.empresa ? " · " + w.empresa : "")))),
+          h("div", { className: "ev-bloque" },
+            h("div", { className: "ev-titulito" }, "Participan"),
+            h("div", { className: "ev-chips" }, elegibles.map(p => {
+              const gano = winners.find(w => w.id === p.id);
+              return h("span", { key: p.id, className: "ev-part" + (gano ? " gano" : "") }, `${p.nombre} ${p.apellidos}`.trim(), gano && " · ganó");
+            })))));
+
+  // ═══ Configuración ═══
+  const estado = st => st && h("div", { className: "ev-estado" + (st.startsWith("✓") ? " ok" : st.startsWith("Error") ? " error" : "") }, st);
+  const selector = (modo, setModo, setSt) => h("div", { className: "ev-seg ancho" },
+    [["sheets", "Link de Google Sheets"], ["excel", "Archivo Excel o CSV"]].map(([k, l]) =>
+      h("button", { key: k, className: modo === k ? "on" : "", onClick: () => { setModo(k); setSt(""); } }, l)));
+
+  const vistaConfig = h("div", { className: "ev-anim ev-angosto" },
+    h("section", { className: "ev-card ev-paso" },
+      h("div", { className: "ev-paso-t" }, h("span", { className: "ev-num" }, "1"), h("h3", null, "Lista de inscriptos")),
+      h("p", null, "Son las respuestas del formulario de inscripción. En Google Sheets publicá la hoja como CSV (Archivo → Compartir → Publicar en la web → Valores separados por comas) y pegá el link, o subí el archivo."),
+      selector(listMode, setListMode, setListSt),
+      listMode === "sheets"
+        ? h("div", null,
+            h("label", { className: "ev-lbl" }, "Link de la hoja publicada"),
+            h("input", { className: "ev-inp", value: listUrl, onChange: e => setListUrl(e.target.value), placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv" }),
+            h("button", { className: "ev-btn", onClick: loadListSheets }, "Cargar inscriptos"))
+        : h("div", null,
+            h("input", { ref: listFileRef, type: "file", accept: ".xlsx,.xls,.csv", id: "ev-lista-arch", style: { display: "none" }, onChange: e => loadListExcel(e.target.files && e.target.files[0]) }),
+            h("label", { htmlFor: "ev-lista-arch", className: "ev-btn" }, "Elegir archivo…")),
+      h("div", { className: "ev-sep" },
+        h("label", { className: "ev-lbl" }, "Traer sólo inscriptos desde (opcional)"),
+        h("input", { type: "date", className: "ev-inp corto", value: listSince, onChange: e => setListSince(e.target.value) }),
+        h("div", { className: "ev-nota" }, "Si la hoja junta varios eventos, poné la fecha de apertura de este para traer sólo a los nuevos (usa la columna \"Marca temporal\").")),
+      estado(listSt)),
+
+    h("section", { className: "ev-card ev-paso" },
+      h("div", { className: "ev-paso-t" }, h("span", { className: "ev-num verde" }, "2"), h("h3", null, "Respuestas de la encuesta")),
+      h("p", null, "La encuesta que se completa con el QR durante el evento. Al cargarla, cada inscripto que respondió queda con la ",
+        h("b", null, "encuesta completa"), " automáticamente (se cruza por mail, o por nombre y apellido). Por eso la encuesta tiene que pedir el mail."),
+      selector(surveyMode, setSurveyMode, setSurveySt),
+      surveyMode === "sheets"
+        ? h("div", null,
+            h("label", { className: "ev-lbl" }, "Link de la hoja de respuestas publicada"),
+            h("input", { className: "ev-inp", value: surveyUrl, onChange: e => setSurveyUrl(e.target.value), placeholder: "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv" }),
+            h("button", { className: "ev-btn", onClick: loadSurveySheets }, "Cruzar con la lista"))
+        : h("div", null,
+            h("input", { ref: surveyFileRef, type: "file", accept: ".xlsx,.xls,.csv", id: "ev-enc-arch", style: { display: "none" }, onChange: e => loadSurveyExcel(e.target.files && e.target.files[0]) }),
+            h("label", { htmlFor: "ev-enc-arch", className: "ev-btn" }, "Elegir archivo…")),
+      h("div", { className: "ev-sep" },
+        h("label", { className: "ev-lbl" }, "Contar respuestas desde (opcional)"),
+        h("input", { type: "date", className: "ev-inp corto", value: surveySince, onChange: e => setSurveySince(e.target.value) }),
+        h("div", { className: "ev-nota" }, "Si la hoja junta encuestas de varios eventos, poné la fecha de este para no contar respuestas viejas.")),
+      estado(surveySt)),
+
+    h("section", { className: "ev-card ev-paso peligro" },
+      h("h3", null, "Empezar de nuevo"),
+      h("div", { className: "ev-reset" },
+        confirmReset === "clear"
+          ? h("div", { className: "ev-fila-btn izq" },
+              h("button", { className: "ev-btn rojo", onClick: clearMarks }, "Sí, borrar llegadas, encuestas y ganadores"),
+              h("button", { className: "ev-btn sec", onClick: () => setConfirmReset(null) }, "Cancelar"))
+          : h("button", { className: "ev-btn sec", onClick: () => setConfirmReset("clear") }, "Preparar para un evento nuevo"),
+        h("div", { className: "ev-nota" }, "Borra quién llegó, las encuestas y los ganadores, pero conserva la lista de inscriptos. Usalo antes de cada evento.")),
+      h("div", { className: "ev-reset" },
+        confirmReset === "base"
+          ? h("div", { className: "ev-fila-btn izq" },
+              h("button", { className: "ev-btn rojo", onClick: resetToBase }, "Sí, volver a la lista original"),
+              h("button", { className: "ev-btn sec", onClick: () => setConfirmReset(null) }, "Cancelar"))
+          : h("button", { className: "ev-btn sec", onClick: () => setConfirmReset("base") }, "Volver a la lista original"),
+        h("div", { className: "ev-nota" }, "Descarta la lista importada y todo lo marcado, y vuelve a los contactos que trae la plataforma."))));
+
+  // ═══ Ventana para agregar asistente ═══
+  const modal = showAdd && h("div", { className: "ev-fondo", onClick: e => { if (e.target === e.currentTarget) setShowAdd(false); } },
+    h("div", { className: "ev-modal", role: "dialog", "aria-label": "Agregar asistente" },
+      h("h3", null, "Agregar asistente"),
+      h("p", { className: "ev-nota" }, "Para alguien que vino sin estar inscripto. Queda marcado como que llegó."),
+      [["nombre", "Nombre *", "text"], ["apellidos", "Apellido", "text"], ["mail", "Mail", "email"], ["celular", "Celular", "tel"], ["empresa", "Empresa o estudio", "text"], ["cargo", "Profesión o cargo", "text"]].map(([k, l, tipo]) =>
+        h("div", { key: k, className: "ev-campo" },
+          h("label", { className: "ev-lbl" }, l),
+          h("input", { className: "ev-inp", type: tipo, value: newP[k], placeholder: k === "celular" ? "11 1234 5678" : "", autoFocus: k === "nombre",
+            onChange: e => setNewP(p => ({ ...p, [k]: e.target.value })),
+            onKeyDown: e => { if (e.key === "Enter") addManual(); } }))),
+      h("label", { className: "ev-check" },
+        h("input", { type: "checkbox", checked: newP.formulario, onChange: () => setNewP(p => ({ ...p, formulario: !p.formulario })) }),
+        h("span", null, h("b", null, "Ya completó la encuesta"), h("br"), h("small", null, "Hace falta para entrar al sorteo"))),
+      h("div", { className: "ev-fila-btn" },
+        h("button", { className: "ev-btn", onClick: addManual, disabled: !newP.nombre.trim() }, "Agregar"),
+        h("button", { className: "ev-btn sec", onClick: () => setShowAdd(false) }, "Cancelar"))));
+
+  return h("div", { className: "ev" },
+    encabezado,
+    h("main", { className: "ev-main" },
+      tab === "asistentes" && vistaAsistentes,
+      tab === "habilitados" && vistaHabilitados,
+      tab === "sorteo" && vistaSorteo,
+      tab === "config" && vistaConfig),
+    modal);
 }
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(/*#__PURE__*/React.createElement(App, null));
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));

@@ -2577,7 +2577,7 @@
     },
     eventos: {
       label: "Eventos",
-      pages: [{ p: "eventos", t: "Check-in & Sorteo" }],
+      pages: [{ p: "eventos", t: "Acreditación y sorteo" }],
     },
     // Un cronograma por canal, cada uno su propia página. Sumar LinkedIn son
     // cuatro líneas: acá, en PAGES, en index.html y en CANALES de contenidos.js.
@@ -2790,8 +2790,9 @@
       "Elegí franja, logo, banner y pie. <b>Todo texto de la pieza se edita haciendo clic</b> sobre él.",
       "Descargás en <b>PDF o JPG</b> a 300 dpi."] },
     { t: "Eventos", ic: "confirmation_number", pages: ["eventos"], pasos: [
-      "<b>Marcá presente</b> a cada persona cuando llega: el estado se comparte en vivo con quien tenga la app abierta.",
-      "La <b>encuesta</b> (la del QR) se cruza sola por mail: presente + encuesta = <b>habilitado</b> para el sorteo.",
+      "Tocá <b>Marcar llegada</b> en cada persona cuando llega: se comparte en vivo con quien tenga la app abierta.",
+      "Si viene alguien sin inscripción, usá <b>Agregar asistente</b> (nombre, apellido, mail y celular). Con <b>Descargar Excel</b> bajás el listado completo.",
+      "La <b>encuesta</b> (la del QR) se cruza sola por mail: llegó + encuesta = <b>habilitado</b> para el sorteo.",
       "En <b>Sorteo</b> elegís un ganador al azar entre los habilitados, con animación.",
       "En <b>Configuración</b> importás la lista de inscriptos y las respuestas desde Google Sheets o Excel."] },
     { t: "Contenidos", ic: "chat", pages: ["contenidos", "contenidos-ig", "contenidos-mail"], pasos: [
@@ -2928,7 +2929,7 @@
     // Liquidación: app autocontenida embebida (trae fuentes y fotos adentro: pesa ~13 MB).
     if (page === "liquidacion") { const f = $("#liquidacionFrame"); if (f && !f.src) f.src = "liquidacion.html?v=2"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
-    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=142"; }
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=143"; }
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
     // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {

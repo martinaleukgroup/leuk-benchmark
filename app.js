@@ -2929,7 +2929,7 @@
     // Liquidación: app autocontenida embebida (trae fuentes y fotos adentro: pesa ~13 MB).
     if (page === "liquidacion") { const f = $("#liquidacionFrame"); if (f && !f.src) f.src = "liquidacion.html?v=2"; }
     // Eventos: app React autocontenida embebida (check-in + sorteo, estado compartido en Supabase).
-    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=143"; }
+    if (page === "eventos") { const f = $("#eventosFrame"); if (f && !f.src) f.src = "eventos.html?v=144"; }
     // Contenidos: un cronograma por canal (calendario + fichas + comentarios). Lo arma
     // contenidos.js, que sabe en qué contenedor dibujar según el canal que se le pasa.
     if (MOD_DE[page] === "contenidos" && window.renderContenidos) {

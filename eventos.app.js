@@ -438,7 +438,20 @@ function App() {
     setNewP(VACIO); setShowAdd(false);
   };
 
-  const mergeParsed = parsed => {
+  // Al cargar una lista: si ya había una lista o algo marcado, pregunta si es otro evento.
+  // Evento nuevo → reemplaza todo (sin agregados a mano, llegadas, encuestas ni ganadores de antes).
+  // Misma lista actualizada → suma los nuevos y conserva lo marcado.
+  const mergeParsed = async parsed => {
+    const habiaAlgo = attendees.some(a => a.manual || a.presente || a.formulario || /^(sh|xl)_/.test(String(a.id))) || winners.length > 0;
+    if (habiaAlgo) {
+      const nuevo = await window.lkConfirmar(
+        "¿Esta lista es de un evento nuevo?\n\nEvento nuevo: se borran los inscriptos, los agregados a mano, las llegadas, las encuestas y los ganadores del evento anterior.\nMisma lista actualizada: se suman los inscriptos nuevos y se conserva lo que ya estaba marcado.",
+        { ok: "Es un evento nuevo", cancelar: "Es la misma lista actualizada" });
+      if (nuevo) {
+        guardarAtt(parsed); guardarWin([]); setRS("idle"); setWinner(null);
+        return "nuevo";
+      }
+    }
     const manual = attendees.filter(a => a.manual);
     const merged = parsed.map(p => {
       const f = attendees.find(a => (norm(a.mail) && norm(a.mail) === norm(p.mail)) || (a.nombre === p.nombre && a.apellidos === p.apellidos));
@@ -462,8 +475,8 @@ function App() {
       const { header, rows } = splitCsv(await res.text());
       const parsed = rowsToAttendees(header, filterSince(header, rows, listSince), "sh_");
       if (!parsed.length) throw new Error("la hoja no tiene inscriptos (o no encontré las columnas de nombre y empresa).");
-      mergeParsed(parsed); saveShared(SHEETS_KEY, listUrl);
-      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde Google Sheets.`);
+      const modo = await mergeParsed(parsed); saveShared(SHEETS_KEY, listUrl);
+      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde Google Sheets${modo === "nuevo" ? " (se borró el evento anterior)" : ""}.`);
     } catch (e) { setListSt("Error: " + e.message); }
   };
   const loadListExcel = async file => {
@@ -473,8 +486,8 @@ function App() {
       if (!aoa || aoa.length < 2) throw new Error("el archivo no tiene filas con datos.");
       const parsed = rowsToAttendees(aoa[0], filterSince(aoa[0], aoa.slice(1), listSince), "xl_");
       if (!parsed.length) throw new Error("no encontré las columnas de nombre y empresa.");
-      mergeParsed(parsed);
-      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde ${file.name}.`);
+      const modo = await mergeParsed(parsed);
+      setListSt(`✓ Se cargaron ${plural(parsed.length, "inscripto", "inscriptos")} desde ${file.name}${modo === "nuevo" ? " (se borró el evento anterior)" : ""}.`);
     } catch (e) { setListSt("Error: " + e.message); }
     finally { if (listFileRef.current) listFileRef.current.value = ""; }
   };

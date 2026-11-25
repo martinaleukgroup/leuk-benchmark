@@ -81,5 +81,5 @@ jobs:
         with:
           name: fichas-${{ github.run_number }}
           path: ${{ runner.temp }}/salida
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: ignore

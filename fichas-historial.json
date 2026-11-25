@@ -56,7 +56,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7222, 7223).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-24"
+    "fecha": "2026-11-25"
    }
   },
   "ARKANSAS": {
@@ -275,7 +275,7 @@
    "drive": {
     "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / De Pared / Apliques / CATEN | Interior / De Pared / Apliques / CATEN",
     "estado": "ambigua",
-    "fecha": "2026-11-24"
+    "fecha": "2026-11-25"
    }
   },
   "CHESTER": {
@@ -508,7 +508,7 @@
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7220, 7221).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-24"
+    "fecha": "2026-11-25"
    }
   },
   "EPICUR": {
@@ -674,13 +674,14 @@
   "KOKO": {
    "actualizada": "2026-11-25",
    "cambios": [
-    "Dibujo técnico"
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "drive": {
     "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7509).",
     "estado": "sin_carpeta",
-    "fecha": "2026-11-24"
+    "fecha": "2026-11-25"
    }
   },
   "KOLDO": {
@@ -1529,8 +1530,8 @@
     "aviso": "Destino fijo (DESTINO_FIJO).",
     "destino": "Interior / Rieles / Rieles / POLAR TRACK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-24",
-    "url": "https://drive.google.com/file/d/1w86nmB06UEHwhqJUpl6vrUYWK7ElK5vZ/view"
+    "fecha": "2026-11-25",
+    "url": "https://drive.google.com/file/d/1Z91znx50w81Nivz6UfPZ8olHhmyeRdDk/view"
    }
   },
   "POLAR BEAM": {

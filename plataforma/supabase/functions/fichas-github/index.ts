@@ -9,6 +9,9 @@
 // Acciones:
 //   { accion: "correr", modo: "prueba" | "real", solo?: "MOLY, DYNA" }
 //        -> { ok: true }   (409 si ya hay una corrida en curso)
+//   { accion: "web", modo: "prueba" | "real", skus?: "4169, 4177" }
+//        -> { ok: true }   dispara el Proceso 7 de n8n (fichas del Hub → WordPress).
+//        Secreto: N8N_FICHAS_WEB_TOKEN. No necesita GITHUB_TOKEN.
 //   { accion: "estado" }
 //        -> { ok, corrida: { estado, resultado, inicio, fin, url, origen, modo?, resumen? } | null }
 //        `resumen` sale de la anotación "Resumen fichas" que deja el script al terminar.
@@ -30,6 +33,7 @@ const json = (body: unknown, status = 200) =>
 const REPO = "martinaleukgroup/leuk-benchmark";
 const WORKFLOW = "fichas-diarias.yml";
 const ROLES = ["admin", "lider", "coordinacion"];
+const N8N_FICHAS_WEB = "https://martinaleukgroup.app.n8n.cloud/webhook/leuk-fichas-web";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -54,11 +58,29 @@ Deno.serve(async (req) => {
   const rol = rRes.ok ? String(await rRes.json()) : "";
   if (!ROLES.includes(rol)) return json({ error: "Sólo admin, líder o coordinación pueden regenerar las fichas" }, 403);
 
-  if (!GH) return json({ error: "Falta cargar el secreto GITHUB_TOKEN en Supabase", sin_token: true }, 503);
-
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* vacío */ }
   const accion = String(body.accion || "");
+
+  // ---- Fichas → web: dispara el Proceso 7 de n8n (sube los PDF del Hub a WordPress) ----
+  // { accion: "web", modo: "prueba" | "real", skus?: "4169, 4177" } -> { ok, mensaje }
+  // Secreto: N8N_FICHAS_WEB_TOKEN (la clave x-leuk-token del nodo "Validar pedido").
+  if (accion === "web") {
+    const N8N = Deno.env.get("N8N_FICHAS_WEB_TOKEN") || "";
+    if (!N8N) return json({ error: "Falta cargar el secreto N8N_FICHAS_WEB_TOKEN en Supabase", sin_token: true }, 503);
+    const quien = await uRes.json().then((u) => u.email || "").catch(() => "");
+    const skus = String(body.skus || "").split(/[\s,;]+/).filter((s) => /^\d{3,6}$/.test(s)).slice(0, 50);
+    const r = await fetch(N8N_FICHAS_WEB, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-leuk-token": N8N },
+      body: JSON.stringify({ modo: body.modo === "real" ? "real" : "prueba", skus, quien }),
+    });
+    if (r.status === 202) return json({ ok: true, mensaje: "En marcha" });
+    if (r.status === 404) return json({ error: "El Proceso 7 no está publicado en n8n" }, 502);
+    return json({ error: `n8n respondió ${r.status}` }, 502);
+  }
+
+  if (!GH) return json({ error: "Falta cargar el secreto GITHUB_TOKEN en Supabase", sin_token: true }, 503);
 
   const gh = (path: string, init: RequestInit = {}, conToken = true) =>
     fetch(`https://api.github.com${path}`, {

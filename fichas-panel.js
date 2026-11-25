@@ -101,6 +101,7 @@
                placeholder="Buscá por nombre de ficha o por SKU…">
         <button id="fpZip" class="btn-desc" title="Genera un ZIP con todas las fichas en PDF">⬇ Todas (ZIP)</button>
         <button id="fpGH" class="btn-desc" hidden title="Vuelve a leer el Hub, regenera las fichas y sus PDF (corre en GitHub)">⟳ Regenerar fichas</button>
+        <button id="fpWeb" class="btn-desc" hidden title="Sube a la web los PDF de fichas que estén en el Hub y reemplaza los viejos (Proceso 7 de n8n)">⇪ Actualizar fichas en la web</button>
         <span class="intg-stat" id="fpMeta"></span>
       </div>
       <div class="fp-gh" id="fpGHEstado" hidden></div>
@@ -121,6 +122,8 @@
     $("#fpZip").onclick = ev => window.FichasDoc.descargarTodas(ev.currentTarget, $("#fpMeta"));
     $("#fpGH").onclick = () => pedirGH("");
     if (puedeGH()) { $("#fpGH").hidden = false; refrescarGH(); }
+    $("#fpWeb").onclick = () => pedirWeb();
+    if (puedeGH()) $("#fpWeb").hidden = false;
     $("#fpChips").onclick = ev => {
       const c = ev.target.closest("[data-etq]"); if (!c) return;
       FILTRO = (FILTRO === c.dataset.etq) ? "" : c.dataset.etq;
@@ -388,6 +391,59 @@
       const btn = $("#fpGH"); if (btn) btn.disabled = true;
       pintarGH("⟳ Regenerando fichas… arrancando (tarda unos 5 minutos)", "px-run");
       GH_TIMER = setTimeout(refrescarGH, 8000);
+    };
+    ov.querySelector("#fpProbar").onclick = () => correr("prueba");
+    ov.querySelector("#fpPublicar").onclick = () => correr("real");
+  }
+
+  /* ================= FICHAS → WEB (n8n, Proceso 7) =================
+     Sube a WordPress los PDF de "Fichas técnicas" del Hub que cambiaron, los asigna a
+     productos y variantes y borra los PDF viejos. Corre solo de lunes a viernes a las 9:00;
+     este botón lo adelanta. Pasa por la Edge Function `fichas-github` (accion "web"), que
+     guarda la clave de n8n. Tope: 40 PDF por corrida. Resultado en la hoja "Log Fichas Web". */
+
+  function pedirWeb() {
+    if (!puedeGH()) return;
+    const ov = document.createElement("div");
+    ov.className = "detail"; ov.id = "fpModal";
+    ov.innerHTML = `<div class="detail-inner fp-modal fp-modal-lote">
+      <button class="detail-close" id="fpClose">✕</button>
+      <h2>Actualizar fichas en la web</h2>
+      <div class="fp-conflicto"><div>Compara la ficha de cada producto de la web con el PDF de
+        la columna "Fichas técnicas" del Hub. Si cambió, sube el PDF nuevo, lo pone en el producto
+        y sus variantes y borra el viejo. Es lo mismo que corre solo de lunes a viernes a las 9:00.
+        Tarda unos 3 minutos; sube hasta 40 PDF por vez (si hay más, volvé a tocarlo).</div></div>
+      <label class="fp-modal-caja"><span>Solo estos SKU</span>
+        <div><input id="fpWebSkus" class="intg-search" placeholder="Opcional, ej.: 4169, 4177 (vacío = todas)"></div></label>
+      <div class="fp-modal-caja"><span>Solo probar</span><div>No toca la web: deja en el log qué cambiaría.</div></div>
+      <div class="fp-modal-caja"><span>Actualizar la web</span><div>Sube los PDF y los cambia en la web.</div></div>
+      <div class="us-msg" id="fpModalMsg"></div>
+      <div class="desc-actions">
+        <button class="btn-ghost" id="fpCancel">Cancelar</button>
+        <button class="btn-ghost" id="fpProbar">Solo probar</button>
+        <button class="btn-primary" id="fpPublicar">Actualizar la web</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => ov.remove();
+    ov.querySelector("#fpClose").onclick = cerrar;
+    ov.querySelector("#fpCancel").onclick = cerrar;
+    ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+    const correr = async modo => {
+      const msg = ov.querySelector("#fpModalMsg");
+      ov.querySelectorAll("button").forEach(b => b.disabled = true);
+      msg.className = "us-msg"; msg.textContent = "Pidiéndoselo a n8n…";
+      const skus = ov.querySelector("#fpWebSkus").value.trim();
+      const d = await fnGH({ accion: "web", modo, skus });
+      if (d.error) {
+        ov.querySelectorAll("button").forEach(b => b.disabled = false);
+        msg.className = "us-msg px-err"; msg.textContent = d.error;
+        return;
+      }
+      cerrar();
+      const btn = $("#fpWeb"); if (btn) { btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 180000); }
+      pintarGH(`⇪ ${modo === "real" ? "Actualizando las fichas de la web" : "Probando la actualización de la web"}${
+        skus ? ` (SKU ${esc(skus)})` : ""}… tarda unos 3 minutos. El resultado queda en la hoja <b>Log Fichas Web</b> del Hub de marketing.`, "px-run");
     };
     ov.querySelector("#fpProbar").onclick = () => correr("prueba");
     ov.querySelector("#fpPublicar").onclick = () => correr("real");

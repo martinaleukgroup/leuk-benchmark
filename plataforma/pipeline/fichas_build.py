@@ -600,6 +600,10 @@ def build_ficha(variants, blue, MAN):
         "switch_cct": switch_cct,
         "clase_aisl": clase_aisl,   # I/II/III → sello al pie: círculo / cuadrado / rombo
         "lente": lente_info(p.get("Comentarios")),
+        # El maestro marca en Comentarios qué plafones aceptan el kit de suspensión
+        # ("Kit de suspensión: Opcional"). Es la única fuente de compatibilidad.
+        "kit_susp": any(re.search(r"kit\s+de\s+suspensi", fmt(v.get("Comentarios")), re.I)
+                        for v in [p] + list(variants)),
         "calado": calado_info(p),
         "colores": colores,
         "assets": {
@@ -702,10 +706,11 @@ DIMERIZABLES = ("TRIAC", "DALI", "DALI + PUSH")
 # Reglas posibles: "prefijos" (la agrupación empieza así) y/o "subcat" + "fijacion".
 ACC_COMPARTIDOS = [
     ("6716", {"prefijos": ("YORK", "SINTRA")}),                 # KIT SUSPENSIÓN SINTRA/YORK
-    # York y Sintra quedan afuera: llevan su propio kit (el 6716)
-    # BILUNE tampoco: lleva su propio KIT BILUNE (7610/7611). Dai, 26/11/2026.
-    ("6829", {"subcat": "aplique", "fijacion": "suspender",
-              "excepto": ("YORK", "SINTRA", "BILUNE")}),        # KIT SUSPENSIÓN 4 TENSORES
+    # Sólo los productos que en el maestro dicen "Kit de suspensión: Opcional".
+    # Antes se adivinaba por aplique + "Suspender" y caía en BILUNE, DUNA y BARON,
+    # que no son compatibles (BILUNE lleva su KIT BILUNE 7610/7611). Dai, 26/11/2026.
+    # York y Sintra quedan afuera: llevan su propio kit (el 6716).
+    ("6829", {"kit_susp": True, "excepto": ("YORK", "SINTRA")}),  # KIT SUSPENSIÓN 3 TENSORES
     # Mati, 20/08/2026:
     ("6810", {"agrupaciones": ("RIELES 3EF",)}),                # COBERTOR RIEL: va en 1EF y 3EF
                                                                 # (en 1EF ya está por agrupación propia)
@@ -724,6 +729,8 @@ def _aplica(f, regla):
         return False
     if "prefijos" in regla:
         return ag.startswith(regla["prefijos"])
+    if regla.get("kit_susp") and not f.get("kit_susp"):
+        return False
     if regla.get("subcat") and fmt(f.get("subcat")).lower() != regla["subcat"]:
         return False
     if regla.get("fijacion") and regla["fijacion"] not in _fijacion(f).lower():

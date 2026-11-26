@@ -121,6 +121,11 @@
    "ficha": "LUKA"
   },
   {
+   "sku": "6119",
+   "nombre": "MATT l BLNG",
+   "ficha": "MATT"
+  },
+  {
    "sku": "6120",
    "nombre": "MATT l NG",
    "ficha": "MATT"
@@ -163,6 +168,11 @@
   {
    "sku": "7189",
    "nombre": "POCKET VI BLNG 3000K",
+   "ficha": "POCKET VI"
+  },
+  {
+   "sku": "7290",
+   "nombre": "POCKET VI NGNG 2700K",
    "ficha": "POCKET VI"
   },
   {
@@ -224,6 +234,11 @@
    "sku": "6437",
    "nombre": "YANA l NG",
    "ficha": "YANA"
+  },
+  {
+   "sku": "6615",
+   "nombre": "YORK BL",
+   "ficha": "YORK"
   }
  ],
  "fichas_fuera": [

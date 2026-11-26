@@ -54,9 +54,10 @@
     "Dibujo técnico"
    ],
    "drive": {
-    "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7222, 7223).",
-    "estado": "sin_carpeta",
-    "fecha": "2026-11-25"
+    "destino": "Interior / De Techo / Cabezales / Accesorios / APLIQUE CABEZAL / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1VYOyamLU8vNtNtMM-pAiVxNST_05s9W4/view"
    }
   },
   "ARKANSAS": {
@@ -268,14 +269,16 @@
    }
   },
   "CATEN": {
-   "actualizada": "2026-11-24",
+   "actualizada": "2026-11-26",
    "cambios": [
     "Foto"
    ],
    "drive": {
-    "aviso": "Los SKU aparecen en varias carpetas de producto y ninguna se llama como la ficha: Exterior / De Pared / Apliques / CATEN | Interior / De Pared / Apliques / CATEN",
-    "estado": "ambigua",
-    "fecha": "2026-11-25"
+    "aviso": "Destino fijo (DESTINO_FIJO). Va a 2 carpetas de producto.",
+    "destino": "Interior / De Pared / Apliques / CATEN / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1jbdnsgtbdXaBd0p-VhI7Qr5Rj7HiqMBh/view"
    }
   },
   "CHESTER": {
@@ -506,9 +509,10 @@
     "Dibujo técnico"
    ],
    "drive": {
-    "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7220, 7221).",
-    "estado": "sin_carpeta",
-    "fecha": "2026-11-25"
+    "destino": "Interior / De Techo / Cabezales / Accesorios / EMBUTIDO CABEZAL / Ficha Técnica (nueva)",
+    "estado": "subida",
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1kSUtZO18-y8VBtqVabHSEri39gbkV82B/view"
    }
   },
   "EPICUR": {
@@ -679,9 +683,10 @@
    ],
    "creada": "2026-11-02",
    "drive": {
-    "aviso": "Ninguna carpeta de producto de la carpeta oficial tiene fotos o CAD con estos SKU (7509).",
-    "estado": "sin_carpeta",
-    "fecha": "2026-11-25"
+    "destino": "Interior / De Apoyo / Mesa / KOKO / Ficha Técnica",
+    "estado": "subida",
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1_XDVpFb-InnKQP1_XS9mMoiRaJ7iUDtT/view"
    }
   },
   "KOLDO": {
@@ -808,15 +813,16 @@
    }
   },
   "LIV": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-26",
    "cambios": [
-    "Foto"
+    "Marca Driver",
+    "Dibujo técnico"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / LIV / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/18naDD9XPcXwE3qju3Vm7HOX2IuXzYL5R/view"
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1UZuvevXcpoqNlOYbYx91-bXquP_QjVDC/view"
    }
   },
   "LOFI": {
@@ -906,16 +912,15 @@
    }
   },
   "MATT": {
-   "actualizada": "2026-11-05",
+   "actualizada": "2026-11-26",
    "cambios": [
-    "Color producto",
-    "Colores"
+    "Variantes"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / MATT / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-05",
-    "url": "https://drive.google.com/file/d/1-0xQ9ocF52S0nWkdF9GQg3JuF05Jo4vS/view"
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1VyJMUfeISDBf0mGGDvUeF9QdH2Bz2q3b/view"
    }
   },
   "MEX": {
@@ -1156,16 +1161,16 @@
    }
   },
   "NUMA": {
-   "actualizada": "2026-11-20",
+   "actualizada": "2026-11-26",
    "cambios": [
-    "Variantes"
+    "Material"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Techo / Embutidos / NUMA / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-23",
-    "url": "https://drive.google.com/file/d/1z3hNKdVc-5jthAyX0wi0b-l7dMkh4VEE/view"
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/10sJ2p9M_aKEBQbhchFDSydAIQsBHJlw_/view"
    }
   },
   "NUMA MODULO": {
@@ -1470,15 +1475,16 @@
    ]
   },
   "POCKET VI": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-26",
    "cambios": [
-    "Foto"
+    "Color producto",
+    "Colores"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / POCKET / POCKET VI / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1yC-8eOZjYEL7eaVI4YUx4J86abFK0vtf/view"
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1BuFWF5NAxDNaL2O9rGvw-ZRvSiPhC_L7/view"
    }
   },
   "POCKET VI AP": {
@@ -2199,16 +2205,17 @@
    }
   },
   "YORK": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-26",
    "cambios": [
-    "LDT"
+    "Color producto",
+    "Colores"
    ],
    "drive": {
     "aviso": "Se deja «Ficha Técnica - YORK MD Lote 20250710.pdf» en la carpeta: no está claro de qué ficha es.",
     "destino": "Interior / De Techo / Apliques / YORK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-17",
-    "url": "https://drive.google.com/file/d/1MvNOj8KGYRVc1XammgTdLSyrk6U5dsoL/view"
+    "fecha": "2026-11-26",
+    "url": "https://drive.google.com/file/d/1kf5DTfoltLO1eDjldFSwI-zsqWhfUDvr/view"
    }
   },
   "YORK 2700": {

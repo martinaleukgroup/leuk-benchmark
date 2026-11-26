@@ -54,11 +54,23 @@ def safe(name):
 FOTO_VACIA = re.compile(r'class="[^"]*\bf-photo\b[^"]*\bf-ph\b|class="[^"]*\bf-ph\b[^"]*\bf-photo\b')
 
 
+# Recuadro cuya imagen (foto, dibujo o curva) se pidió y no cargó: lo marca _fichaImgErr.
+# Pasaba con los dibujos de POLAR LINE (Google corta con 429 si se piden muchas imágenes
+# seguidas) y el PDF salía con el cartel "image" en vez del dibujo.
+IMG_ROTA = re.compile(r'class="[^"]*\bf-err\b')
+
+
+def revisar(exe, extra, url, budget=10000):
+    """(sin_foto, imagenes_rotas) de la ficha tal como la ve Chrome."""
+    r = subprocess.run([exe, "--headless=new", "--disable-gpu", *extra, f"--virtual-time-budget={budget}",
+                        "--dump-dom", url], capture_output=True, text=True, timeout=120)
+    dom = r.stdout or ""
+    return bool(FOTO_VACIA.search(dom)), len(IMG_ROTA.findall(dom))
+
+
 def sin_foto(exe, extra, url):
     """True si alguna hoja de la ficha quedó con el recuadro de foto vacío."""
-    r = subprocess.run([exe, "--headless=new", "--disable-gpu", *extra, "--virtual-time-budget=10000",
-                        "--dump-dom", url], capture_output=True, text=True, timeout=120)
-    return bool(FOTO_VACIA.search(r.stdout or ""))
+    return revisar(exe, extra, url)[0]
 
 
 def main():
@@ -96,15 +108,29 @@ def main():
         for i, ag in enumerate(ags, 1):
             destino = out / f"Ficha Técnica - {safe(ag)}.pdf"
             url = f"http://127.0.0.1:{PORT}/_export.html?ag={urllib.parse.quote(ag)}"
+            # Si algún dibujo o curva no carga, se espera y se reintenta (hasta 3 veces, con
+            # más tiempo cada vez). Si sigue sin cargar, la ficha NO se sube: queda la anterior.
+            rotas = 0
+            for intento, budget in enumerate((10000, 20000, 30000), 1):
+                if intento > 1:
+                    time.sleep(15)
+                foto_falta, rotas = revisar(exe, extra, url, budget)
+                if not rotas or foto_falta:
+                    break
+                print(f"  … {ag}: {rotas} imagen(es) sin cargar, reintento {intento}")
             subprocess.run([exe, "--headless=new", "--disable-gpu", "--no-pdf-header-footer", *extra,
-                            "--virtual-time-budget=10000", f"--print-to-pdf={destino}", url],
+                            f"--virtual-time-budget={budget}", f"--print-to-pdf={destino}", url],
                            capture_output=True, timeout=120)
             # una ficha vacía (agrupación no encontrada) sale como PDF de ~1 KB
             if not destino.exists() or destino.stat().st_size < 5000:
                 fallidas.append(ag)
                 destino.unlink(missing_ok=True)
                 print(f"  ✗ {ag}: no se pudo generar")
-            elif sin_foto(exe, extra, url):
+            elif rotas and not foto_falta:
+                fallidas.append(ag)
+                destino.unlink(missing_ok=True)
+                print(f"  ✗ {ag}: {rotas} dibujo(s)/curva(s) no cargaron; no se sube (queda la ficha anterior)")
+            elif foto_falta:
                 pend.mkdir(parents=True, exist_ok=True)
                 destino.replace(pend / destino.name)
                 pendientes.append(ag)

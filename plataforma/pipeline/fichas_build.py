@@ -628,6 +628,10 @@ def build_ficha(variants, blue, MAN):
 # (las "Unión" y el producto en sí siguen teniendo su ficha propia).
 ACC_GRUPOS = ("CHILL", "RIELES", "DYNA", "REN")   # REN: el MARCO REN SLIM va como hoja de accesorios
 ACC_EXCLUIR = ("DYNA DRIVERS",)         # no entran a la grilla (ver AGRUPACIONES_SIN_FICHA)
+# Documentos donde los accesorios SIN dibujo técnico (kits, conectores) van a la hoja de
+# accesorios en vez de tener hoja propia: con la foto alcanza. Los que tienen dibujo
+# (conectores lineal y flex) siguen con su hoja. Dai, 26/11/2026. Coincidencia exacta.
+ACC_GRILLA_SIN_DIBUJO = ("POLAR",)
 
 # Agrupaciones que NO generan ficha (Mati, 20/08/2026):
 #   · DYNA DRIVERS         → los drivers no llevan ficha. Lo que tiene que verse
@@ -699,8 +703,9 @@ DIMERIZABLES = ("TRIAC", "DALI", "DALI + PUSH")
 ACC_COMPARTIDOS = [
     ("6716", {"prefijos": ("YORK", "SINTRA")}),                 # KIT SUSPENSIÓN SINTRA/YORK
     # York y Sintra quedan afuera: llevan su propio kit (el 6716)
+    # BILUNE tampoco: lleva su propio KIT BILUNE (7610/7611). Dai, 26/11/2026.
     ("6829", {"subcat": "aplique", "fijacion": "suspender",
-              "excepto": ("YORK", "SINTRA")}),                  # KIT SUSPENSIÓN 4 TENSORES
+              "excepto": ("YORK", "SINTRA", "BILUNE")}),        # KIT SUSPENSIÓN 4 TENSORES
     # Mati, 20/08/2026:
     ("6810", {"agrupaciones": ("RIELES 3EF",)}),                # COBERTOR RIEL: va en 1EF y 3EF
                                                                 # (en 1EF ya está por agrupación propia)
@@ -791,6 +796,9 @@ def split_accesorios(fichas):
         ag = f.get("agrupacion") or f.get("titulo") or ""
         es_acc = (ag.upper().startswith(ACC_GRUPOS) and ag.upper() not in ACC_EXCLUIR
                   and fmt(f.get("subcat")).lower() == "accesorio")
+        if (ag.upper() in ACC_GRILLA_SIN_DIBUJO and fmt(f.get("subcat")).lower() == "accesorio"
+                and not (f.get("assets") or {}).get("dibujo_url")):
+            es_acc = True
         if es_acc and f.get("discontinuado"):
             # Accesorio dado de baja: no va a la grilla ni tiene ficha propia.
             # Casos reales (21/08/2026): TAPA 3 EF (7233/7234), reemplazada por
@@ -914,6 +922,15 @@ def main():
             for k in CLASIF:
                 if EMPTY(o.get(k)) and not EMPTY(m.get(k)):
                     o[k] = m[k]
+
+    # Filas marcadas "no subir" en la columna SKU Padre del Hub: no llevan ficha (drivers de
+    # POCKET y POLAR, POCKET MODULO 2CCT). Pedido de Dai, 26/11/2026: "no hacer ficha POCKET
+    # DRIVER" y los drivers de POLAR afuera. La marca vive en el Hub, así que sacarla ahí
+    # devuelve la ficha sin tocar código.
+    _antes = len(rows)
+    rows = [o for o in rows if fmt(o.get("SKU Padre")).strip().lower() != "no subir"]
+    if _antes != len(rows):
+        print(f"  sin ficha por 'no subir' en SKU Padre: {_antes - len(rows)} fila(s)")
 
     # Filtro por stock: fuera las filas cuyo SKU no está en el Excel de stock. Va DESPUÉS
     # de heredar la clasificación (la fila padre puede salir y sus hijas la necesitan) y
@@ -1076,9 +1093,22 @@ def main():
                 return f"assets/ficha/fotos/{s}.png" + (f"?v={FOTO_VER[s]}" if FOTO_VER.get(s) else "")
         return photo.get(sku)
 
+    # Fotos con mucho aire alrededor del producto: se agrandan dentro del recuadro (la
+    # imagen se recorta por el borde del recuadro, no por el producto). Clave = SKU de la
+    # foto que usa la hoja. Dai, 26/11/2026: "CATEN agranden la foto del primero", "RISE
+    # agrandar foto". Si diseño sube una foto ya encuadrada, sacar la entrada.
+    FOTO_ZOOM = {
+        "7097": 1.8,   # CATEN 30
+        "7442": 1.8,   # CATEN 30 CR 3CCT IP44
+        "7701": 1.7,   # RISE
+    }
+
     con_foto = de_drive = 0
     for f in fichas:
         f["foto_url"] = mejor_foto(f)
+        _z = FOTO_ZOOM.get(str(f.get("sku")))
+        if _z and f["foto_url"]:
+            f["foto_zoom"] = _z
         if f["foto_url"]:
             con_foto += 1
             de_drive += f["foto_url"].startswith("assets/ficha/fotos/")

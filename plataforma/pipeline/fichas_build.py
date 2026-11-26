@@ -1149,11 +1149,26 @@ def main():
     for i, f in enumerate(fichas):
         _first.setdefault(f.get("agrupacion") or f.get("titulo") or "", i)
 
+    # Hojas que van primero dentro de su documento (Dai, 26/11/2026): se busca el patrón en el
+    # título y en las filas de la hoja. Las demás quedan abajo, en el orden de siempre.
+    PRIMERO = [
+        ("CATEN", re.compile(r"\bIP44\b", re.I)),    # primero IP44, abajo IP20
+        ("POCKET", re.compile(r"\b2CCT\b", re.I)),   # primero 2CCT, abajo el resto
+        ("LAIVA", re.compile(r"\bTRIAC\b", re.I)),   # primero TRIAC, abajo ON/OFF
+    ]
+
+    def _primero(ag, f):
+        for pref, pat in PRIMERO:
+            if ag.upper().startswith(pref):
+                txt = " ".join([fmt(f.get("titulo"))] + [fmt(x.get("v")) for x in f.get("filas") or []])
+                return 0 if pat.search(txt) else 1
+        return 0
+
     def _page_key(i_f):
         i, f = i_f
         ag = f.get("agrupacion") or f.get("titulo") or ""
         r = RIELES_RANK.get(fmt(f.get("subcat")).lower(), 2) if ag.upper().startswith("RIELES") else 0
-        return (_first[ag], r, i)
+        return (_first[ag], _primero(ag, f), r, i)
 
     fichas = [f for _, f in sorted(enumerate(fichas), key=_page_key)]
 

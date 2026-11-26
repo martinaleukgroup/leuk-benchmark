@@ -1134,6 +1134,9 @@ def main():
               f"({', '.join(AGRUPACIONES_SIN_FICHA)})")
 
     fichas = add_compartidos(fichas)             # accesorios que se repiten en varios documentos
+    # kit_susp sólo sirve para decidir el kit compartido: no va a fichas-data.js (si quedara,
+    # todas las fichas figurarían "con datos distintos" y se regenerarían todos los PDF).
+    fichas = [{k: v for k, v in f.items() if k != "kit_susp"} for f in fichas]
     fichas, acc_ags = split_accesorios(fichas)   # accesorios de Chill/Rieles/Dyna → 1 hoja por documento
     if acc_ags:
         print(f"  hojas de accesorios: {', '.join(acc_ags)}")

@@ -602,7 +602,7 @@ def build_ficha(variants, blue, MAN):
         "lente": lente_info(p.get("Comentarios")),
         # El maestro marca en Comentarios qué plafones aceptan el kit de suspensión
         # ("Kit de suspensión: Opcional"). Es la única fuente de compatibilidad.
-        "kit_susp": any(re.search(r"kit\s+de\s+suspensi", fmt(v.get("Comentarios")), re.I)
+        "kit_susp": any(re.search(r"kit\s+de\s+suspensi", " ".join((fmt(v.get("Comentarios")), fmt(v.get("_coment_base")))), re.I)
                         for v in [p] + list(variants)),
         "calado": calado_info(p),
         "colores": colores,
@@ -886,6 +886,10 @@ def main():
         if pv:
             obj["SKU Padre"] = pv
         # Comentarios del maestro (hoja aparte) → para notas al pie (lentes, etc.)
+        # La columna Comentarios de Base (sincronizada del maestro) se guarda aparte: de ahí sale
+        # la compatibilidad con el kit de suspensión. "Comentarios" sigue viniendo de la hoja
+        # Maestro, que hoy el Hub no trae, para no mover las notas de lentes.
+        obj["_coment_base"] = fmt(obj.get("Comentarios"))
         obj["Comentarios"] = COMENTARIOS.get(fmt(obj.get("SKU")), "")
         rows.append(obj)
 

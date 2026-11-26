@@ -1100,7 +1100,7 @@ def main():
     FOTO_ZOOM = {
         "7097": 1.8,   # CATEN 30
         "7442": 1.8,   # CATEN 30 CR 3CCT IP44
-        "7701": 1.7,   # RISE
+        "7701": 2.2,   # RISE
     }
 
     con_foto = de_drive = 0

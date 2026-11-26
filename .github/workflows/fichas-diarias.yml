@@ -93,10 +93,12 @@ jobs:
           SALIDA: ${{ runner.temp }}/salida
         run: |
           [ -d "$SALIDA/pdfs" ] && ls "$SALIDA/pdfs"/*.pdf >/dev/null 2>&1 || { echo "sin PDF"; exit 0; }
-          export GIT_INDEX_FILE="$RUNNER_TEMP/vista.idx" GIT_WORK_TREE="$SALIDA/pdfs"
+          export GIT_DIR="$GITHUB_WORKSPACE/.git" GIT_INDEX_FILE="$RUNNER_TEMP/vista.idx" GIT_WORK_TREE="$SALIDA/pdfs"
+          cd "$SALIDA/pdfs"
           git -c user.name="fichas-bot" -c user.email="fichas-bot@users.noreply.github.com" add -A -- .
           T=$(git write-tree)
           C=$(git -c user.name="fichas-bot" -c user.email="fichas-bot@users.noreply.github.com" commit-tree "$T" -m "Vista previa fichas, corrida ${{ github.run_number }}")
           unset GIT_INDEX_FILE GIT_WORK_TREE
+          cd "$GITHUB_WORKSPACE"
           git push origin "$C:refs/vista-previa/fichas-${{ github.run_number }}"
           echo "Vista previa: refs/vista-previa/fichas-${{ github.run_number }}"

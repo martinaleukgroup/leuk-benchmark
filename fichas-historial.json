@@ -269,7 +269,7 @@
    }
   },
   "CATEN": {
-   "actualizada": "2026-11-26",
+   "actualizada": "2026-11-27",
    "cambios": [
     "Foto"
    ],
@@ -277,8 +277,8 @@
     "aviso": "Destino fijo (DESTINO_FIJO). Va a 2 carpetas de producto.",
     "destino": "Interior / De Pared / Apliques / CATEN / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-26",
-    "url": "https://drive.google.com/file/d/1jbdnsgtbdXaBd0p-VhI7Qr5Rj7HiqMBh/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/14Z9xRSIub4-zK2gMh_T_aEzsi933rb8Z/view"
    }
   },
   "CHESTER": {
@@ -813,16 +813,22 @@
    }
   },
   "LIV": {
-   "actualizada": "2026-11-26",
+   "actualizada": "2026-11-27",
    "cambios": [
-    "Marca Driver",
-    "Dibujo técnico"
+    "Difusor",
+    "Color producto",
+    "Fuente Lumínica",
+    "Dimensión producto",
+    "Clase de aislación",
+    "Dibujo técnico",
+    "CAD",
+    "Colores"
    ],
    "drive": {
     "destino": "Interior / De Techo / Embutidos / LIV / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-26",
-    "url": "https://drive.google.com/file/d/1UZuvevXcpoqNlOYbYx91-bXquP_QjVDC/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/1-KvRqpPbt4qRBBR83IJrf0x7-A3w5zM_/view"
    }
   },
   "LOFI": {
@@ -1417,16 +1423,19 @@
    ]
   },
   "POCKET IV AP": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-27",
    "cambios": [
-    "Foto"
+    "Flujo lumínico",
+    "Eficacia lumínica",
+    "Dibujo técnico",
+    "CAD"
    ],
    "creada": "2026-11-02",
    "drive": {
-    "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET IV AP / Ficha Técnica (nueva)",
+    "destino": "Interior / De Techo / Apliques / POCKET AP / POCKET IV AP / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1SZnf4fIKz3gHq0r-D4-lV6zaHdf_Cq8w/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/1J3Ajh5lccqkEo2CoZXBlDXXYH_c-zBeH/view"
    }
   },
   "POCKET MODULO III 2CCT": {
@@ -1941,16 +1950,16 @@
    }
   },
   "SUNSET": {
-   "actualizada": "2026-11-17",
+   "actualizada": "2026-11-27",
    "cambios": [
-    "Foto"
+    "Dibujo técnico"
    ],
    "creada": "2026-11-02",
    "drive": {
     "destino": "Interior / De Apoyo / Pie / SUNSET / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1X0fFqG80yfVfbt4hYnKnJSAjVARhWWs7/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/1N8DTkERXt-hX7-0Brli5LeFm9w_OHIzQ/view"
    }
   },
   "SUTSKE": {
@@ -1978,20 +1987,17 @@
    }
   },
   "TERRA": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-27",
    "cambios": [
-    "Variantes",
-    "Foto",
-    "Color producto",
-    "Colores"
+    "Factor de potencia"
    ],
    "creada": "2026-11-02",
    "drive": {
     "aviso": "Destino fijo (DESTINO_FIJO).",
     "destino": "Exterior / Rieles / Rieles / TERRA TRACK / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-23",
-    "url": "https://drive.google.com/file/d/1lOYkUqTxalrRXDWbB9qx6wLdufgRqDLd/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/1vg4nyIu_StQp92DHJ9WjVtwdgcGEWRjh/view"
    }
   },
   "TERRA CHILL": {
@@ -2168,7 +2174,7 @@
    }
   },
   "WINSOR": {
-   "actualizada": "2026-11-18",
+   "actualizada": "2026-11-27",
    "cambios": [
     "Foto"
    ],
@@ -2176,8 +2182,8 @@
    "drive": {
     "destino": "Interior / De Techo / Colgantes / WINSOR / Ficha Técnica",
     "estado": "subida",
-    "fecha": "2026-11-18",
-    "url": "https://drive.google.com/file/d/1fv7kUPzWXT73SZg2gB-WTFasVzwMXsqW/view"
+    "fecha": "2026-11-27",
+    "url": "https://drive.google.com/file/d/1XCf9a8FTtjciZSdlkYW9HhX2ccUgrVpM/view"
    }
   },
   "XAPO": {

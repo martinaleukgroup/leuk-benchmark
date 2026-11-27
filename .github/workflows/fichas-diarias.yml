@@ -84,18 +84,20 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      # Vista previa (corridas de prueba a mano): deja los PDF en una referencia aparte del repo
-      # (refs/vista-previa/fichas-<corrida>, no es una rama ni toca el PR), para poder mirarlos
-      # antes de publicar sin tener que bajar el artifact.
-      - name: Vista previa de los PDF
+      # Vista previa (corridas de prueba a mano): deja el generador armado (fichas-data.js recién
+      # generado + fichas-ui.js + fichas.css + assets/ficha) y los PDF en una referencia aparte del repo
+      # (refs/vista-previa/fichas-<corrida>, no es una rama ni toca el PR), para mirarlos antes de publicar.
+      - name: Vista previa
         if: always() && github.event_name == 'workflow_dispatch' && inputs.modo == 'prueba'
         env:
           SALIDA: ${{ runner.temp }}/salida
         run: |
-          [ -d "$SALIDA/pdfs" ] && ls "$SALIDA/pdfs"/*.pdf >/dev/null 2>&1 || { echo "sin PDF"; exit 0; }
-          export GIT_DIR="$GITHUB_WORKSPACE/.git" GIT_INDEX_FILE="$RUNNER_TEMP/vista.idx" GIT_WORK_TREE="$SALIDA/pdfs"
-          cd "$SALIDA/pdfs"
-          git -c user.name="fichas-bot" -c user.email="fichas-bot@users.noreply.github.com" add -A -- .
+          V="$RUNNER_TEMP/vista"; rm -rf "$V"; mkdir -p "$V/assets"
+          cp fichas-data.js fichas-ui.js fichas.css "$V/" && cp -r assets/ficha "$V/assets/ficha"
+          [ -d "$SALIDA/pdfs" ] && cp -r "$SALIDA/pdfs" "$V/pdfs" || true
+          export GIT_DIR="$GITHUB_WORKSPACE/.git" GIT_INDEX_FILE="$RUNNER_TEMP/vista.idx" GIT_WORK_TREE="$V"
+          cd "$V"
+          git add -A -- .
           T=$(git write-tree)
           C=$(git -c user.name="fichas-bot" -c user.email="fichas-bot@users.noreply.github.com" commit-tree "$T" -m "Vista previa fichas, corrida ${{ github.run_number }}")
           unset GIT_INDEX_FILE GIT_WORK_TREE

@@ -95,6 +95,7 @@ jobs:
           V="$RUNNER_TEMP/vista"; rm -rf "$V"; mkdir -p "$V/assets"
           cp fichas-data.js fichas-ui.js fichas.css "$V/" && cp -r assets/ficha "$V/assets/ficha"
           [ -d "$SALIDA/pdfs" ] && cp -r "$SALIDA/pdfs" "$V/pdfs" || true
+          python3 automatizacion/ci/vista_previa_ext.py fichas-data.js "$V" || true
           export GIT_DIR="$GITHUB_WORKSPACE/.git" GIT_INDEX_FILE="$RUNNER_TEMP/vista.idx" GIT_WORK_TREE="$V"
           cd "$V"
           git add -A -- .

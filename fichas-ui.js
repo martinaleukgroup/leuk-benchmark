@@ -22,7 +22,7 @@
   const CALADO_SVG = `<img class="f-cal-ic" src="${"assets/ficha/"}calado.png" alt="">`;
 
   window._fichaImgErr = function (img, label, fname) {
-    const box = img.parentNode; box.classList.add("f-ph");
+    const box = img.parentNode; box.classList.add("f-ph", "f-err");  // f-err: la imagen no cargó (lo mira exportar_pdfs.py)
     box.innerHTML = `<div class="f-ic"><span class="msi">image</span></div><div>${label}</div>` + (fname ? `<code>${fname}</code>` : "");
   };
 
@@ -92,7 +92,9 @@
     const media = (url, cls, label, fname) => url
       ? `<div class="f-imgbox ${cls}"><img src="${esc(url)}" alt="" onerror="window._fichaImgErr(this,'${label}','${esc(fname || "")}')"></div>`
       : `<div class="f-imgbox ${cls} f-ph">${ph(label, fname)}</div>`;
-    const foto = media(f.foto_url, "f-photo", "FOTO DE PRODUCTO", a.foto);
+    let foto = media(f.foto_url, "f-photo", "FOTO DE PRODUCTO", a.foto);
+    // foto con mucho aire: se agranda dentro del recuadro (fichas_build.py → FOTO_ZOOM)
+    if (f.foto_url && f.foto_zoom) foto = foto.replace('<img ', `<img style="transform:scale(${Number(f.foto_zoom)})" `);
     // si no hay dibujo técnico no se muestra el recuadro: la foto queda sola
     const dibujo = a.dibujo_url ? media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo) : "";
     const polar = media(a.curva_polar_url, "f-curve", "", a.curva_polar);

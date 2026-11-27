@@ -600,6 +600,10 @@ def build_ficha(variants, blue, MAN):
         "switch_cct": switch_cct,
         "clase_aisl": clase_aisl,   # I/II/III → sello al pie: círculo / cuadrado / rombo
         "lente": lente_info(p.get("Comentarios")),
+        # El maestro marca en Comentarios qué plafones aceptan el kit de suspensión
+        # ("Kit de suspensión: Opcional"). Es la única fuente de compatibilidad.
+        "kit_susp": any(re.search(r"kit\s+de\s+suspensi", " ".join((fmt(v.get("Comentarios")), fmt(v.get("_coment_base")))), re.I)
+                        for v in [p] + list(variants)),
         "calado": calado_info(p),
         "colores": colores,
         "assets": {
@@ -628,6 +632,10 @@ def build_ficha(variants, blue, MAN):
 # (las "Unión" y el producto en sí siguen teniendo su ficha propia).
 ACC_GRUPOS = ("CHILL", "RIELES", "DYNA", "REN")   # REN: el MARCO REN SLIM va como hoja de accesorios
 ACC_EXCLUIR = ("DYNA DRIVERS",)         # no entran a la grilla (ver AGRUPACIONES_SIN_FICHA)
+# Documentos donde los accesorios SIN dibujo técnico (kits, conectores) van a la hoja de
+# accesorios en vez de tener hoja propia: con la foto alcanza. Los que tienen dibujo
+# (conectores lineal y flex) siguen con su hoja. Dai, 26/11/2026. Coincidencia exacta.
+ACC_GRILLA_SIN_DIBUJO = ("POLAR",)
 
 # Agrupaciones que NO generan ficha (Mati, 20/08/2026):
 #   · DYNA DRIVERS         → los drivers no llevan ficha. Lo que tiene que verse
@@ -698,9 +706,11 @@ DIMERIZABLES = ("TRIAC", "DALI", "DALI + PUSH")
 # Reglas posibles: "prefijos" (la agrupación empieza así) y/o "subcat" + "fijacion".
 ACC_COMPARTIDOS = [
     ("6716", {"prefijos": ("YORK", "SINTRA")}),                 # KIT SUSPENSIÓN SINTRA/YORK
-    # York y Sintra quedan afuera: llevan su propio kit (el 6716)
-    ("6829", {"subcat": "aplique", "fijacion": "suspender",
-              "excepto": ("YORK", "SINTRA")}),                  # KIT SUSPENSIÓN 4 TENSORES
+    # Sólo los productos que en el maestro dicen "Kit de suspensión: Opcional".
+    # Antes se adivinaba por aplique + "Suspender" y caía en BILUNE, DUNA y BARON,
+    # que no son compatibles (BILUNE lleva su KIT BILUNE 7610/7611). Dai, 26/11/2026.
+    # York y Sintra quedan afuera: llevan su propio kit (el 6716).
+    ("6829", {"kit_susp": True, "excepto": ("YORK", "SINTRA")}),  # KIT SUSPENSIÓN 3 TENSORES
     # Mati, 20/08/2026:
     ("6810", {"agrupaciones": ("RIELES 3EF",)}),                # COBERTOR RIEL: va en 1EF y 3EF
                                                                 # (en 1EF ya está por agrupación propia)
@@ -719,6 +729,8 @@ def _aplica(f, regla):
         return False
     if "prefijos" in regla:
         return ag.startswith(regla["prefijos"])
+    if regla.get("kit_susp") and not f.get("kit_susp"):
+        return False
     if regla.get("subcat") and fmt(f.get("subcat")).lower() != regla["subcat"]:
         return False
     if regla.get("fijacion") and regla["fijacion"] not in _fijacion(f).lower():
@@ -791,6 +803,9 @@ def split_accesorios(fichas):
         ag = f.get("agrupacion") or f.get("titulo") or ""
         es_acc = (ag.upper().startswith(ACC_GRUPOS) and ag.upper() not in ACC_EXCLUIR
                   and fmt(f.get("subcat")).lower() == "accesorio")
+        if (ag.upper() in ACC_GRILLA_SIN_DIBUJO and fmt(f.get("subcat")).lower() == "accesorio"
+                and not (f.get("assets") or {}).get("dibujo_url")):
+            es_acc = True
         if es_acc and f.get("discontinuado"):
             # Accesorio dado de baja: no va a la grilla ni tiene ficha propia.
             # Casos reales (21/08/2026): TAPA 3 EF (7233/7234), reemplazada por
@@ -871,6 +886,10 @@ def main():
         if pv:
             obj["SKU Padre"] = pv
         # Comentarios del maestro (hoja aparte) → para notas al pie (lentes, etc.)
+        # La columna Comentarios de Base (sincronizada del maestro) se guarda aparte: de ahí sale
+        # la compatibilidad con el kit de suspensión. "Comentarios" sigue viniendo de la hoja
+        # Maestro, que hoy el Hub no trae, para no mover las notas de lentes.
+        obj["_coment_base"] = fmt(obj.get("Comentarios"))
         obj["Comentarios"] = COMENTARIOS.get(fmt(obj.get("SKU")), "")
         rows.append(obj)
 
@@ -914,6 +933,15 @@ def main():
             for k in CLASIF:
                 if EMPTY(o.get(k)) and not EMPTY(m.get(k)):
                     o[k] = m[k]
+
+    # Filas marcadas "no subir" en la columna SKU Padre del Hub: no llevan ficha (drivers de
+    # POCKET y POLAR, POCKET MODULO 2CCT). Pedido de Dai, 26/11/2026: "no hacer ficha POCKET
+    # DRIVER" y los drivers de POLAR afuera. La marca vive en el Hub, así que sacarla ahí
+    # devuelve la ficha sin tocar código.
+    _antes = len(rows)
+    rows = [o for o in rows if fmt(o.get("SKU Padre")).strip().lower() != "no subir"]
+    if _antes != len(rows):
+        print(f"  sin ficha por 'no subir' en SKU Padre: {_antes - len(rows)} fila(s)")
 
     # Filtro por stock: fuera las filas cuyo SKU no está en el Excel de stock. Va DESPUÉS
     # de heredar la clasificación (la fila padre puede salir y sus hijas la necesitan) y
@@ -1076,9 +1104,22 @@ def main():
                 return f"assets/ficha/fotos/{s}.png" + (f"?v={FOTO_VER[s]}" if FOTO_VER.get(s) else "")
         return photo.get(sku)
 
+    # Fotos con mucho aire alrededor del producto: se agrandan dentro del recuadro (la
+    # imagen se recorta por el borde del recuadro, no por el producto). Clave = SKU de la
+    # foto que usa la hoja. Dai, 26/11/2026: "CATEN agranden la foto del primero", "RISE
+    # agrandar foto". Si diseño sube una foto ya encuadrada, sacar la entrada.
+    FOTO_ZOOM = {
+        "7097": 1.8,   # CATEN 30
+        "7442": 1.8,   # CATEN 30 CR 3CCT IP44
+        "7701": 2.2,   # RISE
+    }
+
     con_foto = de_drive = 0
     for f in fichas:
         f["foto_url"] = mejor_foto(f)
+        _z = FOTO_ZOOM.get(str(f.get("sku")))
+        if _z and f["foto_url"]:
+            f["foto_zoom"] = _z
         if f["foto_url"]:
             con_foto += 1
             de_drive += f["foto_url"].startswith("assets/ficha/fotos/")
@@ -1093,6 +1134,9 @@ def main():
               f"({', '.join(AGRUPACIONES_SIN_FICHA)})")
 
     fichas = add_compartidos(fichas)             # accesorios que se repiten en varios documentos
+    # kit_susp sólo sirve para decidir el kit compartido: no va a fichas-data.js (si quedara,
+    # todas las fichas figurarían "con datos distintos" y se regenerarían todos los PDF).
+    fichas = [{k: v for k, v in f.items() if k != "kit_susp"} for f in fichas]
     fichas, acc_ags = split_accesorios(fichas)   # accesorios de Chill/Rieles/Dyna → 1 hoja por documento
     if acc_ags:
         print(f"  hojas de accesorios: {', '.join(acc_ags)}")
@@ -1105,11 +1149,26 @@ def main():
     for i, f in enumerate(fichas):
         _first.setdefault(f.get("agrupacion") or f.get("titulo") or "", i)
 
+    # Hojas que van primero dentro de su documento (Dai, 26/11/2026): se busca el patrón en el
+    # título y en las filas de la hoja. Las demás quedan abajo, en el orden de siempre.
+    PRIMERO = [
+        ("CATEN", re.compile(r"\bIP44\b", re.I)),    # primero IP44, abajo IP20
+        ("POCKET", re.compile(r"\b2CCT\b", re.I)),   # primero 2CCT, abajo el resto
+        ("LAIVA", re.compile(r"\bTRIAC\b", re.I)),   # primero TRIAC, abajo ON/OFF
+    ]
+
+    def _primero(ag, f):
+        for pref, pat in PRIMERO:
+            if ag.upper().startswith(pref):
+                txt = " ".join([fmt(f.get("titulo"))] + [fmt(x.get("v")) for x in f.get("filas") or []])
+                return 0 if pat.search(txt) else 1
+        return 0
+
     def _page_key(i_f):
         i, f = i_f
         ag = f.get("agrupacion") or f.get("titulo") or ""
         r = RIELES_RANK.get(fmt(f.get("subcat")).lower(), 2) if ag.upper().startswith("RIELES") else 0
-        return (_first[ag], r, i)
+        return (_first[ag], _primero(ag, f), r, i)
 
     fichas = [f for _, f in sorted(enumerate(fichas), key=_page_key)]
 

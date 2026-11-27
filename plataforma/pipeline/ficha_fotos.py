@@ -189,6 +189,31 @@ def bajar(fid):
     raise RuntimeError(f"Drive no entregó el archivo ({ultimo})")
 
 
+def quitar_fondo_blanco(im, umbral=18):
+    """Fotos con fondo blanco opaco (no PNG transparente): el blanco que toca los bordes
+    pasa a transparente, así la foto queda sobre el gris del recuadro como las demás.
+    Solo actúa si las cuatro esquinas son blancas y opacas; el blanco del producto que
+    no toca el borde se respeta. Devuelve True si cambió algo. (Dai, 26/11/2026: SPY.)"""
+    from PIL import ImageDraw
+    W, H = im.size
+    esquinas = [(0, 0), (W - 1, 0), (0, H - 1), (W - 1, H - 1)]
+    if not all(im.getpixel(p)[3] == 255 and min(im.getpixel(p)[:3]) >= 245 for p in esquinas):
+        return False
+    marca = (255, 0, 255)
+    rgb = im.convert("RGB")
+    for p in esquinas:
+        if rgb.getpixel(p) != marca:
+            ImageDraw.floodfill(rgb, p, marca, thresh=umbral)
+    px, a = rgb.load(), im.getchannel("A")
+    ap = a.load()
+    for y in range(H):
+        for x in range(W):
+            if px[x, y] == marca:
+                ap[x, y] = 0
+    im.putalpha(a)
+    return True
+
+
 def guardar(estado):
     ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
     indice = {sku: e.get("v", "") for sku, e in estado.items() if (DEST / f"{sku}.png").exists()}
@@ -254,6 +279,8 @@ def main():
             im = Image.open(io.BytesIO(bajar(e["id"]))).convert("RGBA")
             if im.width > MAXW:
                 im = im.resize((MAXW, round(im.height * MAXW / im.width)), Image.LANCZOS)
+            if quitar_fondo_blanco(im):
+                print(f"  {sku}: fondo blanco quitado", flush=True)
             im.save(DEST / f"{sku}.png", optimize=True)
             estado[sku] = {"id": e["id"], "mod": e["mod"], "nombre": e["nombre"],
                            "v": hashlib.md5(f'{e["id"]}|{e["mod"]}'.encode()).hexdigest()[:6]}

@@ -1,0 +1,341 @@
+/* ===================== FICHAS TÉCNICAS · UI ===================== */
+/* Lee window.FICHAS (generado por pipeline/fichas_build.py → fichas-data.js). */
+(function () {
+  const FICHAS = (window.FICHAS || []).filter(f => f.sku || f.titulo);
+  // Documentos: agrupar fichas por "Agrupación de fichas técnicas" (varias hojas por archivo)
+  const DOCS = []; const _byAg = {};
+  FICHAS.forEach(f => {
+    const k = f.agrupacion || f.titulo;
+    if (!_byAg[k]) { _byAg[k] = { ag: k, fichas: [] }; DOCS.push(_byAg[k]); }
+    _byAg[k].fichas.push(f);
+  });
+  DOCS.sort((a, b) => a.ag.localeCompare(b.ag, "es"));
+  // texto de búsqueda por documento: nombre de agrupación + títulos + todos los SKU
+  DOCS.forEach(d => {
+    const skus = d.fichas.reduce((acc, f) => acc.concat(f.skus || [f.sku]), []);
+    d._s = (d.ag + " " + d.fichas.map(f => f.titulo).join(" ") + " " + skus.join(" ")).toLowerCase();
+  });
+  const esc = s => (s == null ? "" : String(s)).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const ICON = "assets/ficha/";
+  // Ícono "Dimensión de Calado" — original de la guía de diseño (versión sin recuadro,
+  // la indicada "para uso en reducciones").
+  const CALADO_SVG = `<img class="f-cal-ic" src="${"assets/ficha/"}calado.png" alt="">`;
+
+  window._fichaImgErr = function (img, label, fname) {
+    const box = img.parentNode; box.classList.add("f-ph", "f-err");  // f-err: la imagen no cargó (lo mira exportar_pdfs.py)
+    box.innerHTML = `<div class="f-ic"><span class="msi">image</span></div><div>${label}</div>` + (fname ? `<code>${fname}</code>` : "");
+  };
+
+  // Hoja de accesorios: grilla de 3 columnas con foto + SKUs (Chill / Rieles / Dyna)
+  function accHTML(f) {
+    const items = f.items || [];
+    const cells = items.map(it => {
+      const img = it.foto_url
+        ? `<img src="${esc(it.foto_url)}" alt="" onerror="window._fichaImgErr(this,'SIN FOTO','')">`
+        : "";
+      const box = it.foto_url ? `<div class="f-acc-img">${img}</div>`
+        : `<div class="f-acc-img f-ph"><div class="f-ic"><span class="msi">image</span></div><div>SIN FOTO</div></div>`;
+      const caps = (it.lineas || []).map(l => `<div>SKU ${esc(l.sku)} - ${esc(l.nombre)}</div>`).join("");
+      return `<div class="f-acc-cell">${box}<div class="f-acc-cap">${caps}</div></div>`;
+    }).join("");
+    return `<div class="f-page f-page-acc">
+      <div class="f-head">
+        <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
+        <img class="f-logo" src="${ICON}logo.png" alt="Leuk">
+      </div>
+      <div class="f-hr"></div>
+      <div class="f-acc-grid${items.length > 12 ? " is-dense" : ""}">${cells}</div>
+      <div class="f-foot"><div class="f-web">www.leukiluminacion.com</div></div>
+    </div>`;
+  }
+
+  // Hoja de texto "Equipo de emergencia" (DYNA): intro + una columna por proveedor
+  function emergenciaHTML(f) {
+    const cols = (f.proveedores || []).map(p => {
+      const eqs = (p.equipos || []).map(e => `<div class="f-em-eq">
+          <div class="f-em-largo">${esc(e.largo)}</div>
+          <div>MODELO ${esc(e.modelo)}</div>
+          <div>AUTONOMÍA: ${esc(e.autonomia)}</div>
+          <div>RENDIMIENTO: ${esc(e.rendimiento)}</div>
+        </div>`).join("");
+      return `<div class="f-em-col">
+        <div class="f-em-tag">${esc(p.nombre)}</div>
+        <div class="f-em-desc">${esc(p.desc)}</div>
+        ${eqs}
+        <div class="f-em-web">${esc(p.web)}</div>
+      </div>`;
+    }).join("");
+    return `<div class="f-page f-page-em">
+      <div class="f-head">
+        <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
+        <img class="f-logo" src="${ICON}logo.png" alt="Leuk">
+      </div>
+      <div class="f-hr"></div>
+      <div class="f-em">
+        <div class="f-em-h">${esc(f.seccion)}</div>
+        <p>${esc(f.intro)} <b>${esc(f.intro_destacado)}</b></p>
+        <p>• ${esc(f.bajada)}</p>
+        <div class="f-em-cols">${cols}</div>
+      </div>
+      <div class="f-foot"><div class="f-web">www.leukiluminacion.com</div></div>
+    </div>`;
+  }
+
+  function fichaHTML(f) {
+    if (f.tipo === "accesorios") return accHTML(f);
+    if (f.tipo === "emergencia") return emergenciaHTML(f);
+    // etiqueta puede traer <small>…</small> del builder → no escapar la etiqueta
+    const rows = f.filas.map(r => `<div class="f-row"><div class="k">${r.k}</div><div class="v">${esc(r.v)}</div></div>`).join("");
+
+    const a = f.assets || {};
+    const ph = (label, fname) => `<div class="f-ic"><span class="msi">image</span></div><div>${label}</div>${fname ? `<code>${esc(fname)}</code>` : ""}`;
+    const media = (url, cls, label, fname) => url
+      ? `<div class="f-imgbox ${cls}"><img src="${esc(url)}" alt="" onerror="window._fichaImgErr(this,'${label}','${esc(fname || "")}')"></div>`
+      : `<div class="f-imgbox ${cls} f-ph">${ph(label, fname)}</div>`;
+    let foto = media(f.foto_url, "f-photo", "FOTO DE PRODUCTO", a.foto);
+    // foto con mucho aire: se agranda dentro del recuadro (fichas_build.py → FOTO_ZOOM)
+    if (f.foto_url && f.foto_zoom) foto = foto.replace('<img ', `<img style="transform:scale(${Number(f.foto_zoom)})" `);
+    // si no hay dibujo técnico no se muestra el recuadro: la foto queda sola
+    const dibujo = a.dibujo_url ? media(a.dibujo_url, "f-drawing", "DIBUJO TÉCNICO", a.dibujo) : "";
+    const polar = media(a.curva_polar_url, "f-curve", "", a.curva_polar);
+    const cono = media(a.curva_cono_url, "f-curve", "", a.curva_cono);
+    // Íconos de color: anillo exterior + disco interior; los bicolores van partidos al medio
+    // (según la guía "Íconos y dibujos índice" de diseño).
+    const cols = (f.colores && f.colores.length) ? f.colores : [{ hexes: ["#1a1a1a"], light: false }];
+    const dots = cols.map(c => {
+      const hs = (c.hexes && c.hexes.length) ? c.hexes : (c.hex ? [c.hex] : []);
+      if (!hs.length) return "";   // color sin dato → no se dibuja el ícono
+      const fill = hs.length > 1
+        ? `background:linear-gradient(90deg,${esc(hs[0])} 0 50%,${esc(hs[1])} 50% 100%)`
+        : `background:${esc(hs[0])}`;
+      return `<span class="f-dot"><span class="f-dot-in${c.light ? " is-light" : ""}" style="${fill}"></span></span>`;
+    }).join("");
+    // Información complementaria: solo los botones cuyos archivos existen
+    // label en dos líneas (como la ficha original): permite letra más grande sin separar los íconos
+    const btns = [];
+    // Una ficha puede tener varios LDT (CHILL: uno por ángulo; el kit SINTRA/YORK, uno
+    // por luminaria): va un botón por archivo, rotulado con lo que los distingue.
+    const sinExt = n => String(n || "").replace(/\.[a-z0-9]+$/i, "");
+    const distintivo = ns => {
+      const base = ns.map(sinExt);
+      if (base.length < 2) return base.map(() => "");
+      let i = 0;
+      while (i < base[0].length && base.every(b => b[i] === base[0][i])) i++;
+      return base.map(b => b.slice(i).trim());
+    };
+    const lista = (files, url, nombre) => (files && files.length)
+      ? files : (url ? [{ n: nombre, url: url }] : []);
+    [["ldt", "LDT"], ["cad", "CAD"]].forEach(([k, rotulo]) => {
+      const archivos = lista(a[k + "_files"], a[k + "_url"], a[k]);
+      const extra = distintivo(archivos.map(x => x.n));
+      archivos.forEach((x, i) => btns.push(
+        `<a class="f-btn" href="${esc(x.url)}" download><img src="${ICON}${k}.png"><div class="lb">Archivo<br>${rotulo}${extra[i] ? " " + esc(extra[i]) : ""}</div></a>`));
+    });
+    if (a.manual_url) btns.push(`<a class="f-btn" href="${esc(a.manual_url)}" target="_blank" rel="noopener"><img src="${ICON}manual.png"><div class="lb">Manual de<br>Instalación</div></a>`);
+    const infoComp = btns.length ? `<div><div class="f-h">Información Complementaria</div><div class="f-buttons">${btns.join("")}</div></div>` : "";
+    // Datos fotométricos: cada curva se muestra SOLO si existe. Si no hay ninguna,
+    // "Información Complementaria" sube a ese lugar.
+    const polarBlock = a.curva_polar_url ? `
+          <div class="f-pblock">${polar}
+            <div>
+              <div class="f-ctitle">Curva de distribución de la intensidad luminosa (CD)</div>
+              <div class="f-legend"><div><i style="background:var(--blue)"></i>C0-C180</div><div><i style="background:var(--red)"></i>C90-C270</div><div><i style="background:var(--mag)"></i>G3</div></div>
+            </div>
+          </div>` : "";
+    const conoBlock = a.curva_cono_url ? `
+          <div class="f-pblock">${cono}
+            <div>
+              <div class="f-ctitle">Distribución de iluminancia a distancia (LUX)</div>
+              <div class="f-note"><b>Nota:</b> Las curvas indican el área iluminada y la iluminancia promedio según la distancia de la luminaria.</div>
+            </div>
+          </div>` : "";
+    const fotoBlock = (polarBlock || conoBlock) ? `<div class="f-h">Datos Fotométricos</div>${polarBlock}${conoBlock}` : "";
+
+    // Calado: ícono + "Ø80-85 x 70 mm*" debajo de la tabla, con la nota al pie si hay asterisco
+    const caladoBlock = f.calado ? `
+          <div class="f-calado">${CALADO_SVG}<span>${esc(f.calado.txt)}</span></div>` +
+      (f.calado.nota ? `<div class="f-calado-nota">* Profundidad de calado total aproximada. Considera dicroica y zócalo estándar.</div>` : "")
+      : "";
+
+    // Switch de temperatura de color: nota al pie de la tabla (dispara el asterisco del valor)
+    const switchBlock = f.switch_cct
+      ? `<div class="f-calado-nota">* Incluye switch para cambio de temperatura de color.</div>`
+      : "";
+
+    // Lentes intercambiables (CHILL / MEX): nota al pie, tomada de Comentarios del maestro
+    const lenteBlock = f.lente
+      ? `<div class="f-calado-nota">* ${esc(f.lente)}</div>`
+      : "";
+
+    // Sello de Clase de aislación: I = círculo (tierra), II = cuadrado, III = rombo.
+    // Sin clase cargada → no se muestra sello.
+    const SELLO = { I: "clase1.png", II: "clase2.png", III: "clase3.png" };
+    const sello = SELLO[f.clase_aisl]
+      ? `<img class="f-seal" src="${ICON}${SELLO[f.clase_aisl]}" alt="Clase ${f.clase_aisl}">`
+      : "";
+
+    return `<div class="f-page">
+      <div class="f-head">
+        <div><div class="f-name">${esc(f.titulo)}</div><div class="f-sub">${esc(f.linea)}</div></div>
+        <img class="f-logo" src="${ICON}logo.png" alt="Leuk">
+      </div>
+      <div class="f-hr"></div>
+      <div class="f-top">${foto}${dibujo}</div>
+      <div class="f-cols">
+        <div>
+          <div class="f-h">Especificaciones Técnicas <span class="f-dots">${dots}</span></div>
+          <div class="f-spec">${rows}</div>
+          ${caladoBlock}
+          ${switchBlock}
+          ${lenteBlock}
+        </div>
+        <div>
+          ${fotoBlock}
+          ${infoComp}
+        </div>
+      </div>
+      <div class="f-foot">
+        <div class="f-web">www.leukiluminacion.com</div>
+        <div class="f-seals">${sello}</div>
+      </div>
+    </div>`;
+  }
+
+  // ---------- Descarga masiva: un PDF por documento, todo dentro de un ZIP ----------
+  // Se arma entero en el navegador: se dibuja cada hoja en un canvas y se mete en un PDF.
+  // Las imágenes de Drive lo permiten porque el CDN responde con CORS habilitado.
+  const ESCALA = 1.6;      // ~155 dpi sobre A4: nítido y sin archivos gigantes
+  const CALIDAD = 0.82;
+
+  function esperarImagenes(cont) {
+    const imgs = Array.from(cont.querySelectorAll("img")).filter(i => !i.complete);
+    return Promise.all(imgs.map(i => new Promise(ok => {
+      i.addEventListener("load", ok, { once: true });
+      i.addEventListener("error", ok, { once: true });
+      setTimeout(ok, 12000);                       // que una imagen colgada no frene todo
+    })));
+  }
+
+  // Hojas con muchas filas de specs no entran en la A4 (max-height:297mm + overflow:hidden),
+  // así que el pie se recorta — en pantalla y en el PDF. Se detecta cuál se pasa del borde y
+  // se le compactan las filas (clase f-fit). Sólo afecta las que se cortan.
+  function autofit(container) {
+    container.querySelectorAll(".f-page").forEach(p => {
+      p.classList.remove("f-fit");
+      const last = p.lastElementChild; if (!last) return;
+      if (last.getBoundingClientRect().bottom > p.getBoundingClientRect().bottom + 1) p.classList.add("f-fit");
+    });
+  }
+
+  // El alto definitivo recién se conoce con las fuentes DIN aplicadas. Con font-display:swap las
+  // TTF se piden on-demand, así que document.fonts.ready puede resolver ANTES de que carguen (mide
+  // con el fallback y no ve el recorte). Se fuerza su carga y recién ahí se hace el autofit; un
+  // segundo pase por las dudas si el reflow llega tarde.
+  const FUENTES_FICHA = ["300 52px DINLightCond", "400 11px DINCond", "400 9px DINReg", "500 11px DINMed", "700 11px DINBold"];
+  function autofitCuandoListo(container) {
+    const correr = () => autofit(container);
+    const cargar = document.fonts && document.fonts.load
+      ? Promise.all(FUENTES_FICHA.map(f => document.fonts.load(f).catch(() => {})))
+      : Promise.resolve();
+    cargar.then(() => { requestAnimationFrame(correr); setTimeout(correr, 400); });
+  }
+
+  async function descargarTodas(btn, note) {
+    if (btn.disabled) return;
+    if (!window.jspdf || !window.JSZip || !window.html2canvas) {
+      lkAviso("No se pudieron cargar las librerías para generar los PDF. Recargá la página (Cmd+Shift+R) e intentá de nuevo.");
+      return;
+    }
+    const textoPrevio = btn.textContent;
+    btn.disabled = true;
+    const zip = new JSZip();
+    const jaula = document.createElement("div");
+    jaula.id = "ficha-export";
+    jaula.className = "f-host";
+    document.body.appendChild(jaula);
+    const t0 = Date.now();
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      for (let i = 0; i < DOCS.length; i++) {
+        const d = DOCS[i];
+        btn.textContent = `Generando ${i + 1}/${DOCS.length}…`;
+        jaula.innerHTML = d.fichas.map(fichaHTML).join("");
+        await esperarImagenes(jaula);
+        // fuentes cargadas antes de medir y capturar, si no el PDF también recorta
+        if (document.fonts && document.fonts.load) {
+          try { await Promise.all(FUENTES_FICHA.map(f => document.fonts.load(f))); } catch (e) { /* seguimos igual */ }
+        }
+        autofit(jaula);                              // mismo ajuste que en pantalla, antes del PDF
+        const hojas = jaula.querySelectorAll(".f-page");
+        const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+        for (let h = 0; h < hojas.length; h++) {
+          const cv = await html2canvas(hojas[h], { scale: ESCALA, useCORS: true, backgroundColor: "#fff", logging: false });
+          if (h) pdf.addPage();
+          pdf.addImage(cv.toDataURL("image/jpeg", CALIDAD), "JPEG", 0, 0, 210, 297);
+          // la hoja quedó como imagen → los botones LDT/CAD/manual dejarían de ser
+          // clicleables: se les vuelve a poner el link encima, en la misma posición
+          const caja = hojas[h].getBoundingClientRect();
+          const aMM = 210 / caja.width;                 // px → mm
+          hojas[h].querySelectorAll("a[href]").forEach(a => {
+            if (!a.href) return;
+            const r = a.getBoundingClientRect();
+            pdf.link((r.left - caja.left) * aMM, (r.top - caja.top) * aMM,
+                     r.width * aMM, r.height * aMM, { url: a.href });
+          });
+        }
+        zip.file(`Ficha Técnica - ${d.ag}.pdf`, pdf.output("blob"));
+      }
+      btn.textContent = "Comprimiendo…";
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Fichas Técnicas Leuk.zip";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      const min = Math.round((Date.now() - t0) / 60000);
+      note.innerHTML = `Listo: <b>${DOCS.length}</b> fichas en un ZIP de ${(blob.size / 1e6).toFixed(0)} MB` +
+        (min ? ` (tardó ${min} min).` : ".");
+    } catch (e) {
+      lkAviso("Se cortó la generación del ZIP: " + e.message);
+    } finally {
+      jaula.remove();
+      btn.disabled = false;
+      btn.textContent = textoPrevio;
+    }
+  }
+
+  /* ============================================================
+     Este archivo es el MOTOR de las fichas: los documentos, el dibujo y las
+     descargas. La PANTALLA la arma fichas-panel.js, que une esto con el
+     estado de cada ficha (06_API.gs) en una sola vista.
+     Antes acá vivía también la pantalla (un buscador + el visor); se movió
+     para que la ficha y su estado se vean juntos.
+     ============================================================ */
+
+  // Imprime lo que haya en #ficha-stage. El CSS de impresión (fichas.css)
+  // se engancha a ese id, por eso el panel tiene que conservarlo.
+  function imprimir(nombreDoc) {
+    const tituloPrevio = document.title;   // el navegador lo propone como nombre del PDF
+    if (nombreDoc) document.title = `Ficha Técnica - ${nombreDoc}`;
+    document.body.classList.add("fichas-printing");
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove("fichas-printing");
+      document.title = tituloPrevio;
+    }, 500);
+  }
+
+  /* Lo que consume fichas-panel.js. DOCS ya viene ordenado por agrupación
+     y con el texto de búsqueda (_s) armado. */
+  window.FichasDoc = {
+    docs: () => DOCS,
+    porAgrupacion: ag => DOCS.filter(d => d.ag === ag)[0] || null,
+    html: d => (d ? d.fichas.map(fichaHTML).join("") : ""),
+    autofit: autofitCuandoListo,
+    imprimir: imprimir,
+    descargarTodas: descargarTodas,
+  };
+  // Helpers para el exportador de PDFs (pipeline/fichas_export_pdf.py)
+  window._fichasDocs = DOCS;
+  window._fichaHTML = fichaHTML;
+})();

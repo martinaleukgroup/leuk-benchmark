@@ -1,0 +1,144 @@
+/* ===================== FICHAS TÉCNICAS ===================== */
+/* Todo va namespaced bajo .f-host / .f-* para no colisionar con el resto de la app.
+   .f-host lo llevan el visor (#ficha-stage) y la jaula de export (#ficha-export). */
+
+@font-face{font-family:'DINLightCond';src:url('assets/fonts/DINNextLTPro-LightCondensed.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINCond';src:url('assets/fonts/DINNextLTPro-Condensed.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINReg';src:url('assets/fonts/DINNextLTPro-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINMed';src:url('assets/fonts/DINNextLTPro-Medium.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'DINBold';src:url('assets/fonts/DINNextLTPro-Bold.ttf') format('truetype');font-display:swap}
+
+/* --- Barra de controles --- */
+.fichas-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:14px 18px;background:#f4f5f2;border:1px solid #e2e4de;border-radius:12px;margin-bottom:20px}
+.fichas-bar .fb-field{display:flex;flex-direction:column;gap:3px}
+.fichas-bar label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#808080}
+.fichas-bar select,.fichas-bar input{padding:8px 11px;border:1px solid #CCCCCC;border-radius:8px;font-size:13px;min-width:240px;background:#fff}
+/* buscador con autocompletar */
+.fb-combo{position:relative}
+.fb-combo input{min-width:320px}
+.fb-list{position:absolute;top:100%;left:0;right:0;z-index:30;background:#fff;border:1px solid #CCCCCC;border-radius:8px;margin-top:5px;max-height:360px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+.fb-list[hidden]{display:none}
+.fb-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #F0F0F0}
+.fb-item:last-child{border-bottom:none}
+.fb-item:hover{background:#f3f4ef}
+.fb-badge{font-size:10px;color:#5D5D5D;background:#eef0e6;border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:600}
+.fb-empty{padding:11px 12px;color:#808080;font-size:13px}
+.fichas-bar .fb-btn{margin-left:auto;background:#000000;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
+.fichas-bar .fb-btn:hover{background:#505050}
+.fichas-bar .fb-btn-alt{margin-left:10px;background:#fff;color:#000000;border:1.5px solid #000000}
+.fichas-bar .fb-btn-alt:hover{background:#F0F0F0}
+.fichas-note{font-size:12px;color:#808080;width:100%}
+.fichas-note b{color:#A8741A}
+
+#ficha-stage{display:flex;flex-direction:column;align-items:center;gap:24px}
+
+/* Jaula de render para la descarga masiva: fuera de pantalla y sin sombras */
+#ficha-export{position:fixed;left:-10000px;top:0;width:210mm;z-index:-1}
+#ficha-export .f-page{box-shadow:none!important;margin:0!important}
+
+/* --- La ficha A4 --- */
+.f-host .f-page{--ink:#1a1a1a;--gray:#6f6f6f;--zebra:#f1f1f1;--hair:#d9d9d9;--blue:#337EA9;--red:#e2231a;--mag:#b5299b;
+  width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:11mm 12mm 7mm;display:flex;flex-direction:column;box-shadow:0 8px 34px rgba(0,0,0,.18);color:#1a1a1a;font-family:'DINReg',Arial,sans-serif;box-sizing:border-box}
+.f-host .f-page *{box-sizing:border-box}
+/* imprimir/PDF respetando fondos (cebra, swatch, fondo de imagen, punto) */
+.f-host .f-page, .f-host .f-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* logo alineado arriba y más grande: abarca del tope del título a la base de la bajada */
+.f-host .f-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px}
+.f-host .f-name{font-family:'DINLightCond',sans-serif;font-size:52px;line-height:.9;letter-spacing:3px;font-weight:300}
+.f-host .f-sub{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:3px;margin-top:6px;text-transform:uppercase}
+.f-host .f-logo{height:68px;width:auto;display:block}
+/* línea con border (no colapsa por redondeo de píxeles como sí lo hace un div de 1px+fondo) */
+.f-host .f-hr{height:0;border-top:1px solid var(--ink);margin:0 0 12px}
+.f-host .f-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:11px}
+.f-host .f-imgbox{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.f-host .f-photo{height:255px;background:#ececec}
+.f-host .f-drawing{height:255px}
+.f-host .f-imgbox img{max-width:100%;max-height:100%;object-fit:contain}
+.f-host .f-ph{border:1px dashed #c4c4c4;color:#b0b0b0;flex-direction:column;gap:6px;text-align:center;font-family:'DINCond',sans-serif;font-size:9px;letter-spacing:1px;padding:8px}
+.f-host .f-ph .f-ic{font-size:22px;opacity:.5}
+.f-host .f-ph code{font-family:monospace;font-size:8px;color:#8a8a8a}
+.f-host .f-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1}
+.f-host .f-h{font-family:'DINCond',sans-serif;font-weight:400;font-size:13px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin:0 0 2px;padding-bottom:7px;border-bottom:1.4px solid var(--ink)}
+.f-host .f-dots{display:inline-flex;gap:5px;align-items:center}
+/* Ícono de color: anillo exterior + aire + disco interior (guía de íconos de diseño) */
+.f-host .f-dot{width:15px;height:15px;border-radius:50%;border:1px solid var(--ink);background:#fff;
+  display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:none}
+.f-host .f-dot-in{width:11px;height:11px;border-radius:50%;display:block;box-sizing:border-box}
+.f-host .f-dot-in.is-light{border:.8px solid var(--ink)}   /* claros: contorno para que se vean */
+/* filas en flex (no <table>): así el centrado vertical lo respeta también html2canvas
+   —el motor del PDF/JPG—, que ignora vertical-align:middle en celdas de tabla. */
+.f-host .f-spec{width:100%;font-size:9.2px;margin-top:4px}
+.f-host .f-spec .f-row{display:flex;align-items:center}
+.f-host .f-spec .k,.f-host .f-spec .v{padding:5px 10px;line-height:1.15;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+.f-host .f-spec .v{flex:1;min-width:0}
+/* Fichas con muchas filas que no entran en la A4 → filas más compactas para que quepan.
+   Lo aplica autofit() en fichas-ui.js, sólo a las hojas que se pasan del borde. */
+.f-host .f-page.f-fit .f-spec .k,.f-host .f-page.f-fit .f-spec .v{padding-top:3px;padding-bottom:3px;line-height:1.1}
+.f-host .f-spec .k{color:var(--ink);width:40%;flex:none}
+.f-host .f-spec .k small{font-size:7.6px}
+.f-host .f-spec .f-row:nth-child(even){background:var(--zebra)}
+/* Calado: ícono + medida debajo de la tabla, con nota al pie opcional */
+.f-host .f-calado{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:9.6px}
+.f-host .f-cal-ic{width:20px;height:auto;flex:none;display:block}
+.f-host .f-calado-nota{font-size:8px;color:var(--gray);line-height:1.45;margin-top:6px}
+.f-host .f-pblock{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:16px}
+/* aire debajo de la raya (igual al que hay entre el título y su línea) */
+.f-host .f-h + .f-pblock{margin-top:9px}
+.f-host .f-curve{height:150px}
+.f-host .f-ctitle{font-family:'DINCond',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1px;line-height:1.25;text-transform:uppercase;margin-bottom:7px}
+.f-host .f-legend{font-size:8.5px;line-height:1.7}
+.f-host .f-legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
+.f-host .f-note{font-size:8px;color:var(--gray);line-height:1.4}
+/* íconos equidistantes: cada botón tiene ancho fijo, así el texto de abajo (más largo o
+   más corto) no corre la posición de los íconos. Aire bajo la raya igual al del título. */
+.f-host .f-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.f-host .f-btn{width:84px;text-align:center;text-decoration:none;color:var(--ink)}
+.f-host .f-btn img{height:50px;width:auto;display:block;margin:0 auto}
+.f-host .f-btn .lb{font-family:'DINCond',sans-serif;font-size:11px;letter-spacing:.5px;line-height:1.2;margin-top:8px;text-transform:uppercase}
+.f-host .f-btn .lb small{display:block;font-family:monospace;font-size:7px;color:var(--gray)}
+/* --- Hoja de accesorios (grilla) --- */
+.f-host .f-acc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 26px;
+  flex:1;align-content:start;margin-top:16px}
+.f-host .f-acc-cell{display:flex;flex-direction:column;min-width:0}
+.f-host .f-acc-img{height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 6px}
+.f-host .f-acc-img img{max-width:100%;max-height:100%;object-fit:contain}
+.f-host .f-acc-cap{border-top:1px solid var(--ink);margin-top:8px;padding-top:6px;text-align:center;
+  font-family:'DINCond',sans-serif;font-size:7.6px;letter-spacing:.5px;text-transform:uppercase;line-height:1.65;
+  word-wrap:break-word;overflow-wrap:break-word}
+.f-host .f-acc-grid.is-dense{gap:12px 20px}
+.f-host .f-acc-grid.is-dense .f-acc-img{height:92px}
+.f-host .f-acc-grid.is-dense .f-acc-cap{font-size:7px;line-height:1.5}
+
+/* --- Hoja de texto: equipo de emergencia (DYNA) --- */
+.f-host .f-em{flex:1;padding-top:12px;font-family:'DINLightCond','DINCond',sans-serif;font-size:15.5px;line-height:1.5}
+.f-host .f-em-h{font-family:'DINCond',sans-serif;font-size:19px;letter-spacing:.3px;text-transform:uppercase;
+  width:55%;padding-bottom:4px;border-bottom:1px solid var(--ink);margin-bottom:18px}
+.f-host .f-em p{margin:0 0 20px}
+.f-host .f-em p b{font-family:'DINCond',sans-serif;font-weight:400}
+.f-host .f-em-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 60px;margin-top:40px;
+  font-size:12.5px;line-height:1.5}
+.f-host .f-em-tag{display:inline-block;background:var(--ink);color:#fff;font-family:'DINBold',sans-serif;
+  font-size:12.5px;letter-spacing:.3px;padding:1px 4px 0;margin-bottom:2px}
+.f-host .f-em-desc{margin-bottom:18px}
+.f-host .f-em-eq{margin-bottom:18px}
+.f-host .f-em-largo{font-family:'DINCond',sans-serif}
+.f-host .f-em-web{font-family:'DINBold',sans-serif;margin-top:4px}
+
+.f-host .f-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:8px}
+.f-host .f-web{font-family:'DINCond',sans-serif;font-size:10px;letter-spacing:1px}
+.f-host .f-seals{display:flex;align-items:center;gap:12px}
+.f-host .f-seal{height:23px}
+.f-host .f-sealS{width:34px;height:26px}
+
+/* --- Impresión: aislar la ficha (gated por body.fichas-printing) --- */
+@media print{
+  body.fichas-printing *{visibility:hidden!important}
+  body.fichas-printing #ficha-stage, body.fichas-printing #ficha-stage *{visibility:visible!important}
+  body.fichas-printing #ficha-stage{position:absolute;left:0;top:0;margin:0;display:block}
+  body.fichas-printing .f-page{box-shadow:none!important;margin:0!important}
+  body.fichas-printing #page-fichas .fichas-bar,body.fichas-printing #page-fichas .fichas-note{display:none!important}
+  body.fichas-printing #ficha-stage{gap:0}
+  body.fichas-printing .f-host .f-page{break-after:page;page-break-after:always}
+  body.fichas-printing .f-host .f-page:last-child{break-after:auto;page-break-after:auto}
+  @page{size:A4;margin:0}
+}
